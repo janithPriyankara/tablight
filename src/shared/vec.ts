@@ -4,19 +4,21 @@ export function cosine(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let na = 0;
   let nb = 0;
   for (let i = 0; i < n; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
+    const x = a[i] ?? 0;
+    const y = b[i] ?? 0;
+    dot += x * y;
+    na += x * x;
+    nb += y * y;
   }
   if (na === 0 || nb === 0) return 0;
   return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 export function mean(vs: number[][]): number[] {
   if (vs.length === 0) return [];
-  const out = new Array<number>(vs[0].length).fill(0);
-  for (const v of vs) for (let i = 0; i < out.length; i++) out[i] += v[i] ?? 0;
-  for (let i = 0; i < out.length; i++) out[i] /= vs.length;
-  return out;
+  const first = vs[0] ?? [];
+  const out = new Array<number>(first.length).fill(0);
+  for (const v of vs) for (let i = 0; i < out.length; i++) out[i] = (out[i] ?? 0) + (v[i] ?? 0);
+  return out.map((x) => x / vs.length);
 }
 export function normalize(v: number[]): number[] {
   let s = 0;
