@@ -22,6 +22,13 @@ describe('wordSearch', () => {
     expect(wordSearch(items, groups, 'agnet sdk').map((i) => i.id)).toEqual(['a']);
     expect(wordSearch(items, groups, 'agnt sdk')).toEqual([]); // 4 chars: no typo tolerance
   });
+  it('a typo also matches the start of a longer word ("agnet" finds "agents")', () => {
+    const long = [item('p', 'Building AI agents in Python'), item('q', 'Agency fees explained')];
+    expect(wordSearch(long, [], 'agnet').map((i) => i.id)).toEqual(['p']);
+    expect(wordSearch(long, [], 'pythn').map((i) => i.id)).toEqual(['p']); // deletion against "python"
+    expect(wordSearch(long, [], 'agnt')).toEqual([]); // 4 chars: still no typo tolerance
+    expect(wordSearch(long, [], 'xgents')).toEqual(wordSearch(long, [], 'agents').slice(0, 1)); // substitution
+  });
   it('matches by domain and group name, by prefix, ignoring case and diacritics', () => {
     expect(wordSearch(items, groups, 'YouTube').map((i) => i.id)).toEqual(['b']);
     expect(wordSearch(items, groups, 'trav').map((i) => i.id)).toEqual(['c']);

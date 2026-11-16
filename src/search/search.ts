@@ -31,19 +31,26 @@ function withinOneEdit(a: string, b: string): boolean {
   }
   return la > lb ? a.slice(i + 1) === b.slice(i) : b.slice(i + 1) === a.slice(i);
 }
+/**
+ * One typo against the whole word, or against its same-length start when the word is longer (a typo in
+ * a word still being typed, or a plural: "agnet" matches "agents").
+ */
+function typoMatch(q: string, d: string): boolean {
+  return withinOneEdit(q, d) || (d.length > q.length && withinOneEdit(q, d.slice(0, q.length)));
+}
 /** Best score of one query token against a document's tokens (0: no match). */
 function tokenScore(q: string, doc: string[]): number {
   let best = 0;
   for (const d of doc) {
     if (d === q) return SCORE_EXACT;
     if (best < SCORE_PREFIX && q.length >= PREFIX_MIN_LENGTH && d.startsWith(q)) best = SCORE_PREFIX;
-    else if (best < SCORE_TYPO && q.length >= TYPO_MIN_LENGTH && withinOneEdit(q, d)) best = SCORE_TYPO;
+    else if (best < SCORE_TYPO && q.length >= TYPO_MIN_LENGTH && typoMatch(q, d)) best = SCORE_TYPO;
   }
   return best;
 }
 /**
  * Items whose title, domain or group name match every query token (case/diacritic-insensitive; prefix
- * match from 2 chars, one typo from 5). Ranked by match quality (exact > prefix > typo), then most
+ * match from 2 chars, one typo from 5, also against the start of a longer word). Ranked by match quality (exact > prefix > typo), then most
  * recently active. Pure: no chrome, no db.
  */
 export function wordSearch(items: Item[], groups: Group[], q: string, limit = 50): Item[] {
