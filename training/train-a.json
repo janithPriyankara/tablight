@@ -1,0 +1,2502 @@
+[
+ {
+  "title": "Rail Europe: Paris to Amsterdam",
+  "url": "https://www.raileurope.com/en-us/trains/paris-amsterdam",
+  "group": "travel"
+ },
+ {
+  "title": "Tumblr",
+  "url": "https://www.tumblr.com/dashboard",
+  "group": "social"
+ },
+ {
+  "title": "Customer Metrics Q3 - Google Sheets",
+  "url": "https://docs.google.com/spreadsheets/d/1XyZaBcDeFgHiJkLmNoPqRs/edit#gid=0",
+  "group": "work"
+ },
+ {
+  "title": "Index funds vs ETFs explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ew3Rt5Yu7Io",
+  "group": "finance"
+ },
+ {
+  "title": "Bluesky",
+  "url": "https://bsky.app/",
+  "group": "social"
+ },
+ {
+  "title": "PubMed: creatine supplementation and cognition",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/38123456/",
+  "group": "health"
+ },
+ {
+  "title": "Outlook - Mail",
+  "url": "https://outlook.office.com/mail/inbox",
+  "group": "work"
+ },
+ {
+  "title": "Andor Season 2 - Disney+",
+  "url": "https://www.disneyplus.com/series/andor/3xoUmQwvN9p",
+  "group": "tv"
+ },
+ {
+  "title": "Mastodon - hachyderm.io",
+  "url": "https://hachyderm.io/@gargron",
+  "group": "social"
+ },
+ {
+  "title": "Kyoto Itinerary: 5 days - YouTube",
+  "url": "https://www.youtube.com/watch?v=Gt6Hy8Ju1Ki",
+  "group": "travel"
+ },
+ {
+  "title": "Veterinary clinic opening hours - VCA Animal Hospitals",
+  "url": "https://vcahospitals.com/find-a-hospital",
+  "group": "other"
+ },
+ {
+  "title": "Mobbin - UI & UX design inspiration",
+  "url": "https://mobbin.com/browse/ios/apps",
+  "group": "design"
+ },
+ {
+  "title": "ESPN: NBA Scores",
+  "url": "https://www.espn.com/nba/scoreboard",
+  "group": "other"
+ },
+ {
+  "title": "Building effective agents - Anthropic Engineering",
+  "url": "https://www.anthropic.com/engineering/building-effective-agents",
+  "group": "ai"
+ },
+ {
+  "title": "Joe Rogan Experience #2301 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Vb4Nm6Lk2Ws",
+  "group": "videos"
+ },
+ {
+  "title": "The White Lotus Season 3 - Watch on HBO Max",
+  "url": "https://www.hbomax.com/shows/the-white-lotus",
+  "group": "tv"
+ },
+ {
+  "title": "npm: zod",
+  "url": "https://www.npmjs.com/package/zod",
+  "group": "programming"
+ },
+ {
+  "title": "(14) Home / X",
+  "url": "https://x.com/home",
+  "group": "social"
+ },
+ {
+  "title": "NerdWallet: Best high-yield savings accounts",
+  "url": "https://www.nerdwallet.com/best/banking/high-yield-online-savings-accounts",
+  "group": "finance"
+ },
+ {
+  "title": "Veritasium: The Strange Physics of Spinning Tops - YouTube",
+  "url": "https://www.youtube.com/watch?v=Mn7Bv5Cx3Za",
+  "group": "videos"
+ },
+ {
+  "title": "Wednesday Season 2 Episode 3 review - IGN",
+  "url": "https://www.ign.com/articles/wednesday-season-2-episode-3-review",
+  "group": "tv"
+ },
+ {
+  "title": "Simon Willison's Weblog: SQLite tricks",
+  "url": "https://simonwillison.net/2026/Oct/21/sqlite-tricks/",
+  "group": "programming"
+ },
+ {
+  "title": "Semiconductor export rules tighten - The Economist",
+  "url": "https://www.economist.com/business/2026/11/09/semiconductor-export-rules-tighten",
+  "group": "news"
+ },
+ {
+  "title": "Refactoring UI - Design tips for developers",
+  "url": "https://www.refactoringui.com/",
+  "group": "design"
+ },
+ {
+  "title": "Lawn care calendar by season - Scotts",
+  "url": "https://scotts.com/en-us/lawn-care-calendar.html",
+  "group": "other"
+ },
+ {
+  "title": "Can You Beat Me At This? Epic Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=Lk9Jh8Gf7Dd",
+  "group": "videos"
+ },
+ {
+  "title": "Vector databases explained - Pinecone Learning Center",
+  "url": "https://www.pinecone.io/learn/vector-database/",
+  "group": "ai"
+ },
+ {
+  "title": "Node.js v24 Documentation - fs",
+  "url": "https://nodejs.org/docs/latest-v24.x/api/fs.html",
+  "group": "docs"
+ },
+ {
+  "title": "Nintendo Switch 2 Games - Nintendo",
+  "url": "https://www.nintendo.com/us/store/games/switch-2-games/",
+  "group": "games"
+ },
+ {
+  "title": "meta-llama/Llama-4-Scout-17B-16E-Instruct · Hugging Face",
+  "url": "https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "group": "ai"
+ },
+ {
+  "title": "Anxiety self-help guide - Mind",
+  "url": "https://www.mind.org.uk/information-support/types-of-mental-health-problems/anxiety-and-panic-attacks/self-care/",
+  "group": "health"
+ },
+ {
+  "title": "Dockerfile best practices - Snyk Blog",
+  "url": "https://snyk.io/blog/10-docker-image-security-best-practices/",
+  "group": "programming"
+ },
+ {
+  "title": "Sprint 42 Board - Jira",
+  "url": "https://acme.atlassian.net/jira/software/projects/ACME/boards/7",
+  "group": "work"
+ },
+ {
+  "title": "Yoga With Adriene - Morning Yoga - YouTube",
+  "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE",
+  "group": "health"
+ },
+ {
+  "title": "Class Central: Best Online Courses 2026",
+  "url": "https://www.classcentral.com/report/best-free-online-courses/",
+  "group": "learning"
+ },
+ {
+  "title": "Ted Lasso Season 4 | Apple TV",
+  "url": "https://tv.apple.com/us/show/ted-lasso/umc.cmc.vtoh0mn0xn7t3c643xqonfzy",
+  "group": "tv"
+ },
+ {
+  "title": "Reddit - Dive into anything",
+  "url": "https://www.reddit.com/",
+  "group": "social"
+ },
+ {
+  "title": "CNN: Breaking News, Latest News and Videos",
+  "url": "https://edition.cnn.com/",
+  "group": "news"
+ },
+ {
+  "title": "Rust in 100 Seconds - YouTube",
+  "url": "https://www.youtube.com/watch?v=5C_HPTJg5ek",
+  "group": "programming"
+ },
+ {
+  "title": "(2) Reacting to the funniest fails of 2026 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ty6Ui8Op0As",
+  "group": "videos"
+ },
+ {
+  "title": "Startup funding roundup - Crunchbase News",
+  "url": "https://news.crunchbase.com/venture/weekly-funding-roundup/",
+  "group": "news"
+ },
+ {
+  "title": "Airbnb: Entire apartment in Lisbon",
+  "url": "https://www.airbnb.com/rooms/45678901",
+  "group": "travel"
+ },
+ {
+  "title": "OpenRouter - Models",
+  "url": "https://openrouter.ai/models",
+  "group": "ai"
+ },
+ {
+  "title": "Keychron Q1 Max - Keychron",
+  "url": "https://www.keychron.com/products/keychron-q1-max-qmk-via-wireless-custom-mechanical-keyboard",
+  "group": "shopping"
+ },
+ {
+  "title": "Asana - Marketing launch board",
+  "url": "https://app.asana.com/0/1205555555555/board",
+  "group": "work"
+ },
+ {
+  "title": "Funniest Animals of the Month - Streamable",
+  "url": "https://streamable.com/k3j9x2",
+  "group": "videos"
+ },
+ {
+  "title": "Shogun Season 2 renewal news - Deadline",
+  "url": "https://deadline.com/2026/02/shogun-season-2-production-update-1236000000/",
+  "group": "tv"
+ },
+ {
+  "title": "Renew passport - USA.gov",
+  "url": "https://www.usa.gov/renew-passport",
+  "group": "other"
+ },
+ {
+  "title": "Advent of Code 2025 - Day 7",
+  "url": "https://adventofcode.com/2025/day/7",
+  "group": "programming"
+ },
+ {
+  "title": "Property tax lookup - Cook County Assessor",
+  "url": "https://www.cookcountyassessoril.gov/address-search",
+  "group": "other"
+ },
+ {
+  "title": "City of Seattle - Pay your utility bill",
+  "url": "https://www.seattle.gov/utilities/your-account",
+  "group": "other"
+ },
+ {
+  "title": "Mistral AI - Le Chat",
+  "url": "https://chat.mistral.ai/chat",
+  "group": "ai"
+ },
+ {
+  "title": "Hot Ones with Pedro Pascal - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ab1Cd2Ef3Gh",
+  "group": "videos"
+ },
+ {
+  "title": "Docker Docs - Dockerfile reference",
+  "url": "https://docs.docker.com/reference/dockerfile/",
+  "group": "docs"
+ },
+ {
+  "title": "Python documentation - argparse",
+  "url": "https://docs.python.org/3/library/argparse.html",
+  "group": "docs"
+ },
+ {
+  "title": "Crash Course World History #1 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Yocja_N5s1I",
+  "group": "learning"
+ },
+ {
+  "title": "The Boys (TV Series 2019- ) - IMDb",
+  "url": "https://www.imdb.com/title/tt1190634/",
+  "group": "tv"
+ },
+ {
+  "title": "Watch Dogs Compilation Funny Moments - Dailymotion",
+  "url": "https://www.dailymotion.com/video/x8k2m4n",
+  "group": "videos"
+ },
+ {
+  "title": "30 Min Full Body Workout - YouTube",
+  "url": "https://www.youtube.com/watch?v=UItWltVZZmE",
+  "group": "health"
+ },
+ {
+  "title": "Figma",
+  "url": "https://www.figma.com/files/recent",
+  "group": "design"
+ },
+ {
+  "title": "TED: How to speak so that people want to listen",
+  "url": "https://www.ted.com/talks/julian_treasure_how_to_speak_so_that_people_want_to_listen",
+  "group": "learning"
+ },
+ {
+  "title": "Cronometer: Nutrition tracker",
+  "url": "https://cronometer.com/diary/",
+  "group": "health"
+ },
+ {
+  "title": "Postman API Platform",
+  "url": "https://web.postman.co/workspace/my-workspace",
+  "group": "programming"
+ },
+ {
+  "title": "How to fix a leaky faucet - The Home Depot",
+  "url": "https://www.homedepot.com/c/ah/how-to-fix-a-leaky-faucet/9ba683603be9fa5395fab901c1234567",
+  "group": "other"
+ },
+ {
+  "title": "Kubernetes Documentation | Concepts - Pods",
+  "url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+  "group": "docs"
+ },
+ {
+  "title": "Tenet: is it worth rewatching? - YouTube",
+  "url": "https://www.youtube.com/watch?v=Bt5Rk0aQw8Y",
+  "group": "movies"
+ },
+ {
+  "title": "Marathon Training Plan - Runner's World",
+  "url": "https://www.runnersworld.com/training/a20809900/marathon-training-plan/",
+  "group": "other"
+ },
+ {
+  "title": "Attack on Titan - Watch on Crunchyroll",
+  "url": "https://www.crunchyroll.com/series/GR751KNZY/attack-on-titan",
+  "group": "tv"
+ },
+ {
+  "title": "facebook/react: The library for web and native user interfaces",
+  "url": "https://github.com/facebook/react",
+  "group": "programming"
+ },
+ {
+  "title": "UFC 320 results - Sherdog",
+  "url": "https://www.sherdog.com/events/UFC-320-100123",
+  "group": "other"
+ },
+ {
+  "title": "Replicate - Run AI with an API",
+  "url": "https://replicate.com/black-forest-labs/flux-1.1-pro",
+  "group": "ai"
+ },
+ {
+  "title": "Lofi Hip Hop Radio - Beats to Relax/Study to - YouTube",
+  "url": "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+  "group": "music"
+ },
+ {
+  "title": "Watch The Rings of Power | Prime Video",
+  "url": "https://www.primevideo.com/detail/0TGRZ4YHNZ3F5Q8ONQV9JZ3C4X",
+  "group": "tv"
+ },
+ {
+  "title": "GitHub announces new Copilot pricing - InfoQ",
+  "url": "https://www.infoq.com/news/2026/11/github-copilot-pricing/",
+  "group": "news"
+ },
+ {
+  "title": "Organic Chemistry - Reaction Mechanisms Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Zm4Xk8Sa1Pw",
+  "group": "learning"
+ },
+ {
+  "title": "Google search: how to quantize llama model to 4 bit",
+  "url": "https://www.google.com/search?q=how+to+quantize+llama+model+to+4+bit",
+  "group": "ai"
+ },
+ {
+  "title": "What to Expect: Baby sleep schedule by month",
+  "url": "https://www.whattoexpect.com/first-year/baby-sleep-schedule/",
+  "group": "other"
+ },
+ {
+  "title": "HM Revenue & Customs: Self Assessment",
+  "url": "https://www.gov.uk/self-assessment-tax-returns",
+  "group": "other"
+ },
+ {
+  "title": "cppreference.com - std::vector",
+  "url": "https://en.cppreference.com/w/cpp/container/vector",
+  "group": "docs"
+ },
+ {
+  "title": "WhatsApp Web",
+  "url": "https://web.whatsapp.com/",
+  "group": "social"
+ },
+ {
+  "title": "(5) Unboxing the Weirdest Mystery Box on the Internet - YouTube",
+  "url": "https://www.youtube.com/watch?v=Qa1Ws3Ed5Rf",
+  "group": "videos"
+ },
+ {
+  "title": "Tesla recalls vehicles over software issue - AP News",
+  "url": "https://apnews.com/article/tesla-recall-software-1a2b3c4d",
+  "group": "news"
+ },
+ {
+  "title": "Linux man page: tar(1)",
+  "url": "https://man7.org/linux/man-pages/man1/tar.1.html",
+  "group": "docs"
+ },
+ {
+  "title": "Deep Focus - playlist | Spotify",
+  "url": "https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ",
+  "group": "music"
+ },
+ {
+  "title": "Dell XPS 14 laptop review - Notebookcheck",
+  "url": "https://www.notebookcheck.net/Dell-XPS-14-2026-review.1001234.0.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Reacher Season 3 release date - Tudum by Netflix",
+  "url": "https://www.netflix.com/tudum/articles/reacher-season-3-release-date",
+  "group": "tv"
+ },
+ {
+  "title": "ACME-1423 Fix login redirect loop - Jira",
+  "url": "https://acme.atlassian.net/browse/ACME-1423",
+  "group": "work"
+ },
+ {
+  "title": "Last.fm: Radiohead scrobbles",
+  "url": "https://www.last.fm/music/Radiohead",
+  "group": "music"
+ },
+ {
+  "title": "Parents.com: Toddler activities at home",
+  "url": "https://www.parents.com/toddlers-preschoolers/activities/indoor/",
+  "group": "other"
+ },
+ {
+  "title": "Expedia: Vacation Packages",
+  "url": "https://www.expedia.com/Vacation-Packages",
+  "group": "travel"
+ },
+ {
+  "title": "Mumsnet: Best school uniforms",
+  "url": "https://www.mumsnet.com/talk/primary/1234567-best-school-uniforms",
+  "group": "other"
+ },
+ {
+  "title": "(3) Feed | LinkedIn",
+  "url": "https://www.linkedin.com/feed/",
+  "group": "social"
+ },
+ {
+  "title": "Transformers documentation - Hugging Face",
+  "url": "https://huggingface.co/docs/transformers/index",
+  "group": "ai"
+ },
+ {
+  "title": "Chase Online Banking",
+  "url": "https://secure.chase.com/web/auth/dashboard",
+  "group": "finance"
+ },
+ {
+  "title": "Linear - Issue ENG-882",
+  "url": "https://linear.app/acme/issue/ENG-882/migrate-auth-service",
+  "group": "work"
+ },
+ {
+  "title": "Twitch - Valorant Champions 2026",
+  "url": "https://www.twitch.tv/valorant",
+  "group": "games"
+ },
+ {
+  "title": "Coldplay - Yellow (Official Video) - YouTube",
+  "url": "https://www.youtube.com/watch?v=yKNxeF4KMsY",
+  "group": "music"
+ },
+ {
+  "title": "Postgres query planner deep dive - Substack",
+  "url": "https://newsletter.pragmaticengineer.com/p/postgres-planner",
+  "group": "programming"
+ },
+ {
+  "title": "Best Banana Bread Recipe - Allrecipes",
+  "url": "https://www.allrecipes.com/recipe/20144/banana-banana-bread/",
+  "group": "other"
+ },
+ {
+  "title": "Day in the Life of a Tokyo Street Food Vendor - YouTube",
+  "url": "https://www.youtube.com/watch?v=Iu4Yt6Re8Wq",
+  "group": "videos"
+ },
+ {
+  "title": "SriLankan Airlines | Book Flights",
+  "url": "https://www.srilankan.com/en_uk/book-a-flight",
+  "group": "travel"
+ },
+ {
+  "title": "PyTorch Tutorials - Learn the Basics",
+  "url": "https://pytorch.org/tutorials/beginner/basics/intro.html",
+  "group": "ai"
+ },
+ {
+  "title": "Hacker News",
+  "url": "https://news.ycombinator.com/",
+  "group": "news"
+ },
+ {
+  "title": "Kurzgesagt - What If We Detonated Every Nuclear Bomb at Once? - YouTube",
+  "url": "https://www.youtube.com/watch?v=Qw2Er4Ty6Ui",
+  "group": "videos"
+ },
+ {
+  "title": "ggml-org/llama.cpp: LLM inference in C/C++",
+  "url": "https://github.com/ggml-org/llama.cpp",
+  "group": "ai"
+ },
+ {
+  "title": "Forbes Home: Best vacuum cleaners",
+  "url": "https://www.forbes.com/home-improvement/appliances/best-vacuum-cleaners/",
+  "group": "other"
+ },
+ {
+  "title": "IRS: Tax Withholding Estimator",
+  "url": "https://www.irs.gov/individuals/tax-withholding-estimator",
+  "group": "finance"
+ },
+ {
+  "title": "Weather radar - Weather.com",
+  "url": "https://weather.com/weather/radar/interactive/l/Seattle+WA",
+  "group": "other"
+ },
+ {
+  "title": "Craigslist: furniture - by owner",
+  "url": "https://sfbay.craigslist.org/search/fua",
+  "group": "other"
+ },
+ {
+  "title": "Zillow: 3 bed houses for sale in Austin, TX",
+  "url": "https://www.zillow.com/austin-tx/houses/3-_beds/",
+  "group": "other"
+ },
+ {
+  "title": "PlayStation Store - God of War",
+  "url": "https://store.playstation.com/en-us/concept/10001234",
+  "group": "games"
+ },
+ {
+  "title": "google ai studio - Prompt gallery",
+  "url": "https://aistudio.google.com/prompts/new_chat",
+  "group": "ai"
+ },
+ {
+  "title": "World leaders gather for COP31 summit | Al Jazeera",
+  "url": "https://www.aljazeera.com/news/2026/11/10/cop31-summit-opens",
+  "group": "news"
+ },
+ {
+  "title": "Stripe API Reference - Create a PaymentIntent",
+  "url": "https://docs.stripe.com/api/payment_intents/create",
+  "group": "docs"
+ },
+ {
+  "title": "BBC News - Home",
+  "url": "https://www.bbc.com/news",
+  "group": "news"
+ },
+ {
+  "title": "The Primeagen - Why Neovim in 2026 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Zr8Ep3Wq5Xk",
+  "group": "programming"
+ },
+ {
+  "title": "Google Meet - Design review",
+  "url": "https://meet.google.com/abc-defg-hij",
+  "group": "work"
+ },
+ {
+  "title": "Silo S2E4 discussion - r/SiloSeries",
+  "url": "https://www.reddit.com/r/SiloSeries/comments/1ab3cd4/silo_s02e04_discussion_thread/",
+  "group": "tv"
+ },
+ {
+  "title": "How to evaluate LLM apps - Substack",
+  "url": "https://eugeneyan.substack.com/p/llm-evaluators",
+  "group": "ai"
+ },
+ {
+  "title": "Prompt engineering guide | Anthropic Docs",
+  "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
+  "group": "ai"
+ },
+ {
+  "title": "Ikman.lk - Cars for sale in Colombo",
+  "url": "https://ikman.lk/en/ads/sri-lanka/cars",
+  "group": "other"
+ },
+ {
+  "title": "rust-lang/rust: Empowering everyone to build reliable and efficient software",
+  "url": "https://github.com/rust-lang/rust",
+  "group": "programming"
+ },
+ {
+  "title": "The Brutalist review: a monumental epic | Roger Ebert",
+  "url": "https://www.rogerebert.com/reviews/the-brutalist-movie-review-2024",
+  "group": "movies"
+ },
+ {
+  "title": "Model Context Protocol (MCP) - Introduction",
+  "url": "https://modelcontextprotocol.io/introduction",
+  "group": "ai"
+ },
+ {
+  "title": "Google Maps - Pizza near Brooklyn, NY",
+  "url": "https://www.google.com/maps/search/pizza+near+Brooklyn+NY/",
+  "group": "other"
+ },
+ {
+  "title": "Reddit - r/rust: Is async Rust worth it?",
+  "url": "https://www.reddit.com/r/rust/comments/1jx2y3z/is_async_rust_worth_it/",
+  "group": "programming"
+ },
+ {
+  "title": "Memrise: Learn Korean",
+  "url": "https://app.memrise.com/course/korean-1",
+  "group": "learning"
+ },
+ {
+  "title": "Google Calendar - Week of Nov 16, 2026",
+  "url": "https://calendar.google.com/calendar/u/0/r/week/2026/11/16",
+  "group": "work"
+ },
+ {
+  "title": "Watch Nosferatu (2024) | Prime Video",
+  "url": "https://www.amazon.com/dp/B0DQXK9MZ2",
+  "group": "movies"
+ },
+ {
+  "title": "GitLab - Pipelines · backend/api",
+  "url": "https://gitlab.com/backend/api/-/pipelines",
+  "group": "programming"
+ },
+ {
+  "title": "Blade Runner 2049 - Rotten Tomatoes",
+  "url": "https://www.rottentomatoes.com/m/blade_runner_2049",
+  "group": "movies"
+ },
+ {
+  "title": "Runway Gen-4 - AI video generation",
+  "url": "https://runwayml.com/research/introducing-gen-4",
+  "group": "ai"
+ },
+ {
+  "title": "Premier League Table | BBC Sport",
+  "url": "https://www.bbc.com/sport/football/premier-league/table",
+  "group": "other"
+ },
+ {
+  "title": "Zootopia 2 - Disney+",
+  "url": "https://www.disneyplus.com/movies/zootopia-2/4mXkPq7LwEa",
+  "group": "movies"
+ },
+ {
+  "title": "Dude Perfect Trick Shots Edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=Pl0Ok9Ij8Uh",
+  "group": "videos"
+ },
+ {
+  "title": "Udemy: Complete Public Speaking Masterclass",
+  "url": "https://www.udemy.com/course/public-speaking-masterclass/",
+  "group": "learning"
+ },
+ {
+  "title": "Liquipedia Dota 2 - The International 2026",
+  "url": "https://liquipedia.net/dota2/The_International/2026",
+  "group": "games"
+ },
+ {
+  "title": "Snapchat",
+  "url": "https://www.snapchat.com/",
+  "group": "social"
+ },
+ {
+  "title": "PagerDuty - Incidents",
+  "url": "https://acme.pagerduty.com/incidents",
+  "group": "work"
+ },
+ {
+  "title": "Crazy Hidden Details in Your Favorite Cartoons - YouTube",
+  "url": "https://www.youtube.com/watch?v=Bv2Cx4Zz6Lk",
+  "group": "videos"
+ },
+ {
+  "title": "r/programming - Reddit",
+  "url": "https://www.reddit.com/r/programming/",
+  "group": "social"
+ },
+ {
+  "title": "Gladiator II (2024) - TMDB",
+  "url": "https://www.themoviedb.org/movie/558449-gladiator-ii",
+  "group": "movies"
+ },
+ {
+  "title": "Fallout Season 2 - Prime Video",
+  "url": "https://www.amazon.com/gp/video/detail/0LKZ4WY3VPQX6E9B2C7H8R5T1U/",
+  "group": "tv"
+ },
+ {
+  "title": "GOG.com - Cyberpunk 2077",
+  "url": "https://www.gog.com/en/game/cyberpunk_2077",
+  "group": "games"
+ },
+ {
+  "title": "Adobe Illustrator tutorial: pen tool basics - YouTube",
+  "url": "https://www.youtube.com/watch?v=Lp3Ka9Sd2Fw",
+  "group": "design"
+ },
+ {
+  "title": "Checkout - Best Buy",
+  "url": "https://www.bestbuy.com/checkout/r/fast-track",
+  "group": "shopping"
+ },
+ {
+  "title": "India GDP growth tops forecasts - The Hindu",
+  "url": "https://www.thehindu.com/business/Economy/india-gdp-growth/article70012345.ece",
+  "group": "news"
+ },
+ {
+  "title": "This Old House: How to paint kitchen cabinets",
+  "url": "https://www.thisoldhouse.com/kitchens/21015111/how-to-paint-kitchen-cabinets",
+  "group": "other"
+ },
+ {
+  "title": "Library Catalog - Seattle Public Library",
+  "url": "https://www.spl.org/books-and-media/catalog",
+  "group": "other"
+ },
+ {
+  "title": "The Bear Season 4 Episode 6 recap - Vulture",
+  "url": "https://www.vulture.com/article/the-bear-season-4-episode-6-recap.html",
+  "group": "tv"
+ },
+ {
+  "title": "Headspace: Guided Meditation",
+  "url": "https://www.headspace.com/meditation/meditation-for-beginners",
+  "group": "health"
+ },
+ {
+  "title": "Kendrick Lamar | Discography - Apple Music",
+  "url": "https://music.apple.com/us/artist/kendrick-lamar/368183298",
+  "group": "music"
+ },
+ {
+  "title": "Ollama",
+  "url": "https://ollama.com/library/qwen3",
+  "group": "ai"
+ },
+ {
+  "title": "Pinterest",
+  "url": "https://www.pinterest.com/",
+  "group": "social"
+ },
+ {
+  "title": "Nike Air Max 90 - Nike.com",
+  "url": "https://www.nike.com/t/air-max-90-mens-shoes-6d1kLm/CN8490-002",
+  "group": "shopping"
+ },
+ {
+  "title": "crates.io: tokio",
+  "url": "https://crates.io/crates/tokio",
+  "group": "programming"
+ },
+ {
+  "title": "Nvidia earnings beat expectations as AI demand surges | CNBC",
+  "url": "https://www.cnbc.com/2026/11/12/nvidia-earnings.html",
+  "group": "news"
+ },
+ {
+  "title": "Songkick: Concerts near Colombo",
+  "url": "https://www.songkick.com/metro-areas/28574-sri-lanka-colombo",
+  "group": "music"
+ },
+ {
+  "title": "Chords for Oasis - Wonderwall - E-Chords",
+  "url": "https://www.e-chords.com/chords/oasis/wonderwall",
+  "group": "music"
+ },
+ {
+  "title": "Machine Learning Specialization - Coursera",
+  "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+  "group": "ai"
+ },
+ {
+  "title": "EU AI Act enforcement begins: what changes - Politico Europe",
+  "url": "https://www.politico.eu/article/eu-ai-act-enforcement-begins/",
+  "group": "news"
+ },
+ {
+  "title": "Hashnode - How I structure Go projects",
+  "url": "https://hashnode.com/post/how-i-structure-go-projects-cl9x2y3z4",
+  "group": "programming"
+ },
+ {
+  "title": "(1) Anker 737 Power Bank - Amazon.co.uk",
+  "url": "https://www.amazon.co.uk/dp/B09VPHVT2Z",
+  "group": "shopping"
+ },
+ {
+  "title": "Weapons (2025) explained - spoilers - Reddit",
+  "url": "https://www.reddit.com/r/movies/comments/1m9wxyz/weapons_2025_discussion_thread/",
+  "group": "movies"
+ },
+ {
+  "title": "Google Maps - Fushimi Inari Shrine",
+  "url": "https://www.google.com/maps/place/Fushimi+Inari+Taisha/@34.9671,135.7727,17z",
+  "group": "travel"
+ },
+ {
+  "title": "How to undo a git commit? - Stack Overflow",
+  "url": "https://stackoverflow.com/questions/927358/how-do-i-undo-the-most-recent-local-commits-in-git",
+  "group": "programming"
+ },
+ {
+  "title": "Learn Spanish: Lesson 12 - Duolingo",
+  "url": "https://www.duolingo.com/lesson/es/12",
+  "group": "learning"
+ },
+ {
+  "title": "MrBeast - Last To Leave The Circle Wins $500,000 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Jk8Lm2Np4Qr",
+  "group": "videos"
+ },
+ {
+  "title": "Huberman Lab: Improve Your Sleep - YouTube",
+  "url": "https://www.youtube.com/watch?v=nm1TxQj9IsQ",
+  "group": "health"
+ },
+ {
+  "title": "Meta signs multi-billion dollar chip deal - The Information",
+  "url": "https://www.theinformation.com/articles/meta-chip-deal",
+  "group": "news"
+ },
+ {
+  "title": "How to Change a Flat Tire - YouTube",
+  "url": "https://www.youtube.com/watch?v=joCHBNSJ6VI",
+  "group": "other"
+ },
+ {
+  "title": "Coolors - The super fast color palettes generator",
+  "url": "https://coolors.co/palettes/trending",
+  "group": "design"
+ },
+ {
+  "title": "Fidelity: Roth IRA",
+  "url": "https://www.fidelity.com/retirement-ira/roth-ira",
+  "group": "finance"
+ },
+ {
+  "title": "Calculus 1 - Khan Academy",
+  "url": "https://www.khanacademy.org/math/calculus-1",
+  "group": "learning"
+ },
+ {
+  "title": "Couch to 5K Running Plan - NHS",
+  "url": "https://www.nhs.uk/live-well/exercise/running-and-aerobic-exercises/get-running-with-couch-to-5k/",
+  "group": "health"
+ },
+ {
+  "title": "Issues · denoland/deno",
+  "url": "https://github.com/denoland/deno/issues?q=is%3Aopen+label%3Abug",
+  "group": "programming"
+ },
+ {
+  "title": "Easy Chicken Biryani Recipe - Swasthi's Recipes",
+  "url": "https://www.indianhealthyrecipes.com/chicken-biryani-recipe/",
+  "group": "other"
+ },
+ {
+  "title": "Joker: Folie à Deux - Movie Reviews | Metacritic",
+  "url": "https://www.metacritic.com/movie/joker-folie-a-deux/critic-reviews/",
+  "group": "movies"
+ },
+ {
+  "title": "IKEA Malm desk - IKEA",
+  "url": "https://www.ikea.com/us/en/p/malm-desk-white-80214190/",
+  "group": "shopping"
+ },
+ {
+  "title": "University of Colombo - LMS Moodle",
+  "url": "https://lms.cmb.ac.lk/course/view.php?id=4521",
+  "group": "learning"
+ },
+ {
+  "title": "Best tires for Honda Civic - Tire Rack",
+  "url": "https://www.tirerack.com/tires/tires.jsp?make=Honda&model=Civic",
+  "group": "other"
+ },
+ {
+  "title": "Stack Overflow Developer Survey community - Reddit",
+  "url": "https://www.reddit.com/r/ExperiencedDevs/",
+  "group": "social"
+ },
+ {
+  "title": "Cleveland Clinic: High blood pressure",
+  "url": "https://my.clevelandclinic.org/health/diseases/4314-hypertension-high-blood-pressure",
+  "group": "health"
+ },
+ {
+  "title": "Pet insurance comparison - Lemonade",
+  "url": "https://www.lemonade.com/pet",
+  "group": "other"
+ },
+ {
+  "title": "Slack | #eng-platform | Acme",
+  "url": "https://app.slack.com/client/T0123ABCD/C0456EFGH",
+  "group": "work"
+ },
+ {
+  "title": "Google search: how to remove red wine stain from carpet",
+  "url": "https://www.google.com/search?q=how+to+remove+red+wine+stain+from+carpet",
+  "group": "other"
+ },
+ {
+  "title": "Anthropic raises new funding round at record valuation - TechCrunch",
+  "url": "https://techcrunch.com/2026/10/28/anthropic-raises-new-funding-round/",
+  "group": "news"
+ },
+ {
+  "title": "Hades II Walkthrough - Fextralife Wiki",
+  "url": "https://hades2.wiki.fextralife.com/Hades+2+Wiki",
+  "group": "games"
+ },
+ {
+  "title": "Chess.com - Play Chess Online",
+  "url": "https://www.chess.com/play/online",
+  "group": "games"
+ },
+ {
+  "title": "Spotify - Web Player",
+  "url": "https://open.spotify.com/",
+  "group": "music"
+ },
+ {
+  "title": "Cheapest gas near me - GasBuddy",
+  "url": "https://www.gasbuddy.com/home?search=98101",
+  "group": "other"
+ },
+ {
+  "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle - Crunchyroll",
+  "url": "https://www.crunchyroll.com/series/GY5P48XEY/demon-slayer-kimetsu-no-yaiba",
+  "group": "tv"
+ },
+ {
+  "title": "OpenAI Platform - API Reference",
+  "url": "https://platform.openai.com/docs/api-reference/responses",
+  "group": "ai"
+ },
+ {
+  "title": "Tidal: Dua Lipa - Radical Optimism",
+  "url": "https://tidal.com/browse/album/359372051",
+  "group": "music"
+ },
+ {
+  "title": "Stranger Things: Season 5 | Netflix Official Site",
+  "url": "https://www.netflix.com/title/80057281",
+  "group": "tv"
+ },
+ {
+  "title": "Laws of UX",
+  "url": "https://lawsofux.com/",
+  "group": "design"
+ },
+ {
+  "title": "Sri Lanka Department of Immigration - e-Services",
+  "url": "https://www.immigration.gov.lk/",
+  "group": "other"
+ },
+ {
+  "title": "Cloudflare Workers docs - Get started",
+  "url": "https://developers.cloudflare.com/workers/get-started/guide/",
+  "group": "programming"
+ },
+ {
+  "title": "Apple Developer Documentation - SwiftUI",
+  "url": "https://developer.apple.com/documentation/swiftui",
+  "group": "docs"
+ },
+ {
+  "title": "Google search: kubernetes pod stuck in CrashLoopBackOff",
+  "url": "https://www.google.com/search?q=kubernetes+pod+stuck+in+CrashLoopBackOff&hl=en",
+  "group": "programming"
+ },
+ {
+  "title": "Try Not To Laugh Challenge #47 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Sd5Fg7Hj9Kl",
+  "group": "videos"
+ },
+ {
+  "title": "r/fitness Starting Strength FAQ - Reddit",
+  "url": "https://www.reddit.com/r/Fitness/wiki/faqs/",
+  "group": "health"
+ },
+ {
+  "title": "Epic Games Store - Free Games",
+  "url": "https://store.epicgames.com/en-US/free-games",
+  "group": "games"
+ },
+ {
+  "title": "Investopedia: Dollar-Cost Averaging",
+  "url": "https://www.investopedia.com/terms/d/dollarcostaveraging.asp",
+  "group": "finance"
+ },
+ {
+  "title": "Meteoblue: 7-day forecast Berlin",
+  "url": "https://www.meteoblue.com/en/weather/week/berlin_germany_2950159",
+  "group": "other"
+ },
+ {
+  "title": "MIT OpenCourseWare: Linear Algebra",
+  "url": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/",
+  "group": "learning"
+ },
+ {
+  "title": "Alison: Free Online Diploma Courses",
+  "url": "https://alison.com/courses",
+  "group": "learning"
+ },
+ {
+  "title": "Cooking with my Grandma day in the life | Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=Rt3Yu5Io7Pa",
+  "group": "videos"
+ },
+ {
+  "title": "Build a RAG pipeline with LangChain - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ne6Bg8Vh0Cy",
+  "group": "ai"
+ },
+ {
+  "title": "Minecraft mods - CurseForge",
+  "url": "https://www.curseforge.com/minecraft/mc-mods",
+  "group": "games"
+ },
+ {
+  "title": "The Matrix Resurrections (2021) - Letterboxd",
+  "url": "https://letterboxd.com/film/the-matrix-resurrections/",
+  "group": "movies"
+ },
+ {
+  "title": "Deep Learning Course - fast.ai",
+  "url": "https://course.fast.ai/",
+  "group": "ai"
+ },
+ {
+  "title": "Game of Thrones: Every Episode Ranked - YouTube",
+  "url": "https://www.youtube.com/watch?v=Hn6vTq0Xc3D",
+  "group": "tv"
+ },
+ {
+  "title": "Releases · astral-sh/uv",
+  "url": "https://github.com/astral-sh/uv/releases",
+  "group": "programming"
+ },
+ {
+  "title": "Reddit - r/DIY: Built a floating shelf",
+  "url": "https://www.reddit.com/r/DIY/comments/1m4n5o6/built_a_floating_shelf_from_reclaimed_oak/",
+  "group": "other"
+ },
+ {
+  "title": "Threads",
+  "url": "https://www.threads.net/",
+  "group": "social"
+ },
+ {
+  "title": "Google unveils Gemini 3 Ultra at developer event - Ars Technica",
+  "url": "https://arstechnica.com/ai/2026/11/google-unveils-gemini-3-ultra/",
+  "group": "news"
+ },
+ {
+  "title": "Car insurance quotes - Progressive",
+  "url": "https://www.progressive.com/auto/",
+  "group": "other"
+ },
+ {
+  "title": "Superman (2025) review - Empire",
+  "url": "https://www.empireonline.com/movies/reviews/superman-2025/",
+  "group": "movies"
+ },
+ {
+  "title": "WebMD: Lower back pain causes",
+  "url": "https://www.webmd.com/back-pain/guide/back-pain-causes",
+  "group": "health"
+ },
+ {
+  "title": "Rightmove: Flats to rent in Manchester",
+  "url": "https://www.rightmove.co.uk/property-to-rent/Manchester.html",
+  "group": "other"
+ },
+ {
+  "title": "Pink Floyd - Wish You Were Here (Official Audio) - YouTube",
+  "url": "https://www.youtube.com/watch?v=IXdNnw99-Ic",
+  "group": "music"
+ },
+ {
+  "title": "Sentry - Issues",
+  "url": "https://sentry.io/organizations/acme/issues/?project=4505",
+  "group": "programming"
+ },
+ {
+  "title": "GTA VI - Official Trailer 3 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Rg5Tf7Hy9Ju",
+  "group": "games"
+ },
+ {
+  "title": "Radiohead - Creep lyrics | Genius",
+  "url": "https://genius.com/Radiohead-creep-lyrics",
+  "group": "music"
+ },
+ {
+  "title": "Healthline: How much protein do you need?",
+  "url": "https://www.healthline.com/nutrition/how-much-protein-per-day",
+  "group": "health"
+ },
+ {
+  "title": "Eventbrite: Food festivals near me",
+  "url": "https://www.eventbrite.com/d/online/food-festival/",
+  "group": "other"
+ },
+ {
+  "title": "Shopify: Allbirds Tree Runners",
+  "url": "https://www.allbirds.com/products/mens-tree-runners",
+  "group": "shopping"
+ },
+ {
+  "title": "AWS Console - EC2 Instances",
+  "url": "https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#Instances:",
+  "group": "programming"
+ },
+ {
+  "title": "Git - git-rebase Documentation",
+  "url": "https://git-scm.com/docs/git-rebase",
+  "group": "docs"
+ },
+ {
+  "title": "The Pitt - Season 2 - Rotten Tomatoes",
+  "url": "https://www.rottentomatoes.com/tv/the_pitt/s02",
+  "group": "tv"
+ },
+ {
+  "title": "Lecture 5 - Macroeconomics | Stanford Online",
+  "url": "https://online.stanford.edu/courses/econ-1-macroeconomics",
+  "group": "learning"
+ },
+ {
+  "title": "r/Eldenring - Reddit",
+  "url": "https://www.reddit.com/r/Eldenring/comments/1l8k2m3/shadow_of_the_erdtree_boss_tips/",
+  "group": "games"
+ },
+ {
+  "title": "Ethereum (ETH) price chart | CoinGecko",
+  "url": "https://www.coingecko.com/en/coins/ethereum",
+  "group": "finance"
+ },
+ {
+  "title": "Tailwind CSS - Flexbox",
+  "url": "https://tailwindcss.com/docs/flex",
+  "group": "docs"
+ },
+ {
+  "title": "PyPI · ruff",
+  "url": "https://pypi.org/project/ruff/",
+  "group": "programming"
+ },
+ {
+  "title": "Weather forecast for Colombo - AccuWeather",
+  "url": "https://www.accuweather.com/en/lk/colombo/311399/weather-forecast/311399",
+  "group": "other"
+ },
+ {
+  "title": "Emirates Manage Booking",
+  "url": "https://www.emirates.com/us/english/manage-booking/",
+  "group": "travel"
+ },
+ {
+  "title": "Compiler Explorer",
+  "url": "https://godbolt.org/",
+  "group": "programming"
+ },
+ {
+  "title": "Lanka Property Web - Houses for sale in Kandy",
+  "url": "https://www.lankapropertyweb.com/sale/index.php?district=Kandy",
+  "group": "other"
+ },
+ {
+  "title": "Coursera | Financial Markets by Yale",
+  "url": "https://www.coursera.org/learn/financial-markets-global",
+  "group": "learning"
+ },
+ {
+  "title": "Q4 Planning Notes - Google Docs",
+  "url": "https://docs.google.com/document/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit",
+  "group": "work"
+ },
+ {
+  "title": "Breaking Bad - Season 5 Episode 14 \"Ozymandias\" - IMDb",
+  "url": "https://www.imdb.com/title/tt2301451/",
+  "group": "tv"
+ },
+ {
+  "title": "Google search: how many tablespoons in a cup",
+  "url": "https://www.google.com/search?q=how+many+tablespoons+in+a+cup",
+  "group": "other"
+ },
+ {
+  "title": "Senate passes sweeping budget deal - The Washington Post",
+  "url": "https://www.washingtonpost.com/politics/2026/11/14/senate-budget-deal/",
+  "group": "news"
+ },
+ {
+  "title": "Perplexity",
+  "url": "https://www.perplexity.ai/search/best-open-source-llms-2026-Xy7Kp",
+  "group": "ai"
+ },
+ {
+  "title": "Jujutsu Kaisen Season 3 Episode 5 - Crunchyroll",
+  "url": "https://www.crunchyroll.com/watch/GKEHK1ZDE/the-culling-game",
+  "group": "tv"
+ },
+ {
+  "title": "fix: race condition in worker pool · Issue #4821 · tokio-rs/tokio",
+  "url": "https://github.com/tokio-rs/tokio/issues/4821",
+  "group": "programming"
+ },
+ {
+  "title": "Twitch - xQc Just Chatting highlights",
+  "url": "https://www.twitch.tv/videos/2145678901",
+  "group": "videos"
+ },
+ {
+  "title": "Bitcoin price today - CoinMarketCap",
+  "url": "https://coinmarketcap.com/currencies/bitcoin/",
+  "group": "finance"
+ },
+ {
+  "title": "MDN Web Docs - Array.prototype.map()",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map",
+  "group": "docs"
+ },
+ {
+  "title": "Trending - YouTube",
+  "url": "https://www.youtube.com/feed/trending",
+  "group": "videos"
+ },
+ {
+  "title": "Oscars 2026: Best Picture nominees ranked - Collider",
+  "url": "https://collider.com/oscars-2026-best-picture-nominees-ranked/",
+  "group": "movies"
+ },
+ {
+  "title": "Vercel Dashboard - my-portfolio Deployments",
+  "url": "https://vercel.com/janith/my-portfolio/deployments",
+  "group": "programming"
+ },
+ {
+  "title": "Steam Deck OLED - Valve Store",
+  "url": "https://store.steampowered.com/steamdeck",
+  "group": "shopping"
+ },
+ {
+  "title": "(1) Top Stories - Google News",
+  "url": "https://news.google.com/topstories?hl=en-US&gl=US&ceid=US:en",
+  "group": "news"
+ },
+ {
+  "title": "Whiplash (2014) | Netflix",
+  "url": "https://www.netflix.com/title/70289984",
+  "group": "movies"
+ },
+ {
+  "title": "vLLM: Easy, fast, and cheap LLM serving | docs",
+  "url": "https://docs.vllm.ai/en/latest/",
+  "group": "ai"
+ },
+ {
+  "title": "I Survived 24 Hours in an Abandoned Mall - YouTube",
+  "url": "https://www.youtube.com/watch?v=aB3dE5fGh7J",
+  "group": "videos"
+ },
+ {
+  "title": "Elections 2026: live results - The Guardian",
+  "url": "https://www.theguardian.com/us-news/live/2026/nov/04/midterm-elections-live",
+  "group": "news"
+ },
+ {
+  "title": "Movie Showtimes near me | AMC Theatres",
+  "url": "https://www.amctheatres.com/movie-theatres",
+  "group": "movies"
+ },
+ {
+  "title": "Camelcamelcamel: Price history for Kindle Paperwhite",
+  "url": "https://camelcamelcamel.com/product/B0CFPJYX7P",
+  "group": "shopping"
+ },
+ {
+  "title": "Bandcamp Daily - Best Albums of 2026",
+  "url": "https://daily.bandcamp.com/best-albums-of-the-year",
+  "group": "music"
+ },
+ {
+  "title": "(1) Kubernetes Crash Course for Beginners - YouTube",
+  "url": "https://www.youtube.com/watch?v=X48VuDVv0do",
+  "group": "programming"
+ },
+ {
+  "title": "AAPL Stock Price | Apple Inc. Stock Quote - Yahoo Finance",
+  "url": "https://finance.yahoo.com/quote/AAPL/",
+  "group": "finance"
+ },
+ {
+  "title": "Midjourney v8 community showcase",
+  "url": "https://www.midjourney.com/explore",
+  "group": "ai"
+ },
+ {
+  "title": "Hourly weather - Met Office Edinburgh",
+  "url": "https://www.metoffice.gov.uk/weather/forecast/gcvwr3zrw",
+  "group": "other"
+ },
+ {
+  "title": "Black Friday 2026 Deals | Walmart",
+  "url": "https://www.walmart.com/cp/black-friday/1085666",
+  "group": "shopping"
+ },
+ {
+  "title": "How to grow tomatoes in containers - Gardener's Supply",
+  "url": "https://www.gardeners.com/how-to/growing-tomatoes-in-containers/8575.html",
+  "group": "other"
+ },
+ {
+  "title": "Adopt a Dog - Petfinder",
+  "url": "https://www.petfinder.com/dog/",
+  "group": "other"
+ },
+ {
+  "title": "BoardGameGeek: Wingspan",
+  "url": "https://boardgamegeek.com/boardgame/266192/wingspan",
+  "group": "games"
+ },
+ {
+  "title": "Lowe's - Deck stain buying guide",
+  "url": "https://www.lowes.com/n/buying-guide/deck-stain-buying-guide",
+  "group": "other"
+ },
+ {
+  "title": "I Built a Treehouse in 48 Hours - YouTube",
+  "url": "https://www.youtube.com/watch?v=Gh2Jk4Lz6Xc",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Ranking every Christopher Nolan movie - YouTube",
+  "url": "https://www.youtube.com/watch?v=Lm4Qw8sTz1U",
+  "group": "movies"
+ },
+ {
+  "title": "Cat vs Cucumber Compilation - Vimeo",
+  "url": "https://vimeo.com/987654321",
+  "group": "videos"
+ },
+ {
+  "title": "Google search: python asyncio gather vs taskgroup",
+  "url": "https://www.google.com/search?q=python+asyncio+gather+vs+taskgroup",
+  "group": "programming"
+ },
+ {
+  "title": "Parasite (2019) - Letterboxd",
+  "url": "https://letterboxd.com/film/parasite-2019/reviews/",
+  "group": "movies"
+ },
+ {
+  "title": "Papers with Code - Latest in Machine Learning",
+  "url": "https://paperswithcode.com/",
+  "group": "ai"
+ },
+ {
+  "title": "The Odyssey (2026) - Showtimes & Tickets | Fandango",
+  "url": "https://www.fandango.com/the-odyssey-2026-244611/movie-overview",
+  "group": "movies"
+ },
+ {
+  "title": "FedEx Tracking",
+  "url": "https://www.fedex.com/fedextrack/?trknbr=123456789012",
+  "group": "other"
+ },
+ {
+  "title": "Kayaking safety basics - REI Expert Advice",
+  "url": "https://www.rei.com/learn/expert-advice/kayaking-safety.html",
+  "group": "other"
+ },
+ {
+  "title": "Best budget mechanical keyboards 2026 - Wirecutter",
+  "url": "https://www.nytimes.com/wirecutter/reviews/best-mechanical-keyboards/",
+  "group": "shopping"
+ },
+ {
+  "title": "LM Studio - Discover, download, and run local LLMs",
+  "url": "https://lmstudio.ai/models",
+  "group": "ai"
+ },
+ {
+  "title": "Used cars for sale - AutoTrader",
+  "url": "https://www.autotrader.com/cars-for-sale/all-cars",
+  "group": "other"
+ },
+ {
+  "title": "ComfyUI workflow for Flux - YouTube",
+  "url": "https://www.youtube.com/watch?v=Zq1Xw3Ce5Vt",
+  "group": "ai"
+ },
+ {
+  "title": "ChatGPT",
+  "url": "https://chatgpt.com/c/67a1b2c3-4d5e-6f70-8192-a3b4c5d6e7f8",
+  "group": "ai"
+ },
+ {
+  "title": "Exercism - Rust Track",
+  "url": "https://exercism.org/tracks/rust",
+  "group": "programming"
+ },
+ {
+  "title": "karpathy (@karpathy) / X",
+  "url": "https://x.com/karpathy",
+  "group": "social"
+ },
+ {
+  "title": "Understanding Rust lifetimes - dev.to",
+  "url": "https://dev.to/rustacean/understanding-rust-lifetimes-3f5g",
+  "group": "programming"
+ },
+ {
+  "title": "Latest headlines - NPR",
+  "url": "https://www.npr.org/sections/news/",
+  "group": "news"
+ },
+ {
+  "title": "Spider-Man: Brand New Day trailer breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=Gd7sR1uXy4M",
+  "group": "movies"
+ },
+ {
+  "title": "Peaky Blinders: The Immortal Man | BBC iPlayer",
+  "url": "https://www.bbc.co.uk/iplayer/episode/m002xkq1",
+  "group": "tv"
+ },
+ {
+  "title": "Material Design 3 - Color system",
+  "url": "https://m3.material.io/styles/color/overview",
+  "group": "design"
+ },
+ {
+  "title": "Hackers and Painters: UX trends - Medium",
+  "url": "https://medium.com/design-bootcamp/ux-trends-2026-9a8b7c6d5e4f",
+  "group": "design"
+ },
+ {
+  "title": "Japan's yen slides again - Nikkei Asia",
+  "url": "https://asia.nikkei.com/Economy/japan-yen-slides",
+  "group": "news"
+ },
+ {
+  "title": "neovim/neovim: Vim-fork focused on extensibility",
+  "url": "https://github.com/neovim/neovim",
+  "group": "programming"
+ },
+ {
+  "title": "Microsoft layoffs hit engineering teams - Bloomberg",
+  "url": "https://www.bloomberg.com/news/articles/2026-11-05/microsoft-layoffs",
+  "group": "news"
+ },
+ {
+  "title": "OpenAI announces new reasoning model, shares jump - Reuters",
+  "url": "https://www.reuters.com/technology/openai-announces-new-model-2026-11-10/",
+  "group": "news"
+ },
+ {
+  "title": "Service Ontario - Renew licence plate sticker",
+  "url": "https://www.ontario.ca/page/renew-your-licence-plate-sticker",
+  "group": "other"
+ },
+ {
+  "title": "Yelp: Best Plumbers in Seattle",
+  "url": "https://www.yelp.com/search?find_desc=Plumbers&find_loc=Seattle%2C+WA",
+  "group": "other"
+ },
+ {
+  "title": "Brilliant: Probability course",
+  "url": "https://brilliant.org/courses/probability/",
+  "group": "learning"
+ },
+ {
+  "title": "Smosh: Try Not To Get Slimed - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ew5Rt7Yu9Io",
+  "group": "videos"
+ },
+ {
+  "title": "Sidemen Among Us in Real Life - YouTube",
+  "url": "https://www.youtube.com/watch?v=Tg7Yh9Uj1Ik",
+  "group": "videos"
+ },
+ {
+  "title": "Watch The Last of Us Season 2 | Max",
+  "url": "https://www.max.com/shows/the-last-of-us/0f4d6c9e-5a1b-4c3a-9d2e-1f7a8b6c5d4e",
+  "group": "tv"
+ },
+ {
+  "title": "Cricinfo: India vs Sri Lanka live score",
+  "url": "https://www.espncricinfo.com/series/india-tour-of-sri-lanka-2026/live-cricket-score",
+  "group": "other"
+ },
+ {
+  "title": "Trello | Hiring pipeline",
+  "url": "https://trello.com/b/AbCdEfGh/hiring-pipeline",
+  "group": "work"
+ },
+ {
+  "title": "Attention Is All You Need Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ms9Lk3Jh5Gf",
+  "group": "ai"
+ },
+ {
+  "title": "Dark (TV Series) cast & crew - TMDB",
+  "url": "https://www.themoviedb.org/tv/70523-dark/cast",
+  "group": "tv"
+ },
+ {
+  "title": "Microsoft Teams | Chat",
+  "url": "https://teams.microsoft.com/v2/",
+  "group": "work"
+ },
+ {
+  "title": "Claude Code overview - Claude Docs",
+  "url": "https://docs.claude.com/en/docs/claude-code/overview",
+  "group": "ai"
+ },
+ {
+  "title": "The New York Times - Breaking News, US News & World News",
+  "url": "https://www.nytimes.com/",
+  "group": "news"
+ },
+ {
+  "title": "Top 250 Movies - IMDb",
+  "url": "https://www.imdb.com/chart/top/",
+  "group": "movies"
+ },
+ {
+  "title": "Writing a C compiler in 500 lines - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ak7Lp1Dn3Sc",
+  "group": "programming"
+ },
+ {
+  "title": "Everything Everywhere All at Once (2022) - Metacritic",
+  "url": "https://www.metacritic.com/movie/everything-everywhere-all-at-once/",
+  "group": "movies"
+ },
+ {
+  "title": "Succession ending explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Fq2sLm8Wr7Z",
+  "group": "tv"
+ },
+ {
+  "title": "House of the Dragon | HBO Max",
+  "url": "https://www.hbomax.com/shows/house-of-the-dragon",
+  "group": "tv"
+ },
+ {
+  "title": "The Godfather Part II - Wikipedia",
+  "url": "https://en.wikipedia.org/wiki/The_Godfather_Part_II",
+  "group": "movies"
+ },
+ {
+  "title": "How to build a raised garden bed - Family Handyman",
+  "url": "https://www.familyhandyman.com/project/how-to-build-a-raised-garden-bed/",
+  "group": "other"
+ },
+ {
+  "title": "Flipkart: Redmi Note 15 Pro",
+  "url": "https://www.flipkart.com/redmi-note-15-pro/p/itm1a2b3c4d5e6f",
+  "group": "shopping"
+ },
+ {
+  "title": "Better Call Saul - Wikipedia",
+  "url": "https://en.wikipedia.org/wiki/Better_Call_Saul",
+  "group": "tv"
+ },
+ {
+  "title": "This Guy Broke the World Record - YouTube",
+  "url": "https://www.youtube.com/watch?v=Hj6Gf4Ds2Aa",
+  "group": "videos"
+ },
+ {
+  "title": "Pitchfork: Best New Albums",
+  "url": "https://pitchfork.com/reviews/best/albums/",
+  "group": "music"
+ },
+ {
+  "title": "Bose QuietComfort Ultra Earbuds deal - Slickdeals",
+  "url": "https://slickdeals.net/f/18123456-bose-quietcomfort-ultra",
+  "group": "shopping"
+ },
+ {
+  "title": "Try Not To Cringe - Rumble",
+  "url": "https://rumble.com/v6abcd-try-not-to-cringe.html",
+  "group": "videos"
+ },
+ {
+  "title": "Crockpot chili recipe - YouTube",
+  "url": "https://www.youtube.com/watch?v=Mn3Bv5Cx7Zq",
+  "group": "other"
+ },
+ {
+  "title": "Serious Eats: The Food Lab's Perfect Burger",
+  "url": "https://www.seriouseats.com/the-best-slow-cooked-bolognese-sauce-recipe",
+  "group": "other"
+ },
+ {
+  "title": "Introduction to Psychology | Open Yale Courses",
+  "url": "https://oyc.yale.edu/psychology/psyc-110",
+  "group": "learning"
+ },
+ {
+  "title": "Actions · janith/tab-organizer · Workflow runs",
+  "url": "https://github.com/janith/tab-organizer/actions",
+  "group": "programming"
+ },
+ {
+  "title": "(2) Facebook",
+  "url": "https://www.facebook.com/",
+  "group": "social"
+ },
+ {
+  "title": "3Blue1Brown: Essence of linear algebra - YouTube",
+  "url": "https://www.youtube.com/watch?v=fNk_zzaMoSs",
+  "group": "learning"
+ },
+ {
+  "title": "German A1 Vocabulary - Quizlet",
+  "url": "https://quizlet.com/123456789/german-a1-vocabulary-flash-cards/",
+  "group": "learning"
+ },
+ {
+  "title": "Hotels in Kyoto - Booking.com",
+  "url": "https://www.booking.com/city/jp/kyoto.html",
+  "group": "travel"
+ },
+ {
+  "title": "DJI Mini 5 Pro - Buy DJI Drones",
+  "url": "https://store.dji.com/product/dji-mini-5-pro",
+  "group": "shopping"
+ },
+ {
+  "title": "Dune: Part Three (2026) - IMDb",
+  "url": "https://www.imdb.com/title/tt15239678/",
+  "group": "movies"
+ },
+ {
+  "title": "(7) Discord | #general | Rust Community",
+  "url": "https://discord.com/channels/273534239310479360/273541522815713281",
+  "group": "social"
+ },
+ {
+  "title": "Costco Hours & Locations",
+  "url": "https://www.costco.com/warehouse-locations",
+  "group": "other"
+ },
+ {
+  "title": "Quora - A place to share knowledge",
+  "url": "https://www.quora.com/",
+  "group": "social"
+ },
+ {
+  "title": "Canva - Design Studio",
+  "url": "https://www.canva.com/design/DAF3k9L2xYz/edit",
+  "group": "design"
+ },
+ {
+  "title": "Awesome Python - GitHub",
+  "url": "https://github.com/vinta/awesome-python",
+  "group": "programming"
+ },
+ {
+  "title": "Baldur's Gate 3 - Wiki Guide - IGN",
+  "url": "https://www.ign.com/wikis/baldurs-gate-3",
+  "group": "games"
+ },
+ {
+  "title": "Tokyo Travel Guide - Lonely Planet",
+  "url": "https://www.lonelyplanet.com/japan/tokyo",
+  "group": "travel"
+ },
+ {
+  "title": "Ferry timetable - Stena Line",
+  "url": "https://www.stenaline.co.uk/timetables",
+  "group": "other"
+ },
+ {
+  "title": "Home mortgage rates today - Bankrate",
+  "url": "https://www.bankrate.com/mortgages/mortgage-rates/",
+  "group": "other"
+ },
+ {
+  "title": "Janith Priyankara | LinkedIn",
+  "url": "https://www.linkedin.com/in/janith-priyankara/",
+  "group": "social"
+ },
+ {
+  "title": "Google Fonts - Inter",
+  "url": "https://fonts.google.com/specimen/Inter",
+  "group": "design"
+ },
+ {
+  "title": "Furiosa: A Mad Max Saga - IMDb Awards",
+  "url": "https://www.imdb.com/title/tt12037194/awards/",
+  "group": "movies"
+ },
+ {
+  "title": "Regex101: build, test, and debug regex",
+  "url": "https://regex101.com/",
+  "group": "programming"
+ },
+ {
+  "title": "Gemini - chat to supercharge your ideas",
+  "url": "https://gemini.google.com/app",
+  "group": "ai"
+ },
+ {
+  "title": "Daft Punk - Random Access Memories - album - Spotify",
+  "url": "https://open.spotify.com/album/4m2880jivSbbyEGAKfITCa",
+  "group": "music"
+ },
+ {
+  "title": "Etsy - Handmade Leather Laptop Sleeve",
+  "url": "https://www.etsy.com/listing/1234567890/handmade-leather-laptop-sleeve",
+  "group": "shopping"
+ },
+ {
+  "title": "Prank gone wrong (EXTREME) - YouTube",
+  "url": "https://www.youtube.com/watch?v=Zx9Cv1Bn3Mq",
+  "group": "videos"
+ },
+ {
+  "title": "Samsung 990 PRO 2TB NVMe SSD - Newegg.com",
+  "url": "https://www.newegg.com/samsung-2tb-990-pro/p/N82E16820147861",
+  "group": "shopping"
+ },
+ {
+  "title": "Why I switched from Go to Rust - Medium",
+  "url": "https://medium.com/@systemsdev/why-i-switched-from-go-to-rust-1b2c3d4e5f6a",
+  "group": "programming"
+ },
+ {
+  "title": "Oppenheimer (2023) - Letterboxd",
+  "url": "https://letterboxd.com/film/oppenheimer-2023/",
+  "group": "movies"
+ },
+ {
+  "title": "USPS Tracking",
+  "url": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223197428490",
+  "group": "other"
+ },
+ {
+  "title": "Cheap flights from Colombo to Tokyo - Google Flights",
+  "url": "https://www.google.com/travel/flights?q=Flights%20to%20NRT%20from%20CMB",
+  "group": "travel"
+ },
+ {
+  "title": "Go Packages - net/http",
+  "url": "https://pkg.go.dev/net/http",
+  "group": "docs"
+ },
+ {
+  "title": "Anthropic Cookbook - tool use",
+  "url": "https://github.com/anthropics/anthropic-cookbook/tree/main/tool_use",
+  "group": "ai"
+ },
+ {
+  "title": "2024 Toyota Corolla Cross Review - Edmunds",
+  "url": "https://www.edmunds.com/toyota/corolla-cross/2024/review/",
+  "group": "other"
+ },
+ {
+  "title": "TikTok - Make Your Day",
+  "url": "https://www.tiktok.com/foryou",
+  "group": "social"
+ },
+ {
+  "title": "SoundCloud - Hear the world's sounds",
+  "url": "https://soundcloud.com/discover",
+  "group": "music"
+ },
+ {
+  "title": "Is it safe to feed my cat tuna? - Chewy",
+  "url": "https://www.chewy.com/education/cat/cat-nutrition/can-cats-eat-tuna",
+  "group": "other"
+ },
+ {
+  "title": "iPhone 17 Pro - Buy - Apple",
+  "url": "https://www.apple.com/shop/buy-iphone/iphone-17-pro",
+  "group": "shopping"
+ },
+ {
+  "title": "Vite | Next Generation Frontend Tooling",
+  "url": "https://vite.dev/guide/",
+  "group": "programming"
+ },
+ {
+  "title": "Best dog food for puppies - American Kennel Club",
+  "url": "https://www.akc.org/expert-advice/nutrition/best-puppy-foods/",
+  "group": "other"
+ },
+ {
+  "title": "MyFitnessPal: Food Diary",
+  "url": "https://www.myfitnesspal.com/food/diary",
+  "group": "health"
+ },
+ {
+  "title": "Raspberry Pi 5 8GB | Adafruit",
+  "url": "https://www.adafruit.com/product/5813",
+  "group": "shopping"
+ },
+ {
+  "title": "langchain-ai/langgraph: Build resilient language agents as graphs",
+  "url": "https://github.com/langchain-ai/langgraph",
+  "group": "ai"
+ },
+ {
+  "title": "Interstellar ending explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Pz81Tn2vQ0k",
+  "group": "movies"
+ },
+ {
+  "title": "[2501.12948] DeepSeek-R1: Incentivizing Reasoning Capability in LLMs",
+  "url": "https://arxiv.org/abs/2501.12948",
+  "group": "ai"
+ },
+ {
+  "title": "Apple MacBook Air 15-inch M4 - Amazon.com",
+  "url": "https://www.amazon.com/dp/B0DZZWMB2L",
+  "group": "shopping"
+ },
+ {
+  "title": "Watch Later - YouTube",
+  "url": "https://www.youtube.com/playlist?list=WL",
+  "group": "videos"
+ },
+ {
+  "title": "SNL Weekend Update: Best Jokes of 2026 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ol3Pk5Mj7Nb",
+  "group": "videos"
+ },
+ {
+  "title": "Wikipedia - Dijkstra's algorithm",
+  "url": "https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm",
+  "group": "docs"
+ },
+ {
+  "title": "Budget template - Google Sheets",
+  "url": "https://docs.google.com/spreadsheets/d/1BudgetTemplateKjHgFdSaPoIuYt/edit",
+  "group": "finance"
+ },
+ {
+  "title": "Metallica - Master of Puppets Guitar Tab - Ultimate Guitar",
+  "url": "https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-tabs-12345",
+  "group": "music"
+ },
+ {
+  "title": "Billie Eilish new album review - NME",
+  "url": "https://www.nme.com/reviews/album/billie-eilish-review",
+  "group": "music"
+ },
+ {
+  "title": "JLPT N4 Grammar List - Tae Kim's Guide",
+  "url": "https://guidetojapanese.org/learn/grammar",
+  "group": "learning"
+ },
+ {
+  "title": "Salesforce - Opportunities",
+  "url": "https://acme.lightning.force.com/lightning/o/Opportunity/list",
+  "group": "work"
+ },
+ {
+  "title": "SpaceX Starship flight 14 launches successfully | Space.com",
+  "url": "https://www.space.com/spacex-starship-flight-14-launch",
+  "group": "news"
+ },
+ {
+  "title": "Fight Club (1999) - Trivia - IMDb",
+  "url": "https://www.imdb.com/title/tt0137523/trivia/",
+  "group": "movies"
+ },
+ {
+  "title": "Dribbble - Discover the World's Top Designers",
+  "url": "https://dribbble.com/shots/popular",
+  "group": "design"
+ },
+ {
+  "title": "Formula 1 Standings 2026 - Formula1.com",
+  "url": "https://www.formula1.com/en/results/2026/drivers",
+  "group": "other"
+ },
+ {
+  "title": "Backpacking Europe itinerary 3 weeks - Nomadic Matt",
+  "url": "https://www.nomadicmatt.com/travel-guides/europe-travel-tips/",
+  "group": "travel"
+ },
+ {
+  "title": "Awwwards - Site of the Day",
+  "url": "https://www.awwwards.com/websites/sites_of_the_day/",
+  "group": "design"
+ },
+ {
+  "title": "Pull requests · vercel/next.js",
+  "url": "https://github.com/vercel/next.js/pulls",
+  "group": "programming"
+ },
+ {
+  "title": "Realtor.com: Open houses this weekend",
+  "url": "https://www.realtor.com/open-houses/Denver_CO",
+  "group": "other"
+ },
+ {
+  "title": "AliExpress - ESP32-S3 Dev Board",
+  "url": "https://www.aliexpress.com/item/1005006123456789.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Reddit's best TikToks of the week - YouTube",
+  "url": "https://www.youtube.com/watch?v=Nb8Vc6Xz4Ml",
+  "group": "videos"
+ },
+ {
+  "title": "(3) The Office US - Best Episodes Ranked - YouTube",
+  "url": "https://www.youtube.com/watch?v=Wq9zLm3Dv5P",
+  "group": "tv"
+ },
+ {
+  "title": "Logitech MX Master 4 Mouse - eBay",
+  "url": "https://www.ebay.com/itm/315678901234",
+  "group": "shopping"
+ },
+ {
+  "title": "Bash Reference Manual - GNU",
+  "url": "https://www.gnu.org/software/bash/manual/bash.html",
+  "group": "docs"
+ },
+ {
+  "title": "Google search: best pizza near me open now",
+  "url": "https://www.google.com/search?q=best+pizza+near+me+open+now",
+  "group": "other"
+ },
+ {
+  "title": "Squid Game Season 3 | Netflix",
+  "url": "https://www.netflix.com/title/81040344",
+  "group": "tv"
+ },
+ {
+  "title": "Add support for streaming responses by janedev · Pull Request #312 · encode/httpx",
+  "url": "https://github.com/encode/httpx/pull/312",
+  "group": "programming"
+ },
+ {
+  "title": "Kayak: Car rentals in Rome",
+  "url": "https://www.kayak.com/cars/Rome,Italy-c14352",
+  "group": "travel"
+ },
+ {
+  "title": "Android Developers - Jetpack Compose",
+  "url": "https://developer.android.com/develop/ui/compose/documentation",
+  "group": "docs"
+ },
+ {
+  "title": "Mayo Clinic: Sleep tips",
+  "url": "https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/sleep/art-20048379",
+  "group": "health"
+ },
+ {
+  "title": "Notion - Team Wiki",
+  "url": "https://www.notion.so/acme/Team-Wiki-3f2a1b0c9d8e",
+  "group": "work"
+ },
+ {
+  "title": "Kindle Paperwhite Signature Edition - Daraz.lk",
+  "url": "https://www.daraz.lk/products/kindle-paperwhite-i123456789.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Nextdoor",
+  "url": "https://nextdoor.com/news_feed/",
+  "group": "social"
+ },
+ {
+  "title": "Gordon reacts to TikTok cooking fails - YouTube",
+  "url": "https://www.youtube.com/watch?v=Cx9Zv7Bn5Ma",
+  "group": "videos"
+ },
+ {
+  "title": "Supabase Docs - Row Level Security",
+  "url": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+  "group": "docs"
+ },
+ {
+  "title": "Learn Git Branching",
+  "url": "https://learngitbranching.js.org/",
+  "group": "programming"
+ },
+ {
+  "title": "r/golang - What are you building with Go in 2026?",
+  "url": "https://www.reddit.com/r/golang/comments/1ka9b8c/what_are_you_building_with_go_in_2026/",
+  "group": "programming"
+ },
+ {
+  "title": "Hollow Knight: Silksong - Game8 Walkthrough",
+  "url": "https://game8.co/games/Hollow-Knight-Silksong",
+  "group": "games"
+ },
+ {
+  "title": "Weights & Biases: Experiment tracking dashboard",
+  "url": "https://wandb.ai/home",
+  "group": "ai"
+ },
+ {
+  "title": "Nielsen Norman Group: 10 Usability Heuristics",
+  "url": "https://www.nngroup.com/articles/ten-usability-heuristics/",
+  "group": "design"
+ },
+ {
+  "title": "Movies like Arrival - TasteDive",
+  "url": "https://tastedive.com/movies/like/arrival",
+  "group": "movies"
+ },
+ {
+  "title": "(1) Hans Zimmer - Time (Live) - YouTube",
+  "url": "https://www.youtube.com/watch?v=RxabLA7UQ9k",
+  "group": "music"
+ },
+ {
+  "title": "Docker Compose networking explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=bKFMS5C4CG0",
+  "group": "programming"
+ },
+ {
+  "title": "Sony WH-1000XM6 Wireless Headphones | Best Buy",
+  "url": "https://www.bestbuy.com/site/sony-wh-1000xm6/6590123.p?skuId=6590123",
+  "group": "shopping"
+ },
+ {
+  "title": "Pexels: Free stock photos for mockups",
+  "url": "https://www.pexels.com/search/mockup/",
+  "group": "design"
+ },
+ {
+  "title": "Rate Your Music: Top albums of 2026",
+  "url": "https://rateyourmusic.com/charts/top/album/2026/",
+  "group": "music"
+ },
+ {
+  "title": "The Verge",
+  "url": "https://www.theverge.com/",
+  "group": "news"
+ },
+ {
+  "title": "Tech news today - Engadget",
+  "url": "https://www.engadget.com/",
+  "group": "news"
+ },
+ {
+  "title": "Hugging Face - The AI community building the future",
+  "url": "https://huggingface.co/",
+  "group": "ai"
+ },
+ {
+  "title": "Kotlin docs: Coroutines guide",
+  "url": "https://kotlinlang.org/docs/coroutines-guide.html",
+  "group": "docs"
+ },
+ {
+  "title": "Amazon.com Shopping Cart",
+  "url": "https://www.amazon.com/gp/cart/view.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Budget Bytes: Easy Vegetable Curry",
+  "url": "https://www.budgetbytes.com/easy-vegetable-curry/",
+  "group": "other"
+ },
+ {
+  "title": "Procreate Handbook - Brushes",
+  "url": "https://help.procreate.com/procreate/handbook/brushes/brush-studio",
+  "group": "design"
+ },
+ {
+  "title": "Miro - Architecture Board",
+  "url": "https://miro.com/app/board/uXjVL1a2b3c=/",
+  "group": "work"
+ },
+ {
+  "title": "Orchid care for beginners - The Spruce",
+  "url": "https://www.thespruce.com/orchid-care-for-beginners-1902747",
+  "group": "other"
+ },
+ {
+  "title": "Instagram",
+  "url": "https://www.instagram.com/",
+  "group": "social"
+ },
+ {
+  "title": "Vanguard - My Accounts",
+  "url": "https://investor.vanguard.com/my-account/log-on",
+  "group": "finance"
+ },
+ {
+  "title": "Foundation S3 episode guide - Trakt",
+  "url": "https://trakt.tv/shows/foundation/seasons/3",
+  "group": "tv"
+ },
+ {
+  "title": "Breaking: Markets tumble on rate fears | Financial Times",
+  "url": "https://www.ft.com/content/3a4b5c6d-7e8f-9a0b-1c2d-3e4f5a6b7c8d",
+  "group": "news"
+ },
+ {
+  "title": "Top 10 things to do in Bali - TripAdvisor",
+  "url": "https://www.tripadvisor.com/Attractions-g294226-Activities-Bali.html",
+  "group": "travel"
+ },
+ {
+  "title": "Anki - powerful, intelligent flashcards",
+  "url": "https://apps.ankiweb.net/",
+  "group": "learning"
+ },
+ {
+  "title": "Claude - Anthropic",
+  "url": "https://claude.ai/new",
+  "group": "ai"
+ },
+ {
+  "title": "Chernobyl (2019) - Letterboxd",
+  "url": "https://letterboxd.com/film/chernobyl/",
+  "group": "tv"
+ },
+ {
+  "title": "React Reference - useEffect",
+  "url": "https://react.dev/reference/react/useEffect",
+  "group": "docs"
+ },
+ {
+  "title": "Lenovo ThinkPad X1 Carbon Gen 13 | Lenovo US",
+  "url": "https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/thinkpad-x1-carbon-gen-13",
+  "group": "shopping"
+ },
+ {
+  "title": "Sourdough starter guide - King Arthur Baking",
+  "url": "https://www.kingarthurbaking.com/blog/2018/02/sourdough-starter",
+  "group": "other"
+ },
+ {
+  "title": "LeetCode - Two Sum",
+  "url": "https://leetcode.com/problems/two-sum/",
+  "group": "programming"
+ },
+ {
+  "title": "Tesla Model 3 - Tesla",
+  "url": "https://www.tesla.com/model3",
+  "group": "other"
+ },
+ {
+  "title": "Apple's new M5 Mac lineup reviewed - Wired",
+  "url": "https://www.wired.com/story/apple-m5-macbook-pro-review/",
+  "group": "news"
+ },
+ {
+  "title": "CI failing on main: flaky test in worker module · Issue #77 · acme/svc",
+  "url": "https://github.com/acme/svc/issues/77",
+  "group": "programming"
+ },
+ {
+  "title": "MLB Standings - Baseball Reference",
+  "url": "https://www.baseball-reference.com/leagues/majors/2026-standings.shtml",
+  "group": "other"
+ },
+ {
+  "title": "Stable Diffusion 3.5 prompts - Civitai",
+  "url": "https://civitai.com/models/101055/sd-xl",
+  "group": "ai"
+ },
+ {
+  "title": "Inbox (23) - janith@acme.dev - Gmail",
+  "url": "https://mail.google.com/mail/u/0/#inbox",
+  "group": "work"
+ },
+ {
+  "title": "Show HN: I built an open-source coding agent | Hacker News",
+  "url": "https://news.ycombinator.com/item?id=44123456",
+  "group": "ai"
+ },
+ {
+  "title": "u/spez - Reddit",
+  "url": "https://www.reddit.com/user/spez/",
+  "group": "social"
+ },
+ {
+  "title": "Neural Networks: Zero to Hero - Karpathy",
+  "url": "https://karpathy.ai/zero-to-hero.html",
+  "group": "ai"
+ },
+ {
+  "title": "Product page - Leica Q3 | B&H Photo",
+  "url": "https://www.bhphotovideo.com/c/product/1730000-REG/leica_q3.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Vet-approved homemade dog treats - Hill's Pet",
+  "url": "https://www.hillspet.com/dog-care/nutrition-feeding/homemade-dog-treats",
+  "group": "other"
+ },
+ {
+  "title": "Bitbucket - pull requests",
+  "url": "https://bitbucket.org/acme/web-app/pull-requests/",
+  "group": "programming"
+ },
+ {
+  "title": "Car Registration Renewal - Texas DMV",
+  "url": "https://www.txdmv.gov/motorists/renew-registration",
+  "group": "other"
+ },
+ {
+  "title": "Cursor - The AI Code Editor",
+  "url": "https://cursor.com/",
+  "group": "ai"
+ },
+ {
+  "title": "Target: Instant Pot Duo 7-in-1",
+  "url": "https://www.target.com/p/instant-pot-duo-7-in-1/-/A-54321098",
+  "group": "shopping"
+ },
+ {
+  "title": "Local Gym Class Schedule - Anytime Fitness",
+  "url": "https://www.anytimefitness.com/gyms/1234/",
+  "group": "other"
+ },
+ {
+  "title": "Japan Visa Requirements for Sri Lankan Citizens - VisaGuide",
+  "url": "https://visaguide.world/asia/japan-visa/",
+  "group": "travel"
+ },
+ {
+  "title": "CodeSandbox: React starter",
+  "url": "https://codesandbox.io/s/react-new",
+  "group": "programming"
+ },
+ {
+  "title": "Fine-tuning LLMs with LoRA and QLoRA - Medium",
+  "url": "https://medium.com/@mlengineer/fine-tuning-llms-with-lora-and-qlora-8f3a2b1c9d0e",
+  "group": "ai"
+ },
+ {
+  "title": "Roadmap Q1 2027 - Confluence",
+  "url": "https://acme.atlassian.net/wiki/spaces/ENG/pages/123456/Roadmap+Q1+2027",
+  "group": "work"
+ },
+ {
+  "title": "Show HN: A tiny SQLite-based job queue | Hacker News",
+  "url": "https://news.ycombinator.com/item?id=44051234",
+  "group": "programming"
+ },
+ {
+  "title": "NYT Cooking: Sheet-Pan Chicken Thighs",
+  "url": "https://cooking.nytimes.com/recipes/1019876-sheet-pan-chicken-thighs",
+  "group": "other"
+ },
+ {
+  "title": "Avengers: Doomsday - Official Teaser Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=7HqLw0nB5cE",
+  "group": "movies"
+ },
+ {
+  "title": "Reviews: Best 4K TVs of 2026 - RTINGS.com",
+  "url": "https://www.rtings.com/tv/reviews/best/by-size/55-inch",
+  "group": "shopping"
+ },
+ {
+  "title": "PostgreSQL: Documentation: 17: CREATE INDEX",
+  "url": "https://www.postgresql.org/docs/17/sql-createindex.html",
+  "group": "docs"
+ },
+ {
+  "title": "Film Review: Sinners - The Guardian",
+  "url": "https://www.theguardian.com/film/2025/apr/sinners-review-ryan-coogler",
+  "group": "movies"
+ },
+ {
+  "title": "Mission: Impossible - The Final Reckoning movie review - Variety",
+  "url": "https://variety.com/2025/film/reviews/mission-impossible-final-reckoning-review-1236400000/",
+  "group": "movies"
+ },
+ {
+  "title": "Best Sci-Fi Movies of 2026 So Far - Rotten Tomatoes",
+  "url": "https://editorial.rottentomatoes.com/guide/best-sci-fi-movies-2026/",
+  "group": "movies"
+ },
+ {
+  "title": "Sri Lanka economic recovery update | Daily Mirror",
+  "url": "https://www.dailymirror.lk/business/economy-recovery-update/273-312345",
+  "group": "news"
+ },
+ {
+  "title": "NFL Scores & Schedule - CBS Sports",
+  "url": "https://www.cbssports.com/nfl/schedule/",
+  "group": "other"
+ },
+ {
+  "title": "Arcane Season 2 Act 3 - Netflix",
+  "url": "https://www.netflix.com/watch/81440046",
+  "group": "tv"
+ },
+ {
+  "title": "YouTube Music - Your Mix",
+  "url": "https://music.youtube.com/playlist?list=RDTMAK5uy_kset8DisdE7LSD4TTnh7YGAcZf",
+  "group": "music"
+ },
+ {
+  "title": "Why agents fail in production - r/LocalLLaMA",
+  "url": "https://www.reddit.com/r/LocalLLaMA/comments/1k2x3y4/why_agents_fail_in_production_lessons/",
+  "group": "ai"
+ },
+ {
+  "title": "Pregnancy week by week - BabyCenter",
+  "url": "https://www.babycenter.com/pregnancy/week-by-week",
+  "group": "other"
+ },
+ {
+  "title": "Skyscanner: London to New York",
+  "url": "https://www.skyscanner.net/transport/flights/lond/nyca/261220/",
+  "group": "travel"
+ },
+ {
+  "title": "Kaggle: Your Machine Learning and Data Science Community",
+  "url": "https://www.kaggle.com/competitions",
+  "group": "ai"
+ },
+ {
+  "title": "Hacker News: Zig 0.15 released",
+  "url": "https://news.ycombinator.com/item?id=44987654",
+  "group": "programming"
+ },
+ {
+  "title": "Zoom Meeting - Weekly Sync",
+  "url": "https://acme.zoom.us/j/98765432101",
+  "group": "work"
+ },
+ {
+  "title": "Dune: Part Three | Official Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=Xk3pQ9dLm2A",
+  "group": "movies"
+ },
+ {
+  "title": "Binance - Spot Trading BTC/USDT",
+  "url": "https://www.binance.com/en/trade/BTC_USDT",
+  "group": "finance"
+ },
+ {
+  "title": "Wise: Send money abroad",
+  "url": "https://wise.com/send",
+  "group": "finance"
+ },
+ {
+  "title": "edX - Introduction to Philosophy",
+  "url": "https://www.edx.org/learn/philosophy",
+  "group": "learning"
+ },
+ {
+  "title": "Terraform Registry - aws provider",
+  "url": "https://registry.terraform.io/providers/hashicorp/aws/latest",
+  "group": "programming"
+ },
+ {
+  "title": "Build a REST API with FastAPI - freeCodeCamp",
+  "url": "https://www.freecodecamp.org/news/build-a-rest-api-with-fastapi/",
+  "group": "programming"
+ },
+ {
+  "title": "Weather - Toronto, ON | The Weather Network",
+  "url": "https://www.theweathernetwork.com/en/city/ca/ontario/toronto/current",
+  "group": "other"
+ },
+ {
+  "title": "UK Government - Check if you need a visa to work in UK",
+  "url": "https://www.gov.uk/check-uk-visa",
+  "group": "other"
+ },
+ {
+  "title": "Inception (2010) - Full Cast & Crew - IMDb",
+  "url": "https://www.imdb.com/title/tt1375666/fullcredits",
+  "group": "movies"
+ },
+ {
+  "title": "Typewolf: Font pairings for 2026",
+  "url": "https://www.typewolf.com/google-fonts",
+  "group": "design"
+ },
+ {
+  "title": "Slow Horses (2022) - Episode guide - Apple TV",
+  "url": "https://tv.apple.com/us/show/slow-horses/umc.cmc.2szz3fdt71tl1ulj4xi2jyh1x",
+  "group": "tv"
+ },
+ {
+  "title": "Andrej Karpathy: Let's build GPT from scratch - YouTube",
+  "url": "https://www.youtube.com/watch?v=kCc8FmEb1nY",
+  "group": "ai"
+ },
+ {
+  "title": "Strava - Dashboard",
+  "url": "https://www.strava.com/dashboard",
+  "group": "health"
+ },
+ {
+  "title": "TypeScript: Documentation - Generics",
+  "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+  "group": "programming"
+ },
+ {
+  "title": "The Rust Programming Language - Ownership",
+  "url": "https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html",
+  "group": "docs"
+ },
+ {
+  "title": "Behance - Best of Behance",
+  "url": "https://www.behance.net/",
+  "group": "design"
+ },
+ {
+  "title": "Fireship: 10 Python libraries you need - YouTube",
+  "url": "https://www.youtube.com/watch?v=Hw6Qe2Rt4Yu",
+  "group": "programming"
+ },
+ {
+  "title": "TradingView - NVDA chart",
+  "url": "https://www.tradingview.com/chart/?symbol=NASDAQ%3ANVDA",
+  "group": "finance"
+ },
+ {
+  "title": "Design systems with Figma variables - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ye7Ui1Op5Rt",
+  "group": "design"
+ },
+ {
+  "title": "Monk TV Series - Watch on Peacock",
+  "url": "https://www.peacocktv.com/watch-online/tv/monk/6f2b1d3c",
+  "group": "tv"
+ },
+ {
+  "title": "The Illustrated Transformer - Jay Alammar",
+  "url": "https://jalammar.github.io/illustrated-transformer/",
+  "group": "ai"
+ },
+ {
+  "title": "Severance - Apple TV+",
+  "url": "https://tv.apple.com/us/show/severance/umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
+  "group": "tv"
+ },
+ {
+  "title": "r/personalfinance - Reddit",
+  "url": "https://www.reddit.com/r/personalfinance/",
+  "group": "finance"
+ },
+ {
+  "title": "Elden Ring - Steam",
+  "url": "https://store.steampowered.com/app/1245620/ELDEN_RING/",
+  "group": "games"
+ },
+ {
+  "title": "DMV: Schedule a road test",
+  "url": "https://www.dmv.ca.gov/portal/driver-licenses-identification-cards/",
+  "group": "other"
+ },
+ {
+  "title": "Taylor Swift tour dates 2026 - Ticketmaster",
+  "url": "https://www.ticketmaster.com/taylor-swift-tickets/artist/1094805",
+  "group": "music"
+ },
+ {
+  "title": "My Honest Thoughts After a Year of Vlogging - YouTube",
+  "url": "https://www.youtube.com/watch?v=Df4Gh6Jk8Lz",
+  "group": "videos"
+ }
+]

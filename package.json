@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "train:head": "node scripts/train-head.mjs",
     "prepare:assets": "node scripts/fetch-model.mjs && node scripts/copy-ort.mjs",
     "build": "vite build",
     "test": "vitest run tests/unit",

@@ -2,19 +2,6 @@ import type { Group } from '../shared/types';
 import { cosine, mean, normalize } from '../shared/vec';
 import { STARTER_GROUPS } from './seeds';
 
-/**
- * Tuned on the dev fixture (tests/quality/fixture.json) with generic, brand-free seeds: the
- * spec's starting point (0.35) left most tabs Unsorted (MiniLM similarities between a short title
- * and a short topic description are low); 0.2 is where about half of misc ('other') pages stay
- * Unsorted. Lower values assign more real tabs but also force misc pages into wrong groups.
- */
-export const DEFAULT_THRESHOLD = 0.2;
-/**
- * k-NN k. Starter seeds are facets of a topic ("Gmail", "Jira ticket", "Zoom" are all Work);
- * a tab matches one or two of them, so averaging the top 5 dilutes the score with unrelated
- * facets. k=2 beat k=5 by about 3 points on the dev fixture. Overridable via opts.k.
- */
-export const DEFAULT_K = 2;
 export const MAX_EXEMPLARS = 50;
 /** Never assigned automatically: only the user puts tabs in "Other". */
 export const OTHER_GROUP_ID = 'other';
@@ -24,44 +11,82 @@ export interface Assignment {
   score: number;
 }
 
+/**
+ * Trained classification head (scripts/train-head.mjs → src/classify/head.json):
+ * multinomial logistic regression over the sentence embedding.
+ */
+export interface Head {
+  model: string;
+  dim: number;
+  labels: string[];
+  /** labels.length × dim */
+  W: number[][];
+  b: number[];
+  /** Below this top-class probability the tab stays Unsorted. */
+  threshold: number;
+  /** Cosine to a user-learned exemplar at which that group overrides the head. */
+  similarity: number;
+}
+
+function softmax(z: number[]): number[] {
+  const m = Math.max(...z);
+  const e = z.map((v) => Math.exp(v - m));
+  const s = e.reduce((a, b) => a + b, 0);
+  return e.map((v) => v / s);
+}
+
+/**
+ * Picks a group for an embedded tab. Run after the caller's user-group and ruleGroup checks.
+ * 1. User learning: if the tab is at least `similarity` close to an exemplar a user taught a
+ *    group (drag / learn()), the closest such group wins. User-created groups work this way alone.
+ * 2. Otherwise the head's top label, unless it is `other`, below `threshold`, or not among `groups`.
+ * `other` is never assigned automatically.
+ */
+export function classify(
+  vec: ArrayLike<number>,
+  groups: Group[],
+  head: Head,
+  opts: { threshold?: number; similarity?: number } = {},
+): Assignment {
+  const similarity = opts.similarity ?? head.similarity;
+  let near: Assignment = { groupId: null, score: -Infinity };
+  for (const g of groups) {
+    if (g.id === OTHER_GROUP_ID) continue;
+    for (const e of g.exemplars) {
+      const s = cosine(vec, e);
+      if (s > near.score) near = { groupId: g.id, score: s };
+    }
+  }
+  if (near.groupId !== null && near.score >= similarity) return near;
+
+  if (vec.length !== head.dim) return { groupId: null, score: 0 };
+  const x = Array.from(vec);
+  const p = softmax(head.W.map((row, c) => row.reduce((s, w, d) => s + w * x[d]!, head.b[c] ?? 0)));
+  let top = 0;
+  for (let c = 1; c < p.length; c++) if (p[c]! > p[top]!) top = c;
+  const label = head.labels[top];
+  const score = p[top] ?? 0;
+  const ok =
+    label !== undefined && label !== OTHER_GROUP_ID && score >= (opts.threshold ?? head.threshold) &&
+    groups.some((g) => g.id === label);
+  return { groupId: ok ? label : null, score };
+}
+
 function centroidOf(exemplars: number[][]): number[] | null {
   return exemplars.length ? normalize(mean(exemplars)) : null;
 }
 
-/** score(g) = 0.5 · cos(vec, centroid) + 0.5 · mean(top-k cos(vec, exemplar)). */
-function scoreGroup(vec: ArrayLike<number>, g: Group, k: number): number | null {
-  const centroid = g.centroid ?? centroidOf(g.exemplars);
-  if (!centroid) return null;
-  const c = cosine(vec, centroid);
-  if (g.exemplars.length === 0) return c;
-  const sims = g.exemplars.map((e) => cosine(vec, e)).sort((a, b) => b - a);
-  const top = sims.slice(0, Math.max(1, k));
-  return 0.5 * c + 0.5 * (top.reduce((s, x) => s + x, 0) / top.length);
-}
-
-export function assign(
-  vec: ArrayLike<number>,
-  groups: Group[],
-  opts: { threshold?: number; k?: number } = {},
-): Assignment {
-  const threshold = opts.threshold ?? DEFAULT_THRESHOLD;
-  const k = opts.k ?? DEFAULT_K;
-  let best: Assignment = { groupId: null, score: 0 };
-  for (const g of groups) {
-    if (g.id === OTHER_GROUP_ID) continue;
-    const s = scoreGroup(vec, g, k);
-    if (s !== null && (best.groupId === null || s > best.score)) best = { groupId: g.id, score: s };
-  }
-  return best.score >= threshold ? best : { groupId: null, score: best.score };
-}
-
-/** Adds an exemplar (keeping the newest MAX_EXEMPLARS) and recomputes the centroid. Pure. */
+/** Adds a user-taught exemplar (keeping the newest MAX_EXEMPLARS) and recomputes the centroid. Pure. */
 export function learn(group: Group, vec: number[]): Group {
   const exemplars = [...group.exemplars, vec.slice()].slice(-MAX_EXEMPLARS);
   return { ...group, exemplars, centroid: centroidOf(exemplars) };
 }
 
-/** Embeds every starter seed in one call and returns the built-in groups. */
+/**
+ * Builds the built-in groups. Seeds are embedded once (one call) only to give each group an
+ * initial centroid for clustering, naming and search; they are not exemplars and do not drive
+ * assignment (the head does). `exemplars` holds user-learned vectors only.
+ */
 export async function buildStarterGroups(
   embedFn: (t: string[]) => Promise<Float32Array[]>,
 ): Promise<Group[]> {
@@ -71,10 +96,10 @@ export async function buildStarterGroups(
   const now = Date.now();
   let i = 0;
   return STARTER_GROUPS.map((g) => {
-    const exemplars = g.seeds.map(() => Array.from(vecs[i++]!));
+    const seedVecs = g.seeds.map(() => Array.from(vecs[i++]!));
     return {
       id: g.id, name: g.name, color: g.color, icon: g.icon, builtIn: true,
-      exemplars, centroid: centroidOf(exemplars), createdAt: now,
+      exemplars: [], centroid: centroidOf(seedVecs), createdAt: now,
     };
   });
 }

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { STARTER_GROUPS } from '../../src/classify/seeds';
 import { ruleGroup } from '../../src/classify/rules';
-import { assign, buildStarterGroups, DEFAULT_THRESHOLD, learn } from '../../src/classify/assign';
+import { buildStarterGroups, classify, learn, type Head } from '../../src/classify/assign';
+import { HEAD } from '../../src/classify/head';
 import { nameCluster, suggestGroups } from '../../src/classify/cluster';
 import type { Group } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
@@ -41,47 +42,62 @@ describe('seeds', () => {
   });
 });
 
-describe('assign', () => {
-  const a = group('a', [vec(0, 0.1), vec(0, 0.2), vec(0, 0.05)]);
-  const b = group('b', [vec(4, 0.1), vec(4, 0.2), vec(4, 0.05)]);
-
-  it('picks the group whose exemplars are nearest', () => {
-    expect(assign(vec(0, 0.15), [a, b]).groupId).toBe('a');
-    const r = assign(vec(4, 0.15), [a, b]);
+describe('classify', () => {
+  const axis = (i: number, w = 10) => Array.from({ length: DIM }, (_, d) => (d === i ? w : 0));
+  const head: Head = {
+    model: 'test', dim: DIM, labels: ['a', 'b', 'other'],
+    W: [axis(0), axis(4), axis(9)], b: [0, 0, 0], threshold: 0.6, similarity: 0.9,
+  };
+  const a = group('a', []);
+  const b = group('b', []);
+  const groups = [a, b, group('other', [])];
+  it('takes the head top label', () => {
+    const r = classify(vec(0), groups, head);
+    expect(r.groupId).toBe('a');
+    expect(r.score).toBeGreaterThan(0.99);
+    expect(classify(vec(4), groups, head).groupId).toBe('b');
+  });
+  it('leaves `other` and low-confidence tabs Unsorted', () => {
+    expect(classify(vec(9), groups, head).groupId).toBeNull();
+    const mixed = normalize([...axis(0, 1)].map((x, d) => x + (d === 4 ? 1 : 0)));
+    const r = classify(mixed, groups, head);
+    expect(r).toEqual({ groupId: null, score: expect.closeTo(0.5, 1) });
+    expect(classify(mixed, groups, head, { threshold: 0.4 }).groupId).not.toBeNull();
+  });
+  it('returns null when the head label has no group, or the dimension is wrong', () => {
+    expect(classify(vec(0), [b], head).groupId).toBeNull();
+    expect(classify([1, 0, 0], groups, head)).toEqual({ groupId: null, score: 0 });
+  });
+  it('lets user-learned exemplars override the head', () => {
+    const taughtB = learn(b, vec(0, 0.05));
+    const r = classify(vec(0), [a, taughtB], head);
     expect(r.groupId).toBe('b');
-    expect(r.score).toBeGreaterThan(0.9);
+    expect(r.score).toBeGreaterThan(0.99);
+    expect(classify(vec(0), [a, taughtB], head, { similarity: 1.01 }).groupId).toBe('a');
   });
-
-  it('returns null below the threshold', () => {
-    const r = assign(vec(9), [a, b]);
-    expect(r.groupId).toBeNull();
-    expect(r.score).toBeLessThan(DEFAULT_THRESHOLD);
+  it('assigns user-created groups through exemplars alone', () => {
+    const mine = learn(group('mine', []), vec(12));
+    expect(classify(vec(12, 0.1), [...groups, mine], head).groupId).toBe('mine');
+    // Far from the exemplar: falls back to the head, which is unsure (uniform) → Unsorted.
+    expect(classify(vec(13), [...groups, mine], head).groupId).toBeNull();
   });
-
-  it('respects a custom threshold', () => {
-    expect(assign(vec(0, 0.15), [a, b], { threshold: 1.01 }).groupId).toBeNull();
-  });
-
-  it('uses k nearest exemplars: k=2 by default, overridable', () => {
-    // A: two exact facets plus unrelated ones; B: five mediocre matches.
-    const facets = group('facets', [vec(0, 0, 1), vec(0, 0, 1), vec(5), vec(7), vec(9)]);
-    const uniform = group('uniform', Array.from({ length: 5 }, () => vec(0, 2, 1)));
-    const q = vec(0, 0.3, 1);
-    expect(assign(q, [facets, uniform]).groupId).toBe('facets');
-    expect(assign(q, [facets, uniform], { k: 5 }).groupId).toBe('uniform');
-  });
-  it('never assigns to the other group', () => {
-    const other = group('other', [vec(9), vec(9, 0.1)]);
-    expect(assign(vec(9), [a, b, other]).groupId).toBeNull();
-  });
-
-  it('skips groups with no exemplars and no centroid', () => {
-    const empty = group('empty', []);
-    expect(assign(vec(0), [empty, a]).groupId).toBe('a');
-    expect(assign(vec(0), [empty])).toEqual({ groupId: null, score: 0 });
+  it('never assigns other, even from exemplars', () => {
+    const other = learn(group('other', []), vec(0));
+    expect(classify(vec(0), [a, b, other], head).groupId).toBe('a');
   });
 });
-
+describe('bundled head', () => {
+  it('matches the starter groups and its own dimension', () => {
+    expect(HEAD.labels).toEqual(STARTER_GROUPS.map((g) => g.id));
+    expect(HEAD.W).toHaveLength(HEAD.labels.length);
+    for (const row of HEAD.W) expect(row).toHaveLength(HEAD.dim);
+    expect(HEAD.b).toHaveLength(HEAD.labels.length);
+    expect(HEAD.threshold).toBeGreaterThanOrEqual(0);
+    expect(HEAD.threshold).toBeLessThan(1);
+    expect(HEAD.similarity).toBeGreaterThan(0);
+    expect(HEAD.similarity).toBeLessThanOrEqual(1);
+  });
+});
 describe('learn', () => {
   it('caps exemplars at 50 and keeps the newest 50', () => {
     let g = group('g', []);
@@ -103,7 +119,7 @@ describe('learn', () => {
 });
 
 describe('buildStarterGroups', () => {
-  it('embeds each group seed once and builds centroids', async () => {
+  it('embeds each group seed once into a centroid, with no exemplars', async () => {
     const calls: string[][] = [];
     const groups = await buildStarterGroups(async (texts) => {
       calls.push(texts);
@@ -115,9 +131,8 @@ describe('buildStarterGroups', () => {
     for (const g of groups) {
       const seeds = STARTER_GROUPS.find((s) => s.id === g.id)!.seeds;
       expect(g.builtIn).toBe(true);
-      expect(g.exemplars).toHaveLength(seeds.length);
+      expect(g.exemplars).toEqual([]);
       expect(g.centroid === null).toBe(seeds.length === 0);
-      expect(Array.isArray(g.exemplars[0] ?? [])).toBe(true);
     }
   });
 });

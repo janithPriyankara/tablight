@@ -1,6 +1,7 @@
 /**
  * Built-in starter groups. Each seed is a generic description of the topic (subject words),
- * embedded once at install to form the group's initial exemplars.
+ * embedded once at install to give the group an initial centroid for clustering, naming and
+ * search. Seeds do not drive assignment: the trained head does (src/classify/head.json).
  * Seeds never name brands or sites and never mimic page titles: site knowledge belongs in rules.ts.
  */
 export interface StarterGroup {
