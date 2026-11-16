@@ -1,0 +1,26 @@
+export function cosine(a: ArrayLike<number>, b: ArrayLike<number>): number {
+  const n = Math.min(a.length, b.length);
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < n; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  if (na === 0 || nb === 0) return 0;
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+export function mean(vs: number[][]): number[] {
+  if (vs.length === 0) return [];
+  const out = new Array<number>(vs[0].length).fill(0);
+  for (const v of vs) for (let i = 0; i < out.length; i++) out[i] += v[i] ?? 0;
+  for (let i = 0; i < out.length; i++) out[i] /= vs.length;
+  return out;
+}
+export function normalize(v: number[]): number[] {
+  let s = 0;
+  for (const x of v) s += x * x;
+  const n = Math.sqrt(s);
+  return n === 0 ? v.slice() : v.map((x) => x / n);
+}
