@@ -35,3 +35,17 @@ describe('group rpc handlers', () => {
     mock.uninstall();
   });
 });
+describe('memory rpc handlers', () => {
+  it('validate payloads and register the auto-sleep alarm', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.com/' }] }] });
+    await import('../../src/background/index');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(mock.alarms().find((a) => a.name === 'auto-sleep')?.periodInMinutes).toBe(5);
+    for (const m of [{ t: 'sleep', ids: 'x' }, { t: 'stash', ids: [1] }, { t: 'open', id: '' }, { t: 'close', ids: null }, { t: 'undo', token: 5 }]) {
+      expect(await mock.sendMessage(m)).toMatchObject({ ok: false });
+    }
+    expect(await mock.sendMessage({ t: 'undo', token: 'zzz' })).toEqual({ ok: true, data: false });
+    expect(await mock.sendMessage({ t: 'closeExtras' })).toMatchObject({ ok: true, data: { closed: 0 } });
+    mock.uninstall();
+  });
+});

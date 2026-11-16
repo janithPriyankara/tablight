@@ -127,6 +127,13 @@ export interface MockChrome {
     group(o: chrome.tabs.GroupOptions): Promise<number>;
     query(q: chrome.tabs.QueryInfo): Promise<Tab[]>;
     get(tabId: number): Promise<Tab>;
+    /** Rejects for a missing tab or the active tab of a window (Chrome does not discard those). */
+    discard(tabId: number): Promise<Tab>;
+    /** Rejects when any tab id is missing. */
+    remove(tabIds: number | number[]): Promise<void>;
+    /** Rejects for an unknown windowId. Without one the first window is used. */
+    create(p: chrome.tabs.CreateProperties): Promise<Tab>;
+    update(tabId: number, p: chrome.tabs.UpdateProperties): Promise<Tab>;
     onCreated: MockEvent<(tab: Tab) => void>;
     onUpdated: MockEvent<(tabId: number, info: chrome.tabs.OnUpdatedInfo, tab: Tab) => void>;
     onRemoved: MockEvent<(tabId: number, info: chrome.tabs.OnRemovedInfo) => void>;
@@ -135,6 +142,7 @@ export interface MockChrome {
   };
   windows: {
     WINDOW_ID_NONE: -1;
+    update(windowId: number, p: chrome.windows.UpdateInfo): Promise<unknown>;
     onRemoved: MockEvent<(windowId: number) => void>;
     onFocusChanged: MockEvent<(windowId: number) => void>;
   };
@@ -248,6 +256,34 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       async get(id) {
         return clone(mustGet(id));
       },
+      async discard(id) {
+        const t = mustGet(id);
+        if (t.active) throw new Error(`Cannot discard the active tab with id: ${id}.`);
+        if (!t.discarded) control.updateTab(id, { discarded: true });
+        return clone(t);
+      },
+      async remove(ids) {
+        const list = Array.isArray(ids) ? ids : [ids];
+        list.forEach(mustGet);
+        for (const id of list) removeTab(id);
+      },
+      async create(p) {
+        if (p.windowId !== undefined && !windows.includes(p.windowId)) {
+          throw new Error(`No window with id: ${p.windowId}.`);
+        }
+        const tab = addTab({
+          url: p.url ?? 'chrome://newtab/', pinned: p.pinned ?? false, active: p.active ?? true,
+          ...(p.windowId !== undefined ? { windowId: p.windowId } : {}),
+        });
+        return tab;
+      },
+      async update(id, p) {
+        const t = mustGet(id);
+        if (p.url !== undefined) control.updateTab(id, { url: p.url });
+        if (p.pinned !== undefined) control.updateTab(id, { pinned: p.pinned });
+        if (p.active) control.activateTab(id);
+        return clone(t);
+      },
       onCreated: new MockEvent(),
       onUpdated: new MockEvent(),
       onRemoved: new MockEvent(),
@@ -256,6 +292,11 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
     },
     windows: {
       WINDOW_ID_NONE: -1,
+      async update(windowId, p) {
+        if (!windows.includes(windowId)) throw new Error(`No window with id: ${windowId}.`);
+        if (p.focused) control.focusWindow(windowId);
+        return { id: windowId };
+      },
       onRemoved: new MockEvent(),
       onFocusChanged: new MockEvent(),
     },

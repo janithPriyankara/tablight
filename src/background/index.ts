@@ -10,6 +10,7 @@ import {
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
+import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from './memory';
 import {
   KICK_ALARM,
   configureTabIndex,
@@ -95,6 +96,12 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'groupDelete': await deleteGroup(db, parseId(req.id)); break;
     case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id)); break;
     case 'dismissSuggestion': await dismissSuggestion(db, parseId(req.id)); break;
+    case 'sleep': return sleepTabs(db, parseIds(req.ids));
+    case 'stash': out = await stash(db, parseIds(req.ids)); break;
+    case 'open': await openItem(db, parseId(req.id)); break;
+    case 'close': out = await closeTabs(db, parseIds(req.ids)); break;
+    case 'closeExtras': out = await closeExtras(db); break;
+    case 'undo': return undo(db, parseId(req.token));
     case 'regroupPreview': return regroupPreview(db);
     case 'regroupApply': out = await regroupApply(db); break;
     default: throw new Error(`unsupported request: ${req.t}`);
@@ -128,7 +135,17 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KICK_ALARM) void flushTabEvents();
+  if (alarm.name === AUTO_SLEEP_ALARM) {
+    void getDb()
+      .then((db) => autoSleep(db, Date.now()))
+      .catch((e: unknown) => console.error('auto-sleep failed', e));
+  }
 });
+// Created once; re-creating on every worker start would keep pushing the schedule back.
+void chrome.alarms
+  .get(AUTO_SLEEP_ALARM)
+  .then((a) => (a ? undefined : chrome.alarms.create(AUTO_SLEEP_ALARM, { periodInMinutes: 5 })))
+  .catch((e: unknown) => console.error('auto-sleep alarm failed', e));
 chrome.runtime.onStartup.addListener(() => void flushTabEvents());
 chrome.runtime.onInstalled.addListener(() => {
   void getDb()
