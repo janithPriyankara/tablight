@@ -10,6 +10,7 @@ import {
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
+import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
   SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
   startupCheckInterrupted, takeSnapshot,
@@ -133,6 +134,15 @@ export async function handleRequest(req: Req): Promise<unknown> {
       break;
     }
     case 'regroupApply': out = await regroupApply(db); break;
+    case 'export': return exportJson(db);
+    case 'import': {
+      if (typeof req.json !== 'string') throw new Error('invalid import');
+      const parsed = parseImport(req.json);
+      if (!parsed.ok) throw new Error(parsed.error);
+      out = await applyImport(db, parsed.data);
+      scheduleSync(db);
+      break;
+    }
     default: throw new Error(`unsupported request: ${req.t}`);
   }
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);

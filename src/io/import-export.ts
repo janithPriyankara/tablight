@@ -1,0 +1,225 @@
+// JSON backup: export the stash (also the bridge between Edge and Chrome) and import it back.
+// `parseImport` is pure and treats its input as hostile; `exportJson`/`applyImport` only touch the Db.
+import { sha1hex } from '../shared/hash';
+import type { Group, Item, Snapshot } from '../shared/types';
+import { isSafeToOpen, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
+import { OTHER_GROUP_ID } from '../classify/assign';
+import { STARTER_GROUPS } from '../classify/seeds';
+import type { Db } from '../background/db';
+import { USER_COLORS, parseName } from '../background/groups';
+import { restashTime, stashRecord } from '../background/memory';
+import { MAX_SNAPSHOTS, fingerprint } from '../background/snapshots';
+import { domainOf } from '../background/tab-index';
+export const FORMAT = 'tab-organizer';
+export const VERSION = 1;
+export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+export const MAX_IMPORT_ITEMS = 50_000;
+export const MAX_NEW_GROUPS = 200;
+const MAX_DEPTH = 64;
+const MAX_TITLE = 1_000;
+const MAX_URL = 8_192;
+const MAX_FILE_SNAPSHOTS = 100;
+const MAX_SNAPSHOT_WINDOWS = 100;
+const MAX_SNAPSHOT_TABS = 5_000;
+const ICONS: ReadonlySet<string> = new Set([...STARTER_GROUPS.map((g) => g.icon), '📁', '✨']);
+const COLORS: ReadonlySet<string> = new Set(USER_COLORS);
+// eslint-disable-next-line no-control-regex
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
+export interface ImportGroup { name: string; color: string | null; icon: string | null }
+export interface ImportItem { url: string; title: string; groupName: string | null; stashedAt: number | null }
+export interface ImportData { groups: ImportGroup[]; items: ImportItem[]; snapshots: Snapshot[] }
+export type ParseResult = { ok: true; data: ImportData } | { ok: false; error: string };
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+function utf8Length(s: string): number {
+  return s.length * 3 <= MAX_IMPORT_BYTES ? 0 : new TextEncoder().encode(s).length;
+}
+/** Bracket nesting deeper than `max` (outside strings)? A linear scan, so no recursion is involved. */
+function tooDeep(s: string, max: number): boolean {
+  let depth = 0;
+  let inStr = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (inStr) {
+      if (c === 0x5c) i++; // backslash escape
+      else if (c === 0x22) inStr = false;
+    } else if (c === 0x22) inStr = true;
+    else if (c === 0x5b || c === 0x7b) {
+      if (++depth > max) return true;
+    } else if ((c === 0x5d || c === 0x7d) && depth > 0) depth--;
+  }
+  return false;
+}
+const text = (v: string): string => v.replace(CONTROL, '').slice(0, MAX_TITLE);
+function safeUrl(v: unknown): string | null {
+  return typeof v === 'string' && v.length <= MAX_URL && isWebUrl(v) && isSafeToOpen(v) ? v : null;
+}
+function readItem(v: unknown, now: number): ImportItem | null {
+  if (!isObj(v)) return null;
+  const url = safeUrl(v['url']);
+  if (url === null) return null;
+  const title = v['title'] ?? '';
+  const gn = v['groupName'] ?? null;
+  if (typeof title !== 'string' || (gn !== null && typeof gn !== 'string')) return null;
+  let groupName: string | null = null;
+  if (gn !== null) {
+    try {
+      groupName = parseName(gn);
+    } catch { /* invalid name: the item simply has no group */ }
+  }
+  const at = v['stashedAt'];
+  const stashedAt = typeof at === 'number' && Number.isFinite(at) ? Math.min(Math.max(at, 0), now) : null;
+  return { url, title: text(title), groupName, stashedAt };
+}
+function readGroup(v: unknown): ImportGroup | null {
+  if (!isObj(v)) return null;
+  let name: string;
+  try {
+    name = parseName(v['name']);
+  } catch {
+    return null;
+  }
+  const { color, icon } = v;
+  return {
+    name,
+    color: typeof color === 'string' && COLORS.has(color) ? color : null,
+    icon: typeof icon === 'string' && ICONS.has(icon) ? icon : null,
+  };
+}
+function readSnapshot(v: unknown, now: number): Snapshot | null {
+  if (!isObj(v) || !Array.isArray(v['windows'])) return null;
+  const at = v['takenAt'];
+  if (typeof at !== 'number' || !Number.isFinite(at)) return null;
+  const windows: Snapshot['windows'] = [];
+  let total = 0;
+  for (const w of v['windows'].slice(0, MAX_SNAPSHOT_WINDOWS)) {
+    if (!isObj(w) || !Array.isArray(w['tabs'])) continue;
+    const tabs: { url: string; title: string }[] = [];
+    for (const t of w['tabs']) {
+      if (total >= MAX_SNAPSHOT_TABS) break;
+      if (!isObj(t)) continue;
+      const url = safeUrl(t['url']);
+      const title = t['title'] ?? '';
+      if (url === null || typeof title !== 'string') continue;
+      tabs.push({ url, title: text(title) });
+      total++;
+    }
+    if (tabs.length) windows.push({ tabs });
+  }
+  return windows.length ? { id: '', takenAt: Math.min(Math.max(at, 0), now), windows } : null;
+}
+export function parseImport(json: string): ParseResult {
+  if (typeof json !== 'string') return { ok: false, error: 'not a text file' };
+  if (json.length > MAX_IMPORT_BYTES || utf8Length(json) > MAX_IMPORT_BYTES) return { ok: false, error: 'file is too large' };
+  if (tooDeep(json, MAX_DEPTH)) return { ok: false, error: 'file is nested too deeply' };
+  let root: unknown;
+  try {
+    root = JSON.parse(json);
+  } catch {
+    return { ok: false, error: 'not valid JSON' };
+  }
+  if (!isObj(root) || root['format'] !== FORMAT || root['version'] !== VERSION) {
+    return { ok: false, error: 'not a Tab Organizer backup' };
+  }
+  const rawItems = root['items'] ?? [];
+  const rawGroups = root['groups'] ?? [];
+  const rawSnaps = root['snapshots'] ?? [];
+  if (!Array.isArray(rawItems) || !Array.isArray(rawGroups) || !Array.isArray(rawSnaps)) {
+    return { ok: false, error: 'malformed backup' };
+  }
+  if (rawItems.length > MAX_IMPORT_ITEMS) return { ok: false, error: 'too many items' };
+  const now = Date.now();
+  const items = rawItems.flatMap((v) => readItem(v, now) ?? []);
+  const groups = rawGroups.flatMap((v) => readGroup(v) ?? []);
+  const snapshots = rawSnaps.slice(0, MAX_FILE_SNAPSHOTS).flatMap((v) => readSnapshot(v, now) ?? []);
+  return { ok: true, data: { groups, items, snapshots } };
+}
+export async function exportJson(db: Db): Promise<string> {
+  const groups = (await db.groups.all()).filter((g) => !g.suggested && g.id !== OTHER_GROUP_ID);
+  const names = new Map(groups.map((g) => [g.id, g.name]));
+  const items = (await db.items.byState('stashed')).map((i) => ({
+    url: i.url, title: i.title, groupName: (i.groupId !== null && names.get(i.groupId)) || null,
+    state: 'stashed' as const, stashedAt: i.stashedAt ?? i.createdAt,
+  }));
+  const snapshots = (await db.snapshots.all()).map((s) => ({
+    id: s.id, takenAt: s.takenAt, windows: s.windows.map((w) => ({ tabs: w.tabs.map((t) => ({ url: t.url, title: t.title })) })),
+  }));
+  return JSON.stringify({
+    format: FORMAT, version: VERSION, exportedAt: Date.now(),
+    groups: groups.map((g) => ({ id: g.id, name: g.name, color: g.color, icon: g.icon })), items, snapshots,
+  }, null, 2);
+}
+/** Merges by normalized URL; never deletes or downgrades stashed records. A user's own group wins. */
+export async function applyImport(db: Db, data: ImportData): Promise<{ added: number; skipped: number }> {
+  const now = Date.now();
+  const seen = new Set<string>();
+  const entries: { it: ImportItem; normUrl: string; id: string }[] = [];
+  let skipped = 0;
+  for (const it of data.items) {
+    const normUrl = normalizeUrl(it.url);
+    if (seen.has(normUrl)) {
+      skipped++;
+      continue;
+    }
+    seen.add(normUrl);
+    entries.push({ it, normUrl, id: await sha1hex(normUrl) }); // hashing must not happen inside the transaction
+  }
+  const given = new Map(data.groups.map((g) => [g.name.toLowerCase(), g]));
+  const wanted = new Map<string, string>();
+  for (const n of [...data.groups.map((g) => g.name), ...entries.flatMap((e) => (e.it.groupName ? [e.it.groupName] : []))]) {
+    if (!wanted.has(n.toLowerCase())) wanted.set(n.toLowerCase(), n);
+  }
+  let added = 0;
+  await db.tx(['items', 'groups', 'queue', 'tombstones', 'snapshots'], async (s) => {
+    const existing = (await s.groups.all()).filter((g) => !g.suggested);
+    const byName = new Map<string, Group>();
+    for (const g of existing) if (!byName.has(g.name.toLowerCase())) byName.set(g.name.toLowerCase(), g);
+    let count = existing.length;
+    let created = 0;
+    for (const [key, name] of wanted) {
+      if (byName.has(key) || created >= MAX_NEW_GROUPS) continue;
+      const meta = given.get(key);
+      const g: Group = {
+        id: `g-${crypto.randomUUID()}`, name, color: meta?.color ?? USER_COLORS[count % USER_COLORS.length]!,
+        icon: meta?.icon ?? '📁', builtIn: false, exemplars: [], centroid: null, createdAt: now,
+      };
+      count++;
+      created++;
+      await s.groups.put(g);
+      byName.set(key, g);
+    }
+    for (const { it, normUrl, id } of entries) {
+      const prev = await s.items.get(id);
+      const gid = it.groupName ? byName.get(it.groupName.toLowerCase())?.id ?? null : null;
+      if (prev && (prev.state !== 'stashed' || gid === null || prev.groupSource === 'user' || prev.groupId === gid)) {
+        skipped++;
+        continue;
+      }
+      const base: Item = {
+        id, url: it.url, normUrl, title: it.title, domain: domainOf(it.url), state: 'stashed', groupId: gid,
+        groupSource: gid === null ? 'auto' : 'user', kind: kindOf(it.url), createdAt: it.stashedAt ?? now,
+        lastActiveAt: it.stashedAt ?? now, updatedAt: now, classifiable: true,
+      };
+      const rec = stashRecord(base, prev, id, await restashTime(s, id, now));
+      const stashedAt = Math.min(prev?.stashedAt ?? Infinity, it.stashedAt ?? now);
+      await s.items.put({ ...rec, stashedAt });
+      if (rec.groupId === null) await s.queue.add(id);
+      else await s.queue.remove([id]);
+      if (prev) skipped++;
+      else added++;
+    }
+    const all = await s.snapshots.all();
+    const known = new Set(all.map((x) => fingerprint(x.windows)));
+    const fresh: Snapshot[] = [];
+    for (const sn of data.snapshots) {
+      const fp = fingerprint(sn.windows);
+      if (known.has(fp)) continue;
+      known.add(fp);
+      fresh.push({ ...sn, id: crypto.randomUUID() });
+    }
+    const sorted = [...all, ...fresh].sort((a, b) => b.takenAt - a.takenAt);
+    const keep = new Set(sorted.slice(0, MAX_SNAPSHOTS).map((x) => x.id));
+    for (const sn of fresh) if (keep.has(sn.id)) await s.snapshots.put(sn);
+    for (const sn of all) if (!keep.has(sn.id)) await s.snapshots.delete(sn.id);
+  });
+  return { added, skipped };
+}

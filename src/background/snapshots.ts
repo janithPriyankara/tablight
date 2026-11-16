@@ -22,7 +22,7 @@ export const MAX_STARTUP_ATTEMPTS = 3;
 export interface SessionSummary { id: string; takenAt: number; windows: number; tabs: number }
 const tabUrl = (t: chrome.tabs.Tab) => t.url || t.pendingUrl || '';
 /** Same ordered normalized URLs per window → same session. */
-function fingerprint(windows: Snapshot['windows']): string {
+export function fingerprint(windows: Snapshot['windows']): string {
   return windows.map((w) => w.tabs.map((t) => normalizeUrl(t.url)).join('\n')).join('\n--\n');
 }
 const newest = (all: Snapshot[]): Snapshot | undefined => all.reduce<Snapshot | undefined>(
