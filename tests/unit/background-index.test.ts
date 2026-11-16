@@ -11,6 +11,7 @@ vi.mock('../../src/shared/hash', async (orig) => {
 });
 vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
+  isWarm: vi.fn(() => false),
 }));
 afterEach(() => vi.resetModules());
 describe('background index', () => {
@@ -199,6 +200,77 @@ describe('background index', () => {
       expect((await db.items.all()).find((i) => i.title === 'Imported trip')?.embKey).toBeTypeOf('string');
     });
     expect(await search('unrelated')).toContain('Imported trip');
+    mock.uninstall();
+  });
+  it('state RPC returns totals, group counts without vectors, the active duplicate and statuses', async () => {
+    const mock = installChromeMock({
+      windows: [
+        { tabs: [
+          { url: 'https://www.youtube.com/watch?v=abc', title: 'Video', active: true },
+          { url: 'https://www.youtube.com/watch?v=abc', title: 'Video' },
+          { url: 'chrome://settings', title: 'Settings' },
+        ] },
+        { tabs: [{ url: 'https://stackoverflow.com/questions/5/s', title: 'State Q', active: true }] },
+      ],
+    });
+    const bg = await import('../../src/background/index');
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    const db = await bg.getDb();
+    mock.fireInstalled();
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect(await db.queue.size()).toBe(0);
+      expect((await db.items.all()).filter((i) => i.state !== 'stashed')).toHaveLength(4);
+    });
+    const [a, b] = mock.tabs();
+    const vids = (await db.items.all()).filter((i) => i.title === 'Video' && i.state === 'open');
+    await bg.handleRequest({ t: 'moveItems', ids: vids.map((i) => i.id), groupId: 'videos' });
+    mock.focusWindow(1);
+    type S = import('../../src/shared/types').DashboardState;
+    let s = (await bg.handleRequest({ t: 'state' })) as S;
+    expect(s.windows).toBe(2);
+    expect(s.sleeping).toBe(0);
+    expect(s.dupCount).toBe(1); // one extra copy
+    expect(s.items.filter((i) => i.state !== 'stashed')).toHaveLength(4);
+    expect(s.activeDup?.item.tabId).toBe(a!.id);
+    expect(s.activeDup?.others.map((i) => i.tabId)).toEqual([b!.id]);
+    const inGroup = s.items.filter((i) => i.groupId === 'videos');
+    const g = s.groups.find((x) => x.id === 'videos')!;
+    expect(g.count).toBe(inGroup.length);
+    expect(g.count).toBeGreaterThanOrEqual(2);
+    expect(g.watchCount).toBe(inGroup.filter((i) => i.kind === 'watch').length);
+    expect(g.watchCount).toBeGreaterThanOrEqual(2); // youtube watch pages
+    for (const g of s.groups) {
+      expect(g.exemplars).toEqual([]); // vectors never go to the UI
+      expect(g.centroid).toBeNull();
+    }
+    const { readSyncStatus } = await import('../../src/background/sync');
+    expect(s.syncStatus).toEqual(await readSyncStatus());
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect(await db.queue.size()).toBe(0);
+    });
+    expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(true); // starter groups, empty queue
+    expect(s.lastSession).toBeUndefined();
+    // No duplicate for the focused window's active tab: no alert.
+    mock.focusWindow(2);
+    s = (await bg.handleRequest({ t: 'state' })) as S;
+    expect(s.activeDup).toBeUndefined();
+    // A sleeping tab counts; the last session shows when the startup check stored one.
+    const so = (await db.items.all()).find((i) => i.title === 'State Q')!;
+    await db.items.put({ ...so, state: 'sleeping' });
+    const snap = await bg.handleRequest({ t: 'snapshotNow' }) as { id: string };
+    await chrome.storage.session.set({ lastSession: { snapshotId: snap.id } });
+    s = (await bg.handleRequest({ t: 'state' })) as S;
+    expect(s.sleeping).toBe(1);
+    expect(s.lastSession?.id).toBe(snap.id);
+    // Not ready while work is queued and the embedder has not produced a vector this session.
+    await db.queue.add(so.id);
+    expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(false);
+    const { isWarm } = await import('../../src/background/embedder');
+    vi.mocked(isWarm).mockReturnValue(true);
+    expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(true);
+    await db.queue.remove([so.id]);
     mock.uninstall();
   });
 });

@@ -62,3 +62,27 @@ export type SyncStatus = (
   | { ok: true; synced: number; localOnly: number }
   | { ok: false; reason: 'quota' | 'disabled' | 'rate' | 'error'; message: string }
 ) & { lastSyncAt: number | null };
+/** A group as the UI sees it: exemplars and centroid are emptied (vectors never leave the worker). */
+export type GroupSummary = Group & {
+  /** Items in the group, in any state (open, sleeping or stashed). */
+  count: number;
+  /** Of those, the ones whose kind is 'watch'. */
+  watchCount: number;
+};
+/** Reply of the `state` RPC: everything the popup and dashboard render. */
+export interface DashboardState {
+  items: Item[];
+  groups: GroupSummary[];
+  /** Extra copies: for every set of duplicate tabs, its size minus one. */
+  dupCount: number;
+  /** Distinct windows holding open or sleeping items. */
+  windows: number;
+  sleeping: number;
+  /** The last-focused window's active tab, when it has duplicates. */
+  activeDup?: { item: Item; others: Item[] };
+  syncStatus: SyncStatus;
+  /** The previous browser session, when the startup check found it was not restored. */
+  lastSession?: Snapshot;
+  /** Starter groups exist and the queue is empty or the model produced a vector this session. */
+  modelReady: boolean;
+}

@@ -3,23 +3,24 @@
 import type { Req } from '../shared/rpc';
 import { buildStarterGroups } from '../classify/assign';
 import { openDb, type Db } from './db';
-import { invalidateBadges, updateBadge } from './duplicates';
-import { embed } from './embedder';
+import { findDuplicates, invalidateBadges, updateBadge } from './duplicates';
+import { embed, isWarm } from './embedder';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
 import { semanticSearch, wordSearch } from '../search/search';
-import type { Item } from '../shared/types';
+import type { DashboardState, GroupSummary, Item, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
-  SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
+  LAST_SESSION_KEY, SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
   startupCheckInterrupted, takeSnapshot,
 } from './snapshots';
 import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from './memory';
 import {
-  SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, scheduleSync, touchStashedInGroup,
+  SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, readSyncStatus, scheduleSync,
+  touchStashedInGroup,
 } from './sync';
 import {
   KICK_ALARM,
@@ -143,6 +144,59 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
     return { words, meaning: [] };
   }
 }
+/** The snapshot the startup check flagged as not restored (chrome.storage.session), if any. */
+async function readLastSession(db: Db): Promise<Snapshot | undefined> {
+  const stored = (await chrome.storage.session.get(LAST_SESSION_KEY).catch(() => ({})) as Record<string, unknown>)[LAST_SESSION_KEY];
+  const id = (stored as { snapshotId?: unknown } | undefined)?.snapshotId;
+  if (typeof id !== 'string') return undefined;
+  return (await db.snapshots.all()).find((s) => s.id === id);
+}
+/** The last-focused window's active tab and its copies, when it has any. */
+async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promise<DashboardState['activeDup']> {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []);
+  if (tab?.id === undefined) return undefined;
+  const item = items.find((i) => i.tabId === tab.id && i.state !== 'stashed');
+  const copies = item ? dups.get(item.normUrl) : undefined;
+  if (!item || !copies) return undefined;
+  return { item, others: copies.filter((i) => i.id !== item.id) };
+}
+/**
+ * `state` RPC: one read of items and groups, counted in memory. Group vectors are stripped (they are
+ * large and the UI never needs them). modelReady: the starter groups exist and either nothing waits
+ * for classification or the model already produced a vector in this worker's lifetime.
+ */
+async function dashboardState(db: Db): Promise<DashboardState> {
+  const [items, groups, queued] = await Promise.all([db.items.all(), db.groups.all(), db.queue.size()]);
+  const counts = new Map<string, { count: number; watchCount: number }>();
+  const windows = new Set<number>();
+  let sleeping = 0;
+  for (const i of items) {
+    if (i.groupId !== null) {
+      const c = counts.get(i.groupId) ?? { count: 0, watchCount: 0 };
+      c.count++;
+      if (i.kind === 'watch') c.watchCount++;
+      counts.set(i.groupId, c);
+    }
+    if (i.state === 'stashed') continue;
+    if (i.state === 'sleeping') sleeping++;
+    if (i.windowId !== undefined) windows.add(i.windowId);
+  }
+  const summaries: GroupSummary[] = groups.map((g) => ({
+    ...g, exemplars: [], centroid: null, ...(counts.get(g.id) ?? { count: 0, watchCount: 0 }),
+  }));
+  const dups = findDuplicates(items);
+  let dupCount = 0;
+  for (const list of dups.values()) dupCount += list.length - 1;
+  const [activeDup, syncStatus, lastSession] = await Promise.all([
+    activeDuplicate(items, dups), readSyncStatus(), readLastSession(db),
+  ]);
+  return {
+    items, groups: summaries, dupCount, windows: windows.size, sleeping, syncStatus,
+    modelReady: groups.length > 0 && (queued === 0 || isWarm()),
+    ...(activeDup ? { activeDup } : {}),
+    ...(lastSession ? { lastSession } : {}),
+  };
+}
 /** Activation/focus: a light path (lastActiveAt + that tab's badge), never a full reconcile. */
 async function activated(tabId: number): Promise<void> {
   const db = await getDb();
@@ -197,6 +251,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
       break;
     }
     case 'search': return search(db, req);
+    case 'state': return dashboardState(db);
     case 'regroupApply': out = await regroupApply(db); break;
     case 'export': return exportJson(db);
     case 'import': {

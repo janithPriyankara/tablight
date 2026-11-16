@@ -5,6 +5,11 @@ let ensuring: Promise<void> | undefined; // shared only while a check/create is 
 let closing: Promise<void> | undefined;
 let inflight = 0;
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
+let warm = false;
+/** True once the model produced at least one vector in this worker's lifetime. */
+export function isWarm(): boolean {
+  return warm;
+}
 async function ensureDocument(): Promise<void> {
   if (closing) await closing; // never race a close in progress
   const existing = await chrome.runtime.getContexts({
@@ -59,6 +64,7 @@ export async function embed(texts: string[]): Promise<Float32Array[]> {
     for (let i = 0; i < texts.length; i += BATCH) {
       const rows = await sendBatch(texts.slice(i, i + BATCH));
       for (const r of rows) out.push(Float32Array.from(r));
+      if (rows.length > 0) warm = true;
     }
     return out;
   } finally {

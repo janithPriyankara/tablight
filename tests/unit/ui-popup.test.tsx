@@ -1,0 +1,232 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DashboardState, GroupSummary, Item } from '../../src/shared/types';
+
+vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
+const { send } = await import('../../src/shared/rpc');
+const { Popup } = await import('../../src/ui/popup/Popup');
+const { Favicon } = await import('../../src/ui/common/Favicon');
+const { readableTextOn } = await import('../../src/ui/common/color');
+const sendMock = vi.mocked(send);
+
+const XSS = '<img src=x onerror=alert(1)>';
+function item(id: string, p: Partial<Item> = {}): Item {
+  const url = p.url ?? `https://example.com/${id}`;
+  return {
+    id, url, normUrl: url, title: `Title ${id}`, domain: 'example.com', state: 'open', tabId: Number(id.replace(/\D/g, '')) || 1,
+    windowId: 1, groupId: 'programming', groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1,
+    classifiable: true, ...p,
+  };
+}
+function group(id: string, name: string, count: number, watchCount = 0): GroupSummary {
+  return { id, name, color: '#0090ff', icon: '', builtIn: true, exemplars: [], centroid: null, createdAt: 1, count, watchCount };
+}
+function state(p: Partial<DashboardState> = {}): DashboardState {
+  return {
+    items: [
+      item('i1'), item('i2'), item('i3', { windowId: 2 }), item('i4', { state: 'sleeping' }),
+      item('i5', { url: 'chrome://settings', classifiable: false, title: 'Settings' }),
+      item('i6', { state: 'stashed', tabId: undefined, windowId: undefined }),
+    ],
+    groups: [
+      group('programming', 'Programming', 9), group('videos', 'YouTube / Videos', 7, 3), group('a', 'A', 6),
+      group('b', 'B', 5), group('c', 'C', 4), group('d', 'D', 3), group('e', 'Seventh', 2), group('z', 'Empty', 0),
+    ],
+    dupCount: 1, windows: 2, sleeping: 1,
+    syncStatus: { ok: true, synced: 1, localOnly: 0, lastSyncAt: null },
+    modelReady: true,
+    ...p,
+  };
+}
+type Handler = (req: { t: string; [k: string]: unknown }) => unknown;
+function serve(s: DashboardState, extra: Handler = () => undefined): void {
+  sendMock.mockImplementation(async (req) => (req.t === 'state' ? s : extra(req as never)) as never);
+}
+const tabsQuery = vi.fn(async () => [] as chrome.tabs.Tab[]);
+const tabsCreate = vi.fn(async () => ({}) as chrome.tabs.Tab);
+beforeEach(() => {
+  vi.stubGlobal('chrome', {
+    runtime: { getURL: (p: string) => `chrome-extension://ext/${p.replace(/^\//, '')}` },
+    windows: { getCurrent: vi.fn(async () => ({ id: 1 })), update: vi.fn(async () => ({})) },
+    tabs: { query: tabsQuery, create: tabsCreate, update: vi.fn(async () => ({})) },
+  });
+  vi.spyOn(window, 'close').mockImplementation(() => undefined);
+});
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  sendMock.mockReset();
+  tabsQuery.mockClear();
+  tabsCreate.mockClear();
+});
+
+describe('popup', () => {
+  it('renders totals from the state RPC and the top 6 non-empty groups', async () => {
+    serve(state());
+    render(<Popup />);
+    await screen.findByText('5 tabs · 2 windows · 1 sleeping · 1 duplicate');
+    expect(sendMock).toHaveBeenCalledWith({ t: 'state' });
+    const groups = screen.getAllByRole('listitem').filter((li) => li.closest('[aria-label="Top groups"]'));
+    expect(groups).toHaveLength(6);
+    expect(screen.queryByText('Seventh')).toBeNull();
+    expect(screen.getByText('▶ 3 to watch')).toBeTruthy();
+  });
+
+  it('renders attacker-controlled titles and group names as literal text', async () => {
+    const evil = item('i1', { title: XSS });
+    serve(state({
+      activeDup: { item: evil, others: [item('i2', { title: XSS })] },
+      groups: [{ ...group('g', XSS, 3) }],
+    }));
+    const { container } = render(<Popup />);
+    await screen.findByText('5 tabs · 2 windows · 1 sleeping · 1 duplicate');
+    expect(screen.getAllByText(XSS).length).toBeGreaterThan(0);
+    expect(container.querySelector('img[src=x]')).toBeNull();
+  });
+
+  it('shows the duplicate alert only when activeDup is set; Switch opens the copy, Close closes this one', async () => {
+    serve(state());
+    const first = render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    expect(screen.queryByRole('region', { name: 'Duplicate tab' })).toBeNull();
+    first.unmount();
+
+    const dup = { item: item('i1'), others: [item('i2'), item('i3')] };
+    serve(state({ activeDup: dup }), () => ({ token: 'tok' }));
+    render(<Popup />);
+    const alert = await screen.findByRole('region', { name: 'Duplicate tab' });
+    expect(alert.textContent).toContain('open 3 times');
+    fireEvent.click(screen.getByRole('button', { name: 'Switch' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close this one' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'close', ids: ['i1'] }));
+  });
+
+  it('search is debounced 150 ms, shows words then meaning, and ignores superseded and stale replies', async () => {
+    serve(state(), (req) => {
+      if (req.t !== 'search') return undefined;
+      if (req.q === 'old') return { words: [item('i9', { title: 'Stale' })], meaning: [] };
+      if (req.q === 'sup') return { words: [], meaning: [], superseded: true };
+      return { words: [item('i1', { title: 'Word hit' })], meaning: [item('i2', { title: 'Meaning hit' })] };
+    });
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    vi.useFakeTimers();
+    const box = screen.getByRole('searchbox', { name: 'Search tabs' });
+    fireEvent.input(box, { target: { value: 'ag' } });
+    fireEvent.input(box, { target: { value: 'agent' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(149); });
+    expect(sendMock.mock.calls.filter(([r]) => r.t === 'search')).toHaveLength(0);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    const searches = sendMock.mock.calls.filter(([r]) => r.t === 'search');
+    expect(searches).toEqual([[{ t: 'search', q: 'agent', semantic: true }]]);
+    vi.useRealTimers();
+    const word = await screen.findByText('Word hit');
+    const meaningHead = screen.getByText('Similar by meaning');
+    const meaning = screen.getByText('Meaning hit');
+    expect(word.compareDocumentPosition(meaningHead) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(meaningHead.compareDocumentPosition(meaning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // A superseded reply never replaces the shown results.
+    fireEvent.input(box, { target: { value: 'sup' } });
+    await waitFor(() => expect(sendMock.mock.calls.some(([r]) => r.t === 'search' && r.q === 'sup')).toBe(true));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByText('Word hit')).toBeTruthy();
+    // Latest wins: a slow older reply that lands after a newer one is dropped.
+    let releaseOld!: () => void;
+    sendMock.mockImplementation(async (req) => {
+      if (req.t === 'search' && req.q === 'old') {
+        await new Promise<void>((r) => (releaseOld = r));
+        return { words: [item('i9', { title: 'Stale' })], meaning: [] } as never;
+      }
+      if (req.t === 'search') return { words: [item('i7', { title: 'Fresh' })], meaning: [] } as never;
+      return state() as never;
+    });
+    fireEvent.input(box, { target: { value: 'old' } });
+    await waitFor(() => expect(releaseOld).toBeTypeOf('function'));
+    fireEvent.input(box, { target: { value: 'new' } });
+    await screen.findByText('Fresh');
+    releaseOld();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText('Stale')).toBeNull();
+    // Clicking a result opens it.
+    fireEvent.click(screen.getByText('Fresh'));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i7' }));
+  });
+
+  it('stash this window sends the open web items of the current window and offers Undo', async () => {
+    serve(state(), (req) => (req.t === 'stash' ? { token: 'tok1', skipped: 0 } : req.t === 'undo' ? true : undefined));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'stash', ids: ['i1', 'i2'] }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok1' }));
+  });
+
+  it('the undo offer disappears after 10 s', async () => {
+    serve(state(), (req) => (req.t === 'stash' ? { token: 'tok1', skipped: 0 } : undefined));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+  });
+
+  it('sleep inactive sends every open web item (the background skips active/pinned/audible)', async () => {
+    serve(state(), (req) => (req.t === 'sleep' ? { slept: 2, skipped: 1 } : undefined));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    fireEvent.click(screen.getByRole('button', { name: 'Sleep inactive' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'sleep', ids: ['i1', 'i2', 'i3'] }));
+    await screen.findByText('Slept 2 tabs');
+  });
+
+  it('open dashboard focuses an existing dashboard tab, else creates one', async () => {
+    serve(state());
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    fireEvent.click(screen.getByRole('button', { name: 'Open dashboard' }));
+    await waitFor(() => expect(tabsCreate).toHaveBeenCalledWith({ url: 'chrome-extension://ext/dashboard.html' }));
+    tabsQuery.mockResolvedValueOnce([{ id: 42, windowId: 3, url: 'chrome-extension://ext/dashboard.html' } as chrome.tabs.Tab]);
+    fireEvent.click(screen.getByRole('button', { name: 'Open dashboard' }));
+    await waitFor(() => expect(chrome.tabs.update).toHaveBeenCalledWith(42, { active: true }));
+    expect(chrome.windows.update).toHaveBeenCalledWith(3, { focused: true });
+    expect(tabsCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows an error with a retry when the state RPC fails', async () => {
+    sendMock.mockRejectedValueOnce(new Error('worker asleep'));
+    render(<Popup />);
+    await screen.findByRole('alert');
+    serve(state());
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await screen.findByText(/5 tabs/);
+  });
+});
+
+describe('Favicon', () => {
+  it('uses the browser favicon endpoint for web pages and a local placeholder otherwise', () => {
+    const { container, rerender } = render(<Favicon url="https://a.example/x?y=1&z" />);
+    const img = container.querySelector('img')!;
+    expect(img.getAttribute('src')).toBe(
+      'chrome-extension://ext/_favicon/?pageUrl=' + encodeURIComponent('https://a.example/x?y=1&z') + '&size=32',
+    );
+    expect(img.getAttribute('loading')).toBe('lazy');
+    rerender(<Favicon url="chrome://settings" />);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+});
+
+describe('readableTextOn', () => {
+  it('picks the text color with the higher contrast', () => {
+    expect(readableTextOn('#ffb224')).toBe('#111113');
+    expect(readableTextOn('#3e63dd')).toBe('#ffffff');
+    expect(readableTextOn('not a color')).toBe('#111113');
+  });
+});
