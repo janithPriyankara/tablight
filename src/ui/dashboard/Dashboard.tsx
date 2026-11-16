@@ -19,6 +19,7 @@ import { Onboarding } from './Onboarding';
 import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions } from './Sessions';
 import { Settings } from './Settings';
 import { UndoToast } from './UndoToast';
+import { Tour } from './Tour';
 import { type View, itemsForView, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
 
 /** Opening more than this many tabs at once asks first (same bound as the background's open-all). */
@@ -52,6 +53,7 @@ export function Dashboard() {
   const dragIds = useRef<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [touring, setTouring] = useState(false);
   const [pendingSettings, setPendingSettings] = useState<Partial<SettingsT> | null>(null);
   const [lastSessionHidden, setLastSessionHidden] = useState(false);
   const searchBox = useRef<HTMLInputElement>(null);
@@ -82,6 +84,16 @@ export function Dashboard() {
     setSelected(new Set());
     anchor.current = null;
   }, [view.kind, view.kind === 'group' ? view.id : '']);
+  /** The tour runs over All tabs (so there are tab rows to point at), with the search cleared. */
+  const startTour = () => {
+    search.setQuery('');
+    go({ kind: 'all' });
+    setTouring(true);
+  };
+  const endTour = () => {
+    setTouring(false);
+    if (settings && !settings.onboarded) void act(() => save({ onboarded: true }));
+  };
   const go = (v: View) => {
     search.setQuery('');
     setViewState(v);
@@ -435,7 +447,7 @@ export function Dashboard() {
         <main class="dash-main">
           <header class="dash-top">
             <ViewSelect view={view} groups={groups} onView={go} />
-            <label class="search">
+            <label class="search" data-tour="search">
               <SearchIcon class="search-icon" />
               <input
                 ref={searchBox} type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups  ( / )"
@@ -454,12 +466,13 @@ export function Dashboard() {
               />
             </label>
             <div class="toolbar">
-              <button type="button" class="btn btn-sm" disabled={busy || !state?.dupCount} onClick={() => void closeDuplicates()}>
+              <button type="button" class="btn btn-sm" data-tour="close-duplicates" disabled={busy || !state?.dupCount} onClick={() => void closeDuplicates()}>
                 <CopyIcon />Close duplicates
               </button>
               <button type="button" class="btn btn-sm" disabled={busy || !state} onClick={() => void regroup()}>
                 <SparkIcon />Re-group everything
               </button>
+              <button type="button" class="icon-btn tour-open" aria-label="Guided tour" title="Guided tour" onClick={startTour}>?</button>
             </div>
           </header>
 
@@ -489,6 +502,7 @@ export function Dashboard() {
                 notify('Auto-pause is on: tabs unused for an hour will pause');
               })}
               onDone={() => void act(() => save({ onboarded: true }))}
+              onTour={startTour}
             />
           )}
 
@@ -609,11 +623,13 @@ export function Dashboard() {
             <Settings
               settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)}
               onDeleteAll={() => void deleteAllData()}
+              onTour={startTour}
             />
           )}
         </main>
       </div>
 
+      {touring && <Tour onClose={endTour} />}
       <UndoToast
         notice={notice} onDismiss={dismiss}
         onUndo={() => void runUndo()}

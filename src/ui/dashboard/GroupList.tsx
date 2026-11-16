@@ -44,7 +44,7 @@ export function GroupList(props: GroupListProps) {
           const n = countOf(kind);
           return (
             <li key={kind}>
-              <button type="button" class="nav-item" aria-current={current({ kind })} onClick={() => onView({ kind })}>
+              <button type="button" class="nav-item" data-tour={kind} aria-current={current({ kind })} onClick={() => onView({ kind })}>
                 <Icon class="nav-icon" />
                 <span class="nav-name">{label}</span>
                 {n !== undefined && n > 0 && <span class="nav-count">{n}</span>}
@@ -54,7 +54,7 @@ export function GroupList(props: GroupListProps) {
         })}
       </ul>
       <h2 class="section-h nav-h" id="groups-h">Groups</h2>
-      <ul class="nav-list" aria-labelledby="groups-h">
+      <ul class="nav-list" aria-labelledby="groups-h" data-tour="groups">
         {regular.map((g) => {
           const v: View = { kind: 'group', id: g.id };
           return (

@@ -62,9 +62,11 @@ export interface SettingsProps {
   notify: (message: string) => void;
   /** Settings → Delete all data (the dashboard confirms first). */
   onDeleteAll: () => void;
+  /** Starts the guided tour. */
+  onTour?: () => void;
 }
 
-export function Settings({ settings, syncStatus, busy, save, act, notify, onDeleteAll }: SettingsProps) {
+export function Settings({ settings, syncStatus, busy, save, act, notify, onDeleteAll, onTour }: SettingsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const autoValue = settings.autoSleepMinutes === null ? 'off' : String(settings.autoSleepMinutes);
   const choices = AUTO_SLEEP_CHOICES.some((c) => c.value === settings.autoSleepMinutes)
@@ -94,6 +96,18 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
   return (
     <div class="page-scroll">
       <form class="settings" onSubmit={(e) => e.preventDefault()}>
+        {onTour && (
+          <section class="settings-group" aria-labelledby="set-help-h">
+            <h2 class="settings-h" id="set-help-h">Help</h2>
+            <div class="setting">
+              <span class="setting-text">
+                <span class="setting-name">Guided tour</span>
+                <span class="setting-help">A short walk through every part of Tab Organizer, using your own tabs.</span>
+              </span>
+              <button type="button" class="btn btn-sm" onClick={onTour}>Start the tour</button>
+            </div>
+          </section>
+        )}
         <section class="settings-group" aria-labelledby="set-grouping-h">
           <h2 class="settings-h" id="set-grouping-h">Grouping</h2>
           <label class="setting">

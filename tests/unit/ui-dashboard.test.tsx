@@ -267,6 +267,45 @@ describe('dashboard', () => {
     await waitFor(() => expect(screen.queryByText('Rust one')).toBeNull());
     expect(screen.getByText('Rust two')).toBeTruthy();
   });
+  it('guided tour: offered on first run, steps through the real screen, Esc ends it and marks onboarding done', async () => {
+    serve(state({ settings: DEFAULT_SETTINGS }), (req) => (req.t === 'settings' ? { ...DEFAULT_SETTINGS, ...(req.patch as object) } : undefined));
+    render(<Dashboard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Take the tour' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Welcome to Tab Organizer' });
+    expect(within(dialog).getByText(/1 of \d+/)).toBeTruthy();
+    expect((within(dialog).getByRole('button', { name: 'Back' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(document.activeElement && dialog.contains(document.activeElement)).toBe(true); // focus moves into the tour
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Next' }));
+    const groups = await screen.findByRole('dialog', { name: 'Your groups' });
+    expect(document.querySelector('.tour-spot')).toBeTruthy(); // the real group list is highlighted
+    fireEvent.keyDown(groups, { key: 'ArrowRight' });
+    await screen.findByRole('dialog', { name: 'All tabs' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowLeft' });
+    await screen.findByRole('dialog', { name: 'Your groups' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(sent('settings')).toContainEqual({ t: 'settings', patch: { onboarded: true } }));
+  });
+  it('guided tour: every step points at exactly one element on the page', async () => {
+    const { TOUR_STEPS } = await import('../../src/ui/dashboard/Tour');
+    serve(state());
+    render(<Dashboard />);
+    await screen.findByText('Title i1');
+    for (const s of TOUR_STEPS.filter((x) => x.target)) {
+      expect(document.querySelectorAll(s.target!).length, s.target).toBe(1);
+    }
+  });
+  it('guided tour: the ? button restarts it any time, and the last step says Done', async () => {
+    serve(state());
+    render(<Dashboard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Guided tour' }));
+    await screen.findByRole('dialog', { name: 'Welcome to Tab Organizer' });
+    for (let k = 0; k < 40 && !screen.queryByRole('button', { name: 'Done' }); k++) {
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
   it('import refuses files over 20 MB before reading them', async () => {
     location.hash = '#view=settings';
     serve(state(), (req) => (req.t === 'import' ? { added: 2, skipped: 1 } : undefined));

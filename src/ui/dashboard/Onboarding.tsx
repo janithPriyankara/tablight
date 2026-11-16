@@ -10,7 +10,7 @@ function useUnpinned(): boolean {
   return unpinned;
 }
 /** First run (settings.onboarded false): privacy in three lines, and an offer to turn on auto-sleep. */
-export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDone: () => void }) {
+export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDone: () => void; onTour?: () => void }) {
   const unpinned = useUnpinned();
   return (
     <section class="card onboarding" aria-labelledby="onboarding-h">
@@ -29,7 +29,10 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
           )}
         </ul>
         <div class="card-actions">
-          <button type="button" class="btn btn-sm btn-primary" disabled={props.busy} onClick={props.onAutoSleep}>
+          {props.onTour && (
+            <button type="button" class="btn btn-sm btn-primary" disabled={props.busy} onClick={props.onTour}>Take the tour</button>
+          )}
+          <button type="button" class="btn btn-sm" disabled={props.busy} onClick={props.onAutoSleep}>
             <PauseIcon />Auto-pause tabs unused for 1 hour
           </button>
           <button type="button" class="btn btn-sm" disabled={props.busy} onClick={props.onDone}>Got it</button>

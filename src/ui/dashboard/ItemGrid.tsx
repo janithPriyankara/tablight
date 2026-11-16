@@ -185,6 +185,7 @@ export function ItemGrid(props: ItemGridProps) {
         rowProps={{
           class: 'grid-row',
           'data-index': i,
+          ...(i === 0 ? { 'data-tour': 'row' } : {}),
           draggable: true,
           onDragStart: (e: DragEvent) => props.onDragStart(item, e),
           onDragEnd: () => props.onDragEnd(),
