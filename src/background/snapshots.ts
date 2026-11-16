@@ -14,8 +14,11 @@ export const OPEN_ALL_CONFIRM_ABOVE = 20;
 export const RESTORED_THRESHOLD = 0.3;
 /** chrome.storage.session: `{ snapshotId: string | null }` written by the startup check, read by the dashboard. */
 export const LAST_SESSION_KEY = 'lastSession';
-/** chrome.storage.session: set on browser startup until the startup check finished (survives worker restarts). */
-export const STARTUP_PENDING_KEY = 'startupPending';
+/** chrome.storage.session: set once this browser session's startup check finished (or was given up). */
+export const STARTUP_DONE_KEY = 'startupCheckDone';
+/** chrome.storage.session: how many times the startup check was started this browser session. */
+export const STARTUP_ATTEMPTS_KEY = 'startupCheckAttempts';
+export const MAX_STARTUP_ATTEMPTS = 3;
 export interface SessionSummary { id: string; takenAt: number; windows: number; tabs: number }
 const tabUrl = (t: chrome.tabs.Tab) => t.url || t.pendingUrl || '';
 /** Same ordered normalized URLs per window → same session. */
@@ -81,15 +84,17 @@ async function stashAll(db: Db, snapshot: Snapshot): Promise<void> {
   await db.tx(['items', 'queue'], async (s) => {
     for (const [normUrl, t] of pages) {
       const id = ids.get(normUrl)!;
+      const prev = await s.items.get(id);
+      // The snapshot carries no group info: an existing record keeps its group and source as they are.
       const item: Item = {
-        id, url: t.url, normUrl, title: t.title, domain: domainOf(t.url), state: 'stashed', groupId: null,
-        groupSource: 'auto', kind: kindOf(t.url), createdAt: now, lastActiveAt: snapshot.takenAt, updatedAt: now,
+        id, url: t.url, normUrl, title: t.title, domain: domainOf(t.url), state: 'stashed',
+        groupId: prev?.groupId ?? null, groupSource: prev?.groupSource ?? 'auto', kind: kindOf(t.url),
+        createdAt: now, lastActiveAt: Math.max(prev?.lastActiveAt ?? 0, snapshot.takenAt), updatedAt: now,
         classifiable: true,
       };
-      const prev = await s.items.get(id);
-      await s.items.put(stashRecord(item, prev, id, now));
-      // A page that already has a group keeps it; everything else is classified later.
-      if (!prev || prev.groupId === null) await s.queue.add(id);
+      const rec = stashRecord(item, prev, id, now);
+      await s.items.put(rec);
+      if (rec.groupId === null) await s.queue.add(id); // classified later
     }
   });
 }
@@ -119,12 +124,22 @@ export interface StartupCheckOptions {
   /** The open pages must be unchanged for this many consecutive polls. */
   stableRuns?: number;
 }
-/**
- * Browser startup: wait until the tabs the browser restores (a few seconds after onStartup, in bursts)
- * stopped changing, compare them with the previous session's snapshot, record the verdict for the
- * dashboard, and only then snapshot the new session. Clears STARTUP_PENDING_KEY when done.
- */
-export async function runStartupCheck(db: Db, opts: StartupCheckOptions = {}): Promise<void> {
+async function sessionGet<T>(key: string): Promise<T | undefined> {
+  try {
+    return (await chrome.storage.session.get(key))[key] as T | undefined;
+  } catch {
+    return undefined;
+  }
+}
+/** True once this browser session's startup check ran (the hourly snapshot waits for it). */
+export async function startupCheckDone(): Promise<boolean> {
+  return Boolean(await sessionGet(STARTUP_DONE_KEY));
+}
+/** A check was started this browser session but never finished (the worker was killed): resume it. */
+export async function startupCheckInterrupted(): Promise<boolean> {
+  return !(await startupCheckDone()) && ((await sessionGet<number>(STARTUP_ATTEMPTS_KEY)) ?? 0) > 0;
+}
+async function compareThenSnapshot(db: Db, opts: StartupCheckOptions): Promise<void> {
   const { intervalMs = 2000, maxMs = 20_000, stableRuns = 2 } = opts;
   const started = Date.now();
   let last = '';
@@ -143,12 +158,24 @@ export async function runStartupCheck(db: Db, opts: StartupCheckOptions = {}): P
   const missing = await lastSessionMissing(db, open);
   await chrome.storage.session.set({ [LAST_SESSION_KEY]: { snapshotId: missing?.id ?? null } });
   await takeSnapshot(db, Date.now());
-  await chrome.storage.session.remove(STARTUP_PENDING_KEY);
 }
-export async function startupPending(): Promise<boolean> {
+/**
+ * Once per browser session (storage.session is cleared on restart): wait until the tabs the browser
+ * restores (a few seconds after onStartup, in bursts) stopped changing, compare them with the previous
+ * session's snapshot, record the verdict for the dashboard, and only then snapshot the new session.
+ * Sets STARTUP_DONE_KEY on success. A failure rethrows (callers retry) until MAX_STARTUP_ATTEMPTS, then
+ * the check is given up: lastSession = null and the marker is set so periodic snapshots resume.
+ */
+export async function runStartupCheck(db: Db, opts: StartupCheckOptions = {}): Promise<void> {
+  if (await startupCheckDone()) return;
+  const attempts = ((await sessionGet<number>(STARTUP_ATTEMPTS_KEY)) ?? 0) + 1;
+  await chrome.storage.session.set({ [STARTUP_ATTEMPTS_KEY]: attempts });
   try {
-    return Boolean((await chrome.storage.session.get(STARTUP_PENDING_KEY))[STARTUP_PENDING_KEY]);
-  } catch {
-    return false;
+    await compareThenSnapshot(db, opts);
+  } catch (e) {
+    if (attempts < MAX_STARTUP_ATTEMPTS) throw e;
+    console.error('startup check given up', e);
+    await chrome.storage.session.set({ [LAST_SESSION_KEY]: { snapshotId: null } });
   }
+  await chrome.storage.session.set({ [STARTUP_DONE_KEY]: true });
 }

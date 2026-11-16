@@ -64,6 +64,7 @@ describe('session rpc handlers', () => {
       { t: 'sessionAction', id: snap.data.id, action: 'openAll', confirm: 'yes' },
       { t: 'sessionAction', id: 'missing', action: 'delete' },
     ]) expect(await mock.sendMessage(m)).toMatchObject({ ok: false });
+    await chrome.storage.session.set({ startupCheckDone: true });
     mock.addTab({ url: 'https://b.com/' });
     mock.fireAlarm('snapshot');
     const db = await bg.getDb();
@@ -72,19 +73,37 @@ describe('session rpc handlers', () => {
     expect(await db.snapshots.all()).toHaveLength(1);
     mock.uninstall();
   });
-  it('on startup compares with the last snapshot before taking a new one', async () => {
+  it('snapshotNow with no web tab returns null and stores nothing', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'chrome://newtab/' }] }] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    for (const s of await db.snapshots.all()) await db.snapshots.delete(s.id);
+    expect(await mock.sendMessage({ t: 'snapshotNow' })).toEqual({ ok: true, data: null });
+    expect(await db.snapshots.all()).toEqual([]);
+    mock.uninstall();
+  });
+  it('an alarm before onStartup does not overwrite the previous session; the startup check runs first', async () => {
     const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://fresh.com/' }] }] });
     const bg = await import('../../src/background/index');
     const db = await bg.getDb();
     for (const s of await db.snapshots.all()) await db.snapshots.delete(s.id); // the db outlives each test
     const tabs = Array.from({ length: 10 }, (_, i) => ({ url: `https://old${i}.com/`, title: 'o' }));
     await db.snapshots.put({ id: 'old', takenAt: 1, windows: [{ tabs }] });
-    mock.fireStartup();
+    await new Promise((r) => setTimeout(r, 0));
+    mock.fireAlarm('snapshot'); // e.g. a missed alarm firing as the worker starts
+    await new Promise((r) => setTimeout(r, 100));
+    expect((await db.snapshots.all()).map((s) => s.id)).toEqual(['old']);
+    expect((await chrome.storage.session.get('startupCheckDone')).startupCheckDone).toBeUndefined();
+    mock.fireStartup(); // joins the check already running
     await vi.waitFor(async () => {
       expect((await chrome.storage.session.get('lastSession')).lastSession).toEqual({ snapshotId: 'old' });
       expect(await db.snapshots.all()).toHaveLength(2);
     }, { timeout: 10_000 });
-    expect((await chrome.storage.session.get('startupPending')).startupPending).toBeUndefined();
+    expect((await chrome.storage.session.get('startupCheckDone')).startupCheckDone).toBe(true);
+    // With the marker set the alarm snapshots as usual.
+    mock.addTab({ url: 'https://later.com/' });
+    mock.fireAlarm('snapshot');
+    await vi.waitFor(async () => expect(await db.snapshots.all()).toHaveLength(3));
     mock.uninstall();
   }, 15_000);
 });

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
-  LAST_SESSION_KEY, STARTUP_PENDING_KEY, MAX_SNAPSHOTS, lastSessionMissing, listSessions,
+  LAST_SESSION_KEY, STARTUP_ATTEMPTS_KEY, STARTUP_DONE_KEY, MAX_SNAPSHOTS, startupCheckInterrupted, lastSessionMissing, listSessions,
   runStartupCheck, sessionAction, takeSnapshot,
 } from '../../src/background/snapshots';
 import { sha1hex } from '../../src/shared/hash';
@@ -90,6 +90,19 @@ describe('listSessions', () => {
   });
 });
 describe('sessionAction', () => {
+  it('stashAll keeps the auto group of an existing record and never lowers lastActiveAt', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [] }] });
+    const id = await sha1hex('https://a.com/');
+    await db.items.put({
+      id, url: 'https://a.com/', normUrl: 'https://a.com/', title: 'Mine', domain: 'a.com', state: 'stashed',
+      groupId: 'g1', groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 9000, stashedAt: 1, updatedAt: 1,
+      classifiable: true,
+    });
+    await db.snapshots.put(snap('s', 5, ['https://a.com/']));
+    await sessionAction(db, 's', 'stashAll');
+    expect(await db.items.get(id)).toMatchObject({ groupId: 'g1', groupSource: 'auto', lastActiveAt: 9000 });
+    expect(await db.queue.size()).toBe(0);
+  });
   it('stashAll twice does not duplicate items; records use the stash id and are queued', async () => {
     mock = installChromeMock({ windows: [{ tabs: [] }] });
     await db.snapshots.put({ id: 's', takenAt: 5, windows: [
@@ -148,24 +161,58 @@ describe('sessionAction', () => {
   });
 });
 describe('runStartupCheck', () => {
-  const fast = { intervalMs: 1, maxMs: 200 };
+  const session = async (k: string) => (await chrome.storage.session.get(k))[k];
+  afterEach(() => vi.useRealTimers());
   it('waits for restored tabs to settle, compares against the old snapshot, then snapshots', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] });
     mock = installChromeMock({ windows: [{ tabs: [{ url: 'chrome://newtab/' }] }] });
-    const old = snap('old', 1, urls(10));
-    await db.snapshots.put(old);
-    await chrome.storage.session.set({ [STARTUP_PENDING_KEY]: true });
+    await db.snapshots.put(snap('old', 1, urls(10)));
     // The browser restores the previous session's tabs a little after the check starts.
-    setTimeout(() => urls(10).forEach((url) => mock!.addTab({ url })), 20);
-    await runStartupCheck(db, { intervalMs: 5, maxMs: 2000, stableRuns: 3 });
-    expect((await chrome.storage.session.get(LAST_SESSION_KEY))[LAST_SESSION_KEY]).toEqual({ snapshotId: null });
+    setTimeout(() => urls(10).forEach((url) => mock!.addTab({ url })), 3000);
+    const done = runStartupCheck(db);
+    await vi.advanceTimersByTimeAsync(30_000);
+    await done;
+    expect(await session(LAST_SESSION_KEY)).toEqual({ snapshotId: null });
     expect(await db.snapshots.all()).toHaveLength(1); // identical to the old one: not duplicated
-    expect((await chrome.storage.session.get(STARTUP_PENDING_KEY))[STARTUP_PENDING_KEY]).toBeUndefined();
+    expect(await session(STARTUP_DONE_KEY)).toBe(true);
   });
   it('records the snapshot id when the windows were not restored, then takes the startup snapshot', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] });
     mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://fresh.com/' }] }] });
     await db.snapshots.put(snap('old', 1, urls(10)));
-    await runStartupCheck(db, fast);
-    expect((await chrome.storage.session.get(LAST_SESSION_KEY))[LAST_SESSION_KEY]).toEqual({ snapshotId: 'old' });
+    const done = runStartupCheck(db);
+    await vi.advanceTimersByTimeAsync(30_000);
+    await done;
+    expect(await session(LAST_SESSION_KEY)).toEqual({ snapshotId: 'old' });
     expect(await db.snapshots.all()).toHaveLength(2);
+    // Done for this browser session: a second run does nothing.
+    await runStartupCheck(db);
+    expect(await db.snapshots.all()).toHaveLength(2);
+  });
+  it('retries a failing check, then gives up after 3 attempts so snapshots can resume', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://fresh.com/' }] }] });
+    await db.snapshots.put(snap('old', 1, urls(10)));
+    vi.spyOn(chrome.tabs, 'query').mockRejectedValue(new Error('boom'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await expect(runStartupCheck(db)).rejects.toThrow('boom');
+    expect(await startupCheckInterrupted()).toBe(true); // a restarted worker resumes it
+    await expect(runStartupCheck(db)).rejects.toThrow('boom');
+    await runStartupCheck(db); // third attempt: given up
+    expect(await session(STARTUP_ATTEMPTS_KEY)).toBe(3);
+    expect(await session(STARTUP_DONE_KEY)).toBe(true);
+    expect(await session(LAST_SESSION_KEY)).toEqual({ snapshotId: null });
+    expect(await startupCheckInterrupted()).toBe(false);
+  });
+  it('a resumed check after a worker restart completes normally', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] });
+    mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://fresh.com/' }] }] });
+    await db.snapshots.put(snap('old', 1, urls(10)));
+    await chrome.storage.session.set({ [STARTUP_ATTEMPTS_KEY]: 1 }); // a killed worker's earlier attempt
+    expect(await startupCheckInterrupted()).toBe(true);
+    const done = runStartupCheck(db);
+    await vi.advanceTimersByTimeAsync(30_000);
+    await done;
+    expect(await session(LAST_SESSION_KEY)).toEqual({ snapshotId: 'old' });
+    expect(await session(STARTUP_DONE_KEY)).toBe(true);
   });
 });

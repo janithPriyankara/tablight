@@ -11,8 +11,8 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import {
-  SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, STARTUP_PENDING_KEY, listSessions, runStartupCheck, sessionAction,
-  startupPending, takeSnapshot,
+  SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
+  startupCheckInterrupted, takeSnapshot,
 } from './snapshots';
 import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from './memory';
 import {
@@ -108,7 +108,10 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'undo': out = await undo(db, parseId(req.token)); break;
     case 'regroupPreview': return regroupPreview(db);
     case 'sessions': return listSessions(db);
-    case 'snapshotNow': return takeSnapshot(db, Date.now());
+    case 'snapshotNow': {
+      const snap = await takeSnapshot(db, Date.now());
+      return snap.windows.length ? snap : null; // null: no web tab to snapshot
+    }
     case 'sessionAction': {
       const { action, confirm } = req;
       if (action !== 'openAll' && action !== 'stashAll' && action !== 'delete') throw new Error('invalid action');
@@ -149,8 +152,8 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KICK_ALARM) void flushTabEvents();
   if (alarm.name === SNAPSHOT_ALARM) {
-    void startupPending()
-      .then((pending) => (pending ? undefined : getDb().then((db) => takeSnapshot(db, Date.now()))))
+    void startupCheckDone()
+      .then((done) => (done ? getDb().then((db) => takeSnapshot(db, Date.now())).then(() => undefined) : startupCheck()))
       .catch((e: unknown) => console.error('snapshot failed', e));
   }
   if (alarm.name === AUTO_SLEEP_ALARM) {
@@ -165,9 +168,10 @@ void chrome.alarms
   .then((a) => (a ? undefined : chrome.alarms.create(AUTO_SLEEP_ALARM, { periodInMinutes: 5 })))
   .catch((e: unknown) => console.error('auto-sleep alarm failed', e));
 /**
- * Startup: reconcile now, then compare the restored tabs with the last snapshot once they settled
- * (runStartupCheck) and only then snapshot. The pending flag lives in session storage so a worker
- * restart in the middle resumes the check, and the hourly snapshot waits for it.
+ * Once per browser session (the marker lives in session storage): compare the restored tabs with the
+ * last snapshot once they settled, then snapshot. It runs from onStartup, from a snapshot alarm that
+ * fires before it (a missed alarm), and again when the worker was killed mid-check, so nothing can
+ * snapshot a half-restored browser first.
  */
 let checking: Promise<void> | undefined;
 function startupCheck(): void {
@@ -180,12 +184,9 @@ function startupCheck(): void {
 }
 chrome.runtime.onStartup.addListener(() => {
   void flushTabEvents();
-  void chrome.storage.session
-    .set({ [STARTUP_PENDING_KEY]: true })
-    .catch(() => undefined)
-    .then(startupCheck);
+  startupCheck();
 });
-void startupPending().then((pending) => (pending ? startupCheck() : undefined));
+void startupCheckInterrupted().then((interrupted) => (interrupted ? startupCheck() : undefined));
 void chrome.alarms
   .get(SNAPSHOT_ALARM)
   .then((a) => (a ? undefined : chrome.alarms.create(SNAPSHOT_ALARM, { periodInMinutes: SNAPSHOT_PERIOD_MINUTES })))
