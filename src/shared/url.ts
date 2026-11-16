@@ -85,6 +85,10 @@ const BLANK_TABS = new Set(['', 'about:blank', 'about:newtab', 'chrome://newtab/
  * Tabs not worth listing: this extension's own pages (`ownOrigin` is chrome.runtime.getURL('')) and blank
  * new tabs. Other browser pages (settings, files, other extensions) are still the user's tabs and stay.
  */
+/** An empty new-tab page (or a tab that hasn't loaded anything yet). */
+export function isBlankTab(url: string): boolean {
+  return BLANK_TABS.has(url);
+}
 export function isClutterTab(url: string, ownOrigin: string): boolean {
   return BLANK_TABS.has(url) || (ownOrigin !== '' && url.startsWith(ownOrigin));
 }

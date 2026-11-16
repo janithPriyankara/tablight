@@ -12,7 +12,7 @@ import {
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { openDashboard } from '../shared/nav';
-import { isClutterTab } from '../shared/url';
+import { isBlankTab, isClutterTab } from '../shared/url';
 import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
 import { HEAD } from '../classify/head';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
@@ -438,13 +438,35 @@ void getDb()
   .then((db) => db.settings.get())
   .then((s) => applyToolbar(s.toolbarOpens))
   .catch((e: unknown) => console.error('toolbar setup failed', e));
-chrome.tabs.onCreated.addListener(() => onTabEvent());
-chrome.tabs.onUpdated.addListener((_id, info) => {
+/**
+ * The side panel is window-wide, so once open it would sit beside every tab, including an empty new tab, where a
+ * list of tabs and groups is only clutter. It is turned off for empty new-tab pages and back on once the tab goes
+ * somewhere; Chrome hides and shows the open panel accordingly.
+ */
+const panelOn = new Map<number, boolean>();
+function syncPanel(tab: chrome.tabs.Tab | undefined): void {
+  if (tab?.id === undefined || typeof chrome.sidePanel?.setOptions !== 'function') return;
+  const enabled = !isBlankTab(tab.url || tab.pendingUrl || '');
+  if (panelOn.get(tab.id) === enabled) return;
+  panelOn.set(tab.id, enabled);
+  chrome.sidePanel.setOptions({ tabId: tab.id, enabled }).catch(() => panelOn.delete(tab.id!));
+}
+chrome.tabs.onCreated.addListener((tab) => {
+  onTabEvent();
+  syncPanel(tab);
+});
+chrome.tabs.onUpdated.addListener((_id, info, tab) => {
   // Favicon/audible/mute churn doesn't change the index.
   if (info.url !== undefined || info.title !== undefined || info.status !== undefined ||
       info.discarded !== undefined) onTabEvent();
+  if (info.url !== undefined) syncPanel(tab);
 });
-chrome.tabs.onRemoved.addListener(() => onTabEvent());
+// Tabs already open when the background starts (empty new tabs among them).
+void chrome.tabs.query({}).then((tabs) => tabs.forEach(syncPanel), () => undefined);
+chrome.tabs.onRemoved.addListener((tabId) => {
+  onTabEvent();
+  panelOn.delete(tabId);
+});
 chrome.tabs.onReplaced.addListener(() => onTabEvent());
 chrome.tabs.onActivated.addListener(({ tabId }) => {
   activated(tabId).catch(() => undefined);

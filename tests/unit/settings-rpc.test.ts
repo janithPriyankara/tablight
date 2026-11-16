@@ -125,6 +125,25 @@ describe('settings rpc', () => {
     expect(r.words.map((i) => i.url)).toEqual(['https://organizer-tips.example.com/']);
     mock.uninstall();
   });
+  it('the side panel hides itself on empty new-tab pages and comes back on real pages', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example.com/', title: 'A' }] }] });
+    await import('../../src/background/index');
+    const w = mock.windowIds()[0]!;
+    const blank = mock.addTab({ url: 'chrome://newtab/', title: 'New Tab', windowId: w });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mock.sidePanelEnabled(blank.id!)).toBe(false);
+    mock.updateTab(blank.id!, { url: 'https://b.example.com/', title: 'B' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mock.sidePanelEnabled(blank.id!)).toBe(true);
+    const edgeBlank = mock.addTab({ url: 'edge://newtab/', title: 'New tab', windowId: w });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mock.sidePanelEnabled(edgeBlank.id!)).toBe(false);
+    // Let the tab events' debounced index update and its "changed" broadcast finish before the next test.
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    await whenTabIndexIdle();
+    await new Promise((r) => setTimeout(r, 500));
+    mock.uninstall();
+  });
   it('broadcasts a debounced "changed" message to the UI after a mutation, not after reads', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

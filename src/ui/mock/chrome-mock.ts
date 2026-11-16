@@ -86,6 +86,8 @@ export interface ChromeMockControl {
   sendMessage(message: unknown, sender?: Partial<chrome.runtime.MessageSender>): Promise<unknown>;
   /** Window ids sidePanel.open() was called for, in order. */
   sidePanelOpenedIn(): number[];
+  /** Per-tab side panel enabled state set through sidePanel.setOptions (undefined = never set). */
+  sidePanelEnabled(tabId: number): boolean | undefined;
   /** Messages the extension sent with chrome.runtime.sendMessage (e.g. the worker's "changed" broadcasts). */
   broadcasts(): unknown[];
   /** Call counts of the tab-group APIs (to assert "never called"). */
@@ -181,6 +183,7 @@ export interface MockChrome {
     setPanelBehavior(b: { openPanelOnActionClick?: boolean }): Promise<void>;
     getPanelBehavior(): Promise<{ openPanelOnActionClick: boolean }>;
     open(o: { windowId?: number; tabId?: number }): Promise<void>;
+    setOptions(o: { tabId?: number; enabled?: boolean; path?: string }): Promise<void>;
   };
   commands: { onCommand: MockEvent<(command: string, tab?: Tab) => void> };
   alarms: {
@@ -214,6 +217,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   let popup = 'popup.html';
   let panelOnClick = false;
   const panelOpens: number[] = [];
+  const panelEnabled = new Map<number, boolean>();
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
   const session = new Map<string, unknown>();
@@ -395,6 +399,9 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         panelOpens.push(w);
         return Promise.resolve();
       },
+      async setOptions(o) {
+        if (o.tabId !== undefined && o.enabled !== undefined) panelEnabled.set(o.tabId, o.enabled);
+      },
     },
     commands: { onCommand: new MockEvent() },
     alarms: {
@@ -468,6 +475,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const control: ChromeMockControl = {
     chrome: mock,
     sidePanelOpenedIn: () => [...panelOpens],
+    sidePanelEnabled: (tabId) => panelEnabled.get(tabId),
     tabs: () => ordered().map(clone),
     windowIds: () => [...windows],
     addWindow,
