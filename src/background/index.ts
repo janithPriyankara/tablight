@@ -449,10 +449,18 @@ void chrome.alarms
   .get(SNAPSHOT_ALARM)
   .then((a) => (a ? undefined : chrome.alarms.create(SNAPSHOT_ALARM, { periodInMinutes: SNAPSHOT_PERIOD_MINUTES })))
   .catch((e: unknown) => console.error('snapshot alarm failed', e));
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  const fresh = reason === 'install';
+  // A fresh install shows the dashboard (its onboarding) at once instead of nothing.
+  if (fresh) openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
   void getDb()
     .then(ensureStarterGroups)
     .catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e))
     .then(() => flushTabEvents())
+    .then(async () => {
+      // The first snapshot, once the initial reconcile ran (else nothing exists until the hourly alarm).
+      if (fresh) await takeSnapshot(await getDb(), Date.now());
+    })
+    .catch((e: unknown) => console.error('first snapshot failed', e))
     .then(syncNow); // a fresh install picks up the stash from the user's other devices
 });

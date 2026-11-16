@@ -36,9 +36,14 @@ describe('background index', () => {
       expect((await db.groups.all()).length).toBeGreaterThan(10);
       expect(await db.queue.size()).toBe(0);
       const items = await db.items.all();
-      expect(items).toHaveLength(3);
+      expect(items).toHaveLength(4); // 3 tabs + the dashboard that a fresh install opens
       expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(2);
+      // The first snapshot is taken after the initial reconcile (web tabs only).
+      const snaps = await db.snapshots.all();
+      expect(snaps).toHaveLength(1);
+      expect(snaps[0]!.windows.flatMap((w) => w.tabs).map((t) => t.url)).toHaveLength(2);
     });
+    expect(mock.tabs().filter((t) => t.url === 'chrome-extension://mock-extension-id/dashboard.html')).toHaveLength(1);
     const [a, b, c] = mock.tabs();
     await vi.waitFor(() => expect(mock.badgeText(a!.id)).toBe('2×'));
     expect(mock.badgeText(b!.id)).toBe('2×');
@@ -218,7 +223,7 @@ describe('background index', () => {
     const bg = await import('../../src/background/index');
     const { whenTabIndexIdle } = await import('../../src/background/tab-index');
     const db = await bg.getDb();
-    mock.fireInstalled();
+    mock.fireInstalled('update'); // an update: no dashboard tab opens
     await vi.waitFor(async () => {
       await whenTabIndexIdle();
       expect(await db.queue.size()).toBe(0);
