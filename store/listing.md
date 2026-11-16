@@ -31,3 +31,7 @@ No host permissions, no content scripts, no remote code.
 - Encryption in transit: the extension transmits nothing itself; the optional sync of saved tabs and taught examples is carried by the browser's own sync service.
 - User-deletable data: yes. Settings → "Delete all data" deletes all data on the device and the synced copy of the saved tabs in the user's browser account, and turns sync off on that device (open tabs are not closed). Uninstalling removes the data on the device; turning sync off does NOT remove the synced copy (use "Delete all data" for that). Other devices keep their own copy until "Delete all data" is used there too.
 `https://<owner-github-username>.github.io/<repo>/privacy.html` (placeholder: the owner publishes `public/privacy.html` on their GitHub Pages site and replaces this).
+
+- Publisher: The Moonstone (Pvt) Ltd, Sanasuma, Wawlagala, Baddegama, Sri Lanka
+- Contact / support email: priyankarajanith71@gmail.com
+- Homepage, privacy policy, terms and support URLs: the published copies of `release/site/` (see SUBMIT.md step 1)

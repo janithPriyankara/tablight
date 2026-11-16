@@ -14,21 +14,24 @@ Everything to upload is in this repo:
 
 Rebuild the zip after any change: `npm run build && npm run package`.
 
-## 1. Host the privacy policy (both stores require a URL)
-
-The source repo is private, so publish only the policy:
-
-1. Create a new **public** GitHub repo, e.g. `tablight-privacy`.
-2. Add `public/privacy.html` to it as `index.html`.
+## 1. Publish the information pages (both stores need public links)
+The extension ships About, Privacy, Terms, Support and Licences pages. The stores also need them at public URLs.
+1. Run `npm run site`. It writes `release/site/` (About becomes `index.html`).
+2. Create a new **public** GitHub repo, e.g. `tablight` or `tablight-site`, and upload the contents of `release/site/`.
 3. Settings → Pages → Deploy from branch `main`, folder `/ (root)`.
-4. The URL is `https://<your-username>.github.io/tablight-privacy/`. Use it in both stores.
-
+4. Your links (replace `<user>`):
+   - Homepage: `https://<user>.github.io/tablight/`
+   - Privacy policy: `https://<user>.github.io/tablight/privacy.html`
+   - Terms: `https://<user>.github.io/tablight/terms.html`
+   - Support: `https://<user>.github.io/tablight/support.html`
+5. When www.themoonstonelk.com is live again, the same files can be hosted there instead.
+Contact email for both stores: priyankarajanith71@gmail.com (consider a dedicated address such as support@ your domain once it exists).
 ## 2. Microsoft Edge Add-ons (free)
 
 1. Register at Partner Center: https://partner.microsoft.com/dashboard/microsoftedge/overview (individual account, no fee).
 2. **Create new extension** → upload `release/tablight-1.0.0.zip`.
 3. **Availability:** Public, or Hidden to test with a link first. Markets: all.
-4. **Properties:** category *Productivity*; privacy policy URL from step 1; "Does it access personal information?" Yes (tab titles and addresses), processed on device.
+4. **Properties:** category *Productivity*; privacy policy URL, website (homepage) and support URL from step 1; support contact email; "Does it access personal information?" Yes (tab titles and addresses), processed on device.
 5. **Store listing (English):** description and short description from `store/listing.md`; logo `logo-300x300.png`; small tile `promo-small-440x280.png`; screenshots 1–5.
 6. **Submit.** Review usually takes up to 7 working days.
 
@@ -38,7 +41,7 @@ The source repo is private, so publish only the policy:
    - Declare **trader / non-trader** status. A free personal project is normally *non-trader*; a trader's name and contact details are shown publicly.
    - Turn on 2-step verification for this Google account first.
 2. **New item** → upload the same zip.
-3. **Store listing:** description, category *Productivity → Workflow & Planning*, language English; icon comes from the zip; screenshots 1–5; small promo tile; marquee tile (optional).
+3. **Store listing:** description, category *Productivity → Workflow & Planning*, language English; homepage URL and support URL from step 1; icon comes from the zip; screenshots 1–5; small promo tile; marquee tile (optional).
 4. **Privacy practices:**
    - Single purpose: the "Single purpose" line in `store/listing.md`.
    - Permission justifications: the table in `store/listing.md`, one per permission.

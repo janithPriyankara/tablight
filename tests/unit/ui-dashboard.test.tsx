@@ -331,6 +331,19 @@ describe('dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show all' }));
     await screen.findByText('Seen already');
   });
+  it('Settings → About links to every information page, opening in a new tab', async () => {
+    location.hash = '#view=settings';
+    serve(state());
+    render(<Dashboard />);
+    const about = await screen.findByRole('region', { name: 'About' });
+    const links = within(about).getAllByRole('link').map((a) => [a.textContent, a.getAttribute('href'), a.getAttribute('target'), a.getAttribute('rel')]);
+    expect(links).toEqual([
+      ['About Tablight', 'about.html', '_blank', 'noopener'], ['Help and support', 'support.html', '_blank', 'noopener'],
+      ['Privacy policy', 'privacy.html', '_blank', 'noopener'], ['Terms of use', 'terms.html', '_blank', 'noopener'],
+      ['Open-source licences', 'licenses.html', '_blank', 'noopener'],
+    ]);
+    expect(about.textContent).toContain('The Moonstone (Pvt) Ltd');
+  });
   it('import refuses files over 20 MB before reading them', async () => {
     location.hash = '#view=settings';
     serve(state(), (req) => (req.t === 'import' ? { added: 2, skipped: 1 } : undefined));

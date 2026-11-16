@@ -12,6 +12,12 @@ const AUTO_SLEEP_CHOICES: { value: number | null; label: string }[] = [
   { value: 60, label: '1 hour' }, { value: 120, label: '2 hours' }, { value: 240, label: '4 hours' },
   { value: 480, label: '8 hours' }, { value: 1440, label: '1 day' },
 ];
+/** The installed version (empty outside the extension, e.g. in tests). */
+const VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.().version) || '';
+const ABOUT_LINKS: [string, string][] = [
+  ['about.html', 'About Tablight'], ['support.html', 'Help and support'], ['privacy.html', 'Privacy policy'],
+  ['terms.html', 'Terms of use'], ['licenses.html', 'Open-source licences'],
+];
 const TOOLBAR: { value: SettingsT['toolbarOpens']; label: string }[] = [
   { value: 'popup', label: 'Popup' }, { value: 'sidepanel', label: 'Side panel' },
 ];
@@ -274,6 +280,18 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
               <TrashIcon />Delete all data
             </button>
           </div>
+        </section>
+        <section class="settings-group" aria-labelledby="set-about-h">
+          <h2 class="settings-h" id="set-about-h">About</h2>
+          <p class="about-line">
+            <span class="about-name">Tablight {VERSION}</span>
+            <span class="muted">Made by The Moonstone (Pvt) Ltd, Sri Lanka.</span>
+          </p>
+          <ul class="about-links">
+            {ABOUT_LINKS.map(([href, label]) => (
+              <li key={href}><a class="link" href={href} target="_blank" rel="noopener">{label}</a></li>
+            ))}
+          </ul>
         </section>
       </form>
     </div>

@@ -6,7 +6,9 @@
   "scripts": {
     "train:head": "node scripts/train-head.mjs",
     "prepare:assets": "node scripts/fetch-model.mjs && node scripts/copy-ort.mjs",
-    "build": "vite build",
+    "build": "node scripts/third-party-notices.mjs && vite build",
+    "notices": "node scripts/third-party-notices.mjs",
+    "site": "node scripts/third-party-notices.mjs && node scripts/build-site.mjs",
     "test": "vitest run tests/unit",
     "test:quality": "vitest run tests/quality --reporter=verbose",
     "test:e2e": "playwright test",
