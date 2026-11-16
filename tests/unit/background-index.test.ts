@@ -87,4 +87,39 @@ describe('background index', () => {
     expect(set).toHaveBeenCalledTimes(2);
     mock.uninstall();
   });
+  it('import enqueues items and kicks classification; search RPC finds words and meaning', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const { embed } = await import('../../src/background/embedder');
+    const db = await bg.getDb();
+    const json = JSON.stringify({
+      format: 'tab-organizer', version: 1, exportedAt: 1, groups: [], snapshots: [],
+      items: [
+        { url: 'https://stackoverflow.com/questions/1/x', title: 'Agent SDK question' },
+        { url: 'https://example.org/pasta', title: 'Cooking pasta' },
+      ],
+    });
+    const added = await bg.handleRequest({ t: 'import', json });
+    expect(added).toMatchObject({ added: 2 });
+    await vi.waitFor(async () => {
+      expect(await db.queue.size()).toBe(0);
+      const so = (await db.items.all()).find((i) => i.domain === 'stackoverflow.com');
+      expect(so?.groupId).toBe('programming'); // classified by the kicked pipeline, not left waiting
+    });
+    const none = { words: [], meaning: [] };
+    expect(await bg.handleRequest({ t: 'search', q: '   ', semantic: true })).toEqual(none);
+    await expect(bg.handleRequest({ t: 'search', q: 'x'.repeat(201), semantic: false })).rejects.toThrow();
+    const r = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as { words: { title: string }[]; meaning: { title: string }[] };
+    expect(r.words.map((i) => i.title)).toEqual(['Agent SDK question']);
+    // Every cached vector is identical to the mocked query vector, so the other item matches by meaning only.
+    const meaning = r.meaning.map((i) => i.title);
+    expect(meaning).toContain('Cooking pasta');
+    expect(meaning).not.toContain('Agent SDK question'); // already a word match
+    expect((await bg.handleRequest({ t: 'search', q: 'agnet', semantic: false }) as typeof r).meaning).toEqual([]);
+    vi.mocked(embed).mockRejectedValueOnce(new Error('offline'));
+    const failed = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as typeof r;
+    expect(failed.words).toHaveLength(1);
+    expect(failed.meaning).toEqual([]);
+    mock.uninstall();
+  });
 });

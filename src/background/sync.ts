@@ -39,9 +39,14 @@ const ID_RE = /^[0-9a-f]{40}$/;
 
 type Failure = Extract<SyncStatus, { ok: false }>['reason'];
 
-let hooks: { ready?: (db: Db) => Promise<void> } = {};
+interface SyncHooks {
+  ready?: (db: Db) => Promise<void>;
+  /** Called after a pass applied remote changes (index.ts: kick classification for the queued items). */
+  applied?: (db: Db) => void;
+}
+let hooks: SyncHooks = {};
 /** `ready` runs before each sync (index.ts: seed the starter groups first, so names match them). */
-export function configureSync(h: { ready?: (db: Db) => Promise<void> }): void {
+export function configureSync(h: SyncHooks): void {
   hooks = h;
 }
 
@@ -294,6 +299,7 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
     const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
     const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
     await apply(db, m);
+    if (m.upserts.length) hooks.applied?.(db);
     const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
     // Before the write: an item opened right after it is pushed must already count as synced.
     await rememberSynced(db, remote, enc.included, m.tombs);

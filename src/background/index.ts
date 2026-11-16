@@ -10,6 +10,8 @@ import {
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
+import { semanticSearch, wordSearch } from '../search/search';
+import type { Item } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
   SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
@@ -22,6 +24,7 @@ import {
 import {
   KICK_ALARM,
   configureTabIndex,
+  embeddingKey,
   flushTabEvents,
   maybeSuggest,
   onTabEvent,
@@ -80,6 +83,50 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
   }
 }
 
+/**
+ * Import, stash-all and sync pulls enqueue items without a tab reconcile, so nothing else would run the
+ * classifier for them. Runs the normal pipeline (processQueue is re-entrancy safe) when work is queued.
+ * Never rejects.
+ */
+export async function kickClassification(db: Db): Promise<void> {
+  try {
+    if ((await db.queue.size()) === 0) return;
+    await pipeline(db, { created: 0, deleted: 0, enqueued: 0, navigatedTabIds: [] });
+  } catch (e) {
+    console.error('classification kick failed', e);
+  }
+}
+const MAX_QUERY = 200;
+/** Cap on items compared by meaning (same bound as the word search). */
+const MAX_SEMANTIC_ITEMS = 5_000;
+/** `search` RPC: word matches always, plus (when asked) matches by meaning that aren't already word matches. */
+async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ words: Item[]; meaning: Item[] }> {
+  if (typeof req.q !== 'string' || req.q.length > MAX_QUERY) throw new Error('invalid query');
+  if (typeof req.semantic !== 'boolean') throw new Error('invalid semantic flag');
+  const q = req.q.trim();
+  if (!q) return { words: [], meaning: [] };
+  const items = await db.items.all();
+  const words = wordSearch(items, await db.groups.all(), q);
+  if (!req.semantic) return { words, meaning: [] };
+  try {
+    const [qVec] = await embed([q]);
+    if (!qVec) return { words, meaning: [] };
+    const seen = new Set(words.map((i) => i.id));
+    const recent = items
+      .filter((i) => i.classifiable && !seen.has(i.id))
+      .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
+      .slice(0, MAX_SEMANTIC_ITEMS);
+    const withVec: { item: Item; vec: Float32Array }[] = [];
+    for (const item of recent) {
+      const vec = await db.embeddings.get(await embeddingKey(item));
+      if (vec) withVec.push({ item, vec });
+    }
+    return { words, meaning: semanticSearch(qVec, withVec) };
+  } catch (e) {
+    console.error('semantic search failed', e);
+    return { words, meaning: [] };
+  }
+}
 /** Activation/focus: a light path (lastActiveAt + that tab's badge), never a full reconcile. */
 async function activated(tabId: number): Promise<void> {
   const db = await getDb();
@@ -133,6 +180,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
       out = await sessionAction(db, parseId(req.id), action, confirm === true);
       break;
     }
+    case 'search': return search(db, req);
     case 'regroupApply': out = await regroupApply(db); break;
     case 'export': return exportJson(db);
     case 'import': {
@@ -146,12 +194,13 @@ export async function handleRequest(req: Req): Promise<unknown> {
     default: throw new Error(`unsupported request: ${req.t}`);
   }
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
+  if (req.t === 'import' || req.t === 'sessionAction') void kickClassification(db);
   await mirrorAll(db);
   return out;
 }
 configureTabIndex({ db: getDb, after: pipeline });
 // Remote group names must match the built-in groups, so they are seeded before any sync.
-configureSync({ ready: ensureStarterGroups });
+configureSync({ ready: ensureStarterGroups, applied: (db) => void kickClassification(db) });
 
 handle((req) => handleRequest(req), 'background');
 
