@@ -102,6 +102,7 @@ export function stashRecord(item: Item, prev: Item | undefined, stashId: string,
     domain: item.domain, state: 'stashed', createdAt: prev?.createdAt ?? item.createdAt,
     lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: nextStamp(prev?.updatedAt, now),
     classifiable: item.classifiable,
+    ...(item.embKey ?? prev?.embKey ? { embKey: (item.embKey ?? prev?.embKey)! } : {}),
   };
 }
 /**

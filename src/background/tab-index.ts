@@ -208,6 +208,7 @@ export async function touchTab(db: Db, tabId: number, now = Date.now()): Promise
 export async function sweepEmbeddings(db: Db): Promise<number> {
   const items = await db.items.all();
   const used = new Set(await Promise.all(items.filter((i) => i.classifiable).map(embeddingKey)));
+  for (const i of items) if (i.embKey !== undefined) used.add(i.embKey); // search reads vectors by embKey
   const stale = (await db.embeddings.keys()).filter((k) => !used.has(k));
   if (!stale.length) return 0;
   await db.tx(['embeddings'], async (s) => {
@@ -216,6 +217,33 @@ export async function sweepEmbeddings(db: Db): Promise<number> {
   return stale.length;
 }
 
+/** At most this many items are examined per backfill pass. */
+export const BACKFILL_LIMIT = 200;
+/**
+ * Safety net for items that have no `embKey` (created by stash/import/sync paths that build fresh
+ * records): sets it when the cached vector exists, else queues the item so classification embeds it.
+ * Bounded per call; returns how many items were queued.
+ */
+export async function backfillEmbKeys(db: Db, limit = BACKFILL_LIMIT): Promise<number> {
+  const todo = (await db.items.all()).filter((i) => i.classifiable && i.embKey === undefined).slice(0, limit);
+  if (!todo.length) return 0;
+  const keys = await Promise.all(todo.map(embeddingKey));
+  const have = await db.embeddings.getMany([...new Set(keys)]);
+  let queued = 0;
+  await db.tx(['items', 'queue'], async (s) => {
+    for (const [k, snap] of todo.entries()) {
+      const cur = await s.items.get(snap.id);
+      if (!cur || !cur.classifiable || cur.embKey !== undefined) continue;
+      if (cur.normUrl !== snap.normUrl || cur.title !== snap.title) continue;
+      if (have.has(keys[k]!)) await s.items.put({ ...cur, embKey: keys[k]! }); // local-only field: no updatedAt bump
+      else {
+        await s.queue.add(cur.id);
+        queued++;
+      }
+    }
+  });
+  return queued;
+}
 // ───────────────────────────── debounced tab events ─────────────────────────────
 
 export interface TabIndexConfig {

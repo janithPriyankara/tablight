@@ -23,6 +23,7 @@ import {
 } from './sync';
 import {
   KICK_ALARM,
+  backfillEmbKeys,
   configureTabIndex,
   flushTabEvents,
   maybeSuggest,
@@ -62,6 +63,7 @@ async function ensureStarterGroups(db: Db): Promise<void> {
 async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
   try {
     await ensureStarterGroups(db);
+    await backfillEmbKeys(db);
     const written = await processQueue(db);
     if (written > 0 || r.deleted > 0) {
       await maybeSuggest(db);
@@ -89,6 +91,7 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
  */
 export async function kickClassification(db: Db): Promise<void> {
   try {
+    await backfillEmbKeys(db); // import/stash/sync records may lack their vector key
     if ((await db.queue.size()) === 0) return;
     await pipeline(db, { created: 0, deleted: 0, enqueued: 0, navigatedTabIds: [] });
   } catch (e) {
@@ -101,7 +104,7 @@ let searchTicket = 0;
 /** Cap on items compared by meaning (same bound as the word search). */
 const MAX_SEMANTIC_ITEMS = 5_000;
 /** `search` RPC: word matches always, plus (when asked) matches by meaning that aren't already word matches. */
-async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ words: Item[]; meaning: Item[] }> {
+async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ words: Item[]; meaning: Item[]; superseded?: true }> {
   if (typeof req.q !== 'string' || req.q.length > MAX_QUERY) throw new Error('invalid query');
   if (typeof req.semantic !== 'boolean') throw new Error('invalid semantic flag');
   const q = req.q.trim();
@@ -112,7 +115,7 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
   const ticket = ++searchTicket;
   try {
     const [qVec] = await embed([q]);
-    if (!qVec || ticket !== searchTicket) return { words, meaning: [] }; // a newer search superseded this one
+    if (!qVec || ticket !== searchTicket) return { words, meaning: [], superseded: true }; // a newer search began
     const seen = new Set(words.map((i) => i.id));
     const recent = items
       .filter((i) => i.classifiable && !seen.has(i.id))
@@ -125,6 +128,7 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
       const vec = vecs.get(item.embKey!);
       return vec ? [{ item, vec }] : [];
     });
+    if (ticket !== searchTicket) return { words, meaning: [], superseded: true };
     return { words, meaning: semanticSearch(qVec, withVec) };
   } catch (e) {
     console.error('semantic search failed', e);

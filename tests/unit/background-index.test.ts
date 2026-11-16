@@ -140,7 +140,7 @@ describe('background index', () => {
     await vi.waitFor(() => expect(release).toBeTypeOf('function'));
     const newer = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as typeof r;
     release();
-    expect((await older).meaning).toEqual([]);
+    expect(await older).toMatchObject({ meaning: [], superseded: true });
     expect(newer.meaning.length).toBeGreaterThan(0);
     vi.mocked(embed).mockRejectedValueOnce(new Error('offline'));
     const failed = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as typeof r;
@@ -162,6 +162,43 @@ describe('background index', () => {
       expect(await db.queue.size()).toBe(0);
       expect(it?.embKey).toBeTypeOf('string'); // classified by the kicked pipeline
     }, { timeout: 5000 });
+    mock.uninstall();
+  });
+  it('stashed, synced and imported items stay findable by meaning (embKey survives those paths)', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/9/zzz', title: 'Zzz question' }] }] });
+    const bg = await import('../../src/background/index');
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    mock.fireInstalled();
+    const db = await bg.getDb();
+    const open = async () => (await db.items.all()).find((i) => i.title === 'Zzz question' && i.state === 'open');
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect((await open())?.embKey).toBeTypeOf('string');
+    });
+    const search = async (q: string) =>
+      ((await bg.handleRequest({ t: 'search', q, semantic: true })) as { meaning: { title: string }[] }).meaning.map((i) => i.title);
+    // 1. stash: the stash record carries the key.
+    await bg.handleRequest({ t: 'stash', ids: [(await open())!.id] });
+    const stashed = (await db.items.all()).find((i) => i.title === 'Zzz question' && i.state === 'stashed')!;
+    expect(stashed.embKey).toBeTypeOf('string');
+    expect(await search('unrelated')).toContain('Zzz question');
+    // 2. a sync upsert for an existing classified record with unchanged content keeps the key.
+    await chrome.storage.sync.set({
+      'v1:0': JSON.stringify([[stashed.id, stashed.normUrl, stashed.title, '', stashed.stashedAt, stashed.updatedAt + 100000]]),
+      'v1:meta': { chunks: 1, updatedAt: 1 },
+    });
+    await vi.waitFor(async () => expect((await db.items.get(stashed.id))!.updatedAt).toBe(stashed.updatedAt + 100000), { timeout: 4000 });
+    expect((await db.items.get(stashed.id))!.embKey).toBe(stashed.embKey);
+    // 3. an imported item with a group (never queued by import) gets its key through the backfill.
+    const json = JSON.stringify({
+      format: 'tab-organizer', version: 1, exportedAt: 1, groups: [{ name: 'Travel' }], snapshots: [],
+      items: [{ url: 'https://example.net/trip', title: 'Imported trip', groupName: 'Travel' }],
+    });
+    await bg.handleRequest({ t: 'import', json });
+    await vi.waitFor(async () => {
+      expect((await db.items.all()).find((i) => i.title === 'Imported trip')?.embKey).toBeTypeOf('string');
+    });
+    expect(await search('unrelated')).toContain('Imported trip');
     mock.uninstall();
   });
 });

@@ -180,6 +180,8 @@ function itemFrom(r: SyncRecord, cur: Item | undefined, groupId: string | null, 
     id, url: cur?.url ?? normUrl, normUrl, title, domain: cur?.domain ?? domainOf(normUrl), state: 'stashed',
     groupId, groupSource, kind: cur?.kind ?? kindOf(normUrl), createdAt: cur?.createdAt ?? stashedAt,
     lastActiveAt: cur?.lastActiveAt ?? stashedAt, stashedAt, updatedAt, classifiable: cur?.classifiable ?? true,
+    // The vector key is content-derived: keep it only while the content is unchanged.
+    ...(cur?.embKey !== undefined && cur.normUrl === normUrl && cur.title === title ? { embKey: cur.embKey } : {}),
   };
 }
 

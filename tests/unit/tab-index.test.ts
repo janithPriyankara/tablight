@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
   configureTabIndex,
+  BACKFILL_LIMIT,
+  backfillEmbKeys,
   BACKOFF_MINUTES,
   embeddingKey,
   flushTabEvents,
@@ -349,6 +351,34 @@ describe('embedding cache hygiene (review 1.3)', () => {
     const keys = new Set(await db.embeddings.keys());
     for (const i of await db.items.all()) expect(keys.has(await embeddingKey(i))).toBe(true);
     expect(keys.size).toBe(2);
+  });
+  it('sweep keeps a vector referenced only by an item embKey', async () => {
+    const item: Item = {
+      id: 'e1', url: 'https://a.com/new', normUrl: 'https://a.com/new', title: 'New title', domain: 'a.com',
+      state: 'stashed', groupId: null, groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1,
+      classifiable: true, embKey: 'old-content-key',
+    };
+    await db.items.put(item);
+    await db.embeddings.put('old-content-key', vecFor('old'));
+    await db.embeddings.put('orphan', vecFor('orphan'));
+    expect(await sweepEmbeddings(db)).toBe(1);
+    expect(await db.embeddings.keys()).toEqual(['old-content-key']);
+  });
+  it('backfillEmbKeys sets the key when the vector is cached, else queues the item; it is bounded', async () => {
+    const mk = (id: string): Item => ({
+      id, url: `https://a.com/${id}`, normUrl: `https://a.com/${id}`, title: id, domain: 'a.com', state: 'stashed',
+      groupId: null, groupSource: 'user', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    });
+    const cached = mk('cached');
+    await db.items.put(cached);
+    await db.items.put(mk('fresh'));
+    await db.embeddings.put(await embeddingKey(cached), vecFor('c'));
+    expect(await backfillEmbKeys(db)).toBe(1);
+    expect((await db.items.get('cached'))!.embKey).toBe(await embeddingKey(cached));
+    expect((await db.items.get('fresh'))!.embKey).toBeUndefined();
+    expect(await db.queue.size()).toBe(1);
+    expect(BACKFILL_LIMIT).toBe(200);
+    expect(await backfillEmbKeys(db, 0)).toBe(0);
   });
   it('rate-limits title-only re-embeds and ignores digit-only churn', async () => {
     let now = 1_000_000;
