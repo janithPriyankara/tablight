@@ -10,6 +10,7 @@ import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
+import { hintOnce } from '../common/hints';
 
 const TOP_GROUPS = 6;
 
@@ -89,7 +90,8 @@ export function Popup() {
     act(async () => {
       const ids = (state?.items ?? []).filter(isWebOpen).map((i) => i.id);
       const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-      notify(r.slept ? `Paused ${plural(r.slept, 'tab')}` : 'Nothing to pause right now');
+      if (r.slept) notify(`Paused ${plural(r.slept, 'tab')}`, undefined, hintOnce('pause'));
+      else notify('Nothing to pause right now');
     });
   /** Closing the active tab closes the popup with it, so no Undo is offered (it could never be clicked). */
   const closeThis = (item: Item) =>
@@ -181,7 +183,12 @@ export function Popup() {
 
       <footer class="popup-foot">
         <div class="notice" role="status" aria-live="polite">
-          {notice && <span class="notice-text">{notice.message}</span>}
+          {notice && (
+            <span class="notice-text">
+              {notice.message}
+              {notice.hint && <span class="notice-hint">{notice.hint}</span>}
+            </span>
+          )}
         </div>
         <div class={hasPanel ? 'actions has-panel' : 'actions'}>
           <button type="button" class="btn btn-primary" disabled={busy} onClick={() => void dashboard()}>

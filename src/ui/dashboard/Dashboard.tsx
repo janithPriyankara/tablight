@@ -11,6 +11,7 @@ import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
+import { hintOnce } from '../common/hints';
 import { GroupList, ViewSelect } from './GroupList';
 import { ItemGrid, type RowAction, type SelectMode } from './ItemGrid';
 import { ConfirmDialog, type ConfirmOptions, Modal, NameDialog } from './Modal';
@@ -67,7 +68,7 @@ export function Dashboard() {
       const u = parseUndoHash(location.hash);
       if (!u) return;
       history.replaceState(null, '', `#${viewHash(parseHash(location.hash))}`);
-      notify(`Saved ${plural(u.n, 'tab')} for later`, u.token);
+      notify(`Saved ${plural(u.n, 'tab')} for later`, u.token, hintOnce('save'));
     };
     const onHash = () => {
       setViewState(parseHash(location.hash));
@@ -195,12 +196,13 @@ export function Dashboard() {
   const openItem = (item: Item) => act(() => send({ t: 'open', id: item.id }));
   const sleepIds = async (ids: string[]) => {
     const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-    notify(r.slept ? `Paused ${plural(r.slept, 'tab')}${r.skipped ? ` · ${r.skipped} skipped` : ''}` : 'Nothing to pause: the tab you’re on, pinned tabs and tabs playing sound keep running');
+    if (r.slept) notify(`Paused ${plural(r.slept, 'tab')}${r.skipped ? ` · ${r.skipped} skipped` : ''}`, undefined, hintOnce('pause'));
+    else notify('Nothing to pause: the tab you’re on, pinned tabs and tabs playing sound keep running');
   };
   const stashIds = async (ids: string[]) => {
     const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids });
     const stashed = ids.length - r.skipped;
-    if (stashed > 0) notify(`Saved ${plural(stashed, 'tab')} for later`, r.token);
+    if (stashed > 0) notify(`Saved ${plural(stashed, 'tab')} for later`, r.token, hintOnce('save'));
     else notify('Nothing saved: those tabs can’t be saved for later');
   };
   const closeIds = async (ids: string[]) => {
@@ -369,7 +371,7 @@ export function Dashboard() {
         }))) return;
         await send({ t: 'sessionAction', id: s.id, action, confirm: true });
       }
-      if (action === 'stashAll') notify(`Saved the session’s ${plural(s.tabs, 'tab')} for later`);
+      if (action === 'stashAll') notify(`Saved the session’s ${plural(s.tabs, 'tab')} for later`, undefined, hintOnce('save'));
     });
   const snapshotNow = () =>
     act(async () => {

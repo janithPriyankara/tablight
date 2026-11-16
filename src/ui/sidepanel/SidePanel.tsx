@@ -10,6 +10,7 @@ import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
+import { hintOnce } from '../common/hints';
 import { SearchResultsView, totalsLine } from '../popup/Popup';
 
 /** Section ids that are expanded, kept per browser profile (a convenience: losing it is harmless). */
@@ -110,13 +111,14 @@ export function SidePanel() {
   const sleep = (ids: string[]) =>
     act(async () => {
       const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-      notify(r.slept ? `Paused ${plural(r.slept, 'tab')}` : 'Nothing to pause right now');
+      if (r.slept) notify(`Paused ${plural(r.slept, 'tab')}`, undefined, hintOnce('pause'));
+      else notify('Nothing to pause right now');
     });
   const stash = (item: Item) =>
     act(async () => {
       const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids: [item.id] });
       if (r.skipped) notify('That tab can’t be saved for later');
-      else notify('Saved 1 tab for later', r.token);
+      else notify('Saved 1 tab for later', r.token, hintOnce('save'));
     });
   const close = (item: Item) =>
     act(async () => {
@@ -252,7 +254,12 @@ export function SidePanel() {
 
       <footer class="sp-foot">
         <div class="notice" role="status" aria-live="polite">
-          {notice && <span class="notice-text">{notice.message}</span>}
+          {notice && (
+            <span class="notice-text">
+              {notice.message}
+              {notice.hint && <span class="notice-hint">{notice.hint}</span>}
+            </span>
+          )}
           {notice?.token && (
             <button type="button" class="btn btn-ghost btn-sm" onClick={() => void runUndo()}>Undo</button>
           )}

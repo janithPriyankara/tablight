@@ -142,6 +142,22 @@ describe('SidePanel', () => {
     onMessage({ target: 'ui', t: 'changed' }, { id: 'ext' });
     await waitFor(() => expect(within(screen.getByRole('list', { name: 'Matches' })).queryByText('Dune trailer')).toBeNull());
   });
+  it('the first Pause and the first Save for later explain themselves once', async () => {
+    serve(state(), (req) => (req.t === 'sleep' ? { slept: 1, skipped: 0 } : req.t === 'stash' ? { token: 't', skipped: 0 } : undefined));
+    render(<SidePanel />);
+    await loaded();
+    const rowOf = async (t: string) => (await within(windowSection()).findByText(t)).closest('li')!;
+    fireEvent.click(within(await rowOf('Rust async guide')).getByRole('button', { name: 'Pause' }));
+    await screen.findByText('Paused 1 tab');
+    expect(screen.getByText(/Paused tabs stay in your tab strip and use no memory/)).toBeTruthy();
+    fireEvent.click(within(await rowOf('Rust async guide')).getByRole('button', { name: 'Save for later' }));
+    await screen.findByText('Saved 1 tab for later');
+    expect(screen.getByText(/Find it in Saved for later/)).toBeTruthy();
+    fireEvent.click(within(await rowOf('Rust async guide')).getByRole('button', { name: 'Pause' }));
+    await waitFor(() => expect(sendMock.mock.calls.filter(([r]) => (r as { t: string }).t === 'sleep')).toHaveLength(2));
+    await screen.findByText('Paused 1 tab');
+    expect(screen.queryByText(/Paused tabs stay in your tab strip/)).toBeNull(); // only the first time
+  });
   it('search replaces the lists with matches', async () => {
     serve(state(), (req) => (req.t === 'search' ? { words: [item('i1', { title: 'Rust async guide' })], meaning: [] } : undefined));
     render(<SidePanel />);
