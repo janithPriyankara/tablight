@@ -1,0 +1,121 @@
+/**
+ * High-precision domain/path rules, run before embeddings.
+ * Only pages whose group is certain from the URL (plus explicit title hints)
+ * are decided here; everything else returns null and goes to the model.
+ */
+
+/** Title says it is a series/season/episode (IMDb type hints, streaming titles). */
+const TV_HINT =
+  /\b(?:TV (?:Series|Mini[- ]Series|Episode|Special)|Mini[- ]?Series|Limited Series|Season \d+|S\d{1,2}\s*:?\s*E\d{1,3}|Episode \d+)\b/i;
+
+function parse(url: string): URL | null {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u : null;
+  } catch {
+    return null;
+  }
+}
+
+function hostOf(u: URL): string {
+  return u.hostname.toLowerCase().replace(/^(?:www|m)\./, '');
+}
+
+const byHint = (title: string) => (TV_HINT.test(title) ? 'tv' : 'movies');
+
+/** Streaming services: decide movie vs series from the path when it says so, else from the title. */
+function streaming(host: string, path: string, title: string): string | null {
+  switch (host) {
+    case 'netflix.com':
+      return /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:title|watch)\//i.test(path) ? byHint(title) : null;
+    case 'primevideo.com':
+      return /^\/(?:region\/[a-z]+\/)?(?:detail|dp)\//i.test(path) ? byHint(title) : null;
+    case 'disneyplus.com':
+      if (/^\/(?:[a-z-]+\/)?series\//i.test(path)) return 'tv';
+      if (/^\/(?:[a-z-]+\/)?movies\//i.test(path)) return 'movies';
+      return null;
+    case 'hulu.com':
+      if (path.startsWith('/series/')) return 'tv';
+      if (path.startsWith('/movie/')) return 'movies';
+      return null;
+    case 'max.com':
+    case 'play.max.com':
+      if (/^\/(?:show|shows)\//.test(path)) return 'tv';
+      if (/^\/(?:movie|movies)\//.test(path)) return 'movies';
+      return null;
+    case 'tv.apple.com':
+      if (/^\/(?:[a-z]{2}\/)?show\//.test(path)) return 'tv';
+      if (/^\/(?:[a-z]{2}\/)?movie\//.test(path)) return 'movies';
+      return null;
+    default:
+      return null;
+  }
+}
+
+function imdb(path: string, title: string): string | null {
+  if (!/^\/title\/tt\d+/.test(path)) return null;
+  if (/\(Video Game\b/i.test(title)) return 'games';
+  return byHint(title);
+}
+
+function music(host: string, path: string): string | null {
+  if (host === 'music.youtube.com' || host === 'music.apple.com') return 'music';
+  if (host === 'youtube.com' && (path === '/music' || path.startsWith('/music/'))) return 'music';
+  if (host === 'open.spotify.com' && /^\/(?:intl-[a-z]+\/)?(?:track|album|playlist|artist)\//.test(path)) return 'music';
+  if (host === 'bandcamp.com' || host.endsWith('.bandcamp.com')) return 'music';
+  return null;
+}
+
+const AMAZON = /^(?:smile\.)?amazon\.(?:com|ca|com\.mx|com\.br|co\.uk|de|fr|it|es|nl|se|pl|com\.tr|ae|sa|in|co\.jp|sg|com\.au|eg)$/;
+const EBAY = /^ebay\.(?:com|ca|co\.uk|de|fr|it|es|nl|at|ch|ie|pl|com\.au|com\.sg|com\.my|ph)$/;
+
+function shopping(host: string, path: string): string | null {
+  if (AMAZON.test(host) && /\/(?:dp|gp\/product)\/[A-Z0-9]{10}/i.test(path)) return 'shopping';
+  if (EBAY.test(host) && path.startsWith('/itm/')) return 'shopping';
+  if (/^(?:[a-z]{2}\.)?aliexpress\.(?:com|us|ru)$/.test(host) && path.startsWith('/item/')) return 'shopping';
+  if (host === 'etsy.com' && /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?listing\//.test(path)) return 'shopping';
+  return null;
+}
+
+/**
+ * Single-purpose services: every page on these hosts belongs to one group.
+ * A leading dot also matches subdomains (per-team tenants such as acme.slack.com).
+ * Topic-neutral hosts (reddit, github, youtube, docs.*, medium…) are deliberately absent:
+ * their pages are classified by content.
+ */
+const HOSTS: Record<string, string[]> = {
+  work: [
+    'mail.google.com', 'calendar.google.com', 'docs.google.com', 'drive.google.com', 'meet.google.com',
+    'outlook.office.com', 'outlook.office365.com', 'outlook.live.com', 'teams.microsoft.com',
+    '.slack.com', '.zoom.us', '.atlassian.net', 'linear.app', 'app.asana.com', 'trello.com', 'notion.so',
+    '.okta.com', '.lightning.force.com', '.monday.com', 'app.clickup.com',
+  ],
+  social: [
+    'x.com', 'twitter.com', 'facebook.com', 'messenger.com', 'instagram.com', 'tiktok.com', 'threads.net',
+    'threads.com', 'bsky.app', 'web.whatsapp.com', 'web.telegram.org',
+  ],
+  design: ['figma.com', 'dribbble.com', 'behance.net'],
+  programming: ['stackoverflow.com', 'leetcode.com'],
+  docs: ['developer.mozilla.org'],
+};
+const HOST_TABLE = Object.entries(HOSTS).flatMap(([g, hosts]) => hosts.map((h) => [h, g] as const));
+function byHost(host: string, path: string): string | null {
+  if (host === 'linkedin.com') {
+    return /^\/(?:feed|in|posts|messaging|notifications|mynetwork)(?:\/|$)/.test(path) ? 'social' : null;
+  }
+  if (host === 'discord.com') return path.startsWith('/channels/') ? 'social' : null;
+  for (const [h, g] of HOST_TABLE) {
+    if (h.startsWith('.') ? host === h.slice(1) || host.endsWith(h) : host === h) return g;
+  }
+  return null;
+}
+export function ruleGroup(url: string, title: string): string | null {
+  const u = parse(url);
+  if (!u) return null;
+  const host = hostOf(u);
+  const path = u.pathname;
+  const t = title ?? '';
+  if (host === 'imdb.com') return imdb(path, t);
+  if (host === 'store.steampowered.com' && path.startsWith('/app/')) return 'games';
+  return streaming(host, path, t) ?? music(host, path) ?? shopping(host, path) ?? byHost(host, path);
+}
