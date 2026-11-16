@@ -85,6 +85,8 @@ export interface DashboardState {
   lastSession?: Snapshot;
   /** Nothing waits for classification, or (with groups to classify into) the model produced a vector this session. */
   modelReady: boolean;
+  /** Items waiting for classification (the queue size). */
+  queued: number;
   settings: Settings;
 }
 /** chrome.storage.session key of the startup check's result: `{ snapshotId: string | null }`. */

@@ -27,7 +27,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
     groups: [group('programming', 'Programming', 3), group('videos', 'Videos', 1, { watchCount: 1 })],
     dupCount: 0, windows: 2, sleeping: 0,
     syncStatus: { ok: true, synced: 412, localOnly: 37, lastSyncAt: Date.now() },
-    modelReady: true,
+    modelReady: true, queued: 0,
     settings: { ...DEFAULT_SETTINGS, onboarded: true },
     ...p,
   };

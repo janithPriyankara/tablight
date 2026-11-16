@@ -216,6 +216,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
     items, groups: summaries, dupCount, windows: windows.size, sleeping, syncStatus, settings,
     // An empty queue is ready even with no groups (e.g. the user deleted them all): nothing is pending.
     modelReady: queued === 0 || (groups.length > 0 && isWarm()),
+    queued,
     ...(activeDup ? { activeDup } : {}),
     ...(lastSession ? { lastSession } : {}),
   };

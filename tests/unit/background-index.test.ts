@@ -251,6 +251,7 @@ describe('background index', () => {
       expect(await db.queue.size()).toBe(0);
     });
     expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(true); // starter groups, empty queue
+    expect(((await bg.handleRequest({ t: 'state' })) as S).queued).toBe(0);
     expect(s.lastSession).toBeUndefined();
     // No duplicate for the focused window's active tab: no alert.
     mock.focusWindow(2);
@@ -267,6 +268,7 @@ describe('background index', () => {
     // Not ready while work is queued and the embedder has not produced a vector this session.
     await db.queue.add(so.id);
     expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(false);
+    expect(((await bg.handleRequest({ t: 'state' })) as S).queued).toBe(1); // the queue size is reported
     const { isWarm } = await import('../../src/background/embedder');
     vi.mocked(isWarm).mockReturnValue(true);
     expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(true);

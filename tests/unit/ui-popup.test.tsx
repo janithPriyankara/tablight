@@ -36,7 +36,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
     ],
     dupCount: 1, windows: 2, sleeping: 1,
     syncStatus: { ok: true, synced: 1, localOnly: 0, lastSyncAt: null },
-    modelReady: true,
+    modelReady: true, queued: 0,
     settings: DEFAULT_SETTINGS,
     ...p,
   };
