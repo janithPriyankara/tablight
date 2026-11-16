@@ -1,0 +1,349 @@
+/**
+ * In-page fake of the chrome.* APIs the extension uses: for unit tests and the in-browser UI preview.
+ * Events dispatch synchronously, in the same order Chrome fires them, so tests can drive tab storms
+ * deterministically. Control methods (addTab, removeTab, …) change the fake browser and fire events.
+ * Not used by the shipped extension.
+ */
+
+type Tab = chrome.tabs.Tab;
+type Alarm = chrome.alarms.Alarm;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Fn = (...args: any[]) => void;
+
+export class MockEvent<T extends Fn> {
+  private listeners: T[] = [];
+  addListener(cb: T): void {
+    if (!this.listeners.includes(cb)) this.listeners.push(cb);
+  }
+  removeListener(cb: T): void {
+    this.listeners = this.listeners.filter((l) => l !== cb);
+  }
+  hasListener(cb: T): boolean {
+    return this.listeners.includes(cb);
+  }
+  hasListeners(): boolean {
+    return this.listeners.length > 0;
+  }
+  /** Calls every listener with `args`. A listener that throws doesn't stop the others (like Chrome). */
+  fire(...args: Parameters<T>): void {
+    for (const l of [...this.listeners]) {
+      try {
+        l(...args);
+      } catch (e) {
+        console.error('mock listener threw', e);
+      }
+    }
+  }
+}
+
+export interface MockSeed {
+  windows: { tabs: Partial<Tab>[] }[];
+}
+
+export interface ChromeMockControl {
+  /** The installed fake, typed as the subset implemented here. */
+  readonly chrome: MockChrome;
+  /** Live copies of every tab, in window then index order. */
+  tabs(): Tab[];
+  windowIds(): number[];
+  /** Opens an empty window and returns its id (windows.onCreated is not modelled). */
+  addWindow(): number;
+  /** Closes a window: every tab fires onRemoved with isWindowClosing, then windows.onRemoved. */
+  removeWindow(windowId: number): void;
+  /** Creates a tab (onCreated). `windowId` defaults to the first window, which is created if none exists. */
+  addTab(props?: Partial<Tab>): Tab;
+  removeTab(tabId: number): void;
+  /** Changes a tab and fires onUpdated with the changed url/title/status/discarded/pinned/audible fields. */
+  updateTab(tabId: number, change: Partial<Tab>): Tab;
+  /** Makes a tab the active one in its window (onActivated). */
+  activateTab(tabId: number): void;
+  /** Replaces a tab with a new id (prerender/discard swap): onReplaced(added, removed). */
+  replaceTab(tabId: number): Tab;
+  focusWindow(windowId: number): void;
+  /** Per-tab badge text, falling back to the global text, as Chrome shows it. */
+  badgeText(tabId?: number): string;
+  badgeColor(): string | undefined;
+  /** Fires alarms.onAlarm for a created alarm, as if its time came. */
+  fireAlarm(name: string): void;
+  alarms(): Alarm[];
+  fireInstalled(reason?: `${chrome.runtime.OnInstalledReason}`): void;
+  fireStartup(): void;
+  uninstall(): void;
+}
+
+export interface MockChrome {
+  runtime: {
+    id: string;
+    getURL(path: string): string;
+    onInstalled: MockEvent<(d: chrome.runtime.InstalledDetails) => void>;
+    onStartup: MockEvent<() => void>;
+  };
+  tabs: {
+    query(q: chrome.tabs.QueryInfo): Promise<Tab[]>;
+    get(tabId: number): Promise<Tab>;
+    onCreated: MockEvent<(tab: Tab) => void>;
+    onUpdated: MockEvent<(tabId: number, info: chrome.tabs.OnUpdatedInfo, tab: Tab) => void>;
+    onRemoved: MockEvent<(tabId: number, info: chrome.tabs.OnRemovedInfo) => void>;
+    onActivated: MockEvent<(info: chrome.tabs.OnActivatedInfo) => void>;
+    onReplaced: MockEvent<(addedTabId: number, removedTabId: number) => void>;
+  };
+  windows: {
+    WINDOW_ID_NONE: -1;
+    onRemoved: MockEvent<(windowId: number) => void>;
+    onFocusChanged: MockEvent<(windowId: number) => void>;
+  };
+  action: {
+    setBadgeText(d: chrome.action.BadgeTextDetails): Promise<void>;
+    getBadgeText(d: { tabId?: number }): Promise<string>;
+    setBadgeBackgroundColor(d: chrome.action.BadgeColorDetails): Promise<void>;
+  };
+  alarms: {
+    create(name: string, info: chrome.alarms.AlarmCreateInfo): Promise<void>;
+    get(name: string): Promise<Alarm | undefined>;
+    getAll(): Promise<Alarm[]>;
+    clear(name: string): Promise<boolean>;
+    onAlarm: MockEvent<(alarm: Alarm) => void>;
+  };
+  storage: {
+    local: {
+      get(keys?: string | string[] | null): Promise<Record<string, unknown>>;
+      set(items: Record<string, unknown>): Promise<void>;
+      remove(keys: string | string[]): Promise<void>;
+    };
+  };
+}
+
+const clone = <T>(v: T): T => structuredClone(v);
+
+export function installChromeMock(seed?: MockSeed): ChromeMockControl {
+  let nextTabId = 1;
+  let nextWindowId = 1;
+  const windows: number[] = [];
+  const tabs = new Map<number, Tab>(); // insertion order; index is recomputed per window
+  let focused: number = -1;
+  const badges = new Map<number, string>();
+  let globalBadge = '';
+  let badgeColor: string | undefined;
+  const alarms = new Map<string, Alarm>();
+  const local = new Map<string, unknown>();
+
+  const inWindow = (w: number) => [...tabs.values()].filter((t) => t.windowId === w);
+  const reindex = (w: number) => inWindow(w).forEach((t, i) => (t.index = i));
+  const ordered = () => windows.flatMap(inWindow);
+  const mustGet = (id: number) => {
+    const t = tabs.get(id);
+    if (!t) throw new Error(`No tab with id: ${id}.`);
+    return t;
+  };
+
+  const mock: MockChrome = {
+    runtime: {
+      id: 'mock-extension-id',
+      getURL: (p) => `chrome-extension://mock-extension-id/${p.replace(/^\//, '')}`,
+      onInstalled: new MockEvent(),
+      onStartup: new MockEvent(),
+    },
+    tabs: {
+      async query(q) {
+        return ordered()
+          .filter((t) => {
+            if (q.windowId !== undefined && q.windowId !== t.windowId) return false;
+            if ((q.currentWindow || q.lastFocusedWindow) && t.windowId !== focused) return false;
+            if (q.active !== undefined && q.active !== t.active) return false;
+            if (q.pinned !== undefined && q.pinned !== t.pinned) return false;
+            if (q.audible !== undefined && q.audible !== Boolean(t.audible)) return false;
+            if (q.discarded !== undefined && q.discarded !== t.discarded) return false;
+            if (q.status !== undefined && q.status !== t.status) return false;
+            return true;
+          })
+          .map(clone);
+      },
+      async get(id) {
+        return clone(mustGet(id));
+      },
+      onCreated: new MockEvent(),
+      onUpdated: new MockEvent(),
+      onRemoved: new MockEvent(),
+      onActivated: new MockEvent(),
+      onReplaced: new MockEvent(),
+    },
+    windows: {
+      WINDOW_ID_NONE: -1,
+      onRemoved: new MockEvent(),
+      onFocusChanged: new MockEvent(),
+    },
+    action: {
+      async setBadgeText({ tabId, text }) {
+        if (tabId === undefined) globalBadge = text ?? '';
+        else if (tabs.has(tabId)) badges.set(tabId, text ?? '');
+        else throw new Error(`No tab with id: ${tabId}.`);
+      },
+      async getBadgeText({ tabId }) {
+        return (tabId !== undefined ? badges.get(tabId) : undefined) ?? globalBadge;
+      },
+      async setBadgeBackgroundColor({ color }) {
+        badgeColor = typeof color === 'string' ? color : `rgba(${color.join(',')})`;
+      },
+    },
+    alarms: {
+      async create(name, info) {
+        const delay = info.delayInMinutes ?? info.periodInMinutes ?? 0;
+        alarms.set(name, {
+          name,
+          scheduledTime: info.when ?? Date.now() + delay * 60_000,
+          persistAcrossSessions: info.persistAcrossSessions ?? false,
+          ...(info.periodInMinutes !== undefined ? { periodInMinutes: info.periodInMinutes } : {}),
+        });
+      },
+      async get(name) {
+        const a = alarms.get(name);
+        return a && clone(a);
+      },
+      async getAll() {
+        return [...alarms.values()].map(clone);
+      },
+      async clear(name) {
+        return alarms.delete(name);
+      },
+      onAlarm: new MockEvent(),
+    },
+    storage: {
+      local: {
+        async get(keys) {
+          const ks = keys == null ? [...local.keys()] : typeof keys === 'string' ? [keys] : keys;
+          const out: Record<string, unknown> = {};
+          for (const k of ks) if (local.has(k)) out[k] = clone(local.get(k));
+          return out;
+        },
+        async set(items) {
+          for (const [k, v] of Object.entries(items)) local.set(k, clone(v));
+        },
+        async remove(keys) {
+          for (const k of typeof keys === 'string' ? [keys] : keys) local.delete(k);
+        },
+      },
+    },
+  };
+
+  function addWindow(): number {
+    const id = nextWindowId++;
+    windows.push(id);
+    if (focused === -1) focused = id;
+    return id;
+  }
+
+  function makeTab(p: Partial<Tab>, windowId: number): Tab {
+    const id = p.id ?? nextTabId++;
+    nextTabId = Math.max(nextTabId, id + 1);
+    return {
+      index: 0, pinned: false, highlighted: false, active: false, frozen: false, incognito: false,
+      selected: false, discarded: false, autoDiscardable: true, groupId: -1, lastAccessed: Date.now(),
+      status: 'complete', url: 'about:blank', title: '',
+      ...p,
+      id,
+      windowId,
+    };
+  }
+
+  function addTab(p: Partial<Tab> = {}): Tab {
+    const windowId = p.windowId ?? windows[0] ?? addWindow();
+    if (!windows.includes(windowId)) {
+      windows.push(windowId);
+      nextWindowId = Math.max(nextWindowId, windowId + 1);
+    }
+    const tab = makeTab(p, windowId);
+    tabs.set(tab.id!, tab);
+    reindex(windowId);
+    if (tab.active) for (const o of inWindow(windowId)) if (o.id !== tab.id) o.active = false;
+    mock.tabs.onCreated.fire(clone(tab));
+    return clone(tab);
+  }
+
+  function removeTab(tabId: number, isWindowClosing = false): void {
+    const t = mustGet(tabId);
+    tabs.delete(tabId);
+    badges.delete(tabId);
+    reindex(t.windowId);
+    mock.tabs.onRemoved.fire(tabId, { windowId: t.windowId, isWindowClosing });
+  }
+
+  const control: ChromeMockControl = {
+    chrome: mock,
+    tabs: () => ordered().map(clone),
+    windowIds: () => [...windows],
+    addWindow,
+    removeWindow(windowId) {
+      for (const t of inWindow(windowId)) removeTab(t.id!, true);
+      windows.splice(windows.indexOf(windowId), 1);
+      mock.windows.onRemoved.fire(windowId);
+      if (focused === windowId) {
+        focused = windows[0] ?? -1;
+        mock.windows.onFocusChanged.fire(focused);
+      }
+    },
+    addTab,
+    removeTab: (tabId) => removeTab(tabId),
+    updateTab(tabId, change) {
+      const t = mustGet(tabId);
+      const info: chrome.tabs.OnUpdatedInfo = {};
+      for (const k of ['url', 'title', 'status', 'discarded', 'pinned', 'audible', 'favIconUrl'] as const) {
+        if (change[k] !== undefined && change[k] !== t[k]) Object.assign(info, { [k]: change[k] });
+      }
+      Object.assign(t, change, { id: tabId, windowId: t.windowId });
+      if (info.url !== undefined) badges.delete(tabId); // Chrome resets per-tab badges on navigation
+      mock.tabs.onUpdated.fire(tabId, info, clone(t));
+      return clone(t);
+    },
+    activateTab(tabId) {
+      const t = mustGet(tabId);
+      for (const o of inWindow(t.windowId)) o.active = o.id === tabId;
+      t.lastAccessed = Date.now();
+      mock.tabs.onActivated.fire({ tabId, windowId: t.windowId });
+    },
+    replaceTab(tabId) {
+      const t = mustGet(tabId);
+      const next = { ...t, id: nextTabId++ };
+      const entries = [...tabs.entries()].map(([k, v]) => (k === tabId ? ([next.id, next] as const) : ([k, v] as const)));
+      tabs.clear();
+      for (const [k, v] of entries) tabs.set(k, v);
+      badges.delete(tabId);
+      mock.tabs.onReplaced.fire(next.id, tabId);
+      return clone(next);
+    },
+    focusWindow(windowId) {
+      focused = windowId;
+      mock.windows.onFocusChanged.fire(windowId);
+    },
+    badgeText: (tabId) => (tabId !== undefined ? badges.get(tabId) : undefined) ?? globalBadge,
+    badgeColor: () => badgeColor,
+    fireAlarm(name) {
+      const a = alarms.get(name);
+      if (!a) throw new Error(`no alarm "${name}"`);
+      if (a.periodInMinutes === undefined) alarms.delete(name);
+      mock.alarms.onAlarm.fire(clone(a));
+    },
+    alarms: () => [...alarms.values()].map(clone),
+    fireInstalled(reason = 'install') {
+      mock.runtime.onInstalled.fire({ reason } as chrome.runtime.InstalledDetails);
+    },
+    fireStartup: () => mock.runtime.onStartup.fire(),
+    uninstall() {
+      delete (globalThis as { chrome?: unknown }).chrome;
+    },
+  };
+
+  // Seed silently: a browser that is already running when the extension loads fires no events.
+  for (const w of seed?.windows ?? []) {
+    const windowId = addWindow();
+    for (const p of w.tabs) {
+      const tab = makeTab(p, windowId);
+      tabs.set(tab.id!, tab);
+    }
+    reindex(windowId);
+    const list = inWindow(windowId);
+    if (list.length && !list.some((t) => t.active)) list[0]!.active = true;
+  }
+
+  (globalThis as { chrome?: unknown }).chrome = mock as unknown as typeof chrome;
+  return control;
+}

@@ -1,0 +1,77 @@
+import 'fake-indexeddb/auto';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { openDb, type Db } from '../../src/background/db';
+import { findDuplicates, updateBadge } from '../../src/background/duplicates';
+import { reconcile } from '../../src/background/tab-index';
+import type { Item } from '../../src/shared/types';
+import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
+
+let n = 0;
+let db: Db;
+let mock: ChromeMockControl | undefined;
+beforeEach(async () => {
+  db = await openDb(`dups-${n++}`);
+});
+afterEach(() => {
+  mock?.uninstall();
+  mock = undefined;
+});
+
+function item(id: string, url: string, normUrl: string, over: Partial<Item> = {}): Item {
+  return {
+    id, url, normUrl, title: id, domain: '', state: 'open', tabId: Number(id.replace(/\D/g, '')) || 1, windowId: 1,
+    groupId: null, groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    ...over,
+  };
+}
+
+describe('findDuplicates', () => {
+  it('groups tracking/www/trailing-slash variants by normUrl', async () => {
+    mock = installChromeMock({
+      windows: [{ tabs: [{ url: 'https://a.com/x?utm_source=1' }, { url: 'https://www.a.com/x/' }, { url: 'https://b.com/' }] }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const dups = findDuplicates(await db.items.all());
+    expect([...dups.keys()]).toEqual(['https://a.com/x']);
+    expect(dups.get('https://a.com/x')).toHaveLength(2);
+  });
+
+  it('ignores stashed and non-web items', () => {
+    const items = [
+      item('i1', 'https://a.com', 'https://a.com'),
+      item('i2', 'https://a.com', 'https://a.com', { state: 'stashed', tabId: undefined }),
+      item('i3', 'chrome://newtab', 'chrome://newtab', { classifiable: false }),
+      item('i4', 'chrome://newtab', 'chrome://newtab', { classifiable: false }),
+      item('i5', 'https://c.com', 'https://c.com', { state: 'sleeping' }),
+      item('i6', 'https://c.com', 'https://c.com'),
+    ];
+    const dups = findDuplicates(items);
+    expect([...dups.keys()]).toEqual(['https://c.com']);
+  });
+});
+
+describe('updateBadge', () => {
+  it("shows '2×' on duplicate tabs and '' otherwise", async () => {
+    mock = installChromeMock({
+      windows: [
+        { tabs: [{ url: 'https://a.com/x?utm_source=1', active: true }, { url: 'https://b.com/' }] },
+        { tabs: [{ url: 'https://www.a.com/x/' }, { url: 'chrome://newtab' }, { url: 'chrome://newtab' }] },
+      ],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [a1, b, a2, nt1, nt2] = mock.tabs();
+    await updateBadge(db, a1!.id);
+    expect(mock.badgeText(a1!.id)).toBe('2×');
+    await updateBadge(db);
+    expect(mock.badgeText(a2!.id)).toBe('2×');
+    expect(mock.badgeText(b!.id)).toBe('');
+    expect(mock.badgeText(nt1!.id)).toBe('');
+    expect(mock.badgeText(nt2!.id)).toBe('');
+    expect(mock.badgeColor()).toBeDefined();
+
+    mock.removeTab(a2!.id!);
+    await reconcile(db, await chrome.tabs.query({}));
+    await updateBadge(db, a1!.id);
+    expect(mock.badgeText(a1!.id)).toBe('');
+  });
+});
