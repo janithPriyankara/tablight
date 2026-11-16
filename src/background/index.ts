@@ -363,7 +363,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
   }
   notifyChanged();
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
-  if (req.t === 'import' || req.t === 'sessionAction') void kickClassification(db);
+  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete') void kickClassification(db);
   await mirrorAll(db);
   return out;
 }

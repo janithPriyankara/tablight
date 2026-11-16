@@ -102,6 +102,15 @@ describe('rename / delete / merge', () => {
     await deleteGroup(db, 'games');
     expect(await db.groups.get('games')).toBeUndefined();
     expect(await db.items.get(a.id)).toMatchObject({ groupId: null, groupSource: 'auto' });
+    expect(await db.queue.take(10)).toEqual([a.id]); // queued for re-sorting, as the dialog promises
+  });
+  it('deleteGroup queues only classifiable items for re-sorting', async () => {
+    await db.groups.put(group('games'));
+    const web = await addItem({ groupId: 'games' });
+    const nonWeb = await addItem({ groupId: 'games', classifiable: false, url: 'chrome://x/', normUrl: 'chrome://x/' });
+    await deleteGroup(db, 'games');
+    expect(await db.queue.take(10)).toEqual([web.id]);
+    expect((await db.items.get(nonWeb.id))!.groupId).toBeNull();
   });
   it('merge moves every item and exemplar, then deletes the source', async () => {
     await db.groups.put(group('a', { exemplars: [[1, 0], [0, 1]], centroid: [1, 0] }));

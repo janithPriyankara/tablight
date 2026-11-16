@@ -362,4 +362,24 @@ describe('background index', () => {
     expect(await bg.handleRequest({ t: 'undo', token: st.token })).toBe(false); // no undo across a wipe
     mock.uninstall();
   });
+  it('groupDelete re-sorts the deleted group\'s items into the remaining groups', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/9/z', title: 'Z' }] }] });
+    const bg = await import('../../src/background/index');
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    mock.fireInstalled('update');
+    const db = await bg.getDb();
+    const find = async () => (await db.items.all()).find((i) => i.url === 'https://stackoverflow.com/questions/9/z');
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect((await find())?.groupId).toBe('programming');
+    });
+    const g = (await bg.handleRequest({ t: 'groupCreate', name: 'Temp', ids: [(await find())!.id] })) as { id: string };
+    expect((await find())?.groupId).toBe(g.id);
+    await bg.handleRequest({ t: 'groupDelete', id: g.id });
+    await vi.waitFor(async () => {
+      expect(await db.queue.size()).toBe(0);
+      expect((await find())?.groupId).toBe('programming');
+    });
+    mock.uninstall();
+  });
 });

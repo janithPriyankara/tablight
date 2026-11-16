@@ -133,10 +133,12 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
 /** Deletes a group; its items go back to Unsorted for the next classification. 'other' is permanent. */
 export async function deleteGroup(db: Db, id: string): Promise<void> {
   if (id === OTHER_GROUP_ID) throw new Error('the Other group cannot be deleted');
-  await db.tx(['items', 'groups'], async (s) => {
+  await db.tx(['items', 'groups', 'queue'], async (s) => {
     if (!(await s.groups.get(id))) throw new Error('unknown group');
     for (const i of await s.items.all()) {
-      if (i.groupId === id) await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: nextStamp(i.updatedAt) });
+      if (i.groupId !== id) continue;
+      await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: nextStamp(i.updatedAt) });
+      if (i.classifiable) await s.queue.add(i.id); // re-sorted into the remaining groups (index.ts kicks it)
     }
     await s.groups.delete(id);
   });
