@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
+/** package.json is the single source of the version; verify-release asserts the built manifest matches. */
+export const VERSION: string = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
 export const CSP =
   "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 export const manifest = {
   manifest_version: 3,
   name: 'Tab Organizer',
-  version: '0.1.0',
+  version: VERSION,
   description: 'Groups your tabs with an on-device model. Nothing leaves your device.',
   minimum_chrome_version: '120',
   incognito: 'not_allowed',

@@ -20,6 +20,10 @@ describe('manifest', () => {
     expect(m.content_scripts).toBeUndefined();
     expect(manifest.incognito).toBe('not_allowed');
   });
+  it('takes its version from package.json (single source)', async () => {
+    const pkg = (await import('../../package.json')).default as { version: string };
+    expect(manifest.version).toBe(pkg.version);
+  });
   it('uses the strict extension-page CSP', () => {
     expect(manifest.content_security_policy.extension_pages).toBe(CSP);
   });
