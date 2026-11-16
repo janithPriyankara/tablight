@@ -42,7 +42,12 @@ const NON_WEB: { url: string; title: string }[] = [
 ];
 export function previewTabs(): PreviewTab[] {
   const rand = rng(20261116);
-  const pool = fixture.map((f) => ({ url: f.url, title: f.title }));
+  // Netflix pages go to TV Series by rule (a Netflix film can't be told from a show), so the preview shows a
+  // Netflix series rather than the fixture's Netflix film.
+  const pool = fixture.map((f) =>
+    f.url === 'https://www.netflix.com/title/81458416'
+      ? { url: 'https://www.netflix.com/title/80057281', title: 'Watch Stranger Things | Netflix Official Site' }
+      : { url: f.url, title: f.title });
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     [pool[i], pool[j]] = [pool[j]!, pool[i]!];

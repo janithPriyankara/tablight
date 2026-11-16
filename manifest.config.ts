@@ -7,7 +7,7 @@ export const manifest = {
   manifest_version: 3,
   name: 'Tab Organizer',
   version: VERSION,
-  description: 'Groups your tabs with an on-device model. Nothing leaves your device.',
+  description: 'Groups your tabs by topic with an AI model that runs on your device. No servers, no tracking.',
   minimum_chrome_version: '120',
   incognito: 'not_allowed',
   permissions: ['tabs', 'storage', 'unlimitedStorage', 'alarms', 'offscreen', 'favicon'],

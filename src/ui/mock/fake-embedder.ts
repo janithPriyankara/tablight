@@ -33,3 +33,6 @@ export async function embed(texts: string[]): Promise<Float32Array[]> {
     return known ? unit(known) : hashVector(t, vectors.dim);
   });
 }
+export const OFFSCREEN_IDLE_ALARM = 'offscreen-idle';
+/** No offscreen document in the preview: nothing to close. */
+export async function closeIfIdle(): Promise<void> {}
