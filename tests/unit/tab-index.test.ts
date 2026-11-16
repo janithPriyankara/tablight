@@ -113,6 +113,57 @@ describe('reconcile', () => {
     expect(await db.queue.size()).toBe(0);
   });
 
+  it('browser restart (new tab AND window ids) keeps user groups, one item per tab', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1), web(2)] }, { tabs: [web(3), web(1)] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const items0 = await db.items.all();
+    const w2copy = items0.find((i) => i.url === web(1).url && i.windowId === 2)!;
+    await db.items.put({ ...w2copy, groupId: 'mine', groupSource: 'user', lastActiveAt: Date.now() + 1000 });
+    await db.queue.remove(await db.queue.take(10));
+
+    // Restart: every id changes. Only one copy of web(1) comes back.
+    const restored = (await chrome.tabs.query({}))
+      .filter((t) => !(t.url === web(1).url && t.windowId === 1))
+      .map((t) => ({ ...t, id: t.id! + 100, windowId: t.windowId + 10 }));
+    await reconcile(db, restored);
+    const items = await db.items.all();
+    expect(items).toHaveLength(3);
+    expect(new Set(items.map((i) => i.tabId)).size).toBe(3);
+    const back = items.find((i) => i.url === web(1).url)!;
+    expect(back.id).toBe(w2copy.id); // the most recently active copy wins
+    expect(back.groupId).toBe('mine');
+    expect(back.windowId).toBe(12);
+    expect(new Set(items.map((i) => i.id))).toEqual(
+      new Set(items0.filter((i) => !(i.url === web(1).url && i.windowId === 1)).map((i) => i.id)),
+    );
+    expect(await db.queue.size()).toBe(0);
+  });
+
+  it('re-classifies an auto item when its real title arrives after load', async () => {
+    await db.groups.put(group('programming'));
+    const url = 'https://zzz.example.net/a/b';
+    mock = installChromeMock({ windows: [{ tabs: [{ url, title: url }] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, fakeEmbed);
+    const tabId = mock.tabs()[0]!.id!;
+    const before = (await db.items.byTabId(tabId))!;
+    // As if the model had guessed a group from the URL-only text.
+    await db.items.put({ ...before, groupId: 'social', groupSource: 'auto' });
+    // The model would put the real title into programming: pin that via a user-taught exemplar.
+    const title = 'Fixing a segfault in my compiler';
+    const key = await embeddingKey({ normUrl: before.normUrl, title, url });
+    const v = Array.from(vecFor(`${title} — zzz.example.net a b`));
+    await db.groups.put(group('programming', { exemplars: [v] }));
+    fakeEmbed.mockImplementation(async (texts: string[]) => texts.map((t) => (t.startsWith(title) ? Float32Array.from(v) : vecFor(t))));
+
+    mock.updateTab(tabId, { title });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(await db.queue.size()).toBe(1);
+    await processQueue(db, fakeEmbed);
+    expect((await db.items.byTabId(tabId))!.groupId).toBe('programming');
+    expect(await db.embeddings.get(key)).toBeDefined();
+  });
+
   it('navigation re-enqueues the item but keeps a user group', async () => {
     mock = installChromeMock({ windows: [{ tabs: [web(1)] }] });
     await reconcile(db, await chrome.tabs.query({}));

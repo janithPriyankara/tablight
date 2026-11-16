@@ -36,9 +36,10 @@ function domainOf(url: string): string {
 
 /**
  * Makes the open/sleeping items match `tabs` exactly, in one transaction.
- * Existing items are matched by tabId, then (restored sessions with new tab ids) by normUrl+windowId.
- * Gone, non-stashed items are deleted. New or navigated web items are enqueued for classification;
- * an Unsorted auto item whose title changed (pages load their title late) is enqueued again too.
+ * Existing items are matched by tabId, then (restored sessions with new tab ids) by normUrl+windowId,
+ * then (browser restart: window ids changed too) by normUrl alone, most recently active item first.
+ * Gone, non-stashed items are deleted. A web item is enqueued when new or when its embedding key
+ * (normUrl or cleaned title) changed: auto items are re-classified, user items keep their group.
  */
 export async function reconcile(db: Db, tabs: chrome.tabs.Tab[]): Promise<void> {
   const now = Date.now();
@@ -62,14 +63,25 @@ export async function reconcile(db: Db, tabs: chrome.tabs.Tab[]): Promise<void> 
     // Restored sessions: tab ids changed, the window and URL did not.
     const liveIds = new Set(live.map((t) => t.id!));
     const orphans = [...unmatched.values()].filter((i) => i.tabId === undefined || !liveIds.has(i.tabId));
+    const take = (k: number) => {
+      const i = orphans.splice(k, 1)[0]!;
+      unmatched.delete(i.id);
+      return i;
+    };
+    const rest: chrome.tabs.Tab[] = [];
     for (const t of pending) {
       const norm = normalizeUrl(tabUrl(t));
       const k = orphans.findIndex((i) => i.normUrl === norm && i.windowId === t.windowId);
-      const i = k >= 0 ? orphans.splice(k, 1)[0] : undefined;
-      if (i) unmatched.delete(i.id);
-      pairs.push([t, i]);
+      if (k >= 0) pairs.push([t, take(k)]);
+      else rest.push(t);
     }
-
+    // Browser restart: window ids changed too. Match by URL alone, most recently active item first.
+    orphans.sort((a, b) => b.lastActiveAt - a.lastActiveAt);
+    for (const t of rest) {
+      const norm = normalizeUrl(tabUrl(t));
+      const k = orphans.findIndex((i) => i.normUrl === norm);
+      pairs.push([t, k >= 0 ? take(k) : undefined]);
+    }
     for (const [t, prev] of pairs) {
       const { item, enqueue } = itemFor(t, prev, now);
       if (!prev || changed(prev, item)) await s.items.put(item);
@@ -106,8 +118,7 @@ function itemFor(t: chrome.tabs.Tab, prev: Item | undefined, now: number): { ite
   const item: Item = { ...prev, ...base, updatedAt: prev.updatedAt };
   // A user's choice is kept; an auto group no longer applies to a non-web page.
   if (!classifiable && item.groupSource === 'auto') item.groupId = null;
-  const unsorted = item.groupSource === 'auto' && item.groupId === null;
-  return { item, enqueue: classifiable && (navigated || (retitled && unsorted)) };
+  return { item, enqueue: classifiable && (navigated || retitled) };
 }
 
 const TRACKED: (keyof Item)[] = [
