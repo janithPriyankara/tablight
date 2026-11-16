@@ -16,6 +16,9 @@ import {
 } from './snapshots';
 import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from './memory';
 import {
+  SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, scheduleSync, touchStashedInGroup,
+} from './sync';
+import {
   KICK_ALARM,
   configureTabIndex,
   flushTabEvents,
@@ -88,6 +91,11 @@ async function mirrorAll(db: Db): Promise<void> {
   const windowIds = new Set((await chrome.tabs.query({})).map((t) => t.windowId));
   for (const w of windowIds) await mirrorTabGroups(db, w).catch((e: unknown) => console.error('mirror failed', e));
 }
+/** RPCs that can change the stash or the group names its records carry: each schedules a sync push. */
+const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
+  'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'open',
+  'undo', 'sessionAction', 'regroupApply',
+]);
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
   const db = await getDb();
@@ -95,7 +103,12 @@ export async function handleRequest(req: Req): Promise<unknown> {
   switch (req.t) {
     case 'moveItems': await moveItems(db, parseIds(req.ids), parseId(req.groupId)); break;
     case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids)); break;
-    case 'groupRename': await renameGroup(db, parseId(req.id), parseName(req.name)); break;
+    case 'groupRename': {
+      const id = parseId(req.id);
+      await renameGroup(db, id, parseName(req.name));
+      await touchStashedInGroup(db, id); // the new name must win LWW on other devices
+      break;
+    }
     case 'groupMerge': await mergeGroups(db, parseId(req.from), parseId(req.into)); break;
     case 'groupDelete': await deleteGroup(db, parseId(req.id)); break;
     case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id)); break;
@@ -122,10 +135,13 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'regroupApply': out = await regroupApply(db); break;
     default: throw new Error(`unsupported request: ${req.t}`);
   }
+  if (STASH_CHANGING.has(req.t)) scheduleSync(db);
   await mirrorAll(db);
   return out;
 }
 configureTabIndex({ db: getDb, after: pipeline });
+// Remote group names must match the built-in groups, so they are seeded before any sync.
+configureSync({ ready: ensureStarterGroups });
 
 handle((req) => handleRequest(req), 'background');
 
@@ -149,8 +165,24 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
     .catch(() => undefined);
 });
 
+/** Pull from storage.sync; pullSync never rejects, so only opening the db can fail here. */
+function syncNow(): void {
+  void getDb()
+    .then((db) => pullSync(db))
+    .catch((e: unknown) => console.error('sync failed', e));
+}
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  void getDb()
+    .then((db) => handleSyncStorageChange(db, changes, areaName))
+    .catch((e: unknown) => console.error('sync failed', e));
+});
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KICK_ALARM) void flushTabEvents();
+  if (alarm.name === SYNC_RETRY_ALARM) {
+    void getDb()
+      .then((db) => pushSync(db))
+      .catch((e: unknown) => console.error('sync retry failed', e));
+  }
   if (alarm.name === SNAPSHOT_ALARM) {
     void startupCheckDone()
       .then((done) => (done ? getDb().then((db) => takeSnapshot(db, Date.now())).then(() => undefined) : startupCheck()))
@@ -185,6 +217,7 @@ function startupCheck(): void {
 chrome.runtime.onStartup.addListener(() => {
   void flushTabEvents();
   startupCheck();
+  syncNow();
 });
 void startupCheckInterrupted().then((interrupted) => (interrupted ? startupCheck() : undefined));
 void chrome.alarms
@@ -195,5 +228,6 @@ chrome.runtime.onInstalled.addListener(() => {
   void getDb()
     .then(ensureStarterGroups)
     .catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e))
-    .then(() => flushTabEvents());
+    .then(() => flushTabEvents())
+    .then(syncNow); // a fresh install picks up the stash from the user's other devices
 });

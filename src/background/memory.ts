@@ -220,8 +220,13 @@ export async function undo(db: Db, token: string): Promise<boolean> {
     }
   }
   if (restored.length) {
-    await db.tx(['items'], async (s) => {
-      for (const id of restored) if ((await s.items.get(id))?.state === 'stashed') await s.items.delete(id);
+    // The tombstone keeps sync from bringing the undone stash record back from another device.
+    await db.tx(['items', 'tombstones'], async (s) => {
+      for (const id of restored) {
+        if ((await s.items.get(id))?.state !== 'stashed') continue;
+        await s.items.delete(id);
+        await s.tombstones.put({ id, deletedAt: Date.now() });
+      }
     });
   }
   return true;

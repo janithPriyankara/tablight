@@ -50,3 +50,11 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   onboarded: false,
 };
+/**
+ * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.
+ * lastSyncAt is the time of the last successful sync (kept across failures), null if never.
+ */
+export type SyncStatus = (
+  | { ok: true; synced: number; localOnly: number }
+  | { ok: false; reason: 'quota' | 'disabled' | 'rate' | 'error'; message: string }
+) & { lastSyncAt: number | null };

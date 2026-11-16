@@ -98,6 +98,10 @@ describe('stash', () => {
     expect(await undo(db, token)).toBe(true);
     expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/', 'https://b.com/']);
     expect(await db.items.byState('stashed')).toHaveLength(0);
+    // Tombstones keep sync from bringing the undone records back from another device.
+    expect((await db.tombstones.all()).map((t) => t.id).sort()).toEqual(
+      [await sha1hex('https://a.com/'), await sha1hex('https://b.com/')].sort(),
+    );
     await reconcile(db, await chrome.tabs.query({}));
     const all = await db.items.all();
     expect(all).toHaveLength(2);

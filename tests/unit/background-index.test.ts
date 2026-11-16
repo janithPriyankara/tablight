@@ -64,4 +64,26 @@ describe('background index', () => {
     expect(suggest).toHaveBeenCalledTimes(1);
     mock.uninstall();
   });
+  it('pulls the stash when another device writes storage.sync; its own write-back does not loop', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const { sha1hex } = await import('../../src/shared/hash');
+    const url = 'https://remote.example.com/';
+    const id = await sha1hex(url);
+    const db = await bg.getDb();
+    const localUrl = 'https://local.example.com/';
+    const localId = await sha1hex(localUrl);
+    await db.items.put({
+      id: localId, url: localUrl, normUrl: localUrl, title: 'L', domain: 'local.example.com', state: 'stashed',
+      groupId: null, groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, stashedAt: 1, updatedAt: 1,
+      classifiable: true,
+    });
+    const set = vi.spyOn(mock.chrome.storage.sync, 'set');
+    await chrome.storage.sync.set({ 'v1:0': JSON.stringify([[id, url, 'R', '', 1, 1]]), 'v1:meta': { chunks: 1, updatedAt: 1 } });
+    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'));
+    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2)); // the remote write + our write-back of the local-only item
+    await new Promise((r) => setTimeout(r, 100));
+    expect(set).toHaveBeenCalledTimes(2);
+    mock.uninstall();
+  });
 });

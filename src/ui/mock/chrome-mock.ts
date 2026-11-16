@@ -92,7 +92,9 @@ export interface MockStorageArea {
   set(items: Record<string, unknown>): Promise<void>;
   remove(keys: string | string[]): Promise<void>;
 }
-function storageArea(data: Map<string, unknown>): MockStorageArea {
+type StorageChanges = Record<string, chrome.storage.StorageChange>;
+/** A storage area; `emit` receives the changes of each set/remove (Chrome fires onChanged for them). */
+function storageArea(data: Map<string, unknown>, emit: (changes: StorageChanges) => void = () => undefined): MockStorageArea {
   return {
     async get(keys) {
       const ks = keys == null ? [...data.keys()] : typeof keys === 'string' ? [keys] : keys;
@@ -101,10 +103,20 @@ function storageArea(data: Map<string, unknown>): MockStorageArea {
       return out;
     },
     async set(items) {
-      for (const [k, v] of Object.entries(items)) data.set(k, structuredClone(v));
+      const changes: StorageChanges = {};
+      for (const [k, v] of Object.entries(items)) {
+        changes[k] = { oldValue: structuredClone(data.get(k)), newValue: structuredClone(v) };
+        data.set(k, structuredClone(v));
+      }
+      if (Object.keys(changes).length) emit(changes);
     },
     async remove(keys) {
-      for (const k of typeof keys === 'string' ? [keys] : keys) data.delete(k);
+      const changes: StorageChanges = {};
+      for (const k of typeof keys === 'string' ? [keys] : keys) {
+        if (data.has(k)) changes[k] = { oldValue: structuredClone(data.get(k)) };
+        data.delete(k);
+      }
+      if (Object.keys(changes).length) emit(changes);
     },
   };
 }
@@ -164,6 +176,9 @@ export interface MockChrome {
     local: MockStorageArea;
     /** Cleared by `restartBrowser()`, as Chrome clears it when the browser restarts. */
     session: MockStorageArea;
+    /** The browser-account synced area (only this fake device; no quota is modelled). */
+    sync: MockStorageArea;
+    onChanged: MockEvent<(changes: StorageChanges, areaName: string) => void>;
   };
 }
 
@@ -181,6 +196,10 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
   const session = new Map<string, unknown>();
+  const sync = new Map<string, unknown>();
+  const onStorageChanged = new MockEvent<(changes: StorageChanges, areaName: string) => void>();
+  const area = (data: Map<string, unknown>, name: string) =>
+    storageArea(data, (changes) => onStorageChanged.fire(changes, name));
   const granted = new Set<string>();
   const groups = new Map<number, chrome.tabGroups.TabGroup>();
   let nextGroupId = 1;
@@ -344,7 +363,9 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       },
       onAlarm: new MockEvent(),
     },
-    storage: { local: storageArea(local), session: storageArea(session) },
+    storage: {
+      local: area(local, 'local'), session: area(session, 'session'), sync: area(sync, 'sync'), onChanged: onStorageChanged,
+    },
   };
   function addWindow(): number {
     const id = nextWindowId++;
