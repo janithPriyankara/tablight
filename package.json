@@ -1,0 +1,38 @@
+{
+  "name": "tab-organizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:assets": "node scripts/fetch-model.mjs && node scripts/copy-ort.mjs",
+    "build": "vite build",
+    "test": "vitest run tests/unit",
+    "test:quality": "vitest run tests/quality",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "preview:ui": "vite --open /src/ui/dashboard/dashboard.html",
+    "package": "node scripts/package.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.2",
+    "idb": "8.0.4",
+    "preact": "11.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.13",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@preact/preset-vite": "2.10.6",
+    "@types/archiver": "8.0.0",
+    "@types/chrome": "0.3.7",
+    "@types/node": "22.20.5",
+    "archiver": "8.0.0",
+    "eslint": "10.15.0",
+    "eslint-plugin-no-unsanitized": "4.1.5",
+    "fake-indexeddb": "6.2.8",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.8",
+    "vitest": "4.1.12"
+  }
+}
