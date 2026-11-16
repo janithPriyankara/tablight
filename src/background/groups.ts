@@ -1,6 +1,7 @@
 import { MAX_EXEMPLARS, OTHER_GROUP_ID, learn } from '../classify/assign';
 import type { Group, Item } from '../shared/types';
 import { embedText } from '../shared/url';
+import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
@@ -53,6 +54,7 @@ function withExemplars(g: Group, taught: Taught[]): Group {
   const now = Date.now();
   const learned = taught.reduce((acc, t) => learn(acc, t.vec), g);
   if (!taught.length) return learned;
+  taught = taught.map((t) => ({ ...t, text: lessonText(t.text) }));
   const texts = new Set(taught.map((t) => t.text));
   const lessons = [...(g.lessons ?? []).filter(([t]) => !texts.has(t)), ...taught.map((t): [string, number] => [t.text, now])]
     .slice(-MAX_EXEMPLARS);

@@ -162,20 +162,27 @@ export function encodeChunks(
  * device's clock makes two devices order the same records differently, which never converges.
  */
 const isTime = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+/**
+ * A stamp more than a year ahead is not a fast clock but corruption or tampering: such a tombstone would never
+ * expire (and could fill the sync space forever), such a record would win every merge. Both are ignored.
+ */
+export const MAX_FUTURE_MS = 365 * 86_400_000;
+let horizon = Number.MAX_SAFE_INTEGER;
+const inTime = (v: unknown): v is number => isTime(v) && v <= horizon;
 
 function validRecord(e: unknown[]): SyncRecord | null {
   const [id, normUrl, title, group, stashedAt, updatedAt] = e;
   if (typeof id !== 'string' || !ID_RE.test(id)) return null;
   if (typeof normUrl !== 'string' || normUrl.length > MAX_NORM_URL || !isWebUrl(normUrl)) return null;
   if (typeof title !== 'string' || typeof group !== 'string') return null;
-  if (!isTime(stashedAt) || !isTime(updatedAt)) return null;
+  if (!inTime(stashedAt) || !inTime(updatedAt)) return null;
   const g = group.trim();
   return [id, normUrl, truncate(title, MAX_SYNC_TITLE), g.length > MAX_GROUP_NAME ? '' : g, stashedAt, updatedAt];
 }
 
 function validTomb(e: unknown[]): Tomb | null {
   const [id, deletedAt] = e;
-  if (typeof id !== 'string' || !ID_RE.test(id) || !isTime(deletedAt)) return null;
+  if (typeof id !== 'string' || !ID_RE.test(id) || !inTime(deletedAt)) return null;
   return [id, deletedAt];
 }
 
@@ -198,7 +205,8 @@ function chunkKeys(store: Record<string, unknown>): string[] {
  * Reads records and tombstones from a storage.sync snapshot. Malformed keys, values and entries are
  * ignored, never thrown; every accepted entry is a fresh, validated copy (nothing parsed passes through).
  */
-export function decodeChunks(store: Record<string, unknown>): { recs: SyncRecord[]; tombs: Tomb[] } {
+export function decodeChunks(store: Record<string, unknown>, now = Date.now()): { recs: SyncRecord[]; tombs: Tomb[] } {
+  horizon = now + MAX_FUTURE_MS;
   const recs: SyncRecord[] = [];
   const tombs: Tomb[] = [];
   if (typeof store !== 'object' || store === null) return { recs, tombs };

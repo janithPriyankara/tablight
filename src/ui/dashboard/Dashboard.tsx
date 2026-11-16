@@ -311,6 +311,12 @@ export function Dashboard() {
         confirmLabel: 'Delete all data', danger: true,
       }))) return;
       await send({ t: 'deleteAllData' });
+      // The pages' own small conveniences (open side-panel sections, hints already shown) go too.
+      try {
+        localStorage.clear();
+      } catch {
+        /* storage unavailable: nothing stored there */
+      }
       setPendingSettings(null);
       setSelected(new Set());
       notify('All data deleted');

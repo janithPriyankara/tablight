@@ -515,11 +515,14 @@ describe('dashboard', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(sent('deleteAllData')).toHaveLength(0);
+    localStorage.setItem('hint.pause', '1');
+    localStorage.setItem('sidepanel.open', '["window"]');
     fireEvent.click(screen.getByRole('button', { name: 'Delete all data' }));
     dialog = await screen.findByRole('dialog', { name: 'Delete all data?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete all data' }));
     await waitFor(() => expect(sent('deleteAllData')).toHaveLength(1));
     await screen.findByText('All data deleted');
+    expect(localStorage.length).toBe(0); // the pages' own flags go too
   });
   it('the import notice reports file sessions that did not fit', async () => {
     const { importNotice } = await import('../../src/ui/dashboard/Settings');

@@ -127,20 +127,20 @@ describe('decodeChunks', () => {
     expect(decodeChunks({ 'v1:meta': 'x', 'v1:0': [[hex(1)]] })).toEqual({ recs: [], tombs: [] });
   });
 
-  it('drops javascript:/oversized urls, truncates titles, keeps (raw) far-future timestamps unchanged', () => {
+  it('drops javascript:/oversized urls, truncates titles, keeps (raw) future timestamps within a year unchanged', () => {
     const chunk = JSON.stringify([
       [hex(1), 'javascript:alert(1)', 't', '', 1, 1],
       [hex(2), `https://a.com/${'p'.repeat(2100)}`, 't', '', 1, 1],
-      [hex(3), 'https://b.com/', 'T'.repeat(500), 'G'.repeat(61), 1, NOW + 365 * DAY],
+      [hex(3), 'https://b.com/', 'T'.repeat(500), 'G'.repeat(61), 1, NOW + 364 * DAY],
       [hex(4), 'data:text/html,hi', 't', '', 1, 1],
       ['not-hex', 'https://c.com/', 't', '', 1, 1],
-      [hex(5), NOW + 999 * DAY],
+      [hex(5), NOW + 300 * DAY],
     ]);
-    const out = decodeChunks({ 'v1:0': chunk });
-    expect(out.recs).toEqual([[hex(3), 'https://b.com/', 'T'.repeat(80), '', 1, NOW + 365 * DAY]]);
-    expect(out.tombs).toEqual([[hex(5), NOW + 999 * DAY]]);
+    const out = decodeChunks({ 'v1:0': chunk }, NOW);
+    expect(out.recs).toEqual([[hex(3), 'https://b.com/', 'T'.repeat(80), '', 1, NOW + 364 * DAY]]);
+    expect(out.tombs).toEqual([[hex(5), NOW + 300 * DAY]]);
     // Re-encoding keeps the raw value: two passes never drift.
-    const again = decodeChunks(encodeChunks(out.recs, out.tombs, 90_000, 8_000, NOW).chunks);
+    const again = decodeChunks(encodeChunks(out.recs, out.tombs, 90_000, 8_000, NOW).chunks, NOW);
     expect(again).toEqual(out);
   });
 });
@@ -193,5 +193,14 @@ describe('merge', () => {
     expect(merge([rec(1, 20)], [], [], [[hex(1), 15]])).toEqual({ upserts: [], deletes: [], tombs: [[hex(1), 15]] });
     expect(merge([], [], [rec(1, 20)], [[hex(1), 15]]).tombs).toEqual([[hex(1), 15]]);
     expect(merge([rec(1, 10)], [[hex(1), 15]], [], []).tombs).toEqual([[hex(1), 15]]);
+  });
+});
+describe('hostile sync data', () => {
+  it('ignores records and tombstones dated more than a year ahead (they would never expire)', () => {
+    const now = 1_800_000_000_000;
+    const far = now + 400 * 86_400_000;
+    const soon = now + 3 * 86_400_000; // a device with a fast clock is still accepted
+    const store = { 'v1:0': JSON.stringify([['a'.repeat(40), far], ['b'.repeat(40), soon]]) };
+    expect(decodeChunks(store, now).tombs).toEqual([['b'.repeat(40), soon]]);
   });
 });

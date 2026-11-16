@@ -82,6 +82,21 @@ describe('lesson sync', () => {
     await pullSync(B);
     expect((await B.groups.get('gb'))!.lessons).toHaveLength(1);
   });
+  it('a tab with a very long title still syncs as a lesson, and the devices settle', async () => {
+    await A.groups.put(group('ga', 'Lab'));
+    await B.groups.put(group('gb', 'Lab'));
+    const long = await openTab(A, 'https://news.example/a/very/long/path/words/here', 'Headline '.repeat(35));
+    await moveItems(A, [long.id], 'ga');
+    for (let k = 0; k < 2; k++) for (const d of [A, B]) await pullSync(d);
+    expect((await B.groups.get('gb'))!.lessons).toHaveLength(1);
+    let writes = 0;
+    const set = chrome.storage.sync.set.bind(chrome.storage.sync);
+    vi.spyOn(chrome.storage.sync, 'set').mockImplementation((v: Record<string, unknown>) => { writes++; return set(v); });
+    const remove = vi.spyOn(chrome.storage.sync, 'remove');
+    for (let k = 0; k < 3; k++) for (const d of [A, B]) await pullSync(d);
+    expect(writes).toBe(0);
+    expect(remove).not.toHaveBeenCalled();
+  });
   it('with sync off, no lesson is written', async () => {
     await A.groups.put(group('ga', 'Lab'));
     await A.settings.set({ syncEnabled: false });

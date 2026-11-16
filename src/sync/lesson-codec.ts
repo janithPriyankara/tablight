@@ -14,8 +14,17 @@ export const MAX_LESSON_TEXT = 200;
 export const MAX_LESSONS_PER_GROUP = 50;
 const MAX_GROUP_NAME = 60;
 const MAX_GROUPS = 200;
-/** A lesson stamped more than a day in the future is a broken clock or tampering: ignored. */
-const FUTURE_SLACK_MS = 86_400_000;
+/** A lesson stamped more than a year ahead is corruption or tampering, not a fast clock: ignored. */
+const FUTURE_SLACK_MS = 365 * 86_400_000;
+/** Cuts a lesson's text to MAX_LESSON_TEXT without leaving half a surrogate pair. */
+export function lessonText(t: string): string {
+  if (t.length <= MAX_LESSON_TEXT) return t;
+  let out = t.slice(0, MAX_LESSON_TEXT);
+  const last = out.charCodeAt(out.length - 1);
+  if (last >= 0xd800 && last <= 0xdbff) out = out.slice(0, -1);
+  return out;
+}
+const validName = (n: string) => n.trim() !== '' && n.trim().length <= MAX_GROUP_NAME;
 
 const encoder = new TextEncoder();
 const storedBytes = (value: string) => encoder.encode(JSON.stringify(value)).length;
@@ -43,13 +52,28 @@ export function mergeLessons(a: LessonMap, b: LessonMap): LessonMap {
   return out;
 }
 
+function validLesson(e: unknown, now: number): Lesson | null {
+  if (!Array.isArray(e) || e.length !== 2) return null;
+  const [t, at] = e as unknown[];
+  if (typeof t !== 'string' || !t.trim() || t.length > MAX_LESSON_TEXT) return null;
+  if (typeof at !== 'number' || !Number.isFinite(at) || at <= 0 || at > now + FUTURE_SLACK_MS) return null;
+  return [t, at];
+}
+
 /**
  * Packs lessons into LESSON_KEYS, newest lessons first across all groups, never over LESSON_KEY_BUDGET per
  * key (older lessons that don't fit simply stay on the devices that have them). Keys with nothing are omitted.
  */
-export function encodeLessons(m: LessonMap): Record<string, string> {
+export function encodeLessons(m: LessonMap, now = Date.now()): Record<string, string> {
+  // Only what decodeLessons accepts is written: anything else would be dropped by the other device, which
+  // would then rewrite the keys without it, and the two devices would rewrite each other forever.
   const all = [...m.values()]
-    .flatMap((g) => capped(g.lessons).map((l) => ({ name: g.name, key: g.name.toLowerCase(), l })))
+    .filter((g) => validName(g.name))
+    .slice(0, MAX_GROUPS)
+    .flatMap((g) => capped(g.lessons.flatMap((l) => {
+      const v = validLesson(l, now);
+      return v ? [v] : [];
+    })).map((l) => ({ name: g.name.trim(), key: g.name.trim().toLowerCase(), l })))
     .sort((x, y) => y.l[1] - x.l[1] || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0) || (x.l[0] < y.l[0] ? -1 : x.l[0] > y.l[0] ? 1 : 0));
   const out: Record<string, string> = {};
   let k = 0;
@@ -74,13 +98,6 @@ export function encodeLessons(m: LessonMap): Record<string, string> {
   return out;
 }
 
-function validLesson(e: unknown, now: number): Lesson | null {
-  if (!Array.isArray(e) || e.length !== 2) return null;
-  const [t, at] = e as unknown[];
-  if (typeof t !== 'string' || !t.trim() || t.length > MAX_LESSON_TEXT) return null;
-  if (typeof at !== 'number' || !Number.isFinite(at) || at <= 0 || at > now + FUTURE_SLACK_MS) return null;
-  return [t, at];
-}
 
 /** Reads LESSON_KEYS from a storage.sync snapshot; malformed values and entries are ignored, never thrown. */
 export function decodeLessons(store: Record<string, unknown>, now = Date.now()): LessonMap {

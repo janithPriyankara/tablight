@@ -37,6 +37,11 @@ const PAUSE_RETRY_MINUTES = 15;
 const BACKSTOP_MINUTES = 0.5;
 /** At most this many groups are created from remote names per pass. */
 export const MAX_NEW_GROUPS = 50;
+/**
+ * Sync creates groups from remote names only while there are fewer user groups than this, so a hostile or
+ * corrupted remote store can't flood the sidebar with hundreds of groups over successive passes.
+ */
+export const MAX_GROUPS_FROM_SYNC = 60;
 const ID_RE = /^[0-9a-f]{40}$/;
 
 type Failure = Extract<SyncStatus, { ok: false }>['reason'];
@@ -207,11 +212,13 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
     if (stash.some((i) => doomed.has(i.id))) await db.stashBackups.push(stash);
   }
   // Suggested groups are not the user's: remote names never match them.
-  const known = new Set((await db.groups.all()).filter((g) => !g.suggested).map((g) => g.name.toLowerCase()));
+  const mine = (await db.groups.all()).filter((g) => !g.suggested);
+  const known = new Set(mine.map((g) => g.name.toLowerCase()));
+  const room = Math.max(0, MAX_GROUPS_FROM_SYNC - mine.filter((g) => !g.builtIn).length);
   const unknown = [...new Map(
     m.upserts.map((r) => validName(r[3])).filter((n): n is string => n !== null && !known.has(n.toLowerCase()))
       .map((n) => [n.toLowerCase(), n]),
-  ).values()].slice(0, MAX_NEW_GROUPS);
+  ).values()].slice(0, Math.min(MAX_NEW_GROUPS, room));
   const vecs = await centroids(unknown);
   await db.tx(['items', 'groups', 'queue', 'tombstones'], async (s) => {
     const groups = (await s.groups.all()).filter((g) => !g.suggested);

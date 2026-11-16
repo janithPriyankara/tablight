@@ -169,3 +169,14 @@ describe('isClutterTab', () => {
     expect(isClutterTab(url, own)).toBe(false);
   });
 });
+
+describe('hostile URLs stay cheap', () => {
+  it('a URL ending in a huge run of slashes normalizes quickly (no quadratic regex)', () => {
+    const url = `https://evil.example/a${'/'.repeat(200_000)}b`;
+    const t0 = performance.now();
+    normalizeUrl(url);
+    normalizeUrl(`https://evil.example/a${'/'.repeat(200_000)}`);
+    expect(performance.now() - t0).toBeLessThan(250);
+    expect(normalizeUrl('https://x.example/a/b///')).toBe('https://x.example/a/b');
+  });
+});

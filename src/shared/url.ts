@@ -48,7 +48,11 @@ export function normalizeUrl(url: string): string {
   const yt = outHost === 'youtube.com';
   const rank = (k: string) => (yt && k === 'v' ? 0 : 1);
   params.sort((a, b) => rank(a[0]) - rank(b[0]) || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
-  if (path.length > 1) path = path.replace(/\/+$/, '') || '/';
+  // Trailing slashes trimmed with a loop: the regex /\/+$/ is quadratic on a long run of slashes, and any
+  // web page can set such a URL (history.replaceState) to stall the background.
+  let end = path.length;
+  while (end > 1 && path.charCodeAt(end - 1) === 47) end--;
+  if (end < path.length) path = path.slice(0, end) || '/';
   const q = new URLSearchParams(params).toString();
   // Keep app routes, drop plain anchors: "#/x" and "#!x" (SPA routers) and "#view/id" (Gmail, Keep) name a
   // different page; "#section" only scrolls the same one.

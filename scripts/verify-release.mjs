@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MODEL_FILES, MODEL_ID } from './model-manifest.mjs';
+import { MODEL_FILES, MODEL_ID, ORT_FILES_SHA256 } from './model-manifest.mjs';
 import { BANNED_CODE, URL_LITERAL, cleanUrl, packageOf, urlScopeError } from './release-patterns.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -126,6 +126,8 @@ for (const f of ORT_FILES) {
     const expected = sha256(await readFile(join(root, 'node_modules', 'onnxruntime-web', 'dist', f)));
     const actual = sha256(await readFile(join(dist, 'ort', f)));
     if (actual !== expected) fail(`ORT hash mismatch (dist/ort/${f} differs from node_modules/onnxruntime-web)`);
+    // Pinned, so a tampered or silently changed onnxruntime-web package fails the release too.
+    if (actual !== ORT_FILES_SHA256[f]) fail(`ORT hash mismatch (dist/ort/${f} is not the pinned file in model-manifest.mjs)`);
   } catch {
     fail(`ORT file missing (dist/ort/${f} or node_modules/onnxruntime-web/dist/${f}); run "npm ci && npm run prepare:assets"`);
   }

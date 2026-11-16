@@ -107,3 +107,23 @@ describe('sync across devices (bug hunt)', () => {
     expect(await A.items.get(x.id)).toBeUndefined();
   });
 });
+describe('hostile sync data (devices)', () => {
+  it('groups created from synced names are capped in total, not per pass', async () => {
+    const { MAX_GROUPS_FROM_SYNC } = await import('../../src/background/sync');
+    for (let k = 0; k < MAX_GROUPS_FROM_SYNC + 30; k++) {
+      const url = `https://x.com/${k}`;
+      await B.items.put({
+        id: await sha1hex(url), url, normUrl: url, title: 'X', domain: 'x.com', state: 'stashed', groupId: `g${k}`,
+        groupSource: 'user', kind: 'read', createdAt: 1, lastActiveAt: 1, stashedAt: 1, updatedAt: clock, classifiable: true,
+      });
+      await B.groups.put({ id: `g${k}`, name: `Spam ${k}`, color: '#000', icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: 1 });
+    }
+    await pushSync(B);
+    for (let pass = 0; pass < 5; pass++) {
+      clock += 1000;
+      await pullSync(A);
+    }
+    const made = (await A.groups.all()).filter((g) => g.name.startsWith('Spam'));
+    expect(made.length).toBeLessThanOrEqual(MAX_GROUPS_FROM_SYNC);
+  });
+});
