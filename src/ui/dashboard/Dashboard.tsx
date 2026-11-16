@@ -35,6 +35,7 @@ type Dialog =
   | { kind: 'regroup'; rows: RegroupRow[] };
 
 const hasTab = (i: Item) => i.state !== 'stashed' && i.tabId !== undefined;
+const isStashed = (i: Item) => i.state === 'stashed';
 const isWebOpen = (i: Item) => i.state === 'open' && i.classifiable && i.tabId !== undefined;
 const errorText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
 
@@ -192,6 +193,11 @@ export function Dashboard() {
     const r = await send<{ token: string; closed?: number }>({ t: 'close', ids });
     notify(`Closed ${plural(r.closed ?? ids.length, 'tab')}`, r.token);
   };
+  const removeIds = async (ids: string[]) => {
+    const r = await send<{ token: string; deleted: number }>({ t: 'stashDelete', ids });
+    notify(`Removed ${plural(r.deleted, 'stashed tab')}`, r.deleted ? r.token : undefined);
+    setSelected(new Set());
+  };
   const moveIds = async (ids: string[], groupId: string) => {
     await send({ t: 'moveItems', ids, groupId });
     const g = groupMap.get(groupId);
@@ -206,7 +212,8 @@ export function Dashboard() {
       setTimeout(() => moveSelect.current?.focus(), 0);
       return;
     }
-    void act(() => (action === 'sleep' ? sleepIds([item.id]) : action === 'stash' ? stashIds([item.id]) : closeIds([item.id])));
+    void act(() => (action === 'sleep' ? sleepIds([item.id]) : action === 'stash' ? stashIds([item.id])
+      : action === 'remove' ? removeIds([item.id]) : closeIds([item.id])));
   };
   const onDelete = (focused: Item) => {
     const targets = (selection.length ? selection : [focused]).filter(hasTab);
@@ -268,6 +275,17 @@ export function Dashboard() {
   const groupTargets = list.filter(isWebOpen);
   const stashView = () => act(() => stashIds(groupTargets.map((i) => i.id)));
   const sleepView = () => act(() => sleepIds(groupTargets.map((i) => i.id)));
+  const removeAllStashed = () =>
+    act(async () => {
+      const ids = list.filter(isStashed).map((i) => i.id);
+      if (!ids.length) return;
+      if (!(await confirm({
+        title: `Remove ${plural(ids.length, 'stashed tab')}?`,
+        body: 'They are deleted from the stash here and, when sync is on, on your other devices. You can undo for 10 seconds.',
+        confirmLabel: 'Remove all', danger: true,
+      }))) return;
+      await removeIds(ids);
+    });
   const closeDuplicates = () =>
     act(async () => {
       const n = state?.dupCount ?? 0;
@@ -454,6 +472,11 @@ export function Dashboard() {
             </div>
             {subtitle && <p class="view-sub">{subtitle}</p>}
             <div class="view-actions">
+              {view.kind === 'stashed' && !searching && list.length > 0 && (
+                <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void removeAllStashed()}>
+                  <TrashIcon />Remove all
+                </button>
+              )}
               {canGroupAct && (
                 <>
                   <button type="button" class="btn btn-sm" disabled={busy || !groupTargets.length} onClick={() => void stashView()}>
@@ -501,6 +524,11 @@ export function Dashboard() {
               <button type="button" class="btn btn-sm" disabled={busy || !selection.some(hasTab)} onClick={() => void act(() => closeIds(selection.filter(hasTab).map((i) => i.id)))}>
                 <CloseIcon />Close
               </button>
+              {selection.some(isStashed) && (
+                <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(() => removeIds(selection.filter(isStashed).map((i) => i.id)))}>
+                  <TrashIcon />Remove from stash
+                </button>
+              )}
               <select
                 ref={moveSelect} class="field field-inline field-sm" aria-label="Move selected tabs to group" value="" disabled={busy}
                 onChange={(e) => {

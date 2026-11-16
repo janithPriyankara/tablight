@@ -19,6 +19,8 @@ interface Closed {
 interface UndoEntry {
   expires: number;
   closed: Closed[];
+  /** Stash records the action deleted (no tab involved): undo puts them back. */
+  deleted?: Item[];
 }
 // In memory only: a service-worker restart forgets pending undos, which is acceptable for a 10 s window.
 const undos = new Map<string, UndoEntry>();
@@ -218,12 +220,49 @@ export async function openItem(db: Db, id: string): Promise<void> {
   }
   await adopt(db, { ...item, id: crypto.randomUUID(), stashedAt: undefined }, tab);
 }
+/**
+ * Deletes stashed records without opening them. The whole stash is backed up first; records that were
+ * ever synced get a tombstone so other devices drop them too. Ids that aren't stashed records are ignored.
+ */
+export async function deleteStashed(db: Db, ids: string[]): Promise<{ token: string; deleted: number }> {
+  const stashed = await db.items.byState('stashed');
+  const wanted = new Set(ids);
+  const doomed = stashed.filter((i) => wanted.has(i.id));
+  if (!doomed.length) return { token: remember({ closed: [] }), deleted: 0 };
+  await db.stashBackups.push(stashed);
+  const synced = new Set<string>();
+  for (const i of doomed) if (await wasSynced(i.id)) synced.add(i.id);
+  const deleted: Item[] = [];
+  await db.tx(['items', 'tombstones', 'queue'], async (s) => {
+    for (const { id } of doomed) {
+      const rec = await s.items.get(id); // re-read inside the transaction
+      if (rec?.state !== 'stashed') continue;
+      await s.items.delete(id);
+      await s.queue.remove([id]);
+      if (synced.has(id)) await s.tombstones.put({ id, deletedAt: nextStamp(rec.updatedAt) });
+      deleted.push(rec);
+    }
+  });
+  return { token: remember({ closed: [], deleted }), deleted: deleted.length };
+}
+/** Puts deleted stash records back, stamped newer than their tombstones (which are removed). */
+async function restoreDeleted(db: Db, recs: Item[]): Promise<void> {
+  const now = Date.now();
+  await db.tx(['items', 'tombstones'], async (s) => {
+    for (const rec of recs) {
+      const at = await restashTime(s, rec.id, now);
+      if (await s.items.get(rec.id)) continue; // stashed again meanwhile: keep the newer record
+      await s.items.put({ ...rec, updatedAt: nextStamp(rec.updatedAt, at) });
+    }
+  });
+}
 /** Within UNDO_MS of the action: reopens closed web tabs / un-stashes. Returns false when too late. */
 export async function undo(db: Db, token: string): Promise<boolean> {
   const e = undos.get(token);
   if (!e) return false;
   undos.delete(token);
   if (e.expires <= Date.now()) return false;
+  if (e.deleted?.length) await restoreDeleted(db, e.deleted);
   const restored: string[] = [];
   for (const c of e.closed) {
     if (!isWebUrl(c.url)) continue;

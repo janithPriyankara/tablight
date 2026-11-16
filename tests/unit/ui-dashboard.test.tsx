@@ -394,4 +394,25 @@ describe('dashboard', () => {
     await waitFor(() => expect(sent('state').length).toBeGreaterThan(2));
     expect((sync as HTMLInputElement).checked).toBe(false);
   });
+  it('stashed rows have "Remove from stash"; the Stashed view removes all after a confirm; both undoable', async () => {
+    const stashed = [item('s1', { state: 'stashed', tabId: undefined }), item('s2', { state: 'stashed', tabId: undefined })];
+    serve(state({ items: [item('i1'), ...stashed] }), (req) =>
+      (req.t === 'stashDelete' ? { token: 'rt', deleted: (req.ids as string[]).length } : req.t === 'undo' ? true : undefined));
+    history.replaceState(null, '', '/dashboard.html#view=stashed');
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title s1');
+    const row = [...container.querySelectorAll<HTMLElement>('.grid-row')].find((r) => r.textContent?.includes('Title s1'))!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Remove from stash' }));
+    await waitFor(() => expect(sent('stashDelete')).toEqual([{ t: 'stashDelete', ids: ['s1'] }]));
+    await screen.findByText('Removed 1 stashed tab');
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'rt' }]));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove all' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Remove 2 stashed tabs?' });
+    expect(sent('stashDelete')).toHaveLength(1);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove all' }));
+    await waitFor(() => expect(sent('stashDelete')).toHaveLength(2));
+    expect((sent('stashDelete')[1]!.ids as string[]).sort()).toEqual(['s1', 's2']);
+    await screen.findByText('Removed 2 stashed tabs');
+  });
 });

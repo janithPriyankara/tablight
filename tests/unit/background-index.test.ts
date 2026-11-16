@@ -308,4 +308,22 @@ describe('background index', () => {
     expect(dash()).toHaveLength(1);
     mock.uninstall();
   });
+  it('stashDelete validates ids and deletes only stashed records', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    const rec = {
+      id: 'st1', url: 'https://s.example/', normUrl: 'https://s.example/', title: 'S', domain: 's.example',
+      state: 'stashed' as const, groupId: null, groupSource: 'auto' as const, kind: 'other' as const,
+      createdAt: 1, lastActiveAt: 1, stashedAt: 1, updatedAt: 1, classifiable: true,
+    };
+    await db.items.put(rec);
+    await expect(bg.handleRequest({ t: 'stashDelete', ids: 'st1' as never })).rejects.toThrow();
+    const r = (await bg.handleRequest({ t: 'stashDelete', ids: ['st1'] })) as { deleted: number; token: string };
+    expect(r.deleted).toBe(1);
+    expect(await db.items.get('st1')).toBeUndefined();
+    expect(await bg.handleRequest({ t: 'undo', token: r.token })).toBe(true);
+    expect((await db.items.get('st1'))?.state).toBe('stashed');
+    mock.uninstall();
+  });
 });

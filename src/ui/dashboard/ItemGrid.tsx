@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { GroupSummary, Item } from '../../shared/types';
 import { ItemRow } from '../common/ItemRow';
 import { displayTitle } from '../common/format';
-import { CloseIcon, MoonIcon, MoveIcon, StashIcon, SwitchIcon } from '../common/icons';
+import { CloseIcon, MoonIcon, MoveIcon, StashIcon, SwitchIcon, TrashIcon } from '../common/icons';
 
 /** Fixed row height (px): keeps windowing a matter of arithmetic. Matches .grid-row in dashboard.css. */
 export const ROW_HEIGHT = 52;
@@ -11,7 +11,7 @@ export const OVERSCAN = 10;
 /** Viewport height assumed before the scroller is laid out (and in tests, where nothing is). */
 const FALLBACK_HEIGHT = 800;
 
-export type RowAction = 'sleep' | 'stash' | 'close' | 'move';
+export type RowAction = 'sleep' | 'stash' | 'close' | 'move' | 'remove';
 export type SelectMode = 'toggle' | 'range' | 'only';
 
 export interface ItemGridProps {
@@ -214,6 +214,11 @@ export function ItemGrid(props: ItemGridProps) {
             {hasTab(item) && (
               <button type="button" class="icon-btn" tabIndex={tab} aria-label="Close" title="Close tab" onClick={() => props.onAction('close', item)}>
                 <CloseIcon />
+              </button>
+            )}
+            {item.state === 'stashed' && (
+              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Remove from stash" title="Remove from stash" onClick={() => props.onAction('remove', item)}>
+                <TrashIcon />
               </button>
             )}
           </>

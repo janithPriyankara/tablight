@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from '../../src/background/memory';
+import { autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, undo } from '../../src/background/memory';
 import { reconcile } from '../../src/background/tab-index';
 import { SYNCED_IDS_KEY } from '../../src/background/sync';
 import { sha1hex } from '../../src/shared/hash';
@@ -265,5 +265,38 @@ describe('re-stash and tombstones', () => {
     expect((await db.tombstones.get(a))!.deletedAt).toBe(future + 1);
     await undo(db, token);
     expect((await db.tombstones.get(b))!.deletedAt).toBe(future + 1);
+  });
+});
+describe('deleteStashed', () => {
+  it('deletes stashed records in one go, backs the stash up first, tombstones synced ids only; undo restores', async () => {
+    const items = await setup([{ url: 'https://a.com/', active: true }, { url: 'https://s1.com/' }, { url: 'https://s2.com/' }, { url: 'https://s3.com/' }]);
+    await stash(db, ['https://s1.com/', 'https://s2.com/', 'https://s3.com/'].map((u) => byUrl(items, u).id));
+    const [id1, id2, id3] = await Promise.all(['https://s1.com/', 'https://s2.com/', 'https://s3.com/'].map((u) => sha1hex(u)));
+    await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [id1] });
+    const before = await db.items.get(id1!);
+    const open = byUrl(items, 'https://a.com/');
+    const r = await deleteStashed(db, [id1!, id2!, open.id, 'missing']);
+    expect(r.deleted).toBe(2); // open items and unknown ids are never deleted
+    expect(await db.items.get(open.id)).toBeDefined();
+    expect((await db.items.byState('stashed')).map((i) => i.id)).toEqual([id3]);
+    const backups = await db.stashBackups.all();
+    expect(backups).toHaveLength(1);
+    expect(backups[0]!.items.map((i) => i.id).sort()).toEqual([id1, id2, id3].sort());
+    const tombs = await db.tombstones.all();
+    expect(tombs.map((t) => t.id)).toEqual([id1]); // id2 never synced: no tombstone
+    expect(tombs[0]!.deletedAt).toBeGreaterThan(before!.updatedAt - 1);
+    expect(mock.tabs()).toHaveLength(1); // no tab opened or closed
+    expect(await undo(db, r.token)).toBe(true);
+    expect((await db.items.byState('stashed')).map((i) => i.id).sort()).toEqual([id1, id2, id3].sort());
+    expect(await db.tombstones.all()).toEqual([]);
+    const back = await db.items.get(id1!);
+    expect(back!.updatedAt).toBeGreaterThan(tombs[0]!.deletedAt); // beats the tombstone elsewhere too
+    expect(mock.tabs()).toHaveLength(1);
+  });
+  it('does nothing (no backup) when no id is a stashed record', async () => {
+    await setup([{ url: 'https://a.com/' }]);
+    const r = await deleteStashed(db, ['nope']);
+    expect(r.deleted).toBe(0);
+    expect(await db.stashBackups.all()).toEqual([]);
   });
 });
