@@ -20,8 +20,8 @@ Organize the user's open browser tabs: list, group by topic, find duplicates, sl
 | `favicon` | Show site icons from the browser's own icon cache; no icon is downloaded from a website. |
 | `tabGroups` (optional) | Requested only if the user turns on mirroring of groups into the browser's native tab groups. |
 No host permissions, no content scripts, no remote code.
-- Collects personal data: No. Nothing is sent to the developer or any third party.
-- Sells or transfers user data to third parties: No.
+- Collects personal data: the developer collects nothing; nothing is sent to the developer or to any server of ours. Disclosure: while sync is on (the default; it can be turned off in Settings), the addresses (URLs) and short titles of **stashed** tabs, with their group name and date, are stored in the user's own browser sync storage and carried between the user's own devices by the browser's sync service (Microsoft account in Edge, Google account in Chrome). If the store form counts this as handling "web history", declare it with the purpose "app functionality (sync between the user's own devices)".
+- Sells or transfers user data to third parties: No. Data is not sold, and is not transferred to the developer or anyone else; the browser's own sync of the user's stash stays within the user's browser account.
 - Uses or transfers data for purposes unrelated to the single purpose, or for creditworthiness or lending: No.
 - Remote code: No; the model and all code are in the package.
 - Processing: on device only. Tab titles and addresses are processed locally by the bundled model.
