@@ -26,13 +26,14 @@ export type Req =
   | { t: 'sessionAction'; id: string; action: 'openAll' | 'stashAll' | 'delete'; confirm?: boolean }
   | { t: 'settings'; patch: Partial<Settings> }
   | { t: 'export' }
+  | { t: 'deleteAllData' } // Settings: wipe everything this extension stored, then re-seed
   | { t: 'import'; json: string };
 export type ReqType = Req['t'];
 export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
-  'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'settings', 'export', 'import',
+  'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'settings', 'export', 'deleteAllData', 'import',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

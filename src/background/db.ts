@@ -67,7 +67,12 @@ export interface StoreApis {
     set(p: Partial<Settings>): Promise<Settings>;
   };
 }
+export const STORE_NAMES: readonly StoreName[] = [
+  'items', 'groups', 'embeddings', 'queue', 'snapshots', 'tombstones', 'stashBackups', 'settings',
+];
 export interface Db extends StoreApis {
+  /** Empties every store in one transaction (Settings → Delete all data). */
+  clearAll(): Promise<void>;
   tx<T, S extends StoreName>(stores: S[], fn: (t: Pick<StoreApis, S>) => Promise<T>): Promise<T>;
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,6 +258,10 @@ export async function openDb(name = 'tab-organizer', hooks: OpenDbHooks = {}): P
   };
   return {
     ...buildApis(standalone, nextAddedAt),
+    async clearAll() {
+      const tx = idb.transaction([...STORE_NAMES], 'readwrite');
+      await Promise.all([...STORE_NAMES.map((n) => tx.objectStore(n).clear()), tx.done]);
+    },
     async tx<T, S extends StoreName>(stores: S[], fn: (t: Pick<StoreApis, S>) => Promise<T>): Promise<T> {
       const tx = idb.transaction(stores, 'readwrite') as AnyTx;
       const scoped = buildApis((_names, f) => f(tx), nextAddedAt);

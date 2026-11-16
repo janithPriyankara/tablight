@@ -2,7 +2,7 @@ import { useRef } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
 import { ago, plural } from '../common/format';
-import { DownloadIcon, ShieldIcon, UploadIcon } from '../common/icons';
+import { DownloadIcon, ShieldIcon, TrashIcon, UploadIcon } from '../common/icons';
 import { isoDate, syncStatusLine } from './views';
 
 /** Same limit the background's import enforces; checked before the file is read. */
@@ -48,9 +48,11 @@ export interface SettingsProps {
   /** Runs an action with the dashboard's busy guard, error reporting and refresh. */
   act: (fn: () => Promise<void>) => Promise<void>;
   notify: (message: string) => void;
+  /** Settings → Delete all data (the dashboard confirms first). */
+  onDeleteAll: () => void;
 }
 
-export function Settings({ settings, syncStatus, busy, save, act, notify }: SettingsProps) {
+export function Settings({ settings, syncStatus, busy, save, act, notify, onDeleteAll }: SettingsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const autoValue = settings.autoSleepMinutes === null ? 'off' : String(settings.autoSleepMinutes);
   const choices = AUTO_SLEEP_CHOICES.some((c) => c.value === settings.autoSleepMinutes)
@@ -192,6 +194,18 @@ export function Settings({ settings, syncStatus, busy, save, act, notify }: Sett
               <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
             </span>
           </p>
+          <div class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Delete all data</span>
+              <span class="setting-help">
+                Deletes everything Tab Organizer stored on this device and the synced copy of your stash in your
+                browser account. Open tabs stay open. Uninstalling also removes the data on this device.
+              </span>
+            </span>
+            <button type="button" class="btn btn-sm btn-danger" disabled={busy} onClick={onDeleteAll}>
+              <TrashIcon />Delete all data
+            </button>
+          </div>
         </section>
       </form>
     </div>

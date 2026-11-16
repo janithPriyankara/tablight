@@ -394,6 +394,24 @@ export async function setSyncEnabled(db: Db, enabled: boolean): Promise<SyncStat
   return pullSync(db);
 }
 
+/**
+ * Delete all data, sync side: inside the sync queue (no pass runs meanwhile) runs `wipeLocal`, then removes
+ * our own storage.sync keys ("v1:*" only) and our sync bookkeeping in storage.local. Pending pushes are
+ * cancelled; a later pass starts from nothing.
+ */
+export function clearSyncData(wipeLocal: () => Promise<void>): Promise<void> {
+  for (const t of [pushTimer, pullTimer]) if (t !== undefined) clearTimeout(t);
+  pushTimer = pullTimer = undefined;
+  return serial(async () => {
+    await wipeLocal();
+    const ours = Object.keys(await chrome.storage.sync.get(null)).filter((k) => k.startsWith(SYNC_PREFIX));
+    if (ours.length) await chrome.storage.sync.remove(ours);
+    lastWritten.clear();
+    lastRemoved.clear();
+    await chrome.storage.local.remove([SYNC_STATUS_KEY, SYNCED_IDS_KEY, SYNC_WRITES_KEY]);
+    await Promise.resolve(chrome.alarms.clear(SYNC_RETRY_ALARM)).catch(() => undefined);
+  });
+}
 /** A group rename changes the synced name of its stashed items: bump them so the rename wins LWW elsewhere. */
 export async function touchStashedInGroup(db: Db, groupId: string): Promise<void> {
   await db.tx(['items'], async (s) => {

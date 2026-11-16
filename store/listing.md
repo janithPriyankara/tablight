@@ -26,5 +26,6 @@ No host permissions, no content scripts, no remote code.
 - Remote code: No; the model and all code are in the package.
 - Processing: on device only. Tab titles and addresses are processed locally by the bundled model.
 - Browser sync: if the user leaves sync on (default), stashed tabs (address, short title, group name, date) are stored in the user's own browser sync storage (Microsoft account in Edge, Google account in Chrome). The developer cannot see it. It can be turned off in Settings.
-- Encryption in transit and user-deletable data: nothing is transmitted by the extension; data is deleted by removing the extension or from Settings.
+- Encryption in transit: the extension transmits nothing itself; the optional stash sync is carried by the browser's own sync service.
+- User-deletable data: yes. Settings → "Delete all data" deletes all data on the device and the synced copy of the stash in the user's browser account (open tabs are not closed). Uninstalling removes the data on the device; turning sync off does NOT remove the synced copy (use "Delete all data" for that). Other devices keep their own copy until "Delete all data" is used there too.
 `https://<owner-github-username>.github.io/<repo>/privacy.html` (placeholder: the owner publishes `public/privacy.html` on their GitHub Pages site and replaces this).

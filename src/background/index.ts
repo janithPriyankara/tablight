@@ -10,6 +10,7 @@ import {
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
+import { deleteAllData } from './reset';
 import { openDashboard } from '../shared/nav';
 import { semanticSearch, wordSearch } from '../search/search';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
@@ -339,6 +340,12 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'regroupApply': out = await regroupApply(db); break;
     case 'settings': out = await updateSettings(db, req.patch); break;
     case 'export': return exportJson(db);
+    case 'deleteAllData': {
+      await deleteAllData(db);
+      await ensureStarterGroups(db).catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e));
+      await flushTabEvents(); // re-index the open tabs (nothing was closed)
+      break;
+    }
     case 'import': {
       if (typeof req.json !== 'string') throw new Error('invalid import');
       const parsed = parseImport(req.json);

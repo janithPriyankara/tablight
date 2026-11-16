@@ -326,4 +326,40 @@ describe('background index', () => {
     expect((await db.items.get('st1'))?.state).toBe('stashed');
     mock.uninstall();
   });
+  it('deleteAllData wipes our IndexedDB, local and v1:* sync data only, keeps tabs open, then re-seeds', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example/', title: 'A' }, { url: 'https://b.example/', title: 'B' }] }] });
+    const bg = await import('../../src/background/index');
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    mock.fireInstalled('update');
+    const db = await bg.getDb();
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect((await db.items.all()).filter((i) => i.state === 'open').map((i) => i.url).sort()).toEqual(['https://a.example/', 'https://b.example/']);
+    });
+    const ia = (await db.items.all()).find((i) => i.url === 'https://a.example/');
+    const st = (await bg.handleRequest({ t: 'stash', ids: [ia!.id] })) as { token: string };
+    await bg.handleRequest({ t: 'snapshotNow' });
+    await db.settings.set({ onboarded: true, syncEnabled: false, theme: 'dark' });
+    await db.tombstones.put({ id: 'gone', deletedAt: 1 });
+    await chrome.storage.sync.set({ 'v1:meta': { x: 1 }, 'v1:0': 'chunk', 'other-ext-key': 1 });
+    await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], foreign: 1 });
+    const openTabs = mock.tabs().length;
+    await bg.handleRequest({ t: 'deleteAllData' });
+    expect(mock.tabs()).toHaveLength(openTabs); // nothing closed
+    expect(await db.snapshots.all()).toEqual([]);
+    expect(await db.tombstones.all()).toEqual([]);
+    expect(await db.stashBackups.all()).toEqual([]);
+    expect(await db.items.byState('stashed')).toEqual([]);
+    const settings = await db.settings.get();
+    expect(settings).toMatchObject({ onboarded: false, theme: 'system', syncEnabled: false }); // the sync choice is kept
+    expect(Object.keys(await chrome.storage.sync.get(null))).toEqual(['other-ext-key']);
+    expect(Object.keys(await chrome.storage.local.get(null))).toEqual(['foreign']);
+    expect((await db.groups.all()).length).toBeGreaterThan(10); // starter groups re-seeded
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect((await db.items.all()).map((i) => i.url).sort()).toEqual(['https://b.example/']); // the open tab is re-indexed
+    });
+    expect(await bg.handleRequest({ t: 'undo', token: st.token })).toBe(false); // no undo across a wipe
+    mock.uninstall();
+  });
 });

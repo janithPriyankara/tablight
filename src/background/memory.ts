@@ -31,6 +31,10 @@ function remember(entry: Omit<UndoEntry, 'expires'>): string {
   undos.set(token, { ...entry, expires: now + UNDO_MS });
   return token;
 }
+/** Forgets every pending undo (after Delete all data, nothing may be put back). */
+export function clearUndos(): void {
+  undos.clear();
+}
 const hasTab = (i: Item): i is Item & { tabId: number } => i.state !== 'stashed' && i.tabId !== undefined;
 async function liveTabs(): Promise<Map<number, chrome.tabs.Tab>> {
   return new Map((await chrome.tabs.query({})).flatMap((t) => (t.id === undefined ? [] : [[t.id, t] as const])));

@@ -415,4 +415,20 @@ describe('dashboard', () => {
     expect((sent('stashDelete')[1]!.ids as string[]).sort()).toEqual(['s1', 's2']);
     await screen.findByText('Removed 2 stashed tabs');
   });
+  it('Settings → Delete all data asks first (Cancel focused), then sends deleteAllData', async () => {
+    serve(state(), () => undefined);
+    history.replaceState(null, '', '/dashboard.html#view=settings');
+    render(<Dashboard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete all data' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Delete all data?' });
+    expect(dialog.textContent).toMatch(/Open tabs stay open/);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(sent('deleteAllData')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all data' }));
+    dialog = await screen.findByRole('dialog', { name: 'Delete all data?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete all data' }));
+    await waitFor(() => expect(sent('deleteAllData')).toHaveLength(1));
+    await screen.findByText('All data deleted');
+  });
 });

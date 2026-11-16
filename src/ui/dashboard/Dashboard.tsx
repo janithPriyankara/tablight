@@ -275,6 +275,18 @@ export function Dashboard() {
   const groupTargets = list.filter(isWebOpen);
   const stashView = () => act(() => stashIds(groupTargets.map((i) => i.id)));
   const sleepView = () => act(() => sleepIds(groupTargets.map((i) => i.id)));
+  const deleteAllData = () =>
+    act(async () => {
+      if (!(await confirm({
+        title: 'Delete all data?',
+        body: 'This deletes your groups, stash, saved sessions, settings and the synced copy of your stash in your browser account. Open tabs stay open. This can’t be undone; export a backup first if you may need it.',
+        confirmLabel: 'Delete all data', danger: true,
+      }))) return;
+      await send({ t: 'deleteAllData' });
+      setPendingSettings(null);
+      setSelected(new Set());
+      notify('All data deleted');
+    });
   const removeAllStashed = () =>
     act(async () => {
       const ids = list.filter(isStashed).map((i) => i.id);
@@ -578,7 +590,10 @@ export function Dashboard() {
             <Sessions version={state} busy={busy} onAction={sessionAction} onSnapshot={snapshotNow} />
           )}
           {state && settings && !searching && view.kind === 'settings' && (
-            <Settings settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)} />
+            <Settings
+              settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)}
+              onDeleteAll={() => void deleteAllData()}
+            />
           )}
         </main>
       </div>

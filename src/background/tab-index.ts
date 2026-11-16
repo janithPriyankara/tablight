@@ -497,7 +497,7 @@ async function setKick(periodInMinutes: number, keep = false): Promise<void> {
 }
 
 // ───────────────────────────── suggestions ─────────────────────────────
-const DISMISSED_KEY = 'dismissedSuggestions';
+export const DISMISSED_KEY = 'dismissedSuggestions';
 /** At most this many dismissed suggestions are remembered (newest kept). */
 export const MAX_DISMISSED = 200;
 /** Privacy-light fingerprint of one item: a short hash of its normalized URL. */
