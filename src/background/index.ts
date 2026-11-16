@@ -1,9 +1,15 @@
 // Service worker entry. Every listener is registered synchronously at top level (MV3: a worker woken
 // by an event only delivers it to listeners that exist after the first synchronous run).
+import type { Req } from '../shared/rpc';
 import { buildStarterGroups } from '../classify/assign';
 import { openDb, type Db } from './db';
 import { invalidateBadges, updateBadge } from './duplicates';
 import { embed } from './embedder';
+import {
+  acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
+  parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
+} from './groups';
+import { handle } from '../shared/rpc';
 import {
   KICK_ALARM,
   configureTabIndex,
@@ -72,7 +78,33 @@ async function activated(tabId: number): Promise<void> {
   await updateBadge(db, tabId);
 }
 
+/** Re-applies native tab groups in every window after a group change (no-op unless enabled). */
+async function mirrorAll(db: Db): Promise<void> {
+  const windowIds = new Set((await chrome.tabs.query({})).map((t) => t.windowId));
+  for (const w of windowIds) await mirrorTabGroups(db, w).catch((e: unknown) => console.error('mirror failed', e));
+}
+/** Group RPCs. Payloads come from extension pages but are still validated. */
+export async function handleRequest(req: Req): Promise<unknown> {
+  const db = await getDb();
+  let out: unknown;
+  switch (req.t) {
+    case 'moveItems': await moveItems(db, parseIds(req.ids), parseId(req.groupId)); break;
+    case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids)); break;
+    case 'groupRename': await renameGroup(db, parseId(req.id), parseName(req.name)); break;
+    case 'groupMerge': await mergeGroups(db, parseId(req.from), parseId(req.into)); break;
+    case 'groupDelete': await deleteGroup(db, parseId(req.id)); break;
+    case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id)); break;
+    case 'dismissSuggestion': await dismissSuggestion(db, parseId(req.id)); break;
+    case 'regroupPreview': return regroupPreview(db);
+    case 'regroupApply': out = await regroupApply(db); break;
+    default: throw new Error(`unsupported request: ${req.t}`);
+  }
+  await mirrorAll(db);
+  return out;
+}
 configureTabIndex({ db: getDb, after: pipeline });
+
+handle((req) => handleRequest(req), 'background');
 
 chrome.tabs.onCreated.addListener(() => onTabEvent());
 chrome.tabs.onUpdated.addListener((_id, info) => {

@@ -21,6 +21,9 @@ export class MockEvent<T extends Fn> {
   hasListener(cb: T): boolean {
     return this.listeners.includes(cb);
   }
+  all(): T[] {
+    return [...this.listeners];
+  }
   hasListeners(): boolean {
     return this.listeners.length > 0;
   }
@@ -73,6 +76,14 @@ export interface ChromeMockControl {
    * same order (so old and new ids collide), storage.session is cleared, badges reset. No tab events fire.
    */
   restartBrowser(): void;
+  /** Grants or revokes an optional permission (all are denied by default). */
+  setPermission(name: string, granted: boolean): void;
+  /** Live copies of every native tab group. */
+  tabGroups(): chrome.tabGroups.TabGroup[];
+  /** Sends a runtime message as the extension's own page (or `sender`) and resolves the reply. */
+  sendMessage(message: unknown, sender?: Partial<chrome.runtime.MessageSender>): Promise<unknown>;
+  /** Call counts of the tab-group APIs (to assert "never called"). */
+  calls: { group: number; ungroup: number; update: number };
   uninstall(): void;
 }
 
@@ -103,8 +114,17 @@ export interface MockChrome {
     getURL(path: string): string;
     onInstalled: MockEvent<(d: chrome.runtime.InstalledDetails) => void>;
     onStartup: MockEvent<() => void>;
+    onMessage: MockEvent<
+      (m: unknown, s: chrome.runtime.MessageSender, respond: (r?: unknown) => void) => boolean | void
+    >;
+  };
+  permissions: { contains(p: chrome.permissions.Permissions): Promise<boolean> };
+  tabGroups: {
+    query(q: chrome.tabGroups.QueryInfo): Promise<chrome.tabGroups.TabGroup[]>;
+    update(id: number, p: chrome.tabGroups.UpdateProperties): Promise<chrome.tabGroups.TabGroup>;
   };
   tabs: {
+    group(o: chrome.tabs.GroupOptions): Promise<number>;
     query(q: chrome.tabs.QueryInfo): Promise<Tab[]>;
     get(tabId: number): Promise<Tab>;
     onCreated: MockEvent<(tab: Tab) => void>;
@@ -151,6 +171,10 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
   const session = new Map<string, unknown>();
+  const granted = new Set<string>();
+  const groups = new Map<number, chrome.tabGroups.TabGroup>();
+  let nextGroupId = 1;
+  const calls = { group: 0, ungroup: 0, update: 0 };
 
   const inWindow = (w: number) => [...tabs.values()].filter((t) => t.windowId === w);
   const reindex = (w: number) => inWindow(w).forEach((t, i) => (t.index = i));
@@ -167,8 +191,46 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       getURL: (p) => `chrome-extension://mock-extension-id/${p.replace(/^\//, '')}`,
       onInstalled: new MockEvent(),
       onStartup: new MockEvent(),
+      onMessage: new MockEvent(),
+    },
+    permissions: {
+      async contains(p) {
+        return (p.permissions ?? []).every((x) => granted.has(x));
+      },
+    },
+    tabGroups: {
+      async query(q) {
+        return [...groups.values()]
+          .filter((g) => (q.windowId === undefined || q.windowId === g.windowId) &&
+            (q.title === undefined || q.title === g.title))
+          .map(clone);
+      },
+      async update(id, p) {
+        calls.update++;
+        const g = groups.get(id);
+        if (!g) throw new Error(`No group with id: ${id}.`);
+        Object.assign(g, p);
+        return clone(g);
+      },
     },
     tabs: {
+      async group(o) {
+        calls.group++;
+        const ids = Array.isArray(o.tabIds) ? o.tabIds : [o.tabIds];
+        if (!ids.length) throw new Error('No tabIds');
+        let gid = o.groupId;
+        const first = mustGet(ids[0]!);
+        if (gid === undefined) {
+          gid = nextGroupId++;
+          groups.set(gid, {
+            id: gid, collapsed: false, color: 'grey', title: '', shared: false,
+            windowId: o.createProperties?.windowId ?? first.windowId,
+          });
+        } else if (!groups.has(gid)) throw new Error(`No group with id: ${gid}.`);
+        for (const id of ids) mustGet(id).groupId = gid;
+        for (const k of [...groups.keys()]) if (![...tabs.values()].some((t) => t.groupId === k)) groups.delete(k);
+        return gid;
+      },
       async query(q) {
         return ordered()
           .filter((t) => {
@@ -350,6 +412,22 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         tabs.set(id, { ...t, id, windowId: winMap.get(t.windowId)! });
       }
       focused = windows[0] ?? -1;
+    },
+    setPermission(name, on) {
+      if (on) granted.add(name);
+      else granted.delete(name);
+    },
+    tabGroups: () => [...groups.values()].map(clone),
+    calls,
+    sendMessage(message, sender = {}) {
+      return new Promise((resolve) => {
+        const s = { id: mock.runtime.id, ...sender } as chrome.runtime.MessageSender;
+        let handled = false;
+        for (const l of mock.runtime.onMessage.all()) {
+          if (l(message, s, resolve) === true) handled = true;
+        }
+        if (!handled) resolve(undefined);
+      });
     },
     uninstall() {
       delete (globalThis as { chrome?: unknown }).chrome;

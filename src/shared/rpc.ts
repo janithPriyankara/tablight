@@ -16,6 +16,7 @@ export type Req =
   | { t: 'groupMerge'; from: string; into: string }
   | { t: 'groupDelete'; id: string }
   | { t: 'acceptSuggestion'; id: string }
+  | { t: 'dismissSuggestion'; id: string }
   | { t: 'regroupPreview' }
   | { t: 'regroupApply' }
   | { t: 'snapshotNow' }
@@ -28,7 +29,7 @@ export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'state', 'search', 'moveItems', 'sleep', 'stash', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
-  'regroupPreview', 'regroupApply', 'snapshotNow', 'sessionAction', 'settings', 'export', 'import',
+  'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessionAction', 'settings', 'export', 'import',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

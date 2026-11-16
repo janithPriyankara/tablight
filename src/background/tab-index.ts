@@ -378,6 +378,15 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
   });
 }
 
+/**
+ * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
+ * (trained head + user-taught exemplars) > null. `groups` must exclude suggested groups.
+ */
+export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
+  const rule = ruleGroup(item.url, item.title);
+  if (rule !== null && groups.some((g) => g.id === rule)) return rule;
+  return classify(vec, groups, HEAD).groupId;
+}
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
   const drop = ids.filter((id, k) => !read[k]?.classifiable);
@@ -403,7 +412,6 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
   return db.tx(['items', 'queue', 'embeddings', 'groups'], async (s) => {
     // Read the groups here so a group deleted meanwhile is never assigned.
     const groups = (await s.groups.all()).filter((g) => !g.suggested);
-    const known = new Set(groups.map((g) => g.id));
     for (const [key, v] of fresh) {
       await s.embeddings.put(key, v);
       vecs.set(key, v);
@@ -421,8 +429,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       const vec = vecs.get(keys[k]!)!;
       let groupId = cur.groupId;
       if (cur.groupSource !== 'user') {
-        const rule = ruleGroup(cur.url, cur.title);
-        groupId = rule !== null && known.has(rule) ? rule : classify(vec, groups, HEAD).groupId;
+        groupId = autoGroup(cur, vec, groups);
       }
       await s.items.put({ ...cur, groupId, updatedAt: Date.now() });
       done.push(snap.id);
@@ -452,6 +459,33 @@ async function setKick(periodInMinutes: number, keep = false): Promise<void> {
 }
 
 // ───────────────────────────── suggestions ─────────────────────────────
+const DISMISSED_KEY = 'dismissedSuggestions';
+/** At most this many dismissed suggestions are remembered (newest kept). */
+export const MAX_DISMISSED = 200;
+/** Privacy-light fingerprint of one item: a short hash of its normalized URL. */
+async function urlFingerprint(normUrl: string): Promise<string> {
+  return (await sha1hex(normUrl)).slice(0, 12);
+}
+/** Fingerprints (sorted URL hashes) of the items of a suggestion, for dismissal memory. */
+export async function fingerprintOf(items: Pick<Item, 'normUrl'>[]): Promise<string[]> {
+  return [...new Set(await Promise.all(items.map((i) => urlFingerprint(i.normUrl))))].sort();
+}
+/** Dismissed suggestions, oldest first. Storage trouble reads as "none dismissed". */
+export async function loadDismissed(): Promise<string[][]> {
+  try {
+    const got = await chrome.storage.local.get(DISMISSED_KEY);
+    const v = got[DISMISSED_KEY];
+    return Array.isArray(v) ? (v as unknown[]).filter((x): x is string[] => Array.isArray(x)) : [];
+  } catch {
+    return [];
+  }
+}
+/** Appends a dismissed fingerprint, keeping the newest MAX_DISMISSED. */
+export async function recordDismissed(fp: string[]): Promise<void> {
+  if (!fp.length) return;
+  const next = [...(await loadDismissed()), fp].slice(-MAX_DISMISSED);
+  await chrome.storage.local.set({ [DISMISSED_KEY]: next });
+}
 
 /**
  * When Unsorted has ≥ 4 web items, clusters Unsorted (plus the members of current suggestions,
@@ -479,6 +513,8 @@ export async function maybeSuggest(db: Db): Promise<void> {
   const vecOf = new Map(input.map((x) => [x.id, x.vec]));
   const groupOf = new Map(pool.map((i) => [i.id, i.groupId]));
 
+  const dismissed = (await loadDismissed()).map((d) => new Set(d));
+  const normOf = new Map(pool.map((i) => [i.id, i.normUrl]));
   let slots = MAX_SUGGESTED - suggested.length;
   const now = Date.now();
   const created: { group: Group; itemIds: string[] }[] = [];
@@ -488,6 +524,10 @@ export async function maybeSuggest(db: Db): Promise<void> {
       (g) => c.itemIds.filter((id) => groupOf.get(id) === g.id).length / c.itemIds.length >= SUGGEST_OVERLAP,
     );
     if (overlaps) continue;
+    if (dismissed.length) {
+      const fp = new Set(await fingerprintOf(c.itemIds.map((id) => ({ normUrl: normOf.get(id)! }))));
+      if (dismissed.some((d) => [...fp].filter((h) => d.has(h)).length / fp.size >= SUGGEST_OVERLAP)) continue;
+    }
     const itemIds = c.itemIds.filter((id) => groupOf.get(id) === null);
     if (!itemIds.length) continue;
     const id = `suggested-${crypto.randomUUID()}`;
