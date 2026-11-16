@@ -289,4 +289,18 @@ describe('background index', () => {
     expect(closeIfIdle).toHaveBeenCalledTimes(2);
     mock.uninstall();
   });
+  it('the open-dashboard command opens the dashboard once, then focuses it', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example/', title: 'A' }] }] });
+    await import('../../src/background/index');
+    expect(mock.chrome.commands.onCommand.hasListeners()).toBe(true);
+    const dash = () => mock.tabs().filter((t) => t.url?.startsWith('chrome-extension://mock-extension-id/dashboard.html'));
+    mock.fireCommand('something-else');
+    mock.fireCommand('open-dashboard');
+    await vi.waitFor(() => expect(dash()).toHaveLength(1));
+    mock.activateTab(mock.tabs()[0]!.id!);
+    mock.fireCommand('open-dashboard');
+    await vi.waitFor(() => expect(dash()[0]!.active).toBe(true));
+    expect(dash()).toHaveLength(1);
+    mock.uninstall();
+  });
 });

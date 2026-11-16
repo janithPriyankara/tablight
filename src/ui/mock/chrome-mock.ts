@@ -70,6 +70,8 @@ export interface ChromeMockControl {
   fireAlarm(name: string): void;
   alarms(): Alarm[];
   fireInstalled(reason?: `${chrome.runtime.OnInstalledReason}`): void;
+  /** Fires commands.onCommand, as when the user presses the command's shortcut. */
+  fireCommand(command: string): void;
   fireStartup(): void;
   /**
    * Simulates a browser restart: every tab and window gets a new id, numbered from 1 again in the
@@ -169,6 +171,7 @@ export interface MockChrome {
     getBadgeText(d: { tabId?: number }): Promise<string>;
     setBadgeBackgroundColor(d: chrome.action.BadgeColorDetails): Promise<void>;
   };
+  commands: { onCommand: MockEvent<(command: string) => void> };
   alarms: {
     create(name: string, info: chrome.alarms.AlarmCreateInfo): Promise<void>;
     get(name: string): Promise<Alarm | undefined>;
@@ -350,6 +353,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         badgeColor = typeof color === 'string' ? color : `rgba(${color.join(',')})`;
       },
     },
+    commands: { onCommand: new MockEvent() },
     alarms: {
       async create(name, info) {
         const delay = info.delayInMinutes ?? info.periodInMinutes ?? 0;
@@ -477,6 +481,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
     fireInstalled(reason = 'install') {
       mock.runtime.onInstalled.fire({ reason } as chrome.runtime.InstalledDetails);
     },
+    fireCommand: (command) => mock.commands.onCommand.fire(command),
     fireStartup: () => mock.runtime.onStartup.fire(),
     restartBrowser() {
       const old = ordered();

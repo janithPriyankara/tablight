@@ -5,7 +5,7 @@ import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
 import { CloseIcon, CopyIcon, GridIcon, LogoMark, MoonIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
-import { openDashboard } from '../common/nav';
+import { openDashboard } from '../../shared/nav';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';

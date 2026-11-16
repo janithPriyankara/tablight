@@ -10,6 +10,7 @@ import {
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
 } from './groups';
 import { handle } from '../shared/rpc';
+import { openDashboard } from '../shared/nav';
 import { semanticSearch, wordSearch } from '../search/search';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
@@ -362,6 +363,12 @@ configureSync({
 
 handle((req) => handleRequest(req), 'background');
 
+/** The manifest's `open-dashboard` command (Alt+Shift+T): focus the dashboard tab or open one. */
+export const OPEN_DASHBOARD_COMMAND = 'open-dashboard';
+chrome.commands.onCommand.addListener((command) => {
+  if (command !== OPEN_DASHBOARD_COMMAND) return;
+  openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
+});
 chrome.tabs.onCreated.addListener(() => onTabEvent());
 chrome.tabs.onUpdated.addListener((_id, info) => {
   // Favicon/audible/mute churn doesn't change the index.
