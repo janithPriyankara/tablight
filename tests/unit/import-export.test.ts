@@ -114,7 +114,7 @@ describe('export / import round trip', () => {
     await db.snapshots.put({ id: 's1', takenAt: 5, windows: [{ tabs: [{ url: 'https://a.com/', title: 'A' }] }] });
     const json = await exportJson(db);
     const fresh = await openDb(`io-fresh-${n++}`);
-    expect(await applyImport(fresh, ok(json))).toEqual({ added: 2, skipped: 0 });
+    expect(await applyImport(fresh, ok(json))).toEqual({ added: 2, skipped: 0, skippedSessions: 0 });
     const items = await fresh.items.byState('stashed');
     expect(items.map((i) => i.normUrl).sort()).toEqual((await db.items.all()).map((i) => i.normUrl).sort());
     const a = items.find((i) => i.url.includes('a.com'))!;
@@ -126,7 +126,7 @@ describe('export / import round trip', () => {
     expect(b).toMatchObject({ groupId: null, groupSource: 'auto' });
     expect(await fresh.queue.take(10)).toEqual([b.id]);
     expect(await fresh.snapshots.all()).toHaveLength(1);
-    expect(await applyImport(fresh, ok(json))).toEqual({ added: 0, skipped: 2 });
+    expect(await applyImport(fresh, ok(json))).toEqual({ added: 0, skipped: 2, skippedSessions: 0 });
     expect(await fresh.snapshots.all()).toHaveLength(1);
     expect((await fresh.groups.all()).filter((x) => x.name === 'Work')).toHaveLength(1);
     expect((await fresh.items.get(a.id))!.updatedAt).toBe(a.updatedAt);
@@ -140,7 +140,7 @@ describe('applyImport', () => {
       { url: 'https://a.com/?utm_x=1', title: 'New', groupName: 'Theirs', stashedAt: 100 },
       { url: 'https://c.com/', groupName: 'Theirs' }, { url: 'https://c.com/#frag', groupName: 'Other' },
     ] })));
-    expect(r).toEqual({ added: 1, skipped: 2 });
+    expect(r).toEqual({ added: 1, skipped: 2, skippedSessions: 0 });
     expect(await db.items.get(prev.id)).toEqual(prev);
   });
   it('applies the file group to an unclassified existing record and clears its tombstone', async () => {
@@ -169,17 +169,27 @@ describe('applyImport', () => {
     expect(await db.groups.all()).toHaveLength(200);
     expect(await db.items.all()).toHaveLength(250);
   });
-  it('skips identical snapshots, assigns fresh ids and keeps the newest 14', async () => {
+  it('skips identical snapshots, assigns fresh ids, never deletes local ones: file sessions fill free slots only', async () => {
     const snap = (id: string, t: number, u: string) => ({ id, takenAt: t, windows: [{ tabs: [{ url: u, title: u }] }] });
     for (let i = 0; i < 10; i++) await db.snapshots.put(snap(`old${i}`, 100 + i, `https://e${i}.com/`));
     const incoming = [snap('same', 999, 'https://e9.com/'), ...Array.from({ length: 8 }, (_, i) => snap(`f${i}`, 200 + i, `https://f${i}.com/`))];
-    await applyImport(db, ok(file({ snapshots: incoming })));
+    const r = await applyImport(db, ok(file({ snapshots: incoming })));
+    expect(r).toEqual({ added: 0, skipped: 0, skippedSessions: 4 });
     const all = await db.snapshots.all();
     expect(all).toHaveLength(14);
     const url = (s: { windows: { tabs: { url: string }[] }[] }) => s.windows[0]!.tabs[0]!.url;
     expect(all.some((s) => incoming.some((x) => x.id === s.id))).toBe(false); // fresh ids
     expect(all.filter((s) => url(s) === 'https://e9.com/')).toHaveLength(1);
-    expect(all.filter((s) => url(s).includes('//f'))).toHaveLength(8);
-    expect(all.filter((s) => s.id.startsWith('old'))).toHaveLength(6);
+    expect(all.filter((s) => s.id.startsWith('old'))).toHaveLength(10); // every local session kept
+    expect(all.filter((s) => url(s).includes('//f')).map(url).sort()).toEqual(
+      ['https://f4.com/', 'https://f5.com/', 'https://f6.com/', 'https://f7.com/'], // the newest file sessions
+    );
+  });
+  it('a full local session list takes no file sessions and deletes none', async () => {
+    const snap = (id: string, t: number, u: string) => ({ id, takenAt: t, windows: [{ tabs: [{ url: u, title: u }] }] });
+    for (let i = 0; i < 14; i++) await db.snapshots.put(snap(`old${i}`, 100 + i, `https://e${i}.com/`));
+    const r = await applyImport(db, ok(file({ snapshots: [snap('new', 9_999, 'https://n.com/')] })));
+    expect(r.skippedSessions).toBe(1);
+    expect((await db.snapshots.all()).every((s) => s.id.startsWith('old'))).toBe(true);
   });
 });

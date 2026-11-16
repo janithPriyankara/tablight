@@ -34,10 +34,19 @@ export async function exportBackup(): Promise<void> {
 }
 
 /** Reads a backup file and imports it; files over 20 MB are refused before reading. */
-export async function importBackup(file: File): Promise<{ added: number; skipped: number }> {
+export interface ImportResult { added: number; skipped: number; skippedSessions?: number }
+export async function importBackup(file: File): Promise<ImportResult> {
   if (file.size > MAX_IMPORT_BYTES) throw new Error('That file is larger than 20 MB, so it can’t be a Tab Organizer backup.');
   const json = await file.text();
-  return send<{ added: number; skipped: number }>({ t: 'import', json });
+  return send<ImportResult>({ t: 'import', json });
+}
+/** "Imported 3 tabs · skipped 1 · 2 sessions not imported (the 14 saved sessions are full)". */
+export function importNotice(r: ImportResult): string {
+  return [
+    `Imported ${plural(r.added, 'tab')}`,
+    r.skipped ? `skipped ${r.skipped}` : '',
+    r.skippedSessions ? `${plural(r.skippedSessions, 'session')} not imported (saved sessions are full)` : '',
+  ].filter(Boolean).join(' · ');
 }
 
 export interface SettingsProps {
@@ -75,7 +84,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
     if (!file) return;
     void act(async () => {
       const r = await importBackup(file);
-      notify(`Imported ${plural(r.added, 'tab')}${r.skipped ? ` · skipped ${r.skipped}` : ''}`);
+      notify(importNotice(r));
     });
   };
 

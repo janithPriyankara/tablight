@@ -149,7 +149,10 @@ export async function exportJson(db: Db): Promise<string> {
   }, null, 2);
 }
 /** Merges by normalized URL; never deletes or downgrades stashed records. A user's own group wins. */
-export async function applyImport(db: Db, data: ImportData): Promise<{ added: number; skipped: number }> {
+/** `skippedSessions`: new sessions from the file that did not fit (local sessions are never replaced). */
+export async function applyImport(
+  db: Db, data: ImportData,
+): Promise<{ added: number; skipped: number; skippedSessions: number }> {
   const now = Date.now();
   const seen = new Set<string>();
   const entries: { it: ImportItem; normUrl: string; id: string }[] = [];
@@ -169,6 +172,7 @@ export async function applyImport(db: Db, data: ImportData): Promise<{ added: nu
     if (!wanted.has(n.toLowerCase())) wanted.set(n.toLowerCase(), n);
   }
   let added = 0;
+  let skippedSessions = 0;
   await db.tx(['items', 'groups', 'queue', 'tombstones', 'snapshots'], async (s) => {
     const existing = (await s.groups.all()).filter((g) => !g.suggested);
     const byName = new Map<string, Group>();
@@ -216,10 +220,11 @@ export async function applyImport(db: Db, data: ImportData): Promise<{ added: nu
       known.add(fp);
       fresh.push({ ...sn, id: crypto.randomUUID() });
     }
-    const sorted = [...all, ...fresh].sort((a, b) => b.takenAt - a.takenAt);
-    const keep = new Set(sorted.slice(0, MAX_SNAPSHOTS).map((x) => x.id));
-    for (const sn of fresh) if (keep.has(sn.id)) await s.snapshots.put(sn);
-    for (const sn of all) if (!keep.has(sn.id)) await s.snapshots.delete(sn.id);
+    // Local sessions are never deleted: file sessions (newest first) only fill the free slots.
+    const free = Math.max(0, MAX_SNAPSHOTS - all.length);
+    const take = fresh.sort((a, b) => b.takenAt - a.takenAt).slice(0, free);
+    for (const sn of take) await s.snapshots.put(sn);
+    skippedSessions = fresh.length - take.length;
   });
-  return { added, skipped };
+  return { added, skipped, skippedSessions };
 }

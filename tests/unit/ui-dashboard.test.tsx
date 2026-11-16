@@ -431,4 +431,9 @@ describe('dashboard', () => {
     await waitFor(() => expect(sent('deleteAllData')).toHaveLength(1));
     await screen.findByText('All data deleted');
   });
+  it('the import notice reports file sessions that did not fit', async () => {
+    const { importNotice } = await import('../../src/ui/dashboard/Settings');
+    expect(importNotice({ added: 2, skipped: 1 })).toBe('Imported 2 tabs · skipped 1');
+    expect(importNotice({ added: 1, skipped: 0, skippedSessions: 3 })).toBe('Imported 1 tab · 3 sessions not imported (saved sessions are full)');
+  });
 });
