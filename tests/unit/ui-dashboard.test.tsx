@@ -452,4 +452,11 @@ describe('dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: tok }]));
   });
+  it('the export text says the backup includes saved sessions', async () => {
+    serve(state());
+    history.replaceState(null, '', '/dashboard.html#view=settings');
+    render(<Dashboard />);
+    await screen.findByRole('button', { name: 'Export backup' });
+    expect(screen.getByText(/backup file contains your stashed tabs, your groups and your saved sessions/)).toBeTruthy();
+  });
 });

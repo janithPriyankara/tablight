@@ -146,6 +146,10 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
             Edge and Chrome don’t sync with each other: use Export and Import to move your stash between them.
           </p>
           <p class="setting-help">A device that stays offline for more than 30 days may bring back stashed tabs you removed elsewhere.</p>
+          <p class="setting-help">
+            A backup file contains your stashed tabs, your groups and your saved sessions (the addresses and titles of
+            their tabs). It stays on your computer; keep it somewhere private.
+          </p>
           <div class="button-row">
             <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(async () => {
               await exportBackup();
