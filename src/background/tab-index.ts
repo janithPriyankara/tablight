@@ -37,7 +37,7 @@ export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promis
   return sha1hex(`${i.normUrl}\n${cleanTitle(i.title, i.url)}`);
 }
 
-function domainOf(url: string): string {
+export function domainOf(url: string): string {
   if (!isWebUrl(url)) return '';
   return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
 }

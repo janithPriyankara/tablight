@@ -143,6 +143,8 @@ export interface MockChrome {
   windows: {
     WINDOW_ID_NONE: -1;
     update(windowId: number, p: chrome.windows.UpdateInfo): Promise<unknown>;
+    /** Opens a window holding one tab per url (the first one active); without a url it holds one new-tab page. */
+    create(p?: chrome.windows.CreateData): Promise<{ id: number; tabs: Tab[] }>;
     onRemoved: MockEvent<(windowId: number) => void>;
     onFocusChanged: MockEvent<(windowId: number) => void>;
   };
@@ -296,6 +298,13 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         if (!windows.includes(windowId)) throw new Error(`No window with id: ${windowId}.`);
         if (p.focused) control.focusWindow(windowId);
         return { id: windowId };
+      },
+      async create(p) {
+        const urls = p?.url === undefined ? ['chrome://newtab/'] : Array.isArray(p.url) ? p.url : [p.url];
+        const id = addWindow();
+        const created = urls.map((url, k) => addTab({ url, windowId: id, active: k === 0 }));
+        if (p?.focused) control.focusWindow(id);
+        return { id, tabs: created };
       },
       onRemoved: new MockEvent(),
       onFocusChanged: new MockEvent(),

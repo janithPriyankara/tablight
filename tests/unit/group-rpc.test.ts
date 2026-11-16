@@ -49,3 +49,42 @@ describe('memory rpc handlers', () => {
     mock.uninstall();
   });
 });
+describe('session rpc handlers', () => {
+  it('snapshot, list, validate and act; the snapshot alarm runs hourly and snapshots', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.com/', title: 'A' }] }] });
+    const bg = await import('../../src/background/index');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(mock.alarms().find((a) => a.name === 'snapshot')?.periodInMinutes).toBe(60);
+    const snap = (await mock.sendMessage({ t: 'snapshotNow' })) as { ok: true; data: { id: string } };
+    const list = (await mock.sendMessage({ t: 'sessions' })) as { ok: true; data: unknown[] };
+    expect(list.data).toEqual([expect.objectContaining({ id: snap.data.id, windows: 1, tabs: 1 })]);
+    for (const m of [
+      { t: 'sessionAction', id: '', action: 'delete' },
+      { t: 'sessionAction', id: snap.data.id, action: 'burn' },
+      { t: 'sessionAction', id: snap.data.id, action: 'openAll', confirm: 'yes' },
+      { t: 'sessionAction', id: 'missing', action: 'delete' },
+    ]) expect(await mock.sendMessage(m)).toMatchObject({ ok: false });
+    mock.addTab({ url: 'https://b.com/' });
+    mock.fireAlarm('snapshot');
+    const db = await bg.getDb();
+    await vi.waitFor(async () => expect(await db.snapshots.all()).toHaveLength(2));
+    expect(await mock.sendMessage({ t: 'sessionAction', id: snap.data.id, action: 'delete' })).toEqual({ ok: true, data: {} });
+    expect(await db.snapshots.all()).toHaveLength(1);
+    mock.uninstall();
+  });
+  it('on startup compares with the last snapshot before taking a new one', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://fresh.com/' }] }] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    for (const s of await db.snapshots.all()) await db.snapshots.delete(s.id); // the db outlives each test
+    const tabs = Array.from({ length: 10 }, (_, i) => ({ url: `https://old${i}.com/`, title: 'o' }));
+    await db.snapshots.put({ id: 'old', takenAt: 1, windows: [{ tabs }] });
+    mock.fireStartup();
+    await vi.waitFor(async () => {
+      expect((await chrome.storage.session.get('lastSession')).lastSession).toEqual({ snapshotId: 'old' });
+      expect(await db.snapshots.all()).toHaveLength(2);
+    }, { timeout: 10_000 });
+    expect((await chrome.storage.session.get('startupPending')).startupPending).toBeUndefined();
+    mock.uninstall();
+  }, 15_000);
+});

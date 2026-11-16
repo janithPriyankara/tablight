@@ -36,7 +36,7 @@ describe('background index', () => {
     await vi.waitFor(() => expect(mock.badgeText(a!.id)).toBe('2×'));
     expect(mock.badgeText(b!.id)).toBe('2×');
     expect(mock.badgeText(c!.id)).toBe('');
-    expect(mock.alarms().map((a) => a.name)).toEqual(['auto-sleep']); // no classify-kick: nothing failed
+    expect(mock.alarms().map((a) => a.name)).toEqual(['auto-sleep', 'snapshot']); // no classify-kick: nothing failed
     // Activation and window focus take the light path: no reconcile, lastActiveAt + that badge.
     const tabIndex = await import('../../src/background/tab-index');
     const suggest = vi.mocked(tabIndex.maybeSuggest);

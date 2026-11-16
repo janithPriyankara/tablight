@@ -88,6 +88,21 @@ async function createTab(url: string, windowId: number | undefined, pinned = fal
   return chrome.tabs.create(props);
 }
 /**
+ * The stash record for `item` (id = sha1hex(normUrl)), merged with an existing record of the same page:
+ * a user's group choice survives an auto-classified copy, the oldest createdAt/stashedAt win.
+ */
+export function stashRecord(item: Item, prev: Item | undefined, stashId: string, now: number): Item {
+  const keepGroup = prev?.groupSource === 'user' && item.groupSource === 'auto';
+  return {
+    id: stashId, groupId: keepGroup ? prev.groupId : item.groupId,
+    groupSource: keepGroup ? 'user' : item.groupSource,
+    kind: item.kind, title: item.title || prev?.title || '', url: item.url, normUrl: item.normUrl,
+    domain: item.domain, state: 'stashed', createdAt: prev?.createdAt ?? item.createdAt,
+    lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: now,
+    classifiable: item.classifiable,
+  };
+}
+/**
  * Stashes web tabs: the stash record is persisted (replacing the open item) BEFORE the tab closes, so
  * a failing close never loses a tab. Non-web tabs (they could never be reopened) are skipped.
  */
@@ -104,15 +119,7 @@ export async function stash(db: Db, ids: string[]): Promise<{ token: string; ski
   await db.tx(['items', 'queue'], async (s) => {
     for (const { item, stashId } of picked) {
       const prev = await s.items.get(stashId);
-      const keepGroup = prev?.groupSource === 'user' && item.groupSource === 'auto';
-      const rec: Item = {
-        id: stashId, groupId: keepGroup ? prev.groupId : item.groupId,
-        groupSource: keepGroup ? 'user' : item.groupSource,
-        kind: item.kind, title: item.title || prev?.title || '', url: item.url, normUrl: item.normUrl,
-        domain: item.domain, state: 'stashed', createdAt: prev?.createdAt ?? item.createdAt,
-        lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: now,
-        classifiable: item.classifiable,
-      };
+      const rec = stashRecord(item, prev, stashId, now);
       if (!prev) createdStash.add(stashId);
       await s.items.put(rec);
       await s.items.delete(item.id);
