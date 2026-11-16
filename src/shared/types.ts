@@ -17,6 +17,8 @@ export interface Item {
   stashedAt?: number;
   updatedAt: number;
   classifiable: boolean;
+  /** Embedding cache key of the content last classified (lets search read vectors without hashing). */
+  embKey?: string;
 }
 export interface Group {
   id: string;

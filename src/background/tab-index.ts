@@ -432,7 +432,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       if (cur.groupSource !== 'user') {
         groupId = autoGroup(cur, vec, groups);
       }
-      await s.items.put({ ...cur, groupId, updatedAt: nextStamp(cur.updatedAt) });
+      await s.items.put({ ...cur, groupId, embKey: keys[k]!, updatedAt: nextStamp(cur.updatedAt) });
       done.push(snap.id);
       written++;
     }

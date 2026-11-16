@@ -35,6 +35,8 @@ export interface StoreApis {
     put(key: string, v: Float32Array): Promise<void>;
     delete(key: string): Promise<void>;
     keys(): Promise<string[]>;
+    /** Reads many vectors in one transaction; missing keys are absent from the map. */
+    getMany(keys: string[]): Promise<Map<string, Float32Array>>;
   };
   queue: {
     add(itemId: string): Promise<void>;
@@ -99,6 +101,16 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
         one('embeddings', async (tx) => void (await tx.objectStore('embeddings').put(v, key))),
       delete: (key) => one('embeddings', (tx) => tx.objectStore('embeddings').delete(key)),
       keys: () => one('embeddings', async (tx) => (await tx.objectStore('embeddings').getAllKeys()).map(String)),
+      getMany: (keys) =>
+        one('embeddings', async (tx) => {
+          const store = tx.objectStore('embeddings');
+          const got = await Promise.all(keys.map((k) => store.get(k) as Promise<unknown>));
+          const out = new Map<string, Float32Array>();
+          got.forEach((v, i) => {
+            if (v !== undefined) out.set(keys[i]!, v instanceof Float32Array ? v : new Float32Array(v as ArrayLike<number>));
+          });
+          return out;
+        }),
     },
     queue: {
       add: (itemId) =>

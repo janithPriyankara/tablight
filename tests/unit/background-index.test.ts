@@ -5,6 +5,10 @@ vi.mock('../../src/background/tab-index', async (orig) => {
   const m = await orig<typeof import('../../src/background/tab-index')>();
   return { ...m, maybeSuggest: vi.fn(m.maybeSuggest) };
 });
+vi.mock('../../src/shared/hash', async (orig) => {
+  const m = await orig<typeof import('../../src/shared/hash')>();
+  return { ...m, sha1hex: vi.fn(m.sha1hex) };
+});
 vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
 }));
@@ -116,10 +120,48 @@ describe('background index', () => {
     expect(meaning).toContain('Cooking pasta');
     expect(meaning).not.toContain('Agent SDK question'); // already a word match
     expect((await bg.handleRequest({ t: 'search', q: 'agnet', semantic: false }) as typeof r).meaning).toEqual([]);
+    await expect(bg.handleRequest({ t: 'search', q: 'agnet', semantic: 'yes' as unknown as boolean })).rejects.toThrow();
+    // Semantic search reads vectors in one transaction and never hashes per item.
+    const { sha1hex } = await import('../../src/shared/hash');
+    const getMany = vi.spyOn(db.embeddings, 'getMany');
+    const getOne = vi.spyOn(db.embeddings, 'get');
+    vi.mocked(sha1hex).mockClear();
+    await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true });
+    expect(getMany).toHaveBeenCalledTimes(1);
+    expect(getOne).not.toHaveBeenCalled();
+    expect(sha1hex).not.toHaveBeenCalled();
+    // Latest wins: a search superseded while embedding returns no meaning.
+    let release!: () => void;
+    vi.mocked(embed).mockImplementationOnce(async (t) => {
+      await new Promise<void>((res) => (release = res));
+      return t.map(() => new Float32Array(384).fill(0.05));
+    });
+    const older = bg.handleRequest({ t: 'search', q: 'agnet', semantic: true }) as Promise<typeof r>;
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    const newer = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as typeof r;
+    release();
+    expect((await older).meaning).toEqual([]);
+    expect(newer.meaning.length).toBeGreaterThan(0);
     vi.mocked(embed).mockRejectedValueOnce(new Error('offline'));
     const failed = (await bg.handleRequest({ t: 'search', q: 'agnet', semantic: true })) as typeof r;
     expect(failed.words).toHaveLength(1);
     expect(failed.meaning).toEqual([]);
+    mock.uninstall();
+  });
+  it('a sync pull that queues items kicks classification', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const { sha1hex } = await vi.importActual<typeof import('../../src/shared/hash')>('../../src/shared/hash');
+    const url = 'https://github.com/remote/kick';
+    const id = await sha1hex(url);
+    const db = await bg.getDb();
+    await chrome.storage.sync.set({ 'v1:0': JSON.stringify([[id, url, 'Kick', '', 1, 1]]), 'v1:meta': { chunks: 1, updatedAt: 1 } });
+    await vi.waitFor(async () => {
+      const it = await db.items.get(id);
+      expect(it?.state).toBe('stashed');
+      expect(await db.queue.size()).toBe(0);
+      expect(it?.embKey).toBeTypeOf('string'); // classified by the kicked pipeline
+    }, { timeout: 5000 });
     mock.uninstall();
   });
 });

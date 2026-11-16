@@ -24,7 +24,6 @@ import {
 import {
   KICK_ALARM,
   configureTabIndex,
-  embeddingKey,
   flushTabEvents,
   maybeSuggest,
   onTabEvent,
@@ -97,6 +96,8 @@ export async function kickClassification(db: Db): Promise<void> {
   }
 }
 const MAX_QUERY = 200;
+/** Latest semantic search wins: an older one that finishes embedding after a newer began returns no meaning. */
+let searchTicket = 0;
 /** Cap on items compared by meaning (same bound as the word search). */
 const MAX_SEMANTIC_ITEMS = 5_000;
 /** `search` RPC: word matches always, plus (when asked) matches by meaning that aren't already word matches. */
@@ -108,19 +109,22 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
   const items = await db.items.all();
   const words = wordSearch(items, await db.groups.all(), q);
   if (!req.semantic) return { words, meaning: [] };
+  const ticket = ++searchTicket;
   try {
     const [qVec] = await embed([q]);
-    if (!qVec) return { words, meaning: [] };
+    if (!qVec || ticket !== searchTicket) return { words, meaning: [] }; // a newer search superseded this one
     const seen = new Set(words.map((i) => i.id));
     const recent = items
       .filter((i) => i.classifiable && !seen.has(i.id))
       .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
       .slice(0, MAX_SEMANTIC_ITEMS);
-    const withVec: { item: Item; vec: Float32Array }[] = [];
-    for (const item of recent) {
-      const vec = await db.embeddings.get(await embeddingKey(item));
-      if (vec) withVec.push({ item, vec });
-    }
+    // Items carry their cache key (set at classification): no hashing, one read transaction.
+    const keyed = recent.filter((i) => i.embKey !== undefined);
+    const vecs = await db.embeddings.getMany(keyed.map((i) => i.embKey!));
+    const withVec = keyed.flatMap((item) => {
+      const vec = vecs.get(item.embKey!);
+      return vec ? [{ item, vec }] : [];
+    });
     return { words, meaning: semanticSearch(qVec, withVec) };
   } catch (e) {
     console.error('semantic search failed', e);
