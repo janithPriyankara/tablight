@@ -80,28 +80,41 @@ function shopping(host: string, path: string): string | null {
 /**
  * Single-purpose services: every page on these hosts belongs to one group.
  * A leading dot also matches subdomains (per-team tenants such as acme.slack.com).
- * Topic-neutral hosts (reddit, github, youtube, docs.*, medium…) are deliberately absent:
- * their pages are classified by content.
+ * Topic-neutral hosts are deliberately absent and left to the model: general storage and notes
+ * (Google Docs/Drive, Notion), personal task boards, reddit, github, youtube, docs.* sites.
  */
 const HOSTS: Record<string, string[]> = {
   work: [
-    'mail.google.com', 'calendar.google.com', 'docs.google.com', 'drive.google.com', 'meet.google.com',
-    'outlook.office.com', 'outlook.office365.com', 'outlook.live.com', 'teams.microsoft.com',
-    '.slack.com', '.zoom.us', '.atlassian.net', 'linear.app', 'app.asana.com', 'trello.com', 'notion.so',
-    '.okta.com', '.lightning.force.com', '.monday.com', 'app.clickup.com',
+    'mail.google.com', 'calendar.google.com', 'meet.google.com', 'outlook.office.com', 'outlook.office365.com',
+    'outlook.live.com', 'teams.microsoft.com', '.slack.com', '.zoom.us', '.atlassian.net', 'linear.app',
+    '.okta.com', '.lightning.force.com',
   ],
   social: [
-    'x.com', 'twitter.com', 'facebook.com', 'messenger.com', 'instagram.com', 'tiktok.com', 'threads.net',
-    'threads.com', 'bsky.app', 'web.whatsapp.com', 'web.telegram.org',
+    'x.com', 'twitter.com', 'messenger.com', 'instagram.com', 'tiktok.com', 'threads.net', 'threads.com',
+    'bsky.app', 'web.whatsapp.com', 'web.telegram.org',
   ],
   design: ['figma.com', 'dribbble.com', 'behance.net'],
-  programming: ['stackoverflow.com', 'leetcode.com'],
+  programming: ['stackoverflow.com'],
   docs: ['developer.mozilla.org'],
+  ai: ['chatgpt.com', 'chat.openai.com', 'claude.ai', 'gemini.google.com', 'perplexity.ai', 'huggingface.co'],
+  learning: [
+    'coursera.org', 'udemy.com', 'edx.org', 'khanacademy.org', 'duolingo.com', 'skillshare.com', 'codecademy.com',
+  ],
+  travel: [
+    'booking.com', 'airbnb.com', 'expedia.com', 'skyscanner.net', 'skyscanner.com', 'kayak.com', 'hotels.com',
+    'tripadvisor.com',
+  ],
+  health: ['strava.com', 'connect.garmin.com', 'myfitnesspal.com'],
+  games: ['store.playstation.com', 'store.epicgames.com', 'chess.com', 'lichess.org'],
+  finance: ['coinmarketcap.com', 'coinbase.com'],
+  music: ['soundcloud.com'],
+  videos: ['twitch.tv'],
 };
 const HOST_TABLE = Object.entries(HOSTS).flatMap(([g, hosts]) => hosts.map((h) => [h, g] as const));
 function byHost(host: string, path: string): string | null {
+  // The LinkedIn feed and inbox are social; profiles, jobs and courses are not decided here.
   if (host === 'linkedin.com') {
-    return /^\/(?:feed|in|posts|messaging|notifications|mynetwork)(?:\/|$)/.test(path) ? 'social' : null;
+    return /^\/(?:feed|posts|messaging|notifications|mynetwork)(?:\/|$)/.test(path) ? 'social' : null;
   }
   if (host === 'discord.com') return path.startsWith('/channels/') ? 'social' : null;
   for (const [h, g] of HOST_TABLE) {

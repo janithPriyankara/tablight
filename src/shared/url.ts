@@ -131,8 +131,9 @@ function isPathWord(t: string): boolean {
   if (t.length < 2 || t.length > 24 || !/\p{L}/u.test(t)) return false;
   if (PATH_NOISE.has(t.toLowerCase())) return false;
   const digits = (t.match(/\p{N}/gu) ?? []).length;
-  // Ids and hashes: tt15398776, B09XS7JWHH, 3f2a1b0c9d8e…
-  return digits === 0 || (t.length < 5 && digits < 3);
+  if (digits === 0) return true;
+  // Ids and hashes: tt15398776, B09XS7JWHH, 3f2a1b0c9d8e…, and UUID fragments such as 1b3c.
+  return t.length < 5 && digits < 3 && !(t.length >= 3 && /^[0-9a-f]+$/i.test(t));
 }
 /** Meaningful words from the URL path (spec 7.3.1): no ids, hashes, file extensions or locale noise. */
 export function pathWords(url: string): string {

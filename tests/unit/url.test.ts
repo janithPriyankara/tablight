@@ -124,6 +124,8 @@ describe('pathWords', () => {
     ['https://example.com/%E0%A4%A', ''],
     ['https://github.com/org/repo', ''],
     ['https://github.com/org/repo/issues/12', 'issues'],
+    ['https://chatgpt.com/c/6732a1f0-1b3c-8000-a1b2-9f8e7d6c5b4a', ''],
+    ['https://example.com/v1/cs1/3d/8B', 'v1 cs1 3d 8B'],
     ['not a url', ''],
   ])('%s → %j', (url, expected) => {
     expect(pathWords(url)).toBe(expected);
