@@ -29,6 +29,11 @@ export interface Group {
   icon: string;
   builtIn: boolean;
   exemplars: number[][];
+  /**
+   * What the user taught this group: [the text the model read for the tab, taught at (ms)], newest last.
+   * Synced (lesson-codec) so the same bundled model on other devices learns the same examples.
+   */
+  lessons?: [text: string, at: number][];
   centroid: number[] | null;
   createdAt: number;
   suggested?: boolean;

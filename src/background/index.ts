@@ -218,7 +218,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
     if (i.windowId !== undefined) windows.add(i.windowId);
   }
   const summaries: GroupSummary[] = groups.map((g) => ({
-    ...g, exemplars: [], centroid: null, ...(counts.get(g.id) ?? { count: 0, watchCount: 0 }),
+    ...g, exemplars: [], centroid: null, lessons: undefined, ...(counts.get(g.id) ?? { count: 0, watchCount: 0 }),
   }));
   const dups = findDuplicates(items);
   let dupCount = 0;

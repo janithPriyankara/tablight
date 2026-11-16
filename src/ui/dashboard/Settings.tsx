@@ -151,7 +151,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <label class="setting">
             <span class="setting-text">
               <span class="setting-name">Sync saved tabs through my browser account</span>
-              <span class="setting-help">Only saved tabs sync (address, short title, group). Open tabs and sessions stay on this device.</span>
+              <span class="setting-help">Saved tabs (address, short title, group) and the examples you taught your groups (the title and site of tabs you moved into a group) sync. Other open tabs and sessions stay on this device.</span>
             </span>
             <input
               type="checkbox" class="switch" checked={settings.syncEnabled} disabled={busy}
@@ -242,8 +242,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <p class="privacy-line">
             <ShieldIcon />
             <span>
-              Nothing leaves your device except saved tabs, which sync through your browser account while
-              sync is on. Grouping runs on your computer, and there are no analytics.{' '}
+              Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
+              through your browser account while sync is on. Grouping runs on your computer, and there are no analytics.{' '}
               <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
             </span>
           </p>

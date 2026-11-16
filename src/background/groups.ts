@@ -1,5 +1,6 @@
 import { MAX_EXEMPLARS, OTHER_GROUP_ID, learn } from '../classify/assign';
 import type { Group, Item } from '../shared/types';
+import { embedText } from '../shared/url';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
@@ -43,8 +44,19 @@ async function vectorsOf(db: Db, items: Item[]): Promise<Map<string, number[]>> 
   return out;
 }
 
-function withExemplars(g: Group, vecs: number[][]): Group {
-  return vecs.reduce((acc, v) => learn(acc, v), g);
+interface Taught { vec: number[]; text: string }
+/**
+ * Teaches `g` each example: its vector becomes an exemplar, and its text (what the model read) a lesson, so
+ * the lesson can sync and be learned again by the same model on the user's other devices.
+ */
+function withExemplars(g: Group, taught: Taught[]): Group {
+  const now = Date.now();
+  const learned = taught.reduce((acc, t) => learn(acc, t.vec), g);
+  if (!taught.length) return learned;
+  const texts = new Set(taught.map((t) => t.text));
+  const lessons = [...(g.lessons ?? []).filter(([t]) => !texts.has(t)), ...taught.map((t): [string, number] => [t.text, now])]
+    .slice(-MAX_EXEMPLARS);
+  return { ...learned, lessons };
 }
 
 async function mustGroup(db: Db, id: string): Promise<Group> {
@@ -67,14 +79,14 @@ export async function moveItems(db: Db, ids: string[], groupId: string): Promise
   await db.tx(['items', 'groups'], async (s) => {
     const g = await s.groups.get(groupId);
     if (!g) throw new Error('unknown group');
-    const taught: number[][] = [];
+    const taught: Taught[] = [];
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
       if (!cur) continue;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
       await s.items.put({ ...cur, groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
       const v = vecs.get(cur.id);
-      if (v && !already) taught.push(v);
+      if (v && !already) taught.push({ vec: v, text: embedText(cur) });
     }
     if (taught.length) await s.groups.put(withExemplars(g, taught));
   });
@@ -101,7 +113,7 @@ export async function createGroup(db: Db, name: string, ids: string[]): Promise<
       id: `g-${crypto.randomUUID()}`, name: clean, color: USER_COLORS[all.length % USER_COLORS.length]!,
       icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: Date.now(),
     };
-    const group = withExemplars(base, items.flatMap((i) => (vecs.has(i.id) ? [vecs.get(i.id)!] : [])));
+    const group = withExemplars(base, items.flatMap((i) => (vecs.has(i.id) ? [{ vec: vecs.get(i.id)!, text: embedText(i) }] : [])));
     await s.groups.put(group);
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
@@ -131,7 +143,8 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
     if (!src || !dst) throw new Error('unknown group');
     const exemplars = [...dst.exemplars, ...src.exemplars].slice(-MAX_EXEMPLARS);
     const centroid = exemplars.length ? normalize(mean(exemplars)) : (dst.centroid ?? src.centroid);
-    await s.groups.put({ ...dst, exemplars, centroid, suggested: dst.suggested && src.suggested });
+    const lessons = [...(dst.lessons ?? []), ...(src.lessons ?? [])].sort((a, b) => a[1] - b[1]).slice(-MAX_EXEMPLARS);
+    await s.groups.put({ ...dst, exemplars, centroid, ...(lessons.length ? { lessons } : {}), suggested: dst.suggested && src.suggested });
     for (const i of await s.items.all()) {
       // A merge is the user's decision for every item in it: auto-sorting must not pull them back out
       // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
@@ -176,13 +189,13 @@ export async function acceptSuggestion(db: Db, id: string): Promise<void> {
   await db.tx(['items', 'groups'], async (s) => {
     const cur = await s.groups.get(id);
     if (!cur?.suggested) throw new Error('not a suggestion');
-    const taught: number[][] = [];
+    const taught: Taught[] = [];
     for (const m of members) {
       const i = await s.items.get(m.id);
       if (!i || i.groupId !== id) continue;
       await s.items.put({ ...i, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
       const v = vecs.get(i.id);
-      if (v) taught.push(v);
+      if (v) taught.push({ vec: v, text: embedText(i) });
     }
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;

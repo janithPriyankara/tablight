@@ -5,7 +5,7 @@ A browser extension for Microsoft Edge and Google Chrome (desktop) that keeps la
 - Saves a snapshot of your windows every hour and on startup, so you can pick up where you left off.
 - Searches by words (typo tolerant) and by meaning.
 - Backs up and restores your saved tabs with an export/import file. Saved tabs can sync between your own devices through your browser account.
-Nothing leaves your device. The extension makes no network requests, has no servers, accounts or analytics, and never reads page contents (only each tab's title and address). The one exception you control is the optional sync of saved tabs through your browser's own extension sync. See [public/privacy.html](public/privacy.html) for the full statement.
+Nothing leaves your device. The extension makes no network requests, has no servers, accounts or analytics, and never reads page contents (only each tab's title and address). The one exception you control is the optional sync, through your browser's own extension sync, of saved tabs and of the examples you taught your groups (the title and site of tabs you moved into a group), so your other devices group the same way. See [public/privacy.html](public/privacy.html) for the full statement.
 Requires Node 20 or newer.
 ```
 npm ci
@@ -31,4 +31,4 @@ This runs the release checks again and writes `release/tab-organizer-<version>.z
 - Edge and Chrome do not sync with each other. Use export/import to move your saved tabs between them.
 - Grouping works best for English titles.
 - If a device stays offline for more than 30 days, tabs you removed from Saved for later on another device may reappear there.
-- Browser sync has a small quota: roughly 600 to 900 saved tabs sync; the rest stay on the device they were saved on (the app says so).
+- Browser sync has a small quota: roughly 550 to 800 saved tabs sync; the rest stay on the device they were saved on (the app says so).

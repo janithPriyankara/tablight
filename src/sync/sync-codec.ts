@@ -12,7 +12,8 @@ export type Tomb = [id: string, deletedAt: number];
 
 export const SYNC_PREFIX = 'v1:';
 export const META_KEY = 'v1:meta';
-export const SYNC_BUDGET = 90_000;
+/** Stash share of chrome.storage.sync's 102,400 bytes; synced lessons (lesson-codec) take about 15 KB more. */
+export const SYNC_BUDGET = 80_000;
 export const CHUNK_MAX = 8_000;
 export const MAX_SYNC_TITLE = 80;
 export const MAX_NORM_URL = 2048;

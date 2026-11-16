@@ -397,13 +397,13 @@ describe('dashboard', () => {
     serve(state({ settings: DEFAULT_SETTINGS }));
     render(<Dashboard />);
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tab Organizer' });
-    expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later/);
+    expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later and the examples you teach your groups/);
     act(() => {
       location.hash = '#view=settings';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     const privacy = await screen.findByRole('region', { name: 'Privacy' });
-    expect(privacy.textContent).toMatch(/except saved tabs, which sync through your browser account/);
+    expect(privacy.textContent).toMatch(/except saved tabs and the examples you taught your groups, which sync/);
   });
   it('Undo works while another action is still running', async () => {
     let release!: () => void;

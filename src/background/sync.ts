@@ -8,6 +8,8 @@ import {
   CHUNK_MAX, META_KEY, SYNC_BUDGET, SYNC_PREFIX, TOMB_TTL_MS, chunkIndex, decodeChunks, encodeChunks, merge,
   mergedView, toRecord, verifyIds, type SyncRecord, type Tomb,
 } from '../sync/sync-codec';
+import { LESSON_KEYS, decodeLessons, encodeLessons, mergeLessons, type Lesson, type LessonMap } from '../sync/lesson-codec';
+import { MAX_EXEMPLARS, learn } from '../classify/assign';
 import type { Db } from './db';
 import { embed } from './embedder';
 import { USER_COLORS, parseName } from './groups';
@@ -291,6 +293,85 @@ async function write(store: Record<string, unknown>, chunks: Record<string, stri
   return 'wrote';
 }
 
+// ───────────────────────────── lessons ─────────────────────────────
+function localLessons(groups: Group[]): LessonMap {
+  const out: LessonMap = new Map();
+  for (const g of groups) {
+    if (g.suggested || !g.lessons?.length) continue;
+    out.set(g.name.toLowerCase(), { name: g.name, lessons: g.lessons.map(([t, at]): Lesson => [t, at]) });
+  }
+  return out;
+}
+/**
+ * Teaches local groups the lessons other devices hold for a group of the same name (any case): each missing
+ * lesson's text is embedded by this device's copy of the bundled model and learned as an exemplar. Lessons
+ * for groups this device doesn't have are left in storage.sync (they apply once such a group exists); no group
+ * is ever created from them. A model failure skips this pass and retries on the next.
+ */
+async function applyLessons(db: Db, remote: LessonMap): Promise<void> {
+  const groups = (await db.groups.all()).filter((g) => !g.suggested);
+  const byName = new Map(groups.map((g) => [g.name.toLowerCase(), g]));
+  const todo: { id: string; miss: Lesson[] }[] = [];
+  for (const [key, r] of remote) {
+    const g = byName.get(key);
+    if (!g) continue;
+    const have = new Set((g.lessons ?? []).map(([t]) => t));
+    const miss = r.lessons.filter(([t]) => !have.has(t));
+    if (miss.length) todo.push({ id: g.id, miss });
+  }
+  if (!todo.length) return;
+  const texts = [...new Set(todo.flatMap((x) => x.miss.map(([t]) => t)))];
+  let vecs: Float32Array[];
+  try {
+    vecs = await embed(texts);
+  } catch {
+    return;
+  }
+  const vecOf = new Map(texts.map((t, k) => [t, vecs[k]]));
+  await db.tx(['groups'], async (s) => {
+    for (const { id, miss } of todo) {
+      const cur = await s.groups.get(id);
+      if (!cur || cur.suggested) continue;
+      const have = new Set((cur.lessons ?? []).map(([t]) => t));
+      let next = cur;
+      const added: Lesson[] = [];
+      for (const l of miss) {
+        const v = vecOf.get(l[0]);
+        if (have.has(l[0]) || !v) continue;
+        next = learn(next, Array.from(v));
+        added.push([l[0], l[1]]);
+        have.add(l[0]);
+      }
+      if (!added.length) continue;
+      const lessons = [...(cur.lessons ?? []), ...added].sort((a, b) => a[1] - b[1]).slice(-MAX_EXEMPLARS);
+      await s.groups.put({ ...next, lessons });
+    }
+  });
+}
+/** Writes the union of local and remote lessons when it differs from what storage.sync holds. Never throws. */
+async function writeLessons(db: Db, store: Record<string, unknown>, remote: LessonMap): Promise<void> {
+  try {
+    const enc = encodeLessons(mergeLessons(localLessons(await db.groups.all()), remote));
+    const changed = Object.fromEntries(Object.entries(enc).filter(([k, v]) => store[k] !== v));
+    const gone = LESSON_KEYS.filter((k) => enc[k] === undefined && store[k] !== undefined);
+    if (gone.length) {
+      for (const k of gone) {
+        lastRemoved.add(k);
+        lastWritten.delete(k);
+      }
+      await chrome.storage.sync.remove(gone);
+    }
+    if (Object.keys(changed).length) {
+      for (const [k, v] of Object.entries(changed)) {
+        lastWritten.set(k, JSON.stringify(v));
+        lastRemoved.delete(k);
+      }
+      await chrome.storage.sync.set(changed);
+    }
+  } catch (e) {
+    console.warn('lesson sync skipped this pass', e); // the stash sync result stands
+  }
+}
 /** One full pass: read remote, merge into local, write back what changed. `counted`: pull-triggered. */
 async function run(db: Db, counted: boolean): Promise<SyncStatus> {
   try {
@@ -308,6 +389,8 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
     const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
     await apply(db, m);
     if (m.upserts.length || m.deletes.length) hooks.applied?.(db);
+    const remoteLessons = decodeLessons(store, now);
+    await applyLessons(db, remoteLessons);
     const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
     // Before the write: an item opened right after it is pushed must already count as synced.
     await rememberSynced(db, remote, enc.included, m.tombs);
@@ -316,6 +399,7 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
       await retryIn(PAUSE_RETRY_MINUTES);
       return await fail('rate', 'sync paused: devices disagree');
     }
+    await writeLessons(db, store, remoteLessons);
     await Promise.resolve(chrome.alarms.clear(SYNC_RETRY_ALARM)).catch(() => undefined);
     return await save({ ok: true, synced: enc.included.length, localOnly: enc.localOnly.length, lastSyncAt: now });
   } catch (e) {

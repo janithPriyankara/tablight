@@ -18,7 +18,7 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
       <div class="card-text">
         <h2 id="onboarding-h" class="card-title">Welcome to Tab Organizer</h2>
         <ul class="onboarding-points">
-          <li>Nothing leaves your device except tabs you save for later: no servers, no analytics.</li>
+          <li>Nothing leaves your device except tabs you save for later and the examples you teach your groups, which sync through your browser account: no servers, no analytics.</li>
           <li>Grouping runs on your computer, using only each tab’s title and address.</li>
           <li>Saved tabs sync only through your browser account, and you can turn that off in Settings.</li>
           {unpinned && (
