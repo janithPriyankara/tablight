@@ -12,6 +12,23 @@ export interface DashboardStateHook {
    */
   refresh: () => Promise<void>;
 }
+/** A state read that takes longer than this fails, so a hung read never blocks later refreshes. */
+export const STATE_TIMEOUT_MS = 10_000;
+function readState(): Promise<DashboardState> {
+  return new Promise<DashboardState>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timed out loading your tabs')), STATE_TIMEOUT_MS);
+    send<DashboardState>({ t: 'state' }).then(
+      (s) => {
+        clearTimeout(timer);
+        resolve(s);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
+}
 /** The worker's broadcast after data changed, sent by our own extension only. */
 export function isChangedBroadcast(message: unknown, sender: chrome.runtime.MessageSender | undefined): boolean {
   if (sender?.id === undefined || sender.id !== chrome.runtime.id) return false;
@@ -37,7 +54,7 @@ export function useDashboardState(): DashboardStateHook {
       do {
         dirty.current = false;
         try {
-          const s = await send<DashboardState>({ t: 'state' });
+          const s = await readState(); // a late reply from a timed-out read is dropped
           setState(s);
           setError(null);
         } catch (e) {
