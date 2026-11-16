@@ -101,7 +101,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'open': await openItem(db, parseId(req.id)); break;
     case 'close': out = await closeTabs(db, parseIds(req.ids)); break;
     case 'closeExtras': out = await closeExtras(db); break;
-    case 'undo': return undo(db, parseId(req.token));
+    case 'undo': out = await undo(db, parseId(req.token)); break;
     case 'regroupPreview': return regroupPreview(db);
     case 'regroupApply': out = await regroupApply(db); break;
     default: throw new Error(`unsupported request: ${req.t}`);

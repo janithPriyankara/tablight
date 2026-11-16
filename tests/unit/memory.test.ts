@@ -105,6 +105,61 @@ describe('stash', () => {
     expect(await undo(db, token)).toBe(false); // one use
   });
 });
+describe('undo safety', () => {
+  it('keeps the stash record when recreating the tab fails', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    const { token } = await stash(db, [items[0]!.id]);
+    vi.spyOn(chrome.tabs, 'create').mockRejectedValue(new Error('boom'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await undo(db, token);
+    expect(await db.items.byState('stashed')).toHaveLength(1);
+  });
+  it('keeps the stash record of a tab that never closed', async () => {
+    const items = await setup([{ url: 'https://a.com/' }, { url: 'https://b.com/' }]);
+    const a = byUrl(items, 'https://a.com/');
+    const remove = chrome.tabs.remove.bind(chrome.tabs);
+    vi.spyOn(chrome.tabs, 'remove').mockImplementation((id: number | number[]) =>
+      [id].flat().includes(a.tabId!) ? Promise.reject(new Error('boom')) : remove(id as number));
+    const { token } = await stash(db, items.map((i) => i.id));
+    expect(await undo(db, token)).toBe(true);
+    const stashed = await db.items.byState('stashed');
+    expect(stashed.map((i) => i.url)).toEqual(['https://a.com/']);
+    expect(mock.tabs().filter((t) => t.url === 'https://b.com/')).toHaveLength(1);
+  });
+  it('restores the group when reconcile indexed the recreated tab before adopt', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    await db.items.put({ ...items[0]!, groupId: 'g1', groupSource: 'user' });
+    const { token } = await stash(db, [items[0]!.id]);
+    const create = chrome.tabs.create.bind(chrome.tabs);
+    vi.spyOn(chrome.tabs, 'create').mockImplementation(async (p) => {
+      const tab = await create(p);
+      await reconcile(db, await chrome.tabs.query({})); // the debounced reconcile wins the race
+      return tab;
+    });
+    await undo(db, token);
+    const all = await db.items.all();
+    expect(all.filter((i) => i.state !== 'stashed')).toHaveLength(1);
+    expect(all.find((i) => i.state === 'open')).toMatchObject({ groupId: 'g1', groupSource: 'user' });
+  });
+});
+describe('minor behaviors', () => {
+  it('closeExtras keeps a pinned copy over a more recent one', async () => {
+    const items = await setup([{ url: 'https://k.com/' }, { url: 'https://a.com/x', pinned: true }, { url: 'https://a.com/x?utm_source=1' }]);
+    await db.items.put({ ...byUrl(items, 'https://a.com/x?utm_source=1'), lastActiveAt: Date.now() + 1e6 });
+    await closeExtras(db);
+    expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/x', 'https://k.com/']);
+  });
+  it('stash skipped counts only non-web/missing ids, deduped', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    const id = items[0]!.id;
+    expect((await stash(db, [id, id, 'missing'])).skipped).toBe(1);
+  });
+  it('openItem succeeds when windows.update rejects', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    vi.spyOn(chrome.windows, 'update').mockRejectedValue(new Error('no window'));
+    await expect(openItem(db, items[0]!.id)).resolves.toBeUndefined();
+  });
+});
 describe('openItem', () => {
   it('focuses an open tab and its window', async () => {
     const items = await setup([{ url: 'https://a.com/', active: true }, { url: 'https://b.com/' }]);
@@ -147,7 +202,7 @@ describe('openItem', () => {
 });
 describe('closeExtras / closeTabs / undo', () => {
   it('keeps the most recently active copy', async () => {
-    const items = await setup([{ url: 'https://a.com/x' }, { url: 'https://a.com/x?utm_source=1' }, { url: 'https://b.com/' }]);
+    const items = await setup([{ url: 'https://b.com/' }, { url: 'https://a.com/x' }, { url: 'https://a.com/x?utm_source=1' }]);
     await db.items.put({ ...byUrl(items, 'https://a.com/x'), lastActiveAt: 10 });
     await db.items.put({ ...byUrl(items, 'https://a.com/x?utm_source=1'), lastActiveAt: 99 });
     const r = await closeExtras(db);

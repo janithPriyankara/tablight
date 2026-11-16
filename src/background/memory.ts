@@ -11,12 +11,12 @@ interface Closed {
   url: string;
   windowId: number | undefined;
   pinned: boolean;
+  /** Stash record this action created for the tab (merged ones pre-existed and are kept on undo). */
+  createdStash?: string;
 }
 interface UndoEntry {
   expires: number;
   closed: Closed[];
-  /** Stash records this action created (merged ones pre-existed and are kept on undo). */
-  createdStash: string[];
 }
 // In memory only: a service-worker restart forgets pending undos, which is acceptable for a 10 s window.
 const undos = new Map<string, UndoEntry>();
@@ -64,7 +64,14 @@ export async function autoSleep(db: Db, now: number): Promise<number> {
 async function adopt(db: Db, item: Item, tab: chrome.tabs.Tab): Promise<void> {
   if (tab.id === undefined) return;
   await db.tx(['items'], async (s) => {
-    if (await s.items.byTabId(tab.id!)) return; // a reconcile already indexed it
+    const existing = await s.items.byTabId(tab.id!);
+    if (existing) {
+      // A reconcile got there first: it only knows the auto classification, so restore the group.
+      if (existing.groupSource === 'auto' && existing.normUrl === item.normUrl && item.groupId !== null) {
+        await s.items.put({ ...existing, groupId: item.groupId, groupSource: item.groupSource });
+      }
+      return;
+    }
     await s.items.put({
       ...item, state: 'open', tabId: tab.id!, windowId: tab.windowId, lastActiveAt: Date.now(), updatedAt: Date.now(),
     });
@@ -86,8 +93,9 @@ async function createTab(url: string, windowId: number | undefined, pinned = fal
  */
 export async function stash(db: Db, ids: string[]): Promise<{ token: string; skipped: number }> {
   const live = await liveTabs();
+  const uniqueIds = new Set(ids);
   const picked: { item: Item & { tabId: number }; stashId: string }[] = [];
-  for (const id of new Set(ids)) {
+  for (const id of uniqueIds) {
     const item = await db.items.get(id);
     if (item && hasTab(item) && isWebUrl(item.url)) picked.push({ item, stashId: await sha1hex(item.normUrl) });
   }
@@ -111,12 +119,14 @@ export async function stash(db: Db, ids: string[]): Promise<{ token: string; ski
       await s.queue.remove([item.id]);
     }
   });
-  const closed: Closed[] = picked.map(({ item }) => ({
+  const closed: Closed[] = picked.map(({ item, stashId }) => ({
     item, url: item.url, windowId: item.windowId, pinned: live.get(item.tabId)?.pinned ?? false,
+    ...(createdStash.has(stashId) ? { createdStash: stashId } : {}),
   }));
   const done = await removeTabs(closed.map((c, k) => [c, picked[k]!.item.tabId] as const));
-  // Tabs that could not close stay stashed too; the next reconcile re-adds an open item for them.
-  return { token: remember({ closed: done, createdStash: [...createdStash] }), skipped: ids.length - picked.length };
+  // Tabs that could not close stay stashed too (and stay out of the undo entry, so undo never
+  // deletes their record); the next reconcile re-adds an open item for them.
+  return { token: remember({ closed: done }), skipped: uniqueIds.size - picked.length };
 }
 async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Closed[]> {
   const done: Closed[] = [];
@@ -137,13 +147,24 @@ export async function closeTabs(db: Db, ids: string[]): Promise<{ token: string 
     entries.push([{ item, url: live.get(item.tabId)?.url || item.url, windowId: item.windowId,
       pinned: live.get(item.tabId)?.pinned ?? false }, item.tabId]);
   }
-  return { token: remember({ closed: await removeTabs(entries), createdStash: [] }) };
+  return { token: remember({ closed: await removeTabs(entries) }) };
 }
 /** Closes duplicate tabs, keeping the most recently active copy of each page. */
 export async function closeExtras(db: Db): Promise<{ closed: number; token: string }> {
+  const live = await liveTabs();
+  // Keep a pinned copy, else the active one, else the most recently active.
+  const rank = (i: Item) => {
+    const t = i.tabId === undefined ? undefined : live.get(i.tabId);
+    return [t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
+  };
+  const better = (a: Item, b: Item) => {
+    const [ra, rb] = [rank(a), rank(b)];
+    for (let k = 0; k < 3; k++) if (ra[k] !== rb[k]) return rb[k]! > ra[k]!;
+    return false;
+  };
   const ids: string[] = [];
   for (const group of findDuplicates(await db.items.all()).values()) {
-    const keep = group.reduce((a, b) => (b.lastActiveAt > a.lastActiveAt ? b : a));
+    const keep = group.reduce((a, b) => (better(a, b) ? b : a));
     for (const i of group) if (i !== keep) ids.push(i.id);
   }
   const { token } = await closeTabs(db, ids);
@@ -159,7 +180,8 @@ export async function openItem(db: Db, id: string): Promise<void> {
     } catch {
       throw new Error('tab no longer exists');
     }
-    if (item.windowId !== undefined) await chrome.windows.update(item.windowId, { focused: true });
+    // The tab is already active; failing to raise its window must not fail the open.
+    if (item.windowId !== undefined) await chrome.windows.update(item.windowId, { focused: true }).catch(() => undefined);
     return;
   }
   if (!isSafeToOpen(item.url)) throw new Error('unsafe url');
@@ -179,17 +201,20 @@ export async function undo(db: Db, token: string): Promise<boolean> {
   if (!e) return false;
   undos.delete(token);
   if (e.expires <= Date.now()) return false;
+  const restored: string[] = [];
   for (const c of e.closed) {
     if (!isWebUrl(c.url)) continue;
     try {
-      await adopt(db, c.item, await createTab(c.url, c.windowId, c.pinned));
+      const tab = await createTab(c.url, c.windowId, c.pinned);
+      if (c.createdStash) restored.push(c.createdStash); // only once the tab is back
+      await adopt(db, c.item, tab);
     } catch (err) {
       console.error('undo could not reopen a tab', err);
     }
   }
-  if (e.createdStash.length) {
+  if (restored.length) {
     await db.tx(['items'], async (s) => {
-      for (const id of e.createdStash) if ((await s.items.get(id))?.state === 'stashed') await s.items.delete(id);
+      for (const id of restored) if ((await s.items.get(id))?.state === 'stashed') await s.items.delete(id);
     });
   }
   return true;
