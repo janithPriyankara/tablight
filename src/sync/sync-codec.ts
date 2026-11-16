@@ -18,14 +18,15 @@ export const MAX_SYNC_TITLE = 80;
 export const MAX_NORM_URL = 2048;
 export const MAX_GROUP_NAME = 60;
 export const TOMB_TTL_MS = 30 * 86_400_000;
-/** Remote timestamps are clamped to now + 1 day, so a forged far-future record cannot win forever. */
-const MAX_SKEW_MS = 86_400_000;
 /** storage.sync holds at most 512 items; more chunks than this can only be garbage. */
 const MAX_CHUNKS = 500;
 /** Room kept free inside the budget for the meta key. */
 const META_RESERVE = 200;
-/** Tombstones may use at most this share of the budget; records get the rest. */
-const TOMB_SHARE = 0.25;
+/**
+ * Tombstones are packed first and may use at most this share of the budget; records get the rest
+ * (records past the budget stay local only, which is safe: absent is not deleted).
+ */
+const TOMB_SHARE = 0.75;
 const ID_RE = /^[0-9a-f]{40}$/;
 const CHUNK_RE = /^v1:(\d+)$/;
 
@@ -118,9 +119,11 @@ class Packer {
 }
 
 /**
- * Packs tombstones (newest first, at most a quarter of the budget, older than 30 days pruned) and
+ * Packs tombstones (newest first, at most 75% of the budget, older than 30 days pruned) and then
  * records (newest stashedAt first) into chunks "v1:0".."v1:n". Records past the budget stay local only;
  * `included` is always a newest-first prefix, so freed space promotes the newest local-only items.
+ * A record killed by an encoded tombstone (deletedAt >= updatedAt) is left out entirely; one whose
+ * tombstone did not fit is encoded, so what is written never depends on tombstones nobody else sees.
  */
 export function encodeChunks(
   recs: SyncRecord[], tombs: Tomb[], budget = SYNC_BUDGET, chunkMax = CHUNK_MAX, now = Date.now(),
@@ -131,8 +134,14 @@ export function encodeChunks(
     .filter(([, at]) => at >= now - TOMB_TTL_MS)
     .sort((a, b) => b[1] - a[1] || byIdAsc(a[0], b[0]));
   const tombLimit = Math.floor(limit * TOMB_SHARE);
-  for (const t of liveTombs) if (packer.add(JSON.stringify(t), tombLimit) !== 'ok') break;
-  const sorted = [...latestRecords(recs).values()].sort((a, b) => b[4] - a[4] || byIdAsc(a[0], b[0]));
+  const encodedTombs = new Map<string, number>();
+  for (const t of liveTombs) {
+    if (packer.add(JSON.stringify(t), tombLimit) !== 'ok') break;
+    encodedTombs.set(t[0], t[1]);
+  }
+  const sorted = [...latestRecords(recs).values()]
+    .filter((r) => (encodedTombs.get(r[0]) ?? -Infinity) < r[5])
+    .sort((a, b) => b[4] - a[4] || byIdAsc(a[0], b[0]));
   const included: string[] = [];
   const localOnly: string[] = [];
   let full = false;
@@ -147,25 +156,26 @@ export function encodeChunks(
   return { chunks: packer.chunks(), included, localOnly };
 }
 
-const isTime = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+/**
+ * Timestamps are kept raw (re-encoded unchanged). They are not clamped: a clamp relative to each
+ * device's clock makes two devices order the same records differently, which never converges.
+ */
+const isTime = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 
-function validRecord(e: unknown[], maxTime: number): SyncRecord | null {
+function validRecord(e: unknown[]): SyncRecord | null {
   const [id, normUrl, title, group, stashedAt, updatedAt] = e;
   if (typeof id !== 'string' || !ID_RE.test(id)) return null;
   if (typeof normUrl !== 'string' || normUrl.length > MAX_NORM_URL || !isWebUrl(normUrl)) return null;
   if (typeof title !== 'string' || typeof group !== 'string') return null;
   if (!isTime(stashedAt) || !isTime(updatedAt)) return null;
   const g = group.trim();
-  return [
-    id, normUrl, truncate(title, MAX_SYNC_TITLE), g.length > MAX_GROUP_NAME ? '' : g,
-    Math.min(stashedAt, maxTime), Math.min(updatedAt, maxTime),
-  ];
+  return [id, normUrl, truncate(title, MAX_SYNC_TITLE), g.length > MAX_GROUP_NAME ? '' : g, stashedAt, updatedAt];
 }
 
-function validTomb(e: unknown[], maxTime: number): Tomb | null {
+function validTomb(e: unknown[]): Tomb | null {
   const [id, deletedAt] = e;
   if (typeof id !== 'string' || !ID_RE.test(id) || !isTime(deletedAt)) return null;
-  return [id, Math.min(deletedAt, maxTime)];
+  return [id, deletedAt];
 }
 
 /** Chunk keys to read: 0..meta.chunks-1 when the meta is valid, else every "v1:<n>" key present. */
@@ -187,11 +197,10 @@ function chunkKeys(store: Record<string, unknown>): string[] {
  * Reads records and tombstones from a storage.sync snapshot. Malformed keys, values and entries are
  * ignored, never thrown; every accepted entry is a fresh, validated copy (nothing parsed passes through).
  */
-export function decodeChunks(store: Record<string, unknown>, now = Date.now()): { recs: SyncRecord[]; tombs: Tomb[] } {
+export function decodeChunks(store: Record<string, unknown>): { recs: SyncRecord[]; tombs: Tomb[] } {
   const recs: SyncRecord[] = [];
   const tombs: Tomb[] = [];
   if (typeof store !== 'object' || store === null) return { recs, tombs };
-  const maxTime = now + MAX_SKEW_MS;
   for (const key of chunkKeys(store)) {
     const raw = Object.hasOwn(store, key) ? store[key] : undefined;
     if (typeof raw !== 'string' || raw.length > CHUNK_MAX * 2) continue;
@@ -205,10 +214,10 @@ export function decodeChunks(store: Record<string, unknown>, now = Date.now()): 
     for (const e of parsed as unknown[]) {
       if (!Array.isArray(e)) continue;
       if (e.length === 6) {
-        const r = validRecord(e, maxTime);
+        const r = validRecord(e);
         if (r) recs.push(r);
       } else if (e.length === 2) {
-        const t = validTomb(e, maxTime);
+        const t = validTomb(e);
         if (t) tombs.push(t);
       }
     }
@@ -224,7 +233,8 @@ export async function verifyIds(recs: SyncRecord[]): Promise<SyncRecord[]> {
 
 /**
  * Last-writer-wins per record by updatedAt; a tombstone wins when deletedAt ≥ the record's updatedAt.
- * upserts: remote records to apply locally. deletes: local ids to remove. tombs: the union of tombstones.
+ * upserts: remote records to apply locally. deletes: local ids to remove. tombs: the union of tombstones
+ * minus those a newer record supersedes (a re-stash).
  * A local record absent remotely without a tombstone is kept (it is pushed later).
  */
 export function merge(
@@ -245,19 +255,22 @@ export function merge(
     const newest = Math.max(l[5], R.get(id)?.[5] ?? -Infinity);
     if (dead(id, newest)) deletes.push(id);
   }
-  return { upserts, deletes, tombs: [...tombAt] };
+  const newest = new Map<string, number>();
+  for (const [id, r] of [...L, ...R]) newest.set(id, Math.max(newest.get(id) ?? -Infinity, r[5]));
+  const tombs = [...tombAt].filter(([id, at]) => (newest.get(id) ?? -Infinity) <= at);
+  return { upserts, deletes, tombs };
 }
 
 /**
  * The record set to push after a merge: per id the newer copy, the remote one on a tie (so two devices
- * that agree on updatedAt never rewrite each other's chunks), minus tombstoned records.
+ * that agree on updatedAt never rewrite each other's chunks). Tombstoned records are dropped by
+ * encodeChunks, against the tombstones it actually encodes.
  */
-export function mergedView(local: SyncRecord[], remote: SyncRecord[], tombs: Tomb[]): SyncRecord[] {
-  const tombAt = latestTombs(tombs);
+export function mergedView(local: SyncRecord[], remote: SyncRecord[]): SyncRecord[] {
   const out = latestRecords(local);
   for (const [id, r] of latestRecords(remote)) {
     const l = out.get(id);
     if (!l || r[5] >= l[5]) out.set(id, r);
   }
-  return [...out.values()].filter((r) => (tombAt.get(r[0]) ?? -Infinity) < r[5]);
+  return [...out.values()];
 }

@@ -50,7 +50,9 @@ export interface StoreApis {
     delete(id: string): Promise<void>;
   };
   tombstones: {
+    get(id: string): Promise<Tombstone | undefined>;
     put(t: Tombstone): Promise<void>;
+    delete(id: string): Promise<void>;
     all(): Promise<Tombstone[]>;
     prune(olderThan: number): Promise<void>;
   };
@@ -143,7 +145,9 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
       delete: (id) => one('snapshots', (tx) => tx.objectStore('snapshots').delete(id)),
     },
     tombstones: {
+      get: (id) => one('tombstones', (tx) => tx.objectStore('tombstones').get(id)),
       put: (t) => one('tombstones', async (tx) => void (await tx.objectStore('tombstones').put(t))),
+      delete: (id) => one('tombstones', (tx) => tx.objectStore('tombstones').delete(id)),
       all: () => one('tombstones', (tx) => tx.objectStore('tombstones').getAll()),
       prune: (olderThan) =>
         one('tombstones', async (tx) => {

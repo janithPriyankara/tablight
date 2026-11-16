@@ -74,15 +74,37 @@ describe('encodeChunks', () => {
     const r = recs(50);
     const tombs: Tomb[] = [[hex(9999), NOW - DAY]];
     const { chunks } = encodeChunks(r, tombs, 90_000, 8_000, NOW);
-    const out = decodeChunks({ ...chunks, [META_KEY]: { chunks: Object.keys(chunks).length, updatedAt: NOW } }, NOW);
+    const out = decodeChunks({ ...chunks, [META_KEY]: { chunks: Object.keys(chunks).length, updatedAt: NOW } });
     expect(out.recs).toEqual(r);
     expect(out.tombs).toEqual(tombs);
+  });
+
+  it('tombstones go first, capped at 75% of the budget; records fill the rest', () => {
+    const tombs: Tomb[] = Array.from({ length: 3000 }, (_, k) => [hex(100_000 + k), NOW - k * 1000]);
+    const { chunks, included, localOnly } = encodeChunks(recs(2000), tombs, 90_000, 8_000, NOW);
+    const out = decodeChunks(chunks);
+    const tombBytes = out.tombs.reduce((n, t) => n + bytes(JSON.stringify(JSON.stringify(t))) - 1, 0);
+    expect(tombBytes).toBeLessThanOrEqual(0.75 * 90_000);
+    expect(tombBytes).toBeGreaterThan(0.7 * 90_000);
+    expect(out.tombs.map((t) => t[0])).toEqual(tombs.slice(0, out.tombs.length).map((t) => t[0])); // newest first
+    expect(included.length).toBeGreaterThan(50);
+    expect(localOnly.length).toBeGreaterThan(0);
+  });
+
+  it('drops records killed by an encoded tombstone, keeps those whose tombstone did not fit', () => {
+    const r = recs(3);
+    const { included } = encodeChunks(r, [[hex(0), NOW], [hex(1), r[1]![5] - 1]], 90_000, 8_000, NOW);
+    expect(included).toEqual([hex(1), hex(2)]);
+    const many: Tomb[] = Array.from({ length: 3000 }, (_, k) => [hex(100_000 + k), NOW]);
+    const oldTomb: Tomb = [hex(2), NOW - 1]; // older than all the others: does not fit
+    const res = encodeChunks(r, [...many, oldTomb], 90_000, 8_000, NOW);
+    expect(res.included).toContain(hex(2));
   });
 
   it('prunes tombs older than 30 days', () => {
     const tombs: Tomb[] = [[hex(1), NOW - TOMB_TTL_MS - 1], [hex(2), NOW - TOMB_TTL_MS + 1000]];
     const { chunks } = encodeChunks([], tombs, 90_000, 8_000, NOW);
-    expect(decodeChunks(chunks, NOW).tombs).toEqual([[hex(2), NOW - TOMB_TTL_MS + 1000]]);
+    expect(decodeChunks(chunks).tombs).toEqual([[hex(2), NOW - TOMB_TTL_MS + 1000]]);
   });
 });
 
@@ -97,15 +119,15 @@ describe('decodeChunks', () => {
       other: 'x', 'v2:0': good,
     });
     let out!: ReturnType<typeof decodeChunks>;
-    expect(() => (out = decodeChunks(store, NOW))).not.toThrow();
+    expect(() => (out = decodeChunks(store))).not.toThrow();
     expect(out.recs.map((r) => r[0])).toEqual([hex(0), hex(1)]);
     expect(out.tombs).toEqual([]);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
-    expect(decodeChunks(null as unknown as Record<string, unknown>, NOW)).toEqual({ recs: [], tombs: [] });
-    expect(decodeChunks({ 'v1:meta': 'x', 'v1:0': [[hex(1)]] }, NOW)).toEqual({ recs: [], tombs: [] });
+    expect(decodeChunks(null as unknown as Record<string, unknown>)).toEqual({ recs: [], tombs: [] });
+    expect(decodeChunks({ 'v1:meta': 'x', 'v1:0': [[hex(1)]] })).toEqual({ recs: [], tombs: [] });
   });
 
-  it('drops javascript:/oversized urls, truncates titles, clamps far-future timestamps', () => {
+  it('drops javascript:/oversized urls, truncates titles, keeps (raw) far-future timestamps unchanged', () => {
     const chunk = JSON.stringify([
       [hex(1), 'javascript:alert(1)', 't', '', 1, 1],
       [hex(2), `https://a.com/${'p'.repeat(2100)}`, 't', '', 1, 1],
@@ -114,9 +136,12 @@ describe('decodeChunks', () => {
       ['not-hex', 'https://c.com/', 't', '', 1, 1],
       [hex(5), NOW + 999 * DAY],
     ]);
-    const out = decodeChunks({ 'v1:0': chunk }, NOW);
-    expect(out.recs).toEqual([[hex(3), 'https://b.com/', 'T'.repeat(80), '', 1, NOW + DAY]]);
-    expect(out.tombs).toEqual([[hex(5), NOW + DAY]]);
+    const out = decodeChunks({ 'v1:0': chunk });
+    expect(out.recs).toEqual([[hex(3), 'https://b.com/', 'T'.repeat(80), '', 1, NOW + 365 * DAY]]);
+    expect(out.tombs).toEqual([[hex(5), NOW + 999 * DAY]]);
+    // Re-encoding keeps the raw value: two passes never drift.
+    const again = decodeChunks(encodeChunks(out.recs, out.tombs, 90_000, 8_000, NOW).chunks);
+    expect(again).toEqual(out);
   });
 });
 
@@ -156,11 +181,17 @@ describe('merge', () => {
     const m = merge([rec(1, 10)], [], [rec(2, 10)], []);
     expect(m.deletes).toEqual([]);
     expect(m.upserts).toEqual([rec(2, 10)]);
-    expect(mergedView([rec(1, 10)], [rec(2, 10)], m.tombs).map((r) => r[0]).sort()).toEqual([hex(1), hex(2)]);
+    expect(mergedView([rec(1, 10)], [rec(2, 10)]).map((r) => r[0]).sort()).toEqual([hex(1), hex(2)]);
   });
 
-  it('mergedView prefers the remote copy on a tie and drops tombstoned records', () => {
-    const v = mergedView([rec(1, 10, 'local'), rec(2, 10)], [rec(1, 10, 'remote')], [[hex(2), 10]]);
-    expect(v).toEqual([rec(1, 10, 'remote')]);
+  it('mergedView prefers the remote copy on a tie', () => {
+    const v = mergedView([rec(1, 10, 'local'), rec(2, 10)], [rec(1, 10, 'remote')]);
+    expect(v).toEqual([rec(1, 10, 'remote'), rec(2, 10)]);
+  });
+
+  it('a tombstone superseded by a newer record (re-stash) is dropped from the union', () => {
+    expect(merge([rec(1, 20)], [], [], [[hex(1), 15]]).tombs).toEqual([]);
+    expect(merge([], [], [rec(1, 20)], [[hex(1), 15]]).tombs).toEqual([]);
+    expect(merge([rec(1, 10)], [[hex(1), 15]], [], []).tombs).toEqual([[hex(1), 15]]);
   });
 });

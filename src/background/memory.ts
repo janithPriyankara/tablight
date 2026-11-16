@@ -2,8 +2,9 @@
 import { sha1hex } from '../shared/hash';
 import type { Item } from '../shared/types';
 import { isSafeToOpen, isWebUrl } from '../shared/url';
-import type { Db } from './db';
+import type { Db, StoreApis } from './db';
 import { findDuplicates } from './duplicates';
+import { wasSynced } from './sync';
 export const AUTO_SLEEP_ALARM = 'auto-sleep';
 export const UNDO_MS = 10_000;
 interface Closed {
@@ -103,6 +104,16 @@ export function stashRecord(item: Item, prev: Item | undefined, stashId: string,
   };
 }
 /**
+ * Re-stashing a page clears its tombstone; the returned updatedAt is newer than that tombstone, so the
+ * re-stash also beats the same tombstone still held remotely or by other devices.
+ */
+export async function restashTime(s: Pick<StoreApis, 'tombstones'>, stashId: string, now: number): Promise<number> {
+  const tomb = await s.tombstones.get(stashId);
+  if (!tomb) return now;
+  await s.tombstones.delete(stashId);
+  return Math.max(now, tomb.deletedAt + 1);
+}
+/**
  * Stashes web tabs: the stash record is persisted (replacing the open item) BEFORE the tab closes, so
  * a failing close never loses a tab. Non-web tabs (they could never be reopened) are skipped.
  */
@@ -116,10 +127,10 @@ export async function stash(db: Db, ids: string[]): Promise<{ token: string; ski
   }
   const now = Date.now();
   const createdStash = new Set<string>();
-  await db.tx(['items', 'queue'], async (s) => {
+  await db.tx(['items', 'queue', 'tombstones'], async (s) => {
     for (const { item, stashId } of picked) {
       const prev = await s.items.get(stashId);
-      const rec = stashRecord(item, prev, stashId, now);
+      const rec = stashRecord(item, prev, stashId, await restashTime(s, stashId, now));
       if (!prev) createdStash.add(stashId);
       await s.items.put(rec);
       await s.items.delete(item.id);
@@ -195,9 +206,10 @@ export async function openItem(db: Db, id: string): Promise<void> {
   const tab = await chrome.tabs.create({ url: item.url, active: true });
   const remove = (await db.settings.get()).removeOnOpen;
   if (remove) {
+    const synced = await wasSynced(item.id); // a never-synced record needs no tombstone
     await db.tx(['items', 'tombstones'], async (s) => {
       await s.items.delete(item.id);
-      await s.tombstones.put({ id: item.id, deletedAt: Date.now() });
+      if (synced) await s.tombstones.put({ id: item.id, deletedAt: Date.now() });
     });
   }
   await adopt(db, { ...item, id: crypto.randomUUID(), stashedAt: undefined }, tab);
@@ -220,12 +232,14 @@ export async function undo(db: Db, token: string): Promise<boolean> {
     }
   }
   if (restored.length) {
-    // The tombstone keeps sync from bringing the undone stash record back from another device.
+    // A tombstone keeps sync from bringing an undone, already-synced stash record back.
+    const synced = new Set<string>();
+    for (const id of restored) if (await wasSynced(id)) synced.add(id);
     await db.tx(['items', 'tombstones'], async (s) => {
       for (const id of restored) {
         if ((await s.items.get(id))?.state !== 'stashed') continue;
         await s.items.delete(id);
-        await s.tombstones.put({ id, deletedAt: Date.now() });
+        if (synced.has(id)) await s.tombstones.put({ id, deletedAt: Date.now() });
       }
     });
   }

@@ -6,8 +6,8 @@ vi.mock('../../src/background/embedder', () => ({
 import { openDb, type Db } from '../../src/background/db';
 import { embed } from '../../src/background/embedder';
 import {
-  SYNC_RETRY_ALARM, SYNC_STATUS_KEY, handleSyncStorageChange, pullSync, pushSync, readSyncStatus, scheduleSync,
-  setSyncEnabled, touchStashedInGroup,
+  MAX_NEW_GROUPS, SYNCED_IDS_KEY, SYNC_RETRY_ALARM, SYNC_STATUS_KEY, handleSyncStorageChange, pullSync, pushSync,
+  readSyncStatus, scheduleSync, setSyncEnabled, touchStashedInGroup, wasSynced,
 } from '../../src/background/sync';
 import { META_KEY, encodeChunks, toRecord, type SyncRecord, type Tomb } from '../../src/sync/sync-codec';
 import { sha1hex } from '../../src/shared/hash';
@@ -219,18 +219,28 @@ describe('pullSync', () => {
     expect(await db.items.all()).toHaveLength(1);
   });
 
-  it('onChanged: our own write is ignored, another device\'s write triggers a pull', async () => {
-    await pushSync(db);
-    const own = (await syncStore())[META_KEY];
+  it('onChanged: our own write is ignored; any other v1:* change pulls once, debounced 1 s', async () => {
+    await stashed('https://a.com/');
+    await chrome.storage.sync.set({ 'v1:5': 'stale' });
+    await pushSync(db); // removes v1:5, writes v1:0 + meta
+    const store = await syncStore();
+    const own = { [META_KEY]: { newValue: store[META_KEY] }, 'v1:0': { newValue: store['v1:0'] }, 'v1:5': { oldValue: 'stale' } };
+    expect(handleSyncStorageChange(db, own, 'sync')).toBe(false);
+    expect(handleSyncStorageChange(db, { 'v1:9': { newValue: 'x' } }, 'local')).toBe(false);
+    expect(handleSyncStorageChange(db, { other: { newValue: 'x' } }, 'sync')).toBe(false);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const get = vi.spyOn(chrome.storage.sync, 'get');
-    expect(handleSyncStorageChange(db, { [META_KEY]: { newValue: own } }, 'sync')).toBeUndefined();
-    expect(handleSyncStorageChange(db, { [META_KEY]: { newValue: own } }, 'local')).toBeUndefined();
+    const r = await remoteRec('https://r.com/');
+    // Another device's write arrives in two batches: chunk first, meta later (no meta change at all first).
+    expect(handleSyncStorageChange(db, { 'v1:1': { newValue: 'chunk' } }, 'sync')).toBe(true);
+    await vi.advanceTimersByTimeAsync(500);
+    await remote([r]);
+    expect(handleSyncStorageChange(db, { [META_KEY]: { newValue: { chunks: 1, updatedAt: 1 } } }, 'sync')).toBe(true);
+    await vi.advanceTimersByTimeAsync(900);
     expect(get).not.toHaveBeenCalled();
-    await remote([await remoteRec('https://r.com/')]);
-    const p = handleSyncStorageChange(db, { [META_KEY]: { newValue: { chunks: 1, updatedAt: 1 } } }, 'sync');
-    expect(p).toBeDefined();
-    await p;
-    expect(await db.items.byState('stashed')).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(200);
+    await vi.waitFor(async () => expect(await db.items.get(r[0])).toBeDefined());
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -241,5 +251,88 @@ describe('touchStashedInGroup', () => {
     await touchStashedInGroup(db, 'g1');
     expect((await db.items.get(a.id))!.updatedAt).toBeGreaterThan(5);
     expect((await db.items.get(b.id))!.updatedAt).toBe(5);
+  });
+});
+describe('review fixes', () => {
+  it('removes stale keys before setting the new chunks', async () => {
+    await stashed('https://a.com/');
+    await chrome.storage.sync.set({ 'v1:3': 'stale' });
+    const order: string[] = [];
+    vi.spyOn(chrome.storage.sync, 'remove').mockImplementation(async () => void order.push('remove'));
+    vi.spyOn(chrome.storage.sync, 'set').mockImplementation(async () => void order.push('set'));
+    await pushSync(db);
+    expect(order).toEqual(['remove', 'set']);
+  });
+  it('pauses after more than 6 writes in 10 minutes: status rate, retry alarm in 15 min, warning logged', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    for (let k = 0; k < 6; k++) {
+      await stashed(`https://a${k}.com/`);
+      expect(await pushSync(db)).toMatchObject({ ok: true });
+    }
+    await stashed('https://a6.com/');
+    const set = vi.spyOn(chrome.storage.sync, 'set');
+    expect(await pushSync(db)).toMatchObject({ ok: false, reason: 'rate', message: 'sync paused: devices disagree' });
+    expect(set).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+    const alarm = mock.alarms().find((a) => a.name === SYNC_RETRY_ALARM)!;
+    expect(alarm.scheduledTime - Date.now()).toBeGreaterThan(14 * 60_000);
+    expect(await db.items.byState('stashed')).toHaveLength(7); // local data untouched
+  });
+  it('scheduleSync sets a sync-retry backstop alarm; a successful pass clears it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    scheduleSync(db);
+    await vi.waitFor(() => expect(mock.alarms().map((a) => a.name)).toContain(SYNC_RETRY_ALARM));
+    const a = mock.alarms().find((x) => x.name === SYNC_RETRY_ALARM)!;
+    expect(a.scheduledTime - Date.now()).toBeGreaterThanOrEqual(29_000);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.waitFor(() => expect(mock.alarms().map((x) => x.name)).not.toContain(SYNC_RETRY_ALARM));
+  });
+  it('remote names never match suggested groups; invalid names stay unsorted; at most 50 groups per pass', async () => {
+    await db.groups.put(group('s1', 'Cooking', { suggested: true, builtIn: false }));
+    const recs = [
+      await remoteRec('https://cook.com/', { group: 'cooking' }),
+      await remoteRec('https://blank.com/', { group: '   ' }),
+    ];
+    for (let k = 0; k < MAX_NEW_GROUPS + 5; k++) recs.push(await remoteRec(`https://g${k}.com/`, { group: `Group ${k}` }));
+    await remote(recs);
+    await pullSync(db);
+    const groups = await db.groups.all();
+    expect(groups.filter((g) => !g.suggested)).toHaveLength(MAX_NEW_GROUPS);
+    const cook = (await db.items.byState('stashed')).find((i) => i.normUrl === 'https://cook.com/')!;
+    expect(cook.groupId).not.toBe('s1');
+    const blank = (await db.items.byState('stashed')).find((i) => i.normUrl === 'https://blank.com/')!;
+    expect(blank).toMatchObject({ groupId: null, groupSource: 'auto' });
+    expect((await db.items.byState('stashed')).filter((i) => i.groupId === null).length).toBeGreaterThanOrEqual(5);
+  });
+  it('readSyncStatus validates the stored shape', async () => {
+    await chrome.storage.local.set({ [SYNC_STATUS_KEY]: { ok: true, synced: 'x' } });
+    expect(await readSyncStatus()).toEqual({ ok: true, synced: 0, localOnly: 0, lastSyncAt: null });
+    await chrome.storage.local.set({ [SYNC_STATUS_KEY]: { ok: false, reason: 'pwned', message: 'm', lastSyncAt: null } });
+    expect((await readSyncStatus()).ok).toBe(true);
+    await chrome.storage.local.set({ [SYNC_STATUS_KEY]: { ok: false, reason: 'quota', message: 'm', lastSyncAt: 5, extra: 1 } });
+    expect(await readSyncStatus()).toEqual({ ok: false, reason: 'quota', message: 'm', lastSyncAt: 5 });
+  });
+  it('wasSynced: ids seen remotely or pushed count; never-pushed ones do not', async () => {
+    const a = await stashed('https://a.com/');
+    expect(await wasSynced(a.id)).toBe(false);
+    await pushSync(db);
+    expect(await wasSynced(a.id)).toBe(true);
+    const r = await remoteRec('https://r.com/');
+    await remote([r]);
+    await pullSync(db);
+    expect(await wasSynced(r[0])).toBe(true);
+    expect((await chrome.storage.local.get(SYNCED_IDS_KEY))[SYNCED_IDS_KEY]).toEqual(expect.arrayContaining([a.id, r[0]]));
+  });
+  it('a pass that changes nothing does not touch local updatedAt (far-future remote values kept raw)', async () => {
+    const future = Date.now() + 3 * 86_400_000;
+    await remote([await remoteRec('https://f.com/', { updatedAt: future })]);
+    await pullSync(db);
+    const before = await db.items.all();
+    const set = vi.spyOn(chrome.storage.sync, 'set');
+    await pullSync(db);
+    await pullSync(db);
+    expect(await db.items.all()).toEqual(before);
+    expect(before[0]!.updatedAt).toBe(future);
+    expect(set).not.toHaveBeenCalled();
   });
 });

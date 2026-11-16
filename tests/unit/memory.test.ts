@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import { autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from '../../src/background/memory';
 import { reconcile } from '../../src/background/tab-index';
+import { SYNCED_IDS_KEY } from '../../src/background/sync';
 import { sha1hex } from '../../src/shared/hash';
 import type { Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -95,13 +96,13 @@ describe('stash', () => {
     await db.items.put({ ...byUrl(items, 'https://a.com/'), groupId: 'g1', groupSource: 'user' });
     const { token } = await stash(db, items.map((i) => i.id));
     expect(mock.tabs()).toHaveLength(0);
+    // a.com's record already reached storage.sync; b.com's never did.
+    await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [await sha1hex('https://a.com/')] });
     expect(await undo(db, token)).toBe(true);
     expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/', 'https://b.com/']);
     expect(await db.items.byState('stashed')).toHaveLength(0);
-    // Tombstones keep sync from bringing the undone records back from another device.
-    expect((await db.tombstones.all()).map((t) => t.id).sort()).toEqual(
-      [await sha1hex('https://a.com/'), await sha1hex('https://b.com/')].sort(),
-    );
+    // A tombstone keeps sync from bringing a synced record back; a never-synced one needs none.
+    expect((await db.tombstones.all()).map((t) => t.id)).toEqual([await sha1hex('https://a.com/')]);
     await reconcile(db, await chrome.tabs.query({}));
     const all = await db.items.all();
     expect(all).toHaveLength(2);
@@ -189,13 +190,15 @@ describe('openItem', () => {
     }
     expect(create).not.toHaveBeenCalled();
   });
-  it('opens a stash; removeOnOpen deletes it and writes a tombstone, else keeps it', async () => {
-    const items = await setup([{ url: 'https://a.com/' }]);
-    await stash(db, [items[0]!.id]);
+  it('opens a stash; removeOnOpen deletes it and writes a tombstone (once synced), else keeps it', async () => {
+    const items = await setup([{ url: 'https://a.com/' }, { url: 'https://n.com/' }]);
+    await stash(db, items.map((i) => i.id));
     const id = await sha1hex('https://a.com/');
+    await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [id] });
+    await openItem(db, await sha1hex('https://n.com/')); // never synced: no tombstone
     await db.settings.set({ removeOnOpen: false });
     await openItem(db, id);
-    expect(mock.tabs()).toHaveLength(1);
+    expect(mock.tabs()).toHaveLength(2);
     expect(await db.items.get(id)).toBeDefined();
     expect(await db.tombstones.all()).toEqual([]);
     await db.settings.set({ removeOnOpen: true });
@@ -238,5 +241,16 @@ describe('closeExtras / closeTabs / undo', () => {
   it('ignores unknown tokens', async () => {
     mock = installChromeMock();
     expect(await undo(db, 'nope')).toBe(false);
+  });
+});
+describe('re-stash and tombstones', () => {
+  it('re-stashing a page clears its tombstone and gets an updatedAt newer than it', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    const id = await sha1hex('https://a.com/');
+    const future = Date.now() + 3 * 86_400_000; // e.g. from a device whose clock runs fast
+    await db.tombstones.put({ id, deletedAt: future });
+    await stash(db, [items[0]!.id]);
+    expect(await db.tombstones.all()).toEqual([]);
+    expect((await db.items.get(id))!.updatedAt).toBe(future + 1);
   });
 });

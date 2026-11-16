@@ -3,7 +3,7 @@ import { sha1hex } from '../shared/hash';
 import type { Item, Snapshot } from '../shared/types';
 import { isSafeToOpen, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
 import type { Db } from './db';
-import { stashRecord } from './memory';
+import { restashTime, stashRecord } from './memory';
 import { domainOf } from './tab-index';
 export const SNAPSHOT_ALARM = 'snapshot';
 export const SNAPSHOT_PERIOD_MINUTES = 60;
@@ -81,7 +81,7 @@ async function stashAll(db: Db, snapshot: Snapshot): Promise<void> {
   const ids = new Map<string, string>();
   for (const normUrl of pages.keys()) ids.set(normUrl, await sha1hex(normUrl));
   const now = Date.now();
-  await db.tx(['items', 'queue'], async (s) => {
+  await db.tx(['items', 'queue', 'tombstones'], async (s) => {
     for (const [normUrl, t] of pages) {
       const id = ids.get(normUrl)!;
       const prev = await s.items.get(id);
@@ -92,7 +92,7 @@ async function stashAll(db: Db, snapshot: Snapshot): Promise<void> {
         createdAt: now, lastActiveAt: Math.max(prev?.lastActiveAt ?? 0, snapshot.takenAt), updatedAt: now,
         classifiable: true,
       };
-      const rec = stashRecord(item, prev, id, now);
+      const rec = stashRecord(item, prev, id, await restashTime(s, id, now));
       await s.items.put(rec);
       if (rec.groupId === null) await s.queue.add(id); // classified later
     }

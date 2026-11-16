@@ -10,14 +10,27 @@ import {
 } from '../sync/sync-codec';
 import type { Db } from './db';
 import { embed } from './embedder';
-import { USER_COLORS } from './groups';
+import { USER_COLORS, parseName } from './groups';
 import { domainOf } from './tab-index';
 
 export type { SyncStatus };
 export const SYNC_RETRY_ALARM = 'sync-retry';
+/** chrome.storage.local key of the last SyncStatus (read by the UI via readSyncStatus / state). */
 export const SYNC_STATUS_KEY = 'syncStatus';
+/** chrome.storage.local key: ids that were ever in storage.sync (only those need tombstones). */
+export const SYNCED_IDS_KEY = 'syncedIds';
+/** chrome.storage.local key: times of our recent storage.sync writes (convergence guard). */
+export const SYNC_WRITES_KEY = 'syncWrites';
 export const SYNC_DEBOUNCE_MS = 5_000;
-const RETRY_MINUTES = 2;
+export const PULL_DEBOUNCE_MS = 1_000;
+/** More than MAX_WRITES writes within WRITE_WINDOW_MS means the devices disagree: pause. */
+export const MAX_WRITES = 6;
+export const WRITE_WINDOW_MS = 10 * 60_000;
+const RATE_RETRY_MINUTES = 2;
+const PAUSE_RETRY_MINUTES = 15;
+const BACKSTOP_MINUTES = 0.5;
+/** At most this many groups are created from remote names per pass. */
+export const MAX_NEW_GROUPS = 50;
 const ID_RE = /^[0-9a-f]{40}$/;
 
 type Failure = Extract<SyncStatus, { ok: false }>['reason'];
@@ -28,7 +41,9 @@ export function configureSync(h: { ready?: (db: Db) => Promise<void> }): void {
   hooks = h;
 }
 
-/** meta.updatedAt of our own last write: its onChanged echo is ignored. */
+/** What our own last writes put in storage.sync: their onChanged echo is ignored. */
+const lastWritten = new Map<string, string>();
+const lastRemoved = new Set<string>();
 let lastWrittenAt = 0;
 let chain: Promise<unknown> = Promise.resolve();
 /** Sync passes never overlap. */
@@ -38,16 +53,35 @@ function serial<T>(fn: () => Promise<T>): Promise<T> {
   return p;
 }
 
+async function localGet(key: string): Promise<unknown> {
+  return (await chrome.storage.local.get(key))[key];
+}
+
 // ───────────────────────────── status ─────────────────────────────
 
 const DEFAULT_STATUS: SyncStatus = { ok: true, synced: 0, localOnly: 0, lastSyncAt: null };
+const REASONS: ReadonlySet<unknown> = new Set<Failure>(['quota', 'disabled', 'rate', 'error']);
+const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 
-/** The stored status (validated: storage.local is ours, but never trust a shape blindly). */
+/** A validated copy of a stored status, or null. */
+function parseStatus(v: unknown): SyncStatus | null {
+  if (typeof v !== 'object' || v === null) return null;
+  const o = v as Record<string, unknown>;
+  const at = o.lastSyncAt;
+  if (at !== null && !isCount(at)) return null;
+  if (o.ok === true && isCount(o.synced) && isCount(o.localOnly)) {
+    return { ok: true, synced: o.synced, localOnly: o.localOnly, lastSyncAt: at };
+  }
+  if (o.ok === false && REASONS.has(o.reason) && typeof o.message === 'string') {
+    return { ok: false, reason: o.reason as Failure, message: o.message.slice(0, 500), lastSyncAt: at };
+  }
+  return null;
+}
+
+/** The stored status, or "never synced" when none (or a malformed one) is stored. */
 export async function readSyncStatus(): Promise<SyncStatus> {
   try {
-    const v = (await chrome.storage.local.get(SYNC_STATUS_KEY))[SYNC_STATUS_KEY] as Partial<SyncStatus> | undefined;
-    if (typeof v !== 'object' || v === null || typeof v.ok !== 'boolean') return DEFAULT_STATUS;
-    return v as SyncStatus;
+    return parseStatus(await localGet(SYNC_STATUS_KEY)) ?? DEFAULT_STATUS;
   } catch {
     return DEFAULT_STATUS;
   }
@@ -67,6 +101,38 @@ function reasonOf(e: unknown): Failure {
   if (/MAX_WRITE_OPERATIONS|MAX_SUSTAINED_WRITE/i.test(msg)) return 'rate';
   if (/QUOTA_BYTES|MAX_ITEMS/i.test(msg)) return 'quota';
   return 'error';
+}
+
+async function retryIn(minutes: number): Promise<void> {
+  await Promise.resolve(chrome.alarms.create(SYNC_RETRY_ALARM, { delayInMinutes: minutes })).catch(() => undefined);
+}
+
+// ───────────────────────────── synced ids ─────────────────────────────
+
+async function syncedIds(): Promise<Set<string>> {
+  const v = await localGet(SYNCED_IDS_KEY);
+  return new Set(Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+}
+
+/**
+ * Whether `id` was ever in storage.sync (pushed by us or seen remotely). Only then can another device
+ * hold it, so only then does deleting it need a tombstone. When unsure (storage failing): true.
+ */
+export async function wasSynced(id: string): Promise<boolean> {
+  try {
+    return (await syncedIds()).has(id);
+  } catch {
+    return true;
+  }
+}
+
+/** Remote and about-to-be-pushed ids, plus earlier ones still stashed or tombstoned here. */
+async function rememberSynced(db: Db, remote: SyncRecord[], included: string[], tombs: Tomb[]): Promise<void> {
+  const stashed = new Set((await db.items.byState('stashed')).map((i) => i.id));
+  const tombIds = new Set(tombs.map((t) => t[0]));
+  const next = new Set([...remote.map((r) => r[0]), ...included, ...tombIds]);
+  for (const id of await syncedIds()) if (stashed.has(id)) next.add(id);
+  await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [...next] });
 }
 
 // ───────────────────────────── local side ─────────────────────────────
@@ -101,21 +167,31 @@ function itemFrom(r: SyncRecord, cur: Item | undefined, groupId: string | null, 
   };
 }
 
+const validName = (n: string): string | null => {
+  try {
+    return parseName(n);
+  } catch {
+    return null;
+  }
+};
+
 /** Applies a merge locally: backup, then deletes (stashed records only), upserts, tombstones. */
-async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
+async function apply(db: Db, m: ReturnType<typeof merge>, localTombs: Map<string, number>): Promise<void> {
   const tombAt = new Map(m.tombs);
   if (m.deletes.length) {
     const stash = await db.items.byState('stashed');
     const doomed = new Set(m.deletes);
     if (stash.some((i) => doomed.has(i.id))) await db.stashBackups.push(stash);
   }
-  const known = new Set((await db.groups.all()).map((g) => g.name.toLowerCase()));
+  // Suggested groups are not the user's: remote names never match them.
+  const known = new Set((await db.groups.all()).filter((g) => !g.suggested).map((g) => g.name.toLowerCase()));
   const unknown = [...new Map(
-    m.upserts.map((r) => r[3]).filter((n) => n && !known.has(n.toLowerCase())).map((n) => [n.toLowerCase(), n]),
-  ).values()];
+    m.upserts.map((r) => validName(r[3])).filter((n): n is string => n !== null && !known.has(n.toLowerCase()))
+      .map((n) => [n.toLowerCase(), n]),
+  ).values()].slice(0, MAX_NEW_GROUPS);
   const vecs = await centroids(unknown);
   await db.tx(['items', 'groups', 'queue', 'tombstones'], async (s) => {
-    const groups = await s.groups.all();
+    const groups = (await s.groups.all()).filter((g) => !g.suggested);
     const byName = new Map<string, Group>();
     for (const g of groups) if (!byName.has(g.name.toLowerCase())) byName.set(g.name.toLowerCase(), g);
     let count = groups.length;
@@ -138,7 +214,8 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
     for (const r of m.upserts) {
       const cur = await s.items.get(r[0]);
       if (cur && (cur.state !== 'stashed' || cur.updatedAt >= r[5])) continue;
-      const g = r[3] ? byName.get(r[3].toLowerCase()) : undefined;
+      const name = validName(r[3]);
+      const g = name === null ? undefined : byName.get(name.toLowerCase());
       if (g) {
         await s.items.put(itemFrom(r, cur, g.id, 'user')); // the user's choice on another device
         await s.queue.remove([r[0]]);
@@ -153,21 +230,43 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
     for (const [id, deletedAt] of m.tombs) {
       if (deletedAt > (have.get(id) ?? -Infinity)) await s.tombstones.put({ id, deletedAt });
     }
+    // Tombstones a newer record superseded (exactly as read for this merge; not ones written since).
+    for (const [id, at] of localTombs) if (!tombAt.has(id) && have.get(id) === at) await s.tombstones.delete(id);
   });
 }
 
 // ───────────────────────────── remote side ─────────────────────────────
 
-/** One storage.sync `set` with only the changed chunks plus meta, then removal of stale chunk keys. */
-async function write(store: Record<string, unknown>, chunks: Record<string, string>, now: number): Promise<void> {
+/**
+ * Writes only what changed: stale chunk keys are removed first, then one `set` of the changed chunks
+ * plus meta. More than MAX_WRITES writes in WRITE_WINDOW_MS → 'paused' (devices keep disagreeing).
+ */
+async function write(store: Record<string, unknown>, chunks: Record<string, string>, now: number):
+  Promise<'none' | 'wrote' | 'paused'> {
   const n = Object.keys(chunks).length;
   const changed = Object.fromEntries(Object.entries(chunks).filter(([k, v]) => store[k] !== v));
   const stale = Object.keys(store).filter((k) => (chunkIndex(k) ?? -1) >= n);
   const meta = store[META_KEY] as { chunks?: unknown } | undefined;
-  if (!Object.keys(changed).length && !stale.length && meta?.chunks === n) return;
+  if (!Object.keys(changed).length && !stale.length && meta?.chunks === n) return 'none';
+  const log = await localGet(SYNC_WRITES_KEY);
+  const recent = (Array.isArray(log) ? log : []).filter((t): t is number => typeof t === 'number' && t > now - WRITE_WINDOW_MS && t <= now);
+  if (recent.length >= MAX_WRITES) return 'paused';
+  await chrome.storage.local.set({ [SYNC_WRITES_KEY]: [...recent, now] });
+  if (stale.length) {
+    for (const k of stale) {
+      lastRemoved.add(k);
+      lastWritten.delete(k);
+    }
+    await chrome.storage.sync.remove(stale);
+  }
   lastWrittenAt = Math.max(now, lastWrittenAt + 1);
-  await chrome.storage.sync.set({ ...changed, [META_KEY]: { chunks: n, updatedAt: lastWrittenAt } });
-  if (stale.length) await chrome.storage.sync.remove(stale);
+  const payload: Record<string, unknown> = { ...changed, [META_KEY]: { chunks: n, updatedAt: lastWrittenAt } };
+  for (const [k, v] of Object.entries(payload)) {
+    lastWritten.set(k, JSON.stringify(v));
+    lastRemoved.delete(k);
+  }
+  await chrome.storage.sync.set(payload);
+  return 'wrote';
 }
 
 /** One full pass: read remote, merge into local, write back what changed. */
@@ -178,20 +277,24 @@ async function run(db: Db): Promise<SyncStatus> {
     const now = Date.now();
     await db.tombstones.prune(now - TOMB_TTL_MS);
     const store = await chrome.storage.sync.get(null);
-    const decoded = decodeChunks(store, now);
+    const decoded = decodeChunks(store);
     const remote = await verifyIds(decoded.recs);
-    const localTombs: Tomb[] = (await db.tombstones.all()).map((t) => [t.id, t.deletedAt]);
-    const m = merge(await localRecords(db), localTombs, remote, decoded.tombs);
-    await apply(db, m);
-    const view = mergedView(await localRecords(db), remote, m.tombs);
-    const enc = encodeChunks(view, m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
-    await write(store, enc.chunks, now);
+    const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
+    const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
+    await apply(db, m, localTombs);
+    const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
+    // Before the write: an item opened right after it is pushed must already count as synced.
+    await rememberSynced(db, remote, enc.included, m.tombs);
+    if ((await write(store, enc.chunks, now)) === 'paused') {
+      console.warn(`sync paused: more than ${MAX_WRITES} writes in 10 minutes; retrying in ${PAUSE_RETRY_MINUTES} min`);
+      await retryIn(PAUSE_RETRY_MINUTES);
+      return await fail('rate', 'sync paused: devices disagree');
+    }
+    await Promise.resolve(chrome.alarms.clear(SYNC_RETRY_ALARM)).catch(() => undefined);
     return await save({ ok: true, synced: enc.included.length, localOnly: enc.localOnly.length, lastSyncAt: now });
   } catch (e) {
     const reason = reasonOf(e);
-    if (reason === 'rate') {
-      await Promise.resolve(chrome.alarms.create(SYNC_RETRY_ALARM, { delayInMinutes: RETRY_MINUTES })).catch(() => undefined);
-    }
+    if (reason === 'rate') await retryIn(RATE_RETRY_MINUTES);
     return fail(reason, e instanceof Error ? e.message : String(e)).catch(() => ({
       ok: false as const, reason, message: String(e), lastSyncAt: null,
     }));
@@ -210,34 +313,51 @@ export function pullSync(db: Db): Promise<SyncStatus> {
   return serial(() => run(db));
 }
 
-let timer: ReturnType<typeof setTimeout> | undefined;
-/** Debounced push (5 s) after a stash change; the 'sync-retry' alarm and startup cover a killed worker. */
+let pushTimer: ReturnType<typeof setTimeout> | undefined;
+let pullTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * Debounced push (5 s) after a stash change. A 'sync-retry' alarm is set as a backstop, so a worker
+ * killed before the timer fires still pushes; a successful pass clears it.
+ */
 export function scheduleSync(db: Db): void {
-  if (timer !== undefined) clearTimeout(timer);
-  timer = setTimeout(() => {
-    timer = undefined;
+  if (pushTimer !== undefined) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushTimer = undefined;
     void pushSync(db);
   }, SYNC_DEBOUNCE_MS);
+  void retryIn(BACKSTOP_MINUTES);
 }
 
-/** storage.onChanged: pulls on another device's write to "v1:*"; our own write's echo is ignored. */
+/**
+ * storage.onChanged: any "v1:*" change from another device schedules a pull (debounced 1 s, so a write
+ * delivered in several batches is read once). Changes that only echo our own last write are ignored.
+ * Returns whether a pull was scheduled.
+ */
 export function handleSyncStorageChange(
   db: Db, changes: Record<string, chrome.storage.StorageChange>, areaName: string,
-): Promise<SyncStatus> | undefined {
-  if (areaName !== 'sync' || !Object.keys(changes).some((k) => k.startsWith(SYNC_PREFIX))) return undefined;
-  const meta = changes[META_KEY];
-  if (!meta) return undefined; // every device's write carries meta; a lone remove is our stale-key cleanup
-  const at = (meta.newValue as { updatedAt?: unknown } | undefined)?.updatedAt;
-  if (at !== undefined && at === lastWrittenAt) return undefined;
-  return pullSync(db);
+): boolean {
+  if (areaName !== 'sync') return false;
+  const keys = Object.keys(changes).filter((k) => k.startsWith(SYNC_PREFIX));
+  if (!keys.length) return false;
+  const own = keys.every((k) => {
+    const v = changes[k]!.newValue;
+    return v === undefined ? lastRemoved.has(k) : lastWritten.get(k) === JSON.stringify(v);
+  });
+  if (own) return false;
+  if (pullTimer !== undefined) clearTimeout(pullTimer);
+  pullTimer = setTimeout(() => {
+    pullTimer = undefined;
+    void pullSync(db);
+  }, PULL_DEBOUNCE_MS);
+  return true;
 }
 
 /** Turning sync off keeps the remote data; turning it on pulls, then pushes. */
 export async function setSyncEnabled(db: Db, enabled: boolean): Promise<SyncStatus> {
   await db.settings.set({ syncEnabled: enabled });
-  if (!enabled && timer !== undefined) {
-    clearTimeout(timer);
-    timer = undefined;
+  if (!enabled) {
+    for (const t of [pushTimer, pullTimer]) if (t !== undefined) clearTimeout(t);
+    pushTimer = pullTimer = undefined;
   }
   return pullSync(db);
 }

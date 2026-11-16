@@ -80,8 +80,9 @@ describe('background index', () => {
     });
     const set = vi.spyOn(mock.chrome.storage.sync, 'set');
     await chrome.storage.sync.set({ 'v1:0': JSON.stringify([[id, url, 'R', '', 1, 1]]), 'v1:meta': { chunks: 1, updatedAt: 1 } });
-    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'));
-    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2)); // the remote write + our write-back of the local-only item
+    // The pull is debounced by 1 s (a write may arrive in several onChanged batches).
+    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'), { timeout: 3000 });
+    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2), { timeout: 3000 }); // the remote write + our write-back of the local-only item
     await new Promise((r) => setTimeout(r, 100));
     expect(set).toHaveBeenCalledTimes(2);
     mock.uninstall();
