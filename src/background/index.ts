@@ -20,7 +20,9 @@ import {
   LAST_SESSION_KEY, SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
   startupCheckInterrupted, takeSnapshot,
 } from './snapshots';
-import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, stashWindow, undo } from './memory';
+import {
+  AUTO_SLEEP_ALARM, TAB_GONE, autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, stashWindow, undo,
+} from './memory';
 import {
   SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, readSyncStatus, scheduleSync,
   setSyncEnabled, touchStashedInGroup,
@@ -29,7 +31,7 @@ import {
   KICK_ALARM,
   backfillEmbKeys,
   configureTabIndex,
-  flushTabEvents,
+  flushIfPending, flushTabEvents,
   maybeSuggest,
   onTabEvent,
   processQueue,
@@ -331,7 +333,15 @@ export async function handleRequest(req: Req): Promise<unknown> {
       break;
     }
     case 'stashDelete': out = await deleteStashed(db, parseIds(req.ids)); break;
-    case 'open': await openItem(db, parseId(req.id)); break;
+    case 'open':
+      try {
+        await openItem(db, parseId(req.id));
+      } catch (e) {
+        // The list was behind: bring it up to date so the closed tab disappears, then say why nothing opened.
+        if (e instanceof Error && e.message === TAB_GONE) await flushTabEvents();
+        throw e;
+      }
+      break;
     case 'close': out = await closeTabs(db, parseIds(req.ids)); break;
     case 'closeExtras': out = await closeExtras(db); break;
     case 'undo': out = await undo(db, parseId(req.token)); break;
@@ -376,6 +386,8 @@ export async function handleRequest(req: Req): Promise<unknown> {
   return out;
 }
 configureTabIndex({ db: getDb, after: pipeline });
+// A tab change whose update the previous background didn't finish (it was stopped mid-debounce).
+void flushIfPending();
 // Remote group names must match the built-in groups, so they are seeded before any sync.
 configureSync({
   ready: ensureStarterGroups,

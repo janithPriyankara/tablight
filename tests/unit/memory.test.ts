@@ -177,7 +177,7 @@ describe('openItem', () => {
   it('errors when the tab no longer exists', async () => {
     const items = await setup([{ url: 'https://a.com/' }]);
     mock.removeTab(items[0]!.tabId!);
-    await expect(openItem(db, items[0]!.id)).rejects.toThrow('tab no longer exists');
+    await expect(openItem(db, items[0]!.id)).rejects.toThrow('That tab was already closed');
   });
   it('refuses an unsafe stashed url without creating a tab', async () => {
     mock = installChromeMock();

@@ -276,6 +276,14 @@ let config: TabIndexConfig | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let firstEventAt = 0;
 let chain: Promise<void> = Promise.resolve();
+/**
+ * chrome.storage.session flag: a tab change arrived and its update hasn't finished. The browser may stop the
+ * background between an event and its debounced update; the flag (which outlives the background, though not
+ * a browser restart) lets the next background catch up via flushIfPending.
+ */
+export const PENDING_KEY = 'tabIndexPending';
+let eventSeq = 0;
+let marked = false;
 
 export function configureTabIndex(c: TabIndexConfig): void {
   config = c;
@@ -283,6 +291,11 @@ export function configureTabIndex(c: TabIndexConfig): void {
 
 /** Debounced (500 ms, max 2 s) → tabs.query({}) → reconcile → `after` hook. Safe to call per event. */
 export function onTabEvent(): void {
+  eventSeq++;
+  if (!marked) {
+    marked = true;
+    void chrome.storage.session.set({ [PENDING_KEY]: Date.now() }).catch(() => undefined);
+  }
   const now = Date.now();
   if (!timer) firstEventAt = now;
   else clearTimeout(timer);
@@ -313,11 +326,17 @@ export function flushTabEvents(): Promise<void> {
   }
   const run = chain.then(async () => {
     if (!config) return;
+    const seq = eventSeq;
     try {
       const db = await config.db();
       const newSession = await sessionIsNew();
       const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
       if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+      // Up to date, unless another event arrived meanwhile (its own update is still to come).
+      if (seq === eventSeq && !timer) {
+        marked = false;
+        await chrome.storage.session.remove(PENDING_KEY).catch(() => undefined);
+      }
       await config.after?.(db, result);
     } catch (e) {
       console.error('tab index flush failed', e);
@@ -327,6 +346,16 @@ export function flushTabEvents(): Promise<void> {
   return run;
 }
 
+/** Runs the update a previous background left unfinished (see PENDING_KEY). Never rejects. */
+export async function flushIfPending(): Promise<void> {
+  let pending: unknown;
+  try {
+    pending = (await chrome.storage.session.get(PENDING_KEY))[PENDING_KEY];
+  } catch {
+    return;
+  }
+  if (pending) await flushTabEvents();
+}
 /** Resolves once no debounce is pending and every flush has finished. */
 export async function whenTabIndexIdle(): Promise<void> {
   for (;;) {

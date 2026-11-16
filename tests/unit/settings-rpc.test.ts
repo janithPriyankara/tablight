@@ -76,6 +76,21 @@ describe('settings rpc', () => {
     expect((await db.groups.get('suggested-1'))!.suggested).toBeUndefined();
     mock.uninstall();
   });
+  it('clicking a tab that was already closed removes it from the list and says so', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example.com/', title: 'A' }, { url: 'https://b.example.com/', title: 'B' }] }] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    const { flushTabEvents } = await import('../../src/background/tab-index');
+    await flushTabEvents();
+    const a = (await db.items.all()).find((i) => i.url === 'https://a.example.com/')!;
+    // Closed without the list hearing about it yet.
+    mock.removeTab(a.tabId!);
+    const r = await mock.sendMessage({ t: 'open', id: a.id });
+    expect(r).toMatchObject({ ok: false });
+    expect(JSON.stringify(r)).toContain('That tab was already closed');
+    expect(await db.items.get(a.id)).toBeUndefined();
+    mock.uninstall();
+  });
   it('broadcasts a debounced "changed" message to the UI after a mutation, not after reads', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

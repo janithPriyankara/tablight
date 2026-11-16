@@ -9,6 +9,8 @@ import {
   BACKOFF_MINUTES,
   embeddingKey,
   flushTabEvents,
+  flushIfPending,
+  PENDING_KEY,
   maybeSuggest,
   RETITLE_INTERVAL_MS,
   SESSION_KEY,
@@ -293,6 +295,35 @@ describe('event storm (Review Focus 2)', () => {
   });
 });
 
+describe('pending update survives a background restart', () => {
+  it('a tab event marks an update pending; a finished update clears it', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1)] }] });
+    configureTabIndex({ db: async () => db });
+    onTabEvent();
+    await new Promise((r) => setTimeout(r, 20));
+    expect((await chrome.storage.session.get(PENDING_KEY))[PENDING_KEY]).toBeTruthy();
+    await flushTabEvents();
+    expect((await chrome.storage.session.get(PENDING_KEY))[PENDING_KEY]).toBeUndefined();
+  });
+  it('flushIfPending catches up on a change whose update was lost with the old background', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1), web(2)] }] });
+    configureTabIndex({ db: async () => db });
+    await flushTabEvents();
+    // The background was stopped after the close event but before the debounced update ran.
+    mock.removeTab(mock.tabs()[0]!.id!);
+    await chrome.storage.session.set({ [PENDING_KEY]: 1 });
+    await flushIfPending();
+    expect((await db.items.all()).map((i) => i.url)).toEqual([web(2).url]);
+    expect((await chrome.storage.session.get(PENDING_KEY))[PENDING_KEY]).toBeUndefined();
+  });
+  it('flushIfPending does nothing when no update is pending', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1)] }] });
+    configureTabIndex({ db: async () => db });
+    const query = vi.spyOn(mock.chrome.tabs, 'query');
+    await flushIfPending();
+    expect(query).not.toHaveBeenCalled();
+  });
+});
 describe('processQueue', () => {
   it('resumes after the embedder dies mid-way (Review Focus 3)', async () => {
     await db.groups.put(group('programming'));

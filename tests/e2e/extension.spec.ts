@@ -317,6 +317,39 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   assertNoForeignRequests(extId);
 });
 
+test('clicking an entry switches to its tab, wakes a sleeping one, and drops one that was already closed', async () => {
+  const ext = await launch();
+  const page = ext.dashboard;
+  const urls = PAGES.slice(0, 6).map((p) => server.url(p.slug));
+  await openWindows(page, [urls.slice(0, 3), urls.slice(3, 6)]);
+  let s = await waitSettled(page, 6);
+  const itemFor = (u: string) => s.items.find((i) => i.url === u)!;
+  const row = (title: string) => page.getByRole('button', { name: new RegExp(`^${escapeRe(title)}`) }).first();
+  const activeIn = (windowId: number) =>
+    page.evaluate((w) => chrome.tabs.query({ active: true, windowId: w }).then(([t]) => t?.id), windowId);
+  await navButton(page, 'All tabs').click();
+  // A tab in the other window that is not its window's active tab.
+  const target = itemFor(urls[4]!);
+  expect(await activeIn(target.windowId!)).not.toBe(target.tabId);
+  await row(target.title).click();
+  await expect.poll(() => activeIn(target.windowId!)).toBe(target.tabId);
+  // A sleeping tab: the click switches to it and it loads again.
+  const sleeper = itemFor(urls[1]!);
+  await rpc(page, { t: 'sleep', ids: [sleeper.id] });
+  await expect.poll(async () => (await state(page)).items.find((i) => i.url === urls[1])?.state).toBe('sleeping');
+  s = await state(page);
+  const slept = itemFor(urls[1]!);
+  await row(slept.title).click();
+  await expect.poll(() => activeIn(slept.windowId!)).toBe(slept.tabId);
+  await expect.poll(() => page.evaluate((id) => chrome.tabs.get(id).then((t) => t.discarded), slept.tabId!)).toBe(false);
+  // Closed a moment ago, before the list caught up: the click says so and the entry goes away.
+  const gone = itemFor(urls[5]!);
+  await page.evaluate((id) => chrome.tabs.remove(id), gone.tabId!);
+  await row(gone.title).click();
+  await expect(page.getByRole('status').filter({ hasText: 'That tab was already closed' })).toBeVisible();
+  await expect(row(gone.title)).toHaveCount(0);
+  await expect.poll(async () => (await state(page)).items.some((i) => i.url === urls[5])).toBe(false);
+});
 test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the last load', async () => {
   test.slow();
   const ext = await launch();

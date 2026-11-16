@@ -231,15 +231,17 @@ export async function closeExtras(db: Db): Promise<{ closed: number; token: stri
   const { token, closed } = await closeTabs(db, ids);
   return { closed, token };
 }
+/** Shown when the user picks a tab that was closed before the list caught up. */
+export const TAB_GONE = 'That tab was already closed';
 export async function openItem(db: Db, id: string): Promise<void> {
   const item = await db.items.get(id);
   if (!item) throw new Error('item not found');
   if (item.state !== 'stashed') {
-    if (item.tabId === undefined) throw new Error('tab no longer exists');
+    if (item.tabId === undefined) throw new Error(TAB_GONE);
     try {
       await chrome.tabs.update(item.tabId, { active: true });
     } catch {
-      throw new Error('tab no longer exists');
+      throw new Error(TAB_GONE);
     }
     // The tab is already active; failing to raise its window must not fail the open.
     if (item.windowId !== undefined) await chrome.windows.update(item.windowId, { focused: true }).catch(() => undefined);
