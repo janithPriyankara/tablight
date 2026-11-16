@@ -1,6 +1,7 @@
 import { classify } from '../classify/assign';
 import { suggestGroups } from '../classify/cluster';
 import { HEAD } from '../classify/head';
+import { EMBED_MODEL } from '../classify/model';
 import { ruleGroup } from '../classify/rules';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
@@ -35,8 +36,13 @@ const SUGGEST_COLORS = ['#7c66dc', '#0d74ce', '#2b9a66', '#cc4e00', '#c2298a'];
 export const SESSION_KEY = 'tabIndexSession';
 
 /** Embedding cache key: one vector per normalized URL + cleaned title. */
+/**
+ * Cache key of an item's vector. It names the model, so vectors from a previous model (after an update that
+ * changed it) are never mixed with the current one: they miss the cache, get re-embedded, and the old ones
+ * are swept.
+ */
 export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promise<string> {
-  return sha1hex(`${i.normUrl}\n${cleanTitle(i.title, i.url)}`);
+  return sha1hex(`${EMBED_MODEL}\n${i.normUrl}\n${cleanTitle(i.title, i.url)}`);
 }
 
 export function domainOf(url: string): string {

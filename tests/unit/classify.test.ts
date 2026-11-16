@@ -259,3 +259,26 @@ describe('ruleGroup', () => {
     expect(ruleGroup(url, title)).toBeNull();
   });
 });
+
+describe('classify: neighbour blend', () => {
+  // 2-d toy: the head alone can't separate (all weights 0, so a uniform guess), the neighbours can.
+  const toInt8 = (rows: number[][]) => btoa(String.fromCharCode(...rows.flat().map((x) => Math.round(x * 127) & 0xff)));
+  const head: Head = {
+    model: 't', dim: 2, labels: ['a', 'b', 'other'], W: [[0, 0], [0, 0], [0, 0]], b: [0, 0, -1], threshold: 0, similarity: 0.99,
+    knn: { k: 3, alpha: 0.5, sharp: 10, labels: [0, 0, 0, 1, 1, 1], vecs: toInt8([[1, 0], [0.98, 0.2], [0.95, 0.31], [0, 1], [0.2, 0.98], [0.31, 0.95]]) },
+  };
+  const groups = ['a', 'b', 'other'].map((id) => ({ id, name: id, color: '#000', icon: '', builtIn: true, exemplars: [] as number[][], centroid: null, createdAt: 1 }));
+  it('votes for the group of the nearest training examples', () => {
+    expect(classify([0.99, 0.1], groups, head).groupId).toBe('a');
+    expect(classify([0.1, 0.99], groups, head).groupId).toBe('b');
+  });
+  it('without neighbour data the head alone decides (unchanged behaviour)', () => {
+    const { knn: _k, ...plain } = head;
+    void _k;
+    expect(classify([0.1, 0.99], groups, { ...plain, b: [1, 0, -1] }).groupId).toBe('a');
+  });
+  it('a user-taught exemplar still overrides everything', () => {
+    const taught = groups.map((g) => (g.id === 'a' ? { ...g, exemplars: [[0.1, 0.99]] } : g));
+    expect(classify([0.1, 0.99], taught, head).groupId).toBe('a');
+  });
+});

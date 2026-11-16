@@ -1,0 +1,1502 @@
+[
+ {
+  "title": "Hacker News",
+  "url": "https://news.ycombinator.com/",
+  "group": "news"
+ },
+ {
+  "title": "Ancestry - Family Tree",
+  "url": "https://www.ancestry.com/family-tree/tree/183947261/family",
+  "group": "other"
+ },
+ {
+  "title": "(4) #billing-eng | Acme Corp - Slack",
+  "url": "https://app.slack.com/client/T02AB3CD4/C04BILLENG",
+  "group": "work"
+ },
+ {
+  "title": "Understanding Postgres Locks: A Practical Guide | Crunchy Data Blog",
+  "url": "https://www.crunchydata.com/blog/postgres-locking-when-is-it-concerning",
+  "group": "programming"
+ },
+ {
+  "title": "Kyoto Itinerary: 3 Perfect Days - Lonely Planet",
+  "url": "https://www.lonelyplanet.com/articles/kyoto-itinerary",
+  "group": "travel"
+ },
+ {
+  "title": "Lakers vs Celtics Box Score - NBA.com",
+  "url": "https://www.nba.com/game/lal-vs-bos-0022600214/box-score",
+  "group": "other"
+ },
+ {
+  "title": "[2501.12948] DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+  "url": "https://arxiv.org/abs/2501.12948",
+  "group": "ai"
+ },
+ {
+  "title": "Cursor - The AI Code Editor",
+  "url": "https://www.cursor.com/pricing",
+  "group": "ai"
+ },
+ {
+  "title": "2018 Honda CR-V oil change interval - Edmunds",
+  "url": "https://www.edmunds.com/honda/cr-v/2018/maintenance/",
+  "group": "other"
+ },
+ {
+  "title": "git rebase -i squash last 3 commits without editor - Stack Overflow",
+  "url": "https://stackoverflow.com/questions/7275508/is-there-a-way-to-squash-a-number-of-commits-non-interactively",
+  "group": "programming"
+ },
+ {
+  "title": "Fidelity Investments - Portfolio Summary",
+  "url": "https://digital.fidelity.com/ftgw/digital/portfolio/summary",
+  "group": "finance"
+ },
+ {
+  "title": "MyChart - Appointments",
+  "url": "https://mychart.springfieldclinic.com/MyChart/Visits",
+  "group": "health"
+ },
+ {
+  "title": "Facebook",
+  "url": "https://www.facebook.com/",
+  "group": "social"
+ },
+ {
+  "title": "Small businesses brace for holiday tariff costs - Wall Street Journal",
+  "url": "https://www.wsj.com/business/small-business/holiday-tariffs-small-business-2026",
+  "group": "news"
+ },
+ {
+  "title": "NVIDIA GeForce RTX 5080 - Newegg",
+  "url": "https://www.newegg.com/p/pl?d=rtx+5080",
+  "group": "shopping"
+ },
+ {
+  "title": "529 College Savings Plan - Bright Start | Account Summary",
+  "url": "https://www.brightstart.com/account/summary",
+  "group": "finance"
+ },
+ {
+  "title": "Apple unveils M6 MacBook Pro - TechCrunch",
+  "url": "https://techcrunch.com/2026/11/10/apple-m6-macbook-pro/",
+  "group": "news"
+ },
+ {
+  "title": "Amazon.com : LEGO Duplo Town Big Construction Site 10813",
+  "url": "https://www.amazon.com/LEGO-DUPLO-Construction-Toddlers-Building/dp/B0CFW1VQ8M",
+  "group": "shopping"
+ },
+ {
+  "title": "Figma – Packaging labels v3",
+  "url": "https://www.figma.com/design/kQ9vX2mLp7RtY/Packaging-labels-v3",
+  "group": "design"
+ },
+ {
+  "title": "Building effective agents \\ Anthropic",
+  "url": "https://www.anthropic.com/engineering/building-effective-agents",
+  "group": "ai"
+ },
+ {
+  "title": "Strava | Running, Cycling & Hiking App",
+  "url": "https://www.strava.com/dashboard",
+  "group": "health"
+ },
+ {
+  "title": "ComEd - My Account - Pay Bill",
+  "url": "https://secure.comed.com/MyAccount/MyBillUsage/pages/secure/ViewMyBill.aspx",
+  "group": "other"
+ },
+ {
+  "title": "The Last of Us Season 2 - Rotten Tomatoes",
+  "url": "https://www.rottentomatoes.com/tv/the_last_of_us/s02",
+  "group": "tv"
+ },
+ {
+  "title": "Campus Dining Menu - Tuesday",
+  "url": "https://dining.university.edu/menus/north-hall",
+  "group": "other"
+ },
+ {
+  "title": "Target : Expect More. Pay Less. - Cart",
+  "url": "https://www.target.com/cart",
+  "group": "shopping"
+ },
+ {
+  "title": "Elden Ring OST - SoundCloud",
+  "url": "https://soundcloud.com/bandainamcoent/sets/elden-ring-ost",
+  "group": "music"
+ },
+ {
+  "title": "Why The Shining Still Terrifies | Video Essay - YouTube",
+  "url": "https://www.youtube.com/watch?v=Hh-9ffg1jZ0",
+  "group": "movies"
+ },
+ {
+  "title": "Youth Soccer Fall 2026 Schedule - Springfield Parks & Rec",
+  "url": "https://www.springfieldparks.org/youth-soccer/schedule",
+  "group": "other"
+ },
+ {
+  "title": "Osprey Farpoint 40 Travel Pack | REI Co-op",
+  "url": "https://www.rei.com/product/215066/osprey-farpoint-40-travel-pack",
+  "group": "shopping"
+ },
+ {
+  "title": "Zillow - 55+ communities in Scottsdale AZ",
+  "url": "https://www.zillow.com/scottsdale-az/55-plus-communities/",
+  "group": "other"
+ },
+ {
+  "title": "Why is my golden retriever scratching so much? - American Kennel Club",
+  "url": "https://www.akc.org/expert-advice/health/why-is-my-dog-itching/",
+  "group": "other"
+ },
+ {
+  "title": "IGN - Game Reviews",
+  "url": "https://www.ign.com/reviews/games",
+  "group": "games"
+ },
+ {
+  "title": "Pimsleur Portuguese (Brazilian) Lesson 3",
+  "url": "https://www.pimsleur.com/learn/portuguese-brazilian/lesson-3",
+  "group": "learning"
+ },
+ {
+  "title": "Chappell Roan – Good Luck, Babe! Lyrics | Genius Lyrics",
+  "url": "https://genius.com/Chappell-roan-good-luck-babe-lyrics",
+  "group": "music"
+ },
+ {
+  "title": "Canvas - PSY 101 Modules",
+  "url": "https://canvas.university.edu/courses/48213/modules",
+  "group": "learning"
+ },
+ {
+  "title": "Bandcamp - Khruangbin",
+  "url": "https://khruangbin.bandcamp.com/",
+  "group": "music"
+ },
+ {
+  "title": "Logo design inspiration for florist | Behance",
+  "url": "https://www.behance.net/search/projects/florist%20logo",
+  "group": "design"
+ },
+ {
+  "title": "The Penguin - Episode 8 - Max",
+  "url": "https://play.max.com/video/watch/3a1b2c3d-4e5f/the-penguin-s1e8",
+  "group": "tv"
+ },
+ {
+  "title": "Crash Course World History #22 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Yocja_N5s1I",
+  "group": "learning"
+ },
+ {
+  "title": "Arcane | Netflix Official Site",
+  "url": "https://www.netflix.com/title/81435684",
+  "group": "tv"
+ },
+ {
+  "title": "Hotels.com - Porto Ribeira",
+  "url": "https://www.hotels.com/de1636582/hotels-porto-portugal/",
+  "group": "travel"
+ },
+ {
+  "title": "Apple Music - Fleetwood Mac: Rumours",
+  "url": "https://music.apple.com/us/album/rumours/651932375",
+  "group": "music"
+ },
+ {
+  "title": "TikTok - Make Your Day",
+  "url": "https://www.tiktok.com/foryou",
+  "group": "social"
+ },
+ {
+  "title": "Purdue OWL - APA Formatting and Style Guide (7th Edition)",
+  "url": "https://owl.purdue.edu/owl/research_and_citation/apa_style/apa_formatting_and_style_guide/general_format.html",
+  "group": "learning"
+ },
+ {
+  "title": "thesaurus.com - synonyms for important",
+  "url": "https://www.thesaurus.com/browse/important",
+  "group": "other"
+ },
+ {
+  "title": "Alternative movie posters | Dribbble",
+  "url": "https://dribbble.com/search/movie-poster",
+  "group": "design"
+ },
+ {
+  "title": "Wolfram|Alpha: integrate x^2 e^x dx",
+  "url": "https://www.wolframalpha.com/input?i=integrate+x%5E2+e%5Ex+dx",
+  "group": "learning"
+ },
+ {
+  "title": "BBC News - World",
+  "url": "https://www.bbc.com/news/world",
+  "group": "news"
+ },
+ {
+  "title": "Cheap flights from NYC to Tokyo | Google Flights",
+  "url": "https://www.google.com/travel/flights?q=Flights%20to%20HND%20from%20JFK",
+  "group": "travel"
+ },
+ {
+  "title": "ETIAS travel authorisation - Official EU site",
+  "url": "https://travel-europe.europa.eu/etias_en",
+  "group": "travel"
+ },
+ {
+  "title": "Introduction to Psychology | Coursera",
+  "url": "https://www.coursera.org/learn/introduction-psych/lecture/V5fXk/memory",
+  "group": "learning"
+ },
+ {
+  "title": "https://www.usps.com/manage/hold-mail.htm",
+  "url": "https://www.usps.com/manage/hold-mail.htm",
+  "group": "other"
+ },
+ {
+  "title": "Lucide Icons",
+  "url": "https://lucide.dev/icons/",
+  "group": "design"
+ },
+ {
+  "title": "Malenia, Blade of Miquella | Elden Ring Wiki",
+  "url": "https://eldenring.wiki.fextralife.com/Malenia+Blade+of+Miquella",
+  "group": "games"
+ },
+ {
+  "title": "tar(1) - Linux manual page",
+  "url": "https://man7.org/linux/man-pages/man1/tar.1.html",
+  "group": "docs"
+ },
+ {
+  "title": "Gemini",
+  "url": "https://gemini.google.com/app/7a2c9f1b8e4d",
+  "group": "ai"
+ },
+ {
+  "title": "Kai Cenat - Twitch",
+  "url": "https://www.twitch.tv/kaicenat",
+  "group": "videos"
+ },
+ {
+  "title": "How to fix a leaking kitchen faucet - The Spruce",
+  "url": "https://www.thespruce.com/fix-a-leaky-faucet-1824924",
+  "group": "other"
+ },
+ {
+  "title": "Perplexity",
+  "url": "https://www.perplexity.ai/search/best-ai-tool-for-product-descr-Kx9aQ2",
+  "group": "ai"
+ },
+ {
+  "title": "Quizlet - Bio 201 Exam 3: Cell Respiration Flashcards",
+  "url": "https://quizlet.com/312987465/bio-201-exam-3-cell-respiration-flash-cards/",
+  "group": "learning"
+ },
+ {
+  "title": "Khan Academy | Integration by parts",
+  "url": "https://www.khanacademy.org/math/ap-calculus-bc/bc-integration-new/bc-6-11/v/deriving-integration-by-parts-formula",
+  "group": "learning"
+ },
+ {
+  "title": "Smosh Pit - Try Not To Laugh Challenge #92 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ab3sQ1n9pZc",
+  "group": "videos"
+ },
+ {
+  "title": "Merriam-Webster: definition of 'serendipity'",
+  "url": "https://www.merriam-webster.com/dictionary/serendipity",
+  "group": "other"
+ },
+ {
+  "title": "Atrial fibrillation - Symptoms and causes - Mayo Clinic",
+  "url": "https://www.mayoclinic.org/diseases-conditions/atrial-fibrillation/symptoms-causes/syc-20350624",
+  "group": "health"
+ },
+ {
+  "title": "Redfin - 3 bed homes for sale in Springfield, IL",
+  "url": "https://www.redfin.com/city/17544/IL/Springfield",
+  "group": "other"
+ },
+ {
+  "title": "Minecraft 1.21 Trial Chambers guide - Minecraft Wiki",
+  "url": "https://minecraft.wiki/w/Trial_Chambers",
+  "group": "games"
+ },
+ {
+  "title": "Board Game Geek - Wingspan",
+  "url": "https://boardgamegeek.com/boardgame/266192/wingspan",
+  "group": "games"
+ },
+ {
+  "title": "r/college - Is it normal to feel this burnt out in week 10?",
+  "url": "https://www.reddit.com/r/college/comments/1gq8xk2/is_it_normal_to_feel_this_burnt_out_in_week_10/",
+  "group": "social"
+ },
+ {
+  "title": "Calendar - Week of November 16, 2026",
+  "url": "https://calendar.google.com/calendar/u/0/r/week",
+  "group": "work"
+ },
+ {
+  "title": "(5) Feed | LinkedIn",
+  "url": "https://www.linkedin.com/feed/",
+  "group": "social"
+ },
+ {
+  "title": "Medicare.gov - Find a doctor",
+  "url": "https://www.medicare.gov/care-compare/?providerType=Physician",
+  "group": "health"
+ },
+ {
+  "title": "PBS Masterpiece - All Creatures Great and Small Season 5",
+  "url": "https://www.pbs.org/wgbh/masterpiece/shows/all-creatures-great-and-small/",
+  "group": "tv"
+ },
+ {
+  "title": "How to get crayon off walls - Good Housekeeping",
+  "url": "https://www.goodhousekeeping.com/home/cleaning/tips/a24885/remove-crayon-walls/",
+  "group": "other"
+ },
+ {
+  "title": "Amazon.com: Universal Travel Adapter",
+  "url": "https://www.amazon.com/EPICKA-Universal-Adapter-International-Charger/dp/B07KHGLL3V",
+  "group": "shopping"
+ },
+ {
+  "title": "[Bug] Vite HMR stops working after upgrading to 6.0 · Issue #18832 · vitejs/vite",
+  "url": "https://github.com/vitejs/vite/issues/18832",
+  "group": "programming"
+ },
+ {
+  "title": "Instagram • bloomandtwig.co",
+  "url": "https://www.instagram.com/bloomandtwig.co/",
+  "group": "social"
+ },
+ {
+  "title": "Dune: Part Two (2024) - IMDb",
+  "url": "https://www.imdb.com/title/tt15239678/",
+  "group": "movies"
+ },
+ {
+  "title": "Baldur's Gate 3 best builds for Honour Mode - PC Gamer",
+  "url": "https://www.pcgamer.com/baldurs-gate-3-best-builds/",
+  "group": "games"
+ },
+ {
+  "title": "Le Monde.fr - Actualités et Infos en France et dans le monde",
+  "url": "https://www.lemonde.fr/",
+  "group": "news"
+ },
+ {
+  "title": "NFL Scores - ESPN",
+  "url": "https://www.espn.com/nfl/scoreboard",
+  "group": "other"
+ },
+ {
+  "title": "QuickBooks Online - Invoices",
+  "url": "https://app.qbo.intuit.com/app/invoices",
+  "group": "work"
+ },
+ {
+  "title": "Dashboard | Monarch Money",
+  "url": "https://app.monarchmoney.com/dashboard",
+  "group": "finance"
+ },
+ {
+  "title": "AMC Lincoln Square 13 - Showtimes & Tickets",
+  "url": "https://www.amctheatres.com/movie-theatres/new-york-city/amc-lincoln-square-13/showtimes",
+  "group": "movies"
+ },
+ {
+  "title": "astral-sh/uv: An extremely fast Python package and project manager, written in Rust.",
+  "url": "https://github.com/astral-sh/uv",
+  "group": "programming"
+ },
+ {
+  "title": "Watch Wednesday | Netflix Official Site",
+  "url": "https://www.netflix.com/title/81231974",
+  "group": "tv"
+ },
+ {
+  "title": "The Shining (novel) - Wikipedia",
+  "url": "https://en.wikipedia.org/wiki/The_Shining_(novel)",
+  "group": "other"
+ },
+ {
+  "title": "Fever in Children: When to Call the Doctor - Mayo Clinic",
+  "url": "https://www.mayoclinic.org/diseases-conditions/fever/in-depth/fever/art-20050997",
+  "group": "health"
+ },
+ {
+  "title": "MrBeast - $1 vs $1,000,000,000 Yacht! - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ug5bL1VQvkQ",
+  "group": "videos"
+ },
+ {
+  "title": "Passport Renewal | travel.state.gov",
+  "url": "https://travel.state.gov/content/travel/en/passports/have-passport/renew.html",
+  "group": "other"
+ },
+ {
+  "title": "Discord | #lfg | Raid Night",
+  "url": "https://discord.com/channels/7738291045123/7738291045130",
+  "group": "social"
+ },
+ {
+  "title": "Metformin: MedlinePlus Drug Information",
+  "url": "https://medlineplus.gov/druginfo/meds/a696005.html",
+  "group": "health"
+ },
+ {
+  "title": "Tailwind CSS grid not working in Safari - Stack Overflow",
+  "url": "https://stackoverflow.com/questions/72114387/tailwind-css-grid-not-working-in-safari",
+  "group": "programming"
+ },
+ {
+  "title": "Ollama",
+  "url": "https://ollama.com/library/llama3.3",
+  "group": "ai"
+ },
+ {
+  "title": "Google Fonts: Playfair Display",
+  "url": "https://fonts.google.com/specimen/Playfair+Display",
+  "group": "design"
+ },
+ {
+  "title": "Machine Learning Specialization | Coursera",
+  "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+  "group": "ai"
+ },
+ {
+  "title": "Uline - Shipping Boxes 12x9x6",
+  "url": "https://www.uline.com/Product/Detail/S-4128/Corrugated-Boxes-200-Test/12-x-9-x-6-Corrugated-Boxes",
+  "group": "shopping"
+ },
+ {
+  "title": "Fed holds rates steady, signals one more cut - Reuters",
+  "url": "https://www.reuters.com/markets/us/fed-holds-rates-steady-2026-11-05/",
+  "group": "news"
+ },
+ {
+  "title": "Slow Horses — Apple TV+",
+  "url": "https://tv.apple.com/us/show/slow-horses/umc.cmc.2szz3fdt71tl1ulnbp8utgq5o",
+  "group": "tv"
+ },
+ {
+  "title": "Movie Poster Designs - Pinterest",
+  "url": "https://www.pinterest.com/search/pins/?q=minimalist%20movie%20poster",
+  "group": "design"
+ },
+ {
+  "title": "Fandango - Gladiator II tickets",
+  "url": "https://www.fandango.com/gladiator-ii-2024-236582/movie-overview",
+  "group": "movies"
+ },
+ {
+  "title": "letterboxd.com/filmfan92/watchlist/",
+  "url": "https://letterboxd.com/filmfan92/watchlist/",
+  "group": "movies"
+ },
+ {
+  "title": "Pottery wheel classes near me - Yelp",
+  "url": "https://www.yelp.com/search?find_desc=pottery+classes",
+  "group": "other"
+ },
+ {
+  "title": "Babbel - Lesson: Ordering food in Italian",
+  "url": "https://my.babbel.com/en/dashboard/lessons/ita",
+  "group": "learning"
+ },
+ {
+  "title": "Mailchimp - Campaigns - Black Friday Newsletter draft",
+  "url": "https://us21.admin.mailchimp.com/campaigns/edit?id=8473920",
+  "group": "work"
+ },
+ {
+  "title": "Steam Community :: Hollow Knight: Silksong",
+  "url": "https://steamcommunity.com/app/1030300",
+  "group": "games"
+ },
+ {
+  "title": "千と千尋の神隠し (2001) - 映画.com",
+  "url": "https://eiga.com/movie/1270/",
+  "group": "movies"
+ },
+ {
+  "title": "TripAdvisor: Fushimi Inari Taisha - Reviews",
+  "url": "https://www.tripadvisor.com/Attraction_Review-g14134868-d321450-Reviews-Fushimi_Inari_Taisha-Fushimi_Kyoto_Kyoto_Prefecture_Kinki.html",
+  "group": "travel"
+ },
+ {
+  "title": "‘Conclave’ Review: Ralph Fiennes Is Superb in a Vatican Thriller | IndieWire",
+  "url": "https://www.indiewire.com/criticism/movies/conclave-review-ralph-fiennes-1235048211/",
+  "group": "movies"
+ },
+ {
+  "title": "Billboard Hot 100",
+  "url": "https://www.billboard.com/charts/hot-100/",
+  "group": "music"
+ },
+ {
+  "title": "How we cut our Docker build times by 70% - DEV Community",
+  "url": "https://dev.to/flyio/how-we-cut-our-docker-build-times-by-70-3kp2",
+  "group": "programming"
+ },
+ {
+  "title": "Stripe Dashboard - Payouts",
+  "url": "https://dashboard.stripe.com/payouts",
+  "group": "finance"
+ },
+ {
+  "title": "Lincoln Elementary - Parent Portal",
+  "url": "https://lincolnelementary.parentsquare.com/feeds",
+  "group": "other"
+ },
+ {
+  "title": "Was man in Lissabon unbedingt sehen muss – Reiseblog",
+  "url": "https://www.reiseblog-weltwunder.de/lissabon-sehenswuerdigkeiten/",
+  "group": "travel"
+ },
+ {
+  "title": "Rust Playground",
+  "url": "https://play.rust-lang.org/?version=stable&mode=debug&edition=2021",
+  "group": "programming"
+ },
+ {
+  "title": "TED: The secret to living longer may be your social life | Susan Pinker",
+  "url": "https://www.ted.com/talks/susan_pinker_the_secret_to_living_longer_may_be_your_social_life",
+  "group": "learning"
+ },
+ {
+  "title": "Vanguard - Required minimum distributions (RMDs)",
+  "url": "https://investor.vanguard.com/investor-resources-education/retirement/rmd",
+  "group": "finance"
+ },
+ {
+  "title": "Refactoring UI",
+  "url": "https://www.refactoringui.com/",
+  "group": "design"
+ },
+ {
+  "title": "python - Why does asyncio.gather swallow my exception? - Stack Overflow",
+  "url": "https://stackoverflow.com/questions/63583822/why-does-asyncio-gather-swallow-my-exception",
+  "group": "programming"
+ },
+ {
+  "title": "Gusto - Run payroll",
+  "url": "https://app.gusto.com/payroll_admin/pay_schedules",
+  "group": "work"
+ },
+ {
+  "title": "Actions · acme-corp/billing-api",
+  "url": "https://github.com/acme-corp/billing-api/actions/runs/11873420193",
+  "group": "programming"
+ },
+ {
+  "title": "Headspace - Sleep meditations",
+  "url": "https://www.headspace.com/sleep",
+  "group": "health"
+ },
+ {
+  "title": "Logitech G PRO X Superlight 2 - Amazon.com",
+  "url": "https://www.amazon.com/Logitech-Superlight-Lightweight-Programmable-Compatible/dp/B0CC6N7J4X",
+  "group": "shopping"
+ },
+ {
+  "title": "Array.prototype.flatMap() - JavaScript | MDN",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap",
+  "group": "docs"
+ },
+ {
+  "title": "Delta - Trip Details - Confirmation K7XQ2P",
+  "url": "https://www.delta.com/mytrips/trip-details?confirmationNumber=K7XQ2P",
+  "group": "travel"
+ },
+ {
+  "title": "Chegg Study - Organic Chemistry textbook solutions Ch. 9",
+  "url": "https://www.chegg.com/homework-help/organic-chemistry-9th-edition-chapter-9-solutions-9780321971371",
+  "group": "learning"
+ },
+ {
+  "title": "Square Dashboard",
+  "url": "https://squareup.com/dashboard/",
+  "group": "work"
+ },
+ {
+  "title": "regex101: build, test, and debug regex",
+  "url": "https://regex101.com/r/xK3fQ9/1",
+  "group": "programming"
+ },
+ {
+  "title": "Renew Vehicle Registration - Illinois Secretary of State",
+  "url": "https://www.ilsos.gov/departments/vehicles/registration/home.html",
+  "group": "other"
+ },
+ {
+  "title": "Lisbon Travel Guide - Rick Steves",
+  "url": "https://www.ricksteves.com/europe/portugal/lisbon",
+  "group": "travel"
+ },
+ {
+  "title": "HubSpot - Contacts",
+  "url": "https://app.hubspot.com/contacts/24381977/objects/0-1/views/all/list",
+  "group": "work"
+ },
+ {
+  "title": "https://192.168.1.1/",
+  "url": "http://192.168.1.1/",
+  "group": "other"
+ },
+ {
+  "title": "Sprint 47 board - Billing - Jira",
+  "url": "https://acmecorp.atlassian.net/jira/software/projects/BILL/boards/12",
+  "group": "work"
+ },
+ {
+  "title": "Trello - Holiday Launch 2026",
+  "url": "https://trello.com/b/Xk3pQ8aZ/holiday-launch-2026",
+  "group": "work"
+ },
+ {
+  "title": "Epic Games Store - Free Games",
+  "url": "https://store.epicgames.com/en-US/free-games",
+  "group": "games"
+ },
+ {
+  "title": "Battle.net - Diablo IV",
+  "url": "https://us.shop.battle.net/en-us/product/diablo-iv",
+  "group": "games"
+ },
+ {
+  "title": "Nintendo eShop - Mario Kart World",
+  "url": "https://www.nintendo.com/us/store/products/mario-kart-world-switch-2/",
+  "group": "games"
+ },
+ {
+  "title": "Rome2rio: Osaka to Hiroshima",
+  "url": "https://www.rome2rio.com/map/Osaka/Hiroshima",
+  "group": "travel"
+ },
+ {
+  "title": "asyncio — Asynchronous I/O — Python 3.13.1 documentation",
+  "url": "https://docs.python.org/3/library/asyncio.html",
+  "group": "docs"
+ },
+ {
+  "title": "Venmo",
+  "url": "https://account.venmo.com/",
+  "group": "finance"
+ },
+ {
+  "title": "Grace Community Church - Sunday Livestream",
+  "url": "https://gracecommunity.org/live",
+  "group": "other"
+ },
+ {
+  "title": "40 Easy Sheet Pan Dinners the Whole Family Will Love | Taste of Home",
+  "url": "https://www.tasteofhome.com/collection/sheet-pan-dinners/",
+  "group": "other"
+ },
+ {
+  "title": "Children's ibuprofen dosage chart by weight - HealthyChildren.org",
+  "url": "https://www.healthychildren.org/English/safety-prevention/at-home/medication-safety/Pages/Ibuprofen-for-Fever-and-Pain.aspx",
+  "group": "health"
+ },
+ {
+  "title": "Inventory Nov 2026 - Google Sheets",
+  "url": "https://docs.google.com/spreadsheets/d/1Bq7rT0xY2nLmP9sDf4GhJkL/edit",
+  "group": "work"
+ },
+ {
+  "title": "Bank of America | Online Banking | Accounts Overview",
+  "url": "https://secure.bankofamerica.com/myaccounts/brain/redirect.go?target=accountsoverview",
+  "group": "finance"
+ },
+ {
+  "title": "Comcast Xfinity - My Account - Internet outage",
+  "url": "https://customer.xfinity.com/#/services/internet",
+  "group": "other"
+ },
+ {
+  "title": "Fix race condition in session refresh by mkowalski · Pull Request #4821 · acme-corp/billing-api",
+  "url": "https://github.com/acme-corp/billing-api/pull/4821",
+  "group": "programming"
+ },
+ {
+  "title": "Knitting patterns: Easy cable scarf - Ravelry",
+  "url": "https://www.ravelry.com/patterns/library/easy-cable-scarf-14",
+  "group": "other"
+ },
+ {
+  "title": "The Bear Season 3 Episode 4 Recap: 'Violet' - Vulture",
+  "url": "https://www.vulture.com/article/the-bear-recap-season-3-episode-4-violet.html",
+  "group": "tv"
+ },
+ {
+  "title": "Dow tumbles 600 points as tech stocks slide - CNBC",
+  "url": "https://www.cnbc.com/2026/11/13/stock-market-today-dow-sp500.html",
+  "group": "news"
+ },
+ {
+  "title": "Hans Zimmer - Dune: Part Two (Original Motion Picture Soundtrack) | Spotify",
+  "url": "https://open.spotify.com/album/1lmEo2cZaPLtE6s0ZtPtEo",
+  "group": "music"
+ },
+ {
+  "title": "Rust Lifetimes Explained Visually - YouTube",
+  "url": "https://www.youtube.com/watch?v=juIINGuZyBc",
+  "group": "programming"
+ },
+ {
+  "title": "Japanese for travelers: 50 essential phrases - Tofugu",
+  "url": "https://www.tofugu.com/japanese/japanese-travel-phrases/",
+  "group": "learning"
+ },
+ {
+  "title": "Nextdoor - Your neighborhood",
+  "url": "https://nextdoor.com/news_feed/",
+  "group": "social"
+ },
+ {
+  "title": "PCPartPicker - System Build",
+  "url": "https://pcpartpicker.com/list/Rk8ZtN",
+  "group": "shopping"
+ },
+ {
+  "title": "r/ExperiencedDevs",
+  "url": "https://www.reddit.com/r/ExperiencedDevs/",
+  "group": "social"
+ },
+ {
+  "title": "Dockerfile reference | Docker Docs",
+  "url": "https://docs.docker.com/reference/dockerfile/",
+  "group": "docs"
+ },
+ {
+  "title": "Medicare Supplement Plan G vs Plan N - AARP",
+  "url": "https://www.aarp.org/health/medicare-insurance/medigap-plan-g-vs-plan-n/",
+  "group": "finance"
+ },
+ {
+  "title": "ChatGPT",
+  "url": "https://chatgpt.com/c/6738f2a1-9b04-8001-bc3e-2a7f9d1c4e55",
+  "group": "ai"
+ },
+ {
+  "title": "Bluey | FULL EPISODES | Bluey Season 3 - YouTube Kids",
+  "url": "https://www.youtube.com/watch?v=Mbh3s-x0_fU",
+  "group": "videos"
+ },
+ {
+  "title": "Track Package - UPS 1Z999AA10123456784",
+  "url": "https://www.ups.com/track?loc=en_US&tracknum=1Z999AA10123456784",
+  "group": "shopping"
+ },
+ {
+  "title": "Nosferatu | Official Trailer HD | Focus Features - YouTube",
+  "url": "https://www.youtube.com/watch?v=nulvWqYUM8k",
+  "group": "movies"
+ },
+ {
+  "title": "Kyoto Machiya Stay - Airbnb",
+  "url": "https://www.airbnb.com/rooms/52817394",
+  "group": "travel"
+ },
+ {
+  "title": "Lichess.org • Free Online Chess",
+  "url": "https://lichess.org/",
+  "group": "games"
+ },
+ {
+  "title": "Mubi - Perfect Days",
+  "url": "https://mubi.com/en/us/films/perfect-days",
+  "group": "movies"
+ },
+ {
+  "title": "DMV Appointment Scheduling - California DMV",
+  "url": "https://www.dmv.ca.gov/portal/appointments/select-appointment-type",
+  "group": "other"
+ },
+ {
+  "title": "Spotify – Discover Weekly",
+  "url": "https://open.spotify.com/playlist/37i9dQZEVXcQ9COmYvdajy",
+  "group": "music"
+ },
+ {
+  "title": "Canva - Black Friday Instagram Post",
+  "url": "https://www.canva.com/design/DAGV2kXQ8pM/edit",
+  "group": "design"
+ },
+ {
+  "title": "The Great British Baking Show | Netflix",
+  "url": "https://www.netflix.com/title/80063224",
+  "group": "tv"
+ },
+ {
+  "title": "Godot 4 Beginner Tutorial - Make your first 2D game - YouTube",
+  "url": "https://www.youtube.com/watch?v=LOhfqjmasi0",
+  "group": "programming"
+ },
+ {
+  "title": "BTC USD — Bitcoin Price | Coinbase",
+  "url": "https://www.coinbase.com/price/bitcoin",
+  "group": "finance"
+ },
+ {
+  "title": "CNN - Breaking News, Latest News and Videos",
+  "url": "https://www.cnn.com/",
+  "group": "news"
+ },
+ {
+  "title": "Travelers' Health - Japan | CDC",
+  "url": "https://wwwnc.cdc.gov/travel/destinations/traveler/none/japan",
+  "group": "health"
+ },
+ {
+  "title": "(2) Springfield Moms Group | Facebook",
+  "url": "https://www.facebook.com/groups/springfieldmoms/",
+  "group": "social"
+ },
+ {
+  "title": "Bluey | Disney+",
+  "url": "https://www.disneyplus.com/series/bluey/1xy9TAOQ1kSF",
+  "group": "tv"
+ },
+ {
+  "title": "SpaceX Starship completes first orbital refuelling test - Ars Technica",
+  "url": "https://arstechnica.com/space/2026/11/starship-orbital-refueling/",
+  "group": "news"
+ },
+ {
+  "title": "Claude",
+  "url": "https://claude.ai/new",
+  "group": "ai"
+ },
+ {
+  "title": "Walgreens Pharmacy - Prescription Refills",
+  "url": "https://www.walgreens.com/pharmacy/refill",
+  "group": "health"
+ },
+ {
+  "title": "How To Speak by Patrick Winston - YouTube",
+  "url": "https://www.youtube.com/watch?v=Unzc731iCUY",
+  "group": "learning"
+ },
+ {
+  "title": "Google Maps - Shibuya to Asakusa",
+  "url": "https://www.google.com/maps/dir/Shibuya+Station/Senso-ji/",
+  "group": "travel"
+ },
+ {
+  "title": "Blood pressure chart: What your reading means - Harvard Health",
+  "url": "https://www.health.harvard.edu/heart-health/reading-the-new-blood-pressure-guidelines",
+  "group": "health"
+ },
+ {
+  "title": "Recetas fáciles de lentejas con chorizo - Directo al Paladar",
+  "url": "https://www.directoalpaladar.com/recetas-de-legumbres/lentejas-con-chorizo-receta-tradicional",
+  "group": "other"
+ },
+ {
+  "title": "Google Business Profile - Bloom & Twig reviews",
+  "url": "https://business.google.com/reviews",
+  "group": "other"
+ },
+ {
+  "title": "Ars Technica",
+  "url": "https://arstechnica.com/",
+  "group": "news"
+ },
+ {
+  "title": "Wirecutter: The Best Convertible Car Seats",
+  "url": "https://www.nytimes.com/wirecutter/reviews/best-convertible-car-seat/",
+  "group": "shopping"
+ },
+ {
+  "title": "Shōgun (TV Series 2024– ) - IMDb",
+  "url": "https://www.imdb.com/title/tt2788316/",
+  "group": "tv"
+ },
+ {
+  "title": "TypeError: Cannot read properties of undefined (reading 'map') · Issue #2213 · TanStack/query",
+  "url": "https://github.com/TanStack/query/issues/2213",
+  "group": "programming"
+ },
+ {
+  "title": "Carter's Baby Boy 3-Pack Pajamas | carters.com",
+  "url": "https://www.carters.com/p/baby-boy-3-pack-pajamas/1Q467610.html",
+  "group": "shopping"
+ },
+ {
+  "title": "my Social Security | SSA",
+  "url": "https://secure.ssa.gov/myssa/myprofile-ui/main",
+  "group": "finance"
+ },
+ {
+  "title": "Ms Rachel - Toddler Learning Video - Learn To Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=hTqtGJwsJVE",
+  "group": "videos"
+ },
+ {
+  "title": "r/Eldenring",
+  "url": "https://www.reddit.com/r/Eldenring/",
+  "group": "social"
+ },
+ {
+  "title": "Amazon.com: TI-84 Plus CE Graphing Calculator",
+  "url": "https://www.amazon.com/Texas-Instruments-TI-84-Graphing-Calculator/dp/B00TFYYWQA",
+  "group": "shopping"
+ },
+ {
+  "title": "Gentle Chair Yoga for Seniors - 20 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=1DYH5ud3zHo",
+  "group": "health"
+ },
+ {
+  "title": "xQc - Twitch",
+  "url": "https://www.twitch.tv/xqc",
+  "group": "videos"
+ },
+ {
+  "title": "MyFitnessPal | Food Diary",
+  "url": "https://www.myfitnesspal.com/food/diary",
+  "group": "health"
+ },
+ {
+  "title": "https://www.ups.com/us/en/support/shipping-support/shipping-dimensions-weight.page",
+  "url": "https://www.ups.com/us/en/support/shipping-support/shipping-dimensions-weight.page",
+  "group": "other"
+ },
+ {
+  "title": "Weather Forecast Springfield, IL - The Weather Channel | weather.com",
+  "url": "https://weather.com/weather/tenday/l/Springfield+IL",
+  "group": "other"
+ },
+ {
+  "title": "Dude Perfect - Overtime 45 - YouTube",
+  "url": "https://www.youtube.com/watch?v=yN1kZ7m9rWc",
+  "group": "videos"
+ },
+ {
+  "title": "2024 Toyota RAV4 Hybrid Review, Pricing, and Specs - Car and Driver",
+  "url": "https://www.caranddriver.com/toyota/rav4-hybrid-2024",
+  "group": "other"
+ },
+ {
+  "title": "PostgreSQL: Documentation: 17: 13.3. Explicit Locking",
+  "url": "https://www.postgresql.org/docs/current/explicit-locking.html",
+  "group": "docs"
+ },
+ {
+  "title": "useEffect – React",
+  "url": "https://react.dev/reference/react/useEffect",
+  "group": "docs"
+ },
+ {
+  "title": "op.gg - Summoner Stats",
+  "url": "https://www.op.gg/summoners/euw/Faker-KR1",
+  "group": "games"
+ },
+ {
+  "title": "The New York Times - Breaking News, US News, World News",
+  "url": "https://www.nytimes.com/",
+  "group": "news"
+ },
+ {
+  "title": "Andor season 2 episode guide - Disney+",
+  "url": "https://www.disneyplus.com/series/andor/3xsQKWG00GL5",
+  "group": "tv"
+ },
+ {
+  "title": "Taylor Swift - Fortnight (feat. Post Malone) (Official Music Video) - YouTube",
+  "url": "https://www.youtube.com/watch?v=q3zqJs7JUCQ",
+  "group": "music"
+ },
+ {
+  "title": "Marques Brownlee - Waveform Podcast Ep. 201 - YouTube",
+  "url": "https://www.youtube.com/watch?v=pd9vG4Xk2Lw",
+  "group": "videos"
+ },
+ {
+  "title": "kubectl Quick Reference | Kubernetes",
+  "url": "https://kubernetes.io/docs/reference/kubectl/quick-reference/",
+  "group": "docs"
+ },
+ {
+  "title": "Frank Sinatra - Pandora",
+  "url": "https://www.pandora.com/artist/frank-sinatra/ARn3pwX7jxXg2b3",
+  "group": "music"
+ },
+ {
+  "title": "Wanderlog - Japan 2027 trip plan",
+  "url": "https://wanderlog.com/plan/xqzkmpwr/japan-2027",
+  "group": "travel"
+ },
+ {
+  "title": "Great Courses Plus: The History of Ancient Rome",
+  "url": "https://www.wondrium.com/the-history-of-ancient-rome",
+  "group": "learning"
+ },
+ {
+  "title": "Box office: 'Wicked' opens to $114 million - The Hollywood Reporter",
+  "url": "https://www.hollywoodreporter.com/movies/box-office/wicked-box-office-opening-weekend-1236066544/",
+  "group": "news"
+ },
+ {
+  "title": "Alibaba.com - kraft paper gift bags wholesale",
+  "url": "https://www.alibaba.com/trade/search?SearchText=kraft+paper+gift+bags",
+  "group": "shopping"
+ },
+ {
+  "title": "Costco Wholesale - Kirkland Signature Diapers Size 4",
+  "url": "https://www.costco.com/kirkland-signature-diapers-size-4-150-count.product.100523819.html",
+  "group": "shopping"
+ },
+ {
+  "title": "I Survived 100 Days in a Nuclear Bunker - YouTube",
+  "url": "https://www.youtube.com/watch?v=4bz3Xk9Fqp0",
+  "group": "videos"
+ },
+ {
+  "title": "Charles Schwab | Positions",
+  "url": "https://client.schwab.com/app/accounts/positions/#/",
+  "group": "finance"
+ },
+ {
+  "title": "Halloween pumpkin carving templates easy for kids",
+  "url": "https://www.google.com/search?q=halloween+pumpkin+carving+templates+easy+for+kids",
+  "group": "other"
+ },
+ {
+  "title": "Wise - Send money - USD to JPY",
+  "url": "https://wise.com/us/currency-converter/usd-to-jpy-rate",
+  "group": "finance"
+ },
+ {
+  "title": "Weather radar - Accuweather",
+  "url": "https://www.accuweather.com/en/us/national/weather-radar",
+  "group": "other"
+ },
+ {
+  "title": "Material Design 3 - Color system",
+  "url": "https://m3.material.io/styles/color/system/overview",
+  "group": "design"
+ },
+ {
+  "title": "Coolors - The super fast color palettes generator!",
+  "url": "https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51",
+  "group": "design"
+ },
+ {
+  "title": "Japan Rail Pass - Official Site",
+  "url": "https://japanrailpass.net/en/",
+  "group": "travel"
+ },
+ {
+  "title": "Homemade Pizza Dough (Easy Recipe) - Sally's Baking Addiction",
+  "url": "https://sallysbakingaddiction.com/homemade-pizza-crust-recipe/",
+  "group": "other"
+ },
+ {
+  "title": "ゼルダの伝説 ティアーズ オブ ザ キングダム 攻略 - Game8",
+  "url": "https://game8.jp/zelda-totk",
+  "group": "games"
+ },
+ {
+  "title": "CodeSandbox - react-ts-starter (forked)",
+  "url": "https://codesandbox.io/p/sandbox/react-ts-starter-forked-q9x2lm",
+  "group": "programming"
+ },
+ {
+  "title": "How to Retire Early with Index Funds - The Plain Bagel - YouTube",
+  "url": "https://www.youtube.com/watch?v=fwe-PjrX23o",
+  "group": "finance"
+ },
+ {
+  "title": "Pitchfork - Best New Albums",
+  "url": "https://pitchfork.com/reviews/best/albums/",
+  "group": "music"
+ },
+ {
+  "title": "Let's build GPT: from scratch, in code, spelled out. - YouTube",
+  "url": "https://www.youtube.com/watch?v=kCc8FmEb1nY",
+  "group": "ai"
+ },
+ {
+  "title": "Zocdoc - Cardiologists near me",
+  "url": "https://www.zocdoc.com/search?dr_specialty=132",
+  "group": "health"
+ },
+ {
+  "title": "Hotel Gracery Shinjuku, Tokyo – Updated 2026 Prices - Booking.com",
+  "url": "https://www.booking.com/hotel/jp/gracery-shinjuku.html",
+  "group": "travel"
+ },
+ {
+  "title": "AWS outage in us-east-1 knocks out thousands of sites | The Verge",
+  "url": "https://www.theverge.com/2026/11/14/aws-outage-us-east-1",
+  "group": "news"
+ },
+ {
+  "title": "The Brutalist | Rotten Tomatoes",
+  "url": "https://www.rottentomatoes.com/m/the_brutalist",
+  "group": "movies"
+ },
+ {
+  "title": "Shopify admin - Orders",
+  "url": "https://admin.shopify.com/store/bloom-and-twig/orders",
+  "group": "work"
+ },
+ {
+  "title": "NYT Crossword",
+  "url": "https://www.nytimes.com/crosswords/game/daily",
+  "group": "other"
+ },
+ {
+  "title": "std::sync::Arc - Rust",
+  "url": "https://doc.rust-lang.org/std/sync/struct.Arc.html",
+  "group": "docs"
+ },
+ {
+  "title": "Business License Renewal - City of Portland",
+  "url": "https://www.portland.gov/revenue/business-license",
+  "group": "other"
+ },
+ {
+  "title": "Jeopardy! - Watch Episodes",
+  "url": "https://www.jeopardy.com/watch",
+  "group": "tv"
+ },
+ {
+  "title": "Hugging Face – meta-llama/Llama-3.3-70B-Instruct",
+  "url": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+  "group": "ai"
+ },
+ {
+  "title": "Fallout - Season 2 | Prime Video",
+  "url": "https://www.amazon.com/gp/video/detail/B0FALLOUTS2",
+  "group": "tv"
+ },
+ {
+  "title": "Your Orders - Amazon.com",
+  "url": "https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first",
+  "group": "shopping"
+ },
+ {
+  "title": "CD Rates Today: Best 1-year CDs - Bankrate",
+  "url": "https://www.bankrate.com/banking/cds/cd-rates/",
+  "group": "finance"
+ },
+ {
+  "title": "Your top 4 says a lot about you : r/Letterboxd",
+  "url": "https://www.reddit.com/r/Letterboxd/comments/1gt2m9k/your_top_4_says_a_lot_about_you/",
+  "group": "social"
+ },
+ {
+  "title": "Gmail - Inbox (37) - hello@bloomandtwig.co",
+  "url": "https://mail.google.com/mail/u/1/#inbox",
+  "group": "work"
+ },
+ {
+  "title": "Spiegel Online – Nachrichten",
+  "url": "https://www.spiegel.de/",
+  "group": "news"
+ },
+ {
+  "title": "Chase Business Complete Banking - Account Activity",
+  "url": "https://secure.chase.com/web/auth/dashboard#/dashboard/overview",
+  "group": "finance"
+ },
+ {
+  "title": "git-rebase - Git Documentation",
+  "url": "https://git-scm.com/docs/git-rebase",
+  "group": "docs"
+ },
+ {
+  "title": "(3) Instagram",
+  "url": "https://www.instagram.com/",
+  "group": "social"
+ },
+ {
+  "title": "Visit Japan Web",
+  "url": "https://www.vjw.digital.go.jp/main/#/vjwplo001",
+  "group": "travel"
+ },
+ {
+  "title": "Vimeo - Short of the Week",
+  "url": "https://vimeo.com/channels/shortoftheweek",
+  "group": "videos"
+ },
+ {
+  "title": "Wordle — The New York Times",
+  "url": "https://www.nytimes.com/games/wordle/index.html",
+  "group": "games"
+ },
+ {
+  "title": "(1) Subscriptions - YouTube",
+  "url": "https://www.youtube.com/feed/subscriptions",
+  "group": "videos"
+ },
+ {
+  "title": "OpenAI launches new reasoning model for agents - The Verge",
+  "url": "https://www.theverge.com/2026/11/12/openai-new-agent-model",
+  "group": "ai"
+ },
+ {
+  "title": "Easy One-Pot Chicken and Rice Recipe - Allrecipes",
+  "url": "https://www.allrecipes.com/recipe/16954/chinese-chicken-fried-rice-ii/",
+  "group": "other"
+ },
+ {
+  "title": "Facebook - Marketplace",
+  "url": "https://www.facebook.com/marketplace/",
+  "group": "social"
+ },
+ {
+  "title": "Watch Oppenheimer | Prime Video",
+  "url": "https://www.amazon.com/gp/video/detail/B0CH5YQPZ6",
+  "group": "movies"
+ },
+ {
+  "title": "Mediterranean diet: A heart-healthy eating plan - Mayo Clinic",
+  "url": "https://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/in-depth/mediterranean-diet/art-20047801",
+  "group": "health"
+ },
+ {
+  "title": "Estimated Taxes | Internal Revenue Service",
+  "url": "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+  "group": "finance"
+ },
+ {
+  "title": "Patient Portal - Kaiser Permanente - Test Results",
+  "url": "https://healthy.kaiserpermanente.org/health-wellness/health-encyclopedia/test-results",
+  "group": "health"
+ },
+ {
+  "title": "Elden Ring: Nightreign on Steam",
+  "url": "https://store.steampowered.com/app/2622380/ELDEN_RING_NIGHTREIGN/",
+  "group": "games"
+ },
+ {
+  "title": "Dog boarding near me - Rover.com",
+  "url": "https://www.rover.com/search/?service_type=overnight-boarding",
+  "group": "other"
+ },
+ {
+  "title": "Beethoven Symphony No. 9 - Berliner Philharmoniker Digital Concert Hall",
+  "url": "https://www.digitalconcerthall.com/en/concert/53101",
+  "group": "music"
+ },
+ {
+  "title": "Anora (2024) - Letterboxd",
+  "url": "https://letterboxd.com/film/anora/",
+  "group": "movies"
+ },
+ {
+  "title": "Dribbble - Dashboard UI inspiration",
+  "url": "https://dribbble.com/tags/dashboard_ui",
+  "group": "design"
+ },
+ {
+  "title": "Incident postmortem: 2026-11-12 payment outage - Confluence",
+  "url": "https://acmecorp.atlassian.net/wiki/spaces/ENG/pages/2938471/Incident+postmortem+2026-11-12",
+  "group": "work"
+ },
+ {
+  "title": "Duolingo - The world's best way to learn a language",
+  "url": "https://www.duolingo.com/learn",
+  "group": "learning"
+ },
+ {
+  "title": "Premier League Table 2026/27 - BBC Sport",
+  "url": "https://www.bbc.com/sport/football/premier-league/table",
+  "group": "other"
+ },
+ {
+  "title": "20 Minute Postpartum Core Workout - YouTube",
+  "url": "https://www.youtube.com/watch?v=Rl3ce5LV5nA",
+  "group": "health"
+ },
+ {
+  "title": "The Krebs Cycle Made Easy - YouTube",
+  "url": "https://www.youtube.com/watch?v=juM2ROSLWfw",
+  "group": "learning"
+ },
+ {
+  "title": "Black Friday 2026 Deals: Best Buy",
+  "url": "https://www.bestbuy.com/site/misc/black-friday-deals/pcmcat225600050002.c",
+  "group": "shopping"
+ },
+ {
+  "title": "Commercial lease for rent - 1200 sq ft retail - LoopNet",
+  "url": "https://www.loopnet.com/Listing/1420-SE-Hawthorne-Blvd-Portland-OR/31948271/",
+  "group": "other"
+ },
+ {
+  "title": "NotebookLM",
+  "url": "https://notebooklm.google.com/notebook/8f2a1c7d-4e5b-4a1f-9c3e-77ab12cd34ef",
+  "group": "ai"
+ },
+ {
+  "title": "List of unusual deaths - Wikipedia",
+  "url": "https://en.wikipedia.org/wiki/List_of_unusual_deaths",
+  "group": "other"
+ },
+ {
+  "title": "Untitled",
+  "url": "about:blank",
+  "group": "other"
+ },
+ {
+  "title": "Small Business Tax Deductions 2026 | NerdWallet",
+  "url": "https://www.nerdwallet.com/article/small-business/small-business-tax-deductions",
+  "group": "finance"
+ },
+ {
+  "title": "Severance (TV Series 2022– ) - IMDb",
+  "url": "https://www.imdb.com/title/tt11280740/",
+  "group": "tv"
+ },
+ {
+  "title": "Configuration | Vite",
+  "url": "https://vite.dev/config/",
+  "group": "docs"
+ },
+ {
+  "title": "Oscars 2026 predictions: Best Picture frontrunners - Variety",
+  "url": "https://variety.com/lists/2026-oscars-predictions-best-picture/",
+  "group": "movies"
+ },
+ {
+  "title": "BILL-3312 Refund webhook retries double-charge customers - Jira",
+  "url": "https://acmecorp.atlassian.net/browse/BILL-3312",
+  "group": "work"
+ },
+ {
+  "title": "Skyscanner - LIS to OPO trains and flights",
+  "url": "https://www.skyscanner.com/transport/flights/lis/opo/",
+  "group": "travel"
+ },
+ {
+  "title": "Datadog - billing-api p99 latency dashboard",
+  "url": "https://app.datadoghq.com/dashboard/x7k-2pq-9mn/billing-api-overview",
+  "group": "work"
+ },
+ {
+  "title": "Every Wes Anderson Film Ranked - Vulture",
+  "url": "https://www.vulture.com/article/wes-anderson-movies-ranked.html",
+  "group": "movies"
+ },
+ {
+  "title": "Discord | #general | CS 2026 Study Group",
+  "url": "https://discord.com/channels/9182736450192837/9182736450192840",
+  "group": "social"
+ },
+ {
+  "title": "Zoom Meeting",
+  "url": "https://acmecorp.zoom.us/j/93847261055",
+  "group": "work"
+ },
+ {
+  "title": "Tokyo weather in March - Weather Spark",
+  "url": "https://weatherspark.com/m/143809/3/Average-Weather-in-March-in-Tokyo-Japan",
+  "group": "other"
+ },
+ {
+  "title": "Lo-Fi Beats to Code To - playlist by Spotify | Spotify",
+  "url": "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn",
+  "group": "music"
+ },
+ {
+  "title": "Severance Season 2 Ending Explained - Screen Rant",
+  "url": "https://screenrant.com/severance-season-2-ending-explained/",
+  "group": "tv"
+ },
+ {
+  "title": "Tool use with Claude - Anthropic",
+  "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview",
+  "group": "ai"
+ },
+ {
+  "title": "Tokyo Night Walk 4K - Shinjuku in the Rain - YouTube",
+  "url": "https://www.youtube.com/watch?v=Xtj5f3mV3hA",
+  "group": "videos"
+ },
+ {
+  "title": "VTI - Vanguard Total Stock Market ETF - Yahoo Finance",
+  "url": "https://finance.yahoo.com/quote/VTI/",
+  "group": "finance"
+ },
+ {
+  "title": "(12) Home / X",
+  "url": "https://x.com/home",
+  "group": "social"
+ },
+ {
+  "title": "Stripe API Reference - Create a PaymentIntent",
+  "url": "https://docs.stripe.com/api/payment_intents/create",
+  "group": "docs"
+ },
+ {
+  "title": "Criterion Channel - Seven Samurai",
+  "url": "https://www.criterionchannel.com/seven-samurai",
+  "group": "movies"
+ },
+ {
+  "title": "How to prune hydrangeas in fall - Gardeners' World",
+  "url": "https://www.gardenersworld.com/how-to/grow-plants/how-to-prune-hydrangeas/",
+  "group": "other"
+ },
+ {
+  "title": "Q4 on-call rotation - Google Sheets",
+  "url": "https://docs.google.com/spreadsheets/d/1qZ8xYwVtR2mN4pLkJhGfDsA/edit#gid=0",
+  "group": "work"
+ },
+ {
+  "title": "Lofi Girl - lofi hip hop radio 📚 beats to relax/study to - YouTube",
+  "url": "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+  "group": "music"
+ },
+ {
+  "title": "Lecture 7: Thermodynamics - MIT OpenCourseWare",
+  "url": "https://ocw.mit.edu/courses/8-01sc-classical-mechanics-fall-2016/pages/week-7/",
+  "group": "learning"
+ },
+ {
+  "title": "YouTube",
+  "url": "https://www.youtube.com/",
+  "group": "videos"
+ },
+ {
+  "title": "langchain-ai/langgraph: Build resilient language agents as graphs.",
+  "url": "https://github.com/langchain-ai/langgraph",
+  "group": "ai"
+ },
+ {
+  "title": "Inbox (1,204) - m.kowalski@acmecorp.com - Acme Corp Mail",
+  "url": "https://mail.google.com/mail/u/0/#inbox",
+  "group": "work"
+ },
+ {
+  "title": "Hostelworld - Hostels in Lisbon",
+  "url": "https://www.hostelworld.com/st/hostels/europe/portugal/lisbon/",
+  "group": "travel"
+ },
+ {
+  "title": "Toddler won't sleep through the night at 2 years - BabyCenter",
+  "url": "https://www.babycenter.com/toddler/sleep/toddler-sleep-problems_10357",
+  "group": "other"
+ },
+ {
+  "title": "Stardew Valley Wiki - Crops",
+  "url": "https://stardewvalleywiki.com/Crops",
+  "group": "games"
+ }
+]

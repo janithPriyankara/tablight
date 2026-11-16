@@ -1,15 +1,16 @@
 import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { env, pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
+import { EMBED_MODEL, EMBED_POOLING } from '../../src/classify/model';
 let ex: FeatureExtractionPipeline;
 beforeAll(async () => {
   env.allowRemoteModels = false;
   env.allowLocalModels = true;
   env.localModelPath = resolve(import.meta.dirname, '../../public/models') + '/';
-  ex = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
+  ex = await pipeline('feature-extraction', EMBED_MODEL, { dtype: 'q8' });
 }, 120_000);
 async function e(text: string): Promise<number[]> {
-  const out = await ex([text], { pooling: 'mean', normalize: true });
+  const out = await ex([text], { pooling: EMBED_POOLING, normalize: true });
   return (out.tolist() as number[][])[0]!;
 }
 const dot = (a: number[], b: number[]) => a.reduce((s, x, i) => s + x * b[i]!, 0);

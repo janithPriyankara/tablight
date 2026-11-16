@@ -15,6 +15,7 @@ import type { Req } from '../../src/shared/rpc';
 import type { DashboardState, Item } from '../../src/shared/types';
 import { captureNetwork, type NetworkCapture } from './fixtures/cdp-network';
 import { PAGES, startPageServer, type PageServer } from './fixtures/server';
+import { MODEL_ID } from '../../scripts/model-manifest.mjs';
 
 const DIST = resolve('dist');
 if (!existsSync(join(DIST, 'manifest.json'))) {
@@ -183,9 +184,13 @@ test('offscreen bundle points Transformers.js at bundled files before building t
   sequence(/allowLocalModels\s*=\s*(?:!0|true)\s*[,;]\s*\w+\.localModelPath\s*=/);
   sequence(/useBrowserCache\s*=\s*(?:!1|false)\s*[,;]\s*\w+\.useWasmCache\s*=\s*(?:!1|false)\b/);
   sequence(/wasmPaths\s*=\s*\{[^}]*\}\s*[,;]\s*\w+\.numThreads\s*=\s*1\s*[,;]\s*\w+\.proxy\s*=\s*(?:!1|false)\b/);
-  const pipelineCall = at(new RegExp(`${q}feature-extraction${q}\\s*,\\s*${q}Xenova/all-MiniLM-L6-v2${q}`));
+  // The bundled model (src/classify/model.ts, pinned in scripts/model-manifest.mjs) is the one loaded: its id is
+  // in the offscreen chunk or in a chunk it imports (the constant is shared with the background).
+  const imported = [...js.matchAll(/from\s*["']\.\/([\w.-]+\.js)["']/g)].map((m) => readFileSync(join(DIST, 'assets', m[1]!), 'utf8'));
+  expect([js, ...imported].some((c) => c.includes(MODEL_ID)), MODEL_ID).toBe(true);
+  const pipelineCall = at(new RegExp(`${q}feature-extraction${q}\\s*,`));
   for (const i of config) expect(i).toBeLessThan(pipelineCall);
-  for (const f of ['ort/ort-wasm-simd-threaded.mjs', 'ort/ort-wasm-simd-threaded.wasm', 'models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx']) {
+  for (const f of ['ort/ort-wasm-simd-threaded.mjs', 'ort/ort-wasm-simd-threaded.wasm', `models/${MODEL_ID}/onnx/model_quantized.onnx`]) {
     expect(existsSync(join(DIST, f)), f).toBe(true);
   }
 });

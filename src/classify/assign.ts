@@ -29,6 +29,53 @@ export interface Head {
   threshold: number;
   /** Cosine to a user-learned exemplar at which that group overrides the head. */
   similarity: number;
+  /**
+   * Neighbour blend: scores = (1-alpha)·p_head + alpha·vote of the k nearest training items (weight
+   * exp(sharp·cosine)). `vecs` is base64 of int8 vectors (x·127, row-major, `dim` per item); `labels[i]` is
+   * item i's index into `labels`. Absent: head only.
+   */
+  knn?: { k: number; alpha: number; sharp: number; labels: number[]; vecs: string };
+}
+interface Neighbours { vecs: Int8Array; labels: Int32Array; n: number }
+const decoded = new WeakMap<Head, Neighbours | null>();
+function neighbours(head: Head): Neighbours | null {
+  if (decoded.has(head)) return decoded.get(head)!;
+  let out: Neighbours | null = null;
+  const k = head.knn;
+  if (k && k.labels.length) {
+    const bin = atob(k.vecs);
+    const vecs = new Int8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) vecs[i] = (bin.charCodeAt(i) << 24) >> 24;
+    const n = Math.min(k.labels.length, Math.floor(vecs.length / head.dim));
+    out = { vecs, labels: Int32Array.from(k.labels.slice(0, n)), n };
+  }
+  decoded.set(head, out);
+  return out;
+}
+/** Weighted vote of the k nearest training items (cosine via int8 dot / 127). */
+function neighbourVote(vec: ArrayLike<number>, head: Head, nb: Neighbours): Float64Array {
+  const { k, sharp } = head.knn!;
+  const D = head.dim;
+  const best: { s: number; y: number }[] = [];
+  for (let i = 0; i < nb.n; i++) {
+    let s = 0;
+    const o = i * D;
+    for (let d = 0; d < D; d++) s += vec[d]! * nb.vecs[o + d]!;
+    s /= 127;
+    if (best.length < k) best.push({ s, y: nb.labels[i]! });
+    else if (s > best[best.length - 1]!.s) best[best.length - 1] = { s, y: nb.labels[i]! };
+    else continue;
+    best.sort((a, b) => b.s - a.s);
+  }
+  const v = new Float64Array(head.labels.length);
+  let total = 0;
+  for (const { s, y } of best) {
+    const w = Math.exp(sharp * s);
+    v[y] = (v[y] ?? 0) + w;
+    total += w;
+  }
+  if (total > 0) for (let c = 0; c < v.length; c++) v[c] = v[c]! / total;
+  return v;
 }
 
 function softmax(z: number[]): number[] {
@@ -66,7 +113,13 @@ export function classify(
 
   if (vec.length !== head.dim) return { groupId: null, score: 0 };
   const x = Array.from(vec);
-  const p = softmax(head.W.map((row, c) => row.reduce((s, w, d) => s + w * x[d]!, head.b[c] ?? 0)));
+  let p = softmax(head.W.map((row, c) => row.reduce((s, w, d) => s + w * x[d]!, head.b[c] ?? 0)));
+  const nb = neighbours(head);
+  if (nb && head.knn) {
+    const vote = neighbourVote(x, head, nb);
+    const a = head.knn.alpha;
+    p = p.map((pc, c) => (1 - a) * pc + a * vote[c]!);
+  }
   let top = 0;
   for (let c = 1; c < p.length; c++) if (p[c]! > p[top]!) top = c;
   const label = head.labels[top];

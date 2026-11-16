@@ -6,27 +6,32 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT.
 //
-// Pool = training/train-a.json + training/train-b.json + tests/quality/fixture.json.
-// tests/quality/holdout.json is never read here: it is the blind test set.
+// Pool = training/train-a.json + train-b.json + train-c.json + tests/quality/fixture.json.
+// tests/quality/holdout.json and holdout2.json are never read here: they are the blind test sets.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env, pipeline } from '@huggingface/transformers';
 import { runnerImport } from 'vite';
-import { MODEL_ID as DEFAULT_MODEL } from './model-manifest.mjs';
+import { MODEL_ID as DEFAULT_MODEL, MODEL_POOLING } from './model-manifest.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const MODEL_ID = process.env.MODEL_ID ?? DEFAULT_MODEL;
 const MODEL_PATH = process.env.MODEL_PATH ?? join(root, 'public', 'models');
-const POOLING = process.env.POOLING ?? 'mean';
+const POOLING = process.env.POOLING ?? MODEL_POOLING;
 const OUT = process.env.OUT ?? join(root, 'src', 'classify', 'head.json');
 
 const SEED = 42;
 const VAL_SHARE = 0.15;
 const EPOCHS = 600;
 const LR = 0.05;
-const L2_GRID = [1e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2];
+const L2_GRID = [1e-4, 3e-4, 1e-3, 3e-3];
+/**
+ * Neighbour blend (chosen by 5-fold CV, see docs §12): final scores = (1-ALPHA)·p_head + ALPHA·vote of the
+ * K nearest pool items, each weighted exp(SHARP·cosine). Shipped as int8 vectors in head.json.
+ */
+const KNN = { k: 10, alpha: 0.3, sharp: 10 };
 /** Max share of `other` items the threshold may let through to a real group (val split). */
 const MAX_OTHER_ASSIGNED = 0.3;
 /** Required precision of the learned-exemplar override (val split). */
@@ -40,7 +45,7 @@ const LABELS = STARTER_GROUPS.map((g) => g.id);
 const OTHER = LABELS.indexOf('other');
 
 // ---------- data ----------
-const files = ['training/train-a.json', 'training/train-b.json', 'tests/quality/fixture.json'];
+const files = ['training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'tests/quality/fixture.json'];
 const seen = new Set();
 const pool = [];
 for (const f of files) {
@@ -153,10 +158,35 @@ function train(idx, l2) {
   return { W: W.map((r) => Array.from(r)), b: Array.from(b) };
 }
 
-/** Pipeline on one item: rule first, then the head (other / low confidence → Unsorted). */
+/** Neighbour vote over `ref` pool items (indices), as the shipped classify() does with head.knn. */
+function knnVote(i, ref) {
+  const sims = [];
+  for (const j of ref) {
+    let s = 0;
+    for (let d = 0; d < DIM; d++) s += X[i][d] * X[j][d];
+    sims.push([s, Y[j]]);
+  }
+  sims.sort((a, b) => b[0] - a[0]);
+  const v = new Array(LABELS.length).fill(0);
+  let S = 0;
+  for (const [s, y] of sims.slice(0, KNN.k)) {
+    const w = Math.exp(KNN.sharp * s);
+    v[y] += w;
+    S += w;
+  }
+  return v.map((x) => x / S);
+}
+/** Pipeline on one item: rule first, then head blended with neighbours (other / low confidence → Unsorted). */
 function predict(head, i, threshold) {
   if (RULE[i]) return RULE[i];
-  const p = softmax(logits(head.W, head.b, X[i]));
+  head.cache ??= new Map(); // blended scores per item: the threshold search re-reads them ~90 times
+  let p = head.cache.get(i);
+  if (!p) {
+    const ph = softmax(logits(head.W, head.b, X[i]));
+    const vote = knnVote(i, head.ref);
+    p = ph.map((x, c) => (1 - KNN.alpha) * x + KNN.alpha * vote[c]);
+    head.cache.set(i, p);
+  }
   let top = 0;
   for (let c = 1; c < p.length; c++) if (p[c] > p[top]) top = c;
   return top === OTHER || p[top] < threshold ? null : LABELS[top];
@@ -191,7 +221,7 @@ function bestThreshold(head, idx) {
 // ---------- model selection on the val split ----------
 let chosen = null;
 for (const l2 of L2_GRID) {
-  const head = train(trainIdx, l2);
+  const head = { ...train(trainIdx, l2), ref: trainIdx };
   const r = bestThreshold(head, valIdx);
   console.log(`l2=${l2}: val acc ${(r.acc * 100).toFixed(1)}% @ t=${r.threshold}, other assigned ${(r.otherRate * 100).toFixed(0)}%`);
   // Ties go to the larger L2 (simpler model).
@@ -232,6 +262,12 @@ const out = {
   b: final.b.map(round),
   threshold: chosen.threshold,
   similarity,
+  // Neighbours: every pool item's vector, int8-quantized (x·127, unit vectors), base64; labels index into `labels`.
+  knn: {
+    ...KNN,
+    labels: Y,
+    vecs: Buffer.from(Int8Array.from(X.flat(), (x) => Math.max(-127, Math.min(127, Math.round(x * 127)))).buffer).toString('base64'),
+  },
   l2: chosen.l2,
   val: { acc: round(chosen.acc), otherAssigned: round(chosen.otherRate), n: valIdx.length },
   trainedAt: new Date().toISOString(),

@@ -2,7 +2,7 @@
 // Fails (exit 1) on: manifest permission/CSP/version drift, URL literals in shipped JS that are not
 // allowlisted or not confined to the library they come from, model/ORT hash mismatch, DOM-injection or
 // dynamic-code APIs in app code, a Node-only package in the bundle, a non-allowlisted license among
-// bundled packages, or a package size of 45 MB (45,000,000 bytes) or more (unpacked dist, and the zip
+// bundled packages, or a package size of 55 MB (55,000,000 bytes) or more (unpacked dist, and the zip
 // when `--zip <file>` is given).
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -12,8 +12,11 @@ import { MODEL_FILES, MODEL_ID, ORT_FILES_SHA256 } from './model-manifest.mjs';
 import { BANNED_CODE, URL_LITERAL, cleanUrl, packageOf, urlScopeError } from './release-patterns.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-/** 45 MB in decimal megabytes (10^6 bytes), the unit of the 45 MB package constraint. */
-export const SIZE_LIMIT = 45_000_000;
+/**
+ * 55 MB in decimal megabytes (10^6 bytes). Raised from 45 MB for bge-small-en-v1.5 (33 MB, replacing the 23 MB
+ * MiniLM) plus the head's neighbour data (~1 MB); see docs §12.
+ */
+export const SIZE_LIMIT = 55_000_000;
 const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
   "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";

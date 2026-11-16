@@ -1,3 +1,4 @@
+import { EMBED_MODEL, EMBED_POOLING } from '../classify/model';
 import { env, pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
 import { handle, send } from '../shared/rpc.ts';
 /**
@@ -33,7 +34,7 @@ wasm.numThreads = 1;
 wasm.proxy = false;
 let extractor: Promise<FeatureExtractionPipeline> | undefined;
 function getExtractor(): Promise<FeatureExtractionPipeline> {
-  extractor ??= pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+  extractor ??= pipeline('feature-extraction', EMBED_MODEL, {
     dtype: 'q8',
     device: 'wasm',
   }).catch((e: unknown) => {
@@ -49,7 +50,7 @@ handle(async (req) => {
   idleTimer = undefined;
   try {
     const ex = await getExtractor();
-    const out = await ex(req.texts, { pooling: 'mean', normalize: true });
+    const out = await ex(req.texts, { pooling: EMBED_POOLING, normalize: true });
     return out.tolist() as number[][];
   } finally {
     busy--;

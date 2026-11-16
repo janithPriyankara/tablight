@@ -3,6 +3,10 @@ import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import fixture from './fixture.json';
 import holdout from './holdout.json';
+import holdout2 from './holdout2.json';
+import trainA from '../../training/train-a.json';
+import trainB from '../../training/train-b.json';
+import trainC from '../../training/train-c.json';
 import { loadEmbedder } from './model';
 import { buildStarterGroups, classify, type Head } from '../../src/classify/assign';
 import { ruleGroup } from '../../src/classify/rules';
@@ -11,6 +15,7 @@ import type { Group } from '../../src/shared/types';
 interface Row { title: string; url: string; group: string }
 const dev = fixture as Row[];
 const blind = holdout as Row[];
+const blind2 = holdout2 as Row[];
 // HEAD_PATH / MODEL_PATH let model experiments run without touching the bundled files.
 const headPath = process.env.HEAD_PATH ?? resolve(import.meta.dirname, '../../src/classify/head.json');
 let head: Head & { pooling?: 'mean' | 'cls'; val?: { acc: number; otherAssigned: number } };
@@ -32,15 +37,11 @@ describe('classifier accuracy', () => {
     );
     expect(await run(rows)).toEqual(['ai', 'ai']);
   });
-  // Blind holdout, written independently and never used for training or tuning.
-  // Only aggregate numbers are printed, by design.
-  it('blind holdout: ≥ 85% top-1, ≤ 35% of `other` pages auto-assigned', async () => {
-    const predicted = await run(blind);
-    let correct = 0;
-    let total = 0;
-    let others = 0;
-    let otherAssigned = 0;
-    blind.forEach((r, i) => {
+  /** Top-1 on non-`other` rows and the share of `other` rows pushed into a group. Aggregates only. */
+  async function measure(rows: Row[]) {
+    const predicted = await run(rows);
+    let correct = 0, total = 0, others = 0, otherAssigned = 0;
+    rows.forEach((r, i) => {
       if (r.group === 'other') {
         others++;
         if (predicted[i] !== null) otherAssigned++;
@@ -49,15 +50,34 @@ describe('classifier accuracy', () => {
         if (predicted[i] === r.group) correct++;
       }
     });
-    const acc = correct / total;
-    const otherRate = otherAssigned / others;
+    return { acc: correct / total, correct, total, otherRate: others ? otherAssigned / others : 0, otherAssigned, others };
+  }
+  const line = (name: string, m: Awaited<ReturnType<typeof measure>>) =>
+    `${name} top-1 accuracy ${(m.acc * 100).toFixed(1)}% (${m.correct}/${m.total}); ` +
+    `'other' auto-assigned ${m.otherAssigned}/${m.others} (${(m.otherRate * 100).toFixed(0)}%)`;
+  // Blind holdouts, written independently and never used for training or tuning.
+  // Only aggregate numbers are printed, by design.
+  it('blind holdout: ≥ 85% top-1, ≤ 35% of `other` pages auto-assigned', async () => {
+    const m = await measure(blind);
     console.log(
-      `HOLDOUT top-1 accuracy ${(acc * 100).toFixed(1)}% (${correct}/${total}); ` +
-        `'other' auto-assigned ${otherAssigned}/${others} (${(otherRate * 100).toFixed(0)}%); ` +
-        `model ${head.model}, threshold ${head.threshold}, similarity ${head.similarity}` +
+      `${line('HOLDOUT', m)}; model ${head.model}, threshold ${head.threshold}, similarity ${head.similarity}` +
         (head.val ? `; train-time val ${(head.val.acc * 100).toFixed(1)}%` : ''),
     );
-    expect(acc).toBeGreaterThanOrEqual(0.85);
-    expect(otherRate).toBeLessThanOrEqual(0.35);
+    expect(m.acc).toBeGreaterThanOrEqual(0.85);
+    expect(m.otherRate).toBeLessThanOrEqual(0.35);
+  });
+  // holdout2: 300 tabs from eight imagined people, written after the model choice and never seen while tuning.
+  // "clean" leaves out rows whose URL or title also occurs in the training pool (common pages like an inbox).
+  it('blind holdout 2: ≥ 82% top-1, ≤ 35% of `other` pages auto-assigned', async () => {
+    const norm = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase();
+    const pool = [...(trainA as Row[]), ...(trainB as Row[]), ...(trainC as Row[]), ...dev];
+    const urls = new Set(pool.map((r) => norm(r.url)));
+    const titles = new Set(pool.map((r) => r.title.toLowerCase()));
+    const clean = blind2.filter((r) => !urls.has(norm(r.url)) && !titles.has(r.title.toLowerCase()));
+    const m = await measure(blind2);
+    const c = await measure(clean);
+    console.log(`${line('HOLDOUT2', m)}\n${line(`HOLDOUT2 clean (${clean.length} rows)`, c)}`);
+    expect(m.acc).toBeGreaterThanOrEqual(0.82);
+    expect(m.otherRate).toBeLessThanOrEqual(0.35);
   });
 });
