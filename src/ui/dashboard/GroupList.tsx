@@ -98,9 +98,16 @@ export function GroupList(props: GroupListProps) {
   );
 }
 
-/** Below 900 px the column collapses into this select at the top of the page. */
+/** Below 900 px the column collapses into this select at the top of the page (groups and suggestions). */
 export function ViewSelect({ view, groups, onView }: { view: View; groups: GroupSummary[]; onView: (v: View) => void }) {
   const value = view.kind === 'group' ? `group:${view.id}` : view.kind;
+  const regular = groups.filter((g) => !g.suggested).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  const suggested = groups.filter((g) => g.suggested);
+  const option = (g: GroupSummary) => (
+    <option key={g.id} value={`group:${g.id}`}>
+      {`${g.name} (${g.count}${g.watchCount ? ` · ▶ ${g.watchCount} to watch` : ''})`}
+    </option>
+  );
   return (
     <label class="view-select">
       <span class="sr-only">View</span>
@@ -112,9 +119,8 @@ export function ViewSelect({ view, groups, onView }: { view: View; groups: Group
         }}
       >
         {SPECIAL.map((s) => <option key={s.kind} value={s.kind}>{s.label}</option>)}
-        <optgroup label="Groups">
-          {groups.map((g) => <option key={g.id} value={`group:${g.id}`}>{`${g.name} (${g.count})`}</option>)}
-        </optgroup>
+        <optgroup label="Groups">{regular.map(option)}</optgroup>
+        {suggested.length > 0 && <optgroup label="Suggested">{suggested.map(option)}</optgroup>}
       </select>
     </label>
   );

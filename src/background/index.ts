@@ -352,6 +352,7 @@ configureSync({
     notifyChanged();
     void kickClassification(db);
   },
+  status: notifyChanged,
 });
 
 handle((req) => handleRequest(req), 'background');

@@ -6,7 +6,10 @@ export interface DashboardStateHook {
   state: DashboardState | null;
   /** Message of the last failed load (also when stale state is still shown), cleared by the next success. */
   error: string | null;
-  /** Re-reads the state; overlapping calls resolve in order and only the latest reply is applied. */
+  /**
+   * Re-reads the state. Coalesced: while a read is in flight, any number of calls queue exactly one more
+   * read after it; every caller's promise resolves once the reads it asked for are done.
+   */
   refresh: () => Promise<void>;
 }
 /** The worker's broadcast after data changed, sent by our own extension only. */
@@ -23,18 +26,28 @@ export function isChangedBroadcast(message: unknown, sender: chrome.runtime.Mess
 export function useDashboardState(): DashboardStateHook {
   const [state, setState] = useState<DashboardState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const seq = useRef(0);
-  const refresh = useCallback(async () => {
-    const mine = ++seq.current;
-    try {
-      const s = await send<DashboardState>({ t: 'state' });
-      if (mine !== seq.current) return;
-      setState(s);
-      setError(null);
-    } catch (e) {
-      if (mine !== seq.current) return;
-      setError(e instanceof Error ? e.message : String(e));
+  const running = useRef<Promise<void> | null>(null);
+  const dirty = useRef(false);
+  const refresh = useCallback(() => {
+    if (running.current) {
+      dirty.current = true;
+      return running.current;
     }
+    const run = async () => {
+      do {
+        dirty.current = false;
+        try {
+          const s = await send<DashboardState>({ t: 'state' });
+          setState(s);
+          setError(null);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } while (dirty.current);
+      running.current = null;
+    };
+    running.current = run();
+    return running.current;
   }, []);
   useEffect(() => {
     void refresh();

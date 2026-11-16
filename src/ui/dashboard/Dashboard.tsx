@@ -104,10 +104,18 @@ export function Dashboard() {
   const selection = useMemo(() => list.filter((i) => selected.has(i.id)), [list, selected]);
   const currentGroup = view.kind === 'group' ? groupMap.get(view.id) : undefined;
 
-  /** Runs one action at a time (a ref guards double clicks), reports failures, then re-reads the state. */
+  /** The control that started the running action: focus goes back to it if it was lost meanwhile. */
+  const opener = useRef<HTMLElement | null>(null);
+  /**
+   * Runs one action at a time (a ref guards double clicks), reports failures, then re-reads the state.
+   * Controls are disabled while it runs, so a dialog closing then cannot hand focus back to its opener:
+   * the effect below does that once the controls are enabled again.
+   */
   const act = async (fn: () => Promise<void>) => {
     if (busyRef.current) return;
     busyRef.current = true;
+    const active = document.activeElement;
+    opener.current = active instanceof HTMLElement && active !== document.body ? active : null;
     setBusy(true);
     try {
       await fn();
@@ -119,22 +127,57 @@ export function Dashboard() {
       await refresh();
     }
   };
+  useEffect(() => {
+    if (busy || dialog) return;
+    const el = opener.current;
+    opener.current = null;
+    const lost = !document.activeElement || document.activeElement === document.body;
+    if (el?.isConnected && lost) el.focus();
+  }, [busy, dialog]);
   const confirm = (opts: ConfirmOptions) =>
     new Promise<boolean>((resolve) => setDialog({ kind: 'confirm', opts, resolve }));
   const askName = (title: string, confirmLabel: string, initial?: string) =>
     new Promise<string | null>((resolve) => setDialog({ kind: 'name', title, confirmLabel, initial, resolve }));
-  /** Shows the change at once (controls don't flick back); the next state read replaces the overlay. */
+  /** Overlay keys whose value `s` does not hold yet (null when none are left). */
+  const unreflected = (p: Partial<SettingsT> | null, s: SettingsT): Partial<SettingsT> | null => {
+    if (!p) return null;
+    const rest = Object.fromEntries(Object.entries(p).filter(([k, v]) => s[k as keyof SettingsT] !== v));
+    return Object.keys(rest).length ? (rest as Partial<SettingsT>) : null;
+  };
+  /**
+   * Shows a settings change at once (controls don't flick back). Each key of the overlay is dropped once
+   * a state read reflects it; a refused or adjusted write drops its keys at once.
+   */
   const save = async (patch: Partial<SettingsT>) => {
     setPendingSettings((p) => ({ ...p, ...patch }));
+    const drop = (keys: string[]) =>
+      setPendingSettings((p) => {
+        if (!p) return p;
+        const rest = Object.fromEntries(Object.entries(p).filter(([k]) => !keys.includes(k)));
+        return Object.keys(rest).length ? (rest as Partial<SettingsT>) : null;
+      });
     try {
-      await send<SettingsT>({ t: 'settings', patch });
+      const next = await send<SettingsT>({ t: 'settings', patch });
+      drop(Object.keys(patch).filter((k) => next?.[k as keyof SettingsT] !== patch[k as keyof SettingsT]));
     } catch (e) {
-      setPendingSettings(null);
+      drop(Object.keys(patch));
       throw e;
     }
   };
-  useEffect(() => setPendingSettings(null), [state]);
+  useEffect(() => {
+    if (state) setPendingSettings((p) => unreflected(p, state.settings));
+  }, [state]);
 
+  /** Undo bypasses the busy guard: its 10 s window must not be lost to another action still running. */
+  const runUndo = async () => {
+    try {
+      notify((await undo()) ? 'Undone' : 'Too late to undo');
+    } catch (e) {
+      notify(errorText(e));
+    } finally {
+      await refresh();
+    }
+  };
   // ── item actions ──
   const openItem = (item: Item) => act(() => send({ t: 'open', id: item.id }));
   const sleepIds = async (ids: string[]) => {
@@ -146,8 +189,8 @@ export function Dashboard() {
     notify(`Stashed ${plural(ids.length - r.skipped, 'tab')}`, r.token);
   };
   const closeIds = async (ids: string[]) => {
-    const r = await send<{ token: string }>({ t: 'close', ids });
-    notify(`Closed ${plural(ids.length, 'tab')}`, r.token);
+    const r = await send<{ token: string; closed?: number }>({ t: 'close', ids });
+    notify(`Closed ${plural(r.closed ?? ids.length, 'tab')}`, r.token);
   };
   const moveIds = async (ids: string[], groupId: string) => {
     await send({ t: 'moveItems', ids, groupId });
@@ -345,7 +388,7 @@ export function Dashboard() {
 
         <main class="dash-main">
           <header class="dash-top">
-            <ViewSelect view={view} groups={moveTargets} onView={go} />
+            <ViewSelect view={view} groups={groups} onView={go} />
             <label class="search">
               <SearchIcon class="search-icon" />
               <input
@@ -514,9 +557,7 @@ export function Dashboard() {
 
       <UndoToast
         notice={notice} onDismiss={dismiss}
-        onUndo={() => void act(async () => {
-          notify((await undo()) ? 'Undone' : 'Too late to undo');
-        })}
+        onUndo={() => void runUndo()}
       />
 
       {dialog?.kind === 'confirm' && (

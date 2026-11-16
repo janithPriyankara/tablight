@@ -17,9 +17,10 @@ export interface SearchHook {
   error: string | null;
 }
 /**
- * Debounced word + meaning search. Latest wins twice over: a client-side sequence number drops replies
- * to older queries, and replies the background marked `superseded` (another page searched meanwhile)
- * never replace the shown results, but they do end the pending state.
+ * Debounced word + meaning search. A client-side sequence number drops replies to older queries. A reply
+ * the background marked `superseded` (another page searched meanwhile) still answers this query: its word
+ * matches are shown, without meaning results. A failure clears the results, so nothing stale is shown or
+ * opened.
  */
 export function useSearch(delay = SEARCH_DEBOUNCE_MS): SearchHook {
   const [query, setQueryState] = useState('');
@@ -43,13 +44,13 @@ export function useSearch(delay = SEARCH_DEBOUNCE_MS): SearchHook {
         (r) => {
           if (mine !== seq.current) return;
           setPending(false);
-          if (r.superseded) return;
-          setResults({ words: r.words, meaning: r.meaning });
+          setResults({ words: r.words, meaning: r.superseded ? [] : r.meaning });
           setError(null);
         },
         (e: unknown) => {
           if (mine !== seq.current) return;
           setPending(false);
+          setResults(null);
           setError(e instanceof Error ? e.message : String(e));
         },
       );

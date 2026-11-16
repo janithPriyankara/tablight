@@ -110,7 +110,7 @@ describe('popup', () => {
     serve(state(), (req) => {
       if (req.t !== 'search') return undefined;
       if (req.q === 'old') return { words: [item('i9', { title: 'Stale' })], meaning: [] };
-      if (req.q === 'sup') return { words: [], meaning: [], superseded: true };
+      if (req.q === 'sup') return { words: [item('i8', { title: 'Sup word' })], meaning: [], superseded: true };
       return { words: [item('i1', { title: 'Word hit' })], meaning: [item('i2', { title: 'Meaning hit' })] };
     });
     render(<Popup />);
@@ -130,11 +130,11 @@ describe('popup', () => {
     const meaning = screen.getByText('Meaning hit');
     expect(word.compareDocumentPosition(meaningHead) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(meaningHead.compareDocumentPosition(meaning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // A superseded reply never replaces the shown results.
+    // A superseded reply (another page searched meanwhile) shows its own word matches, without meaning.
     fireEvent.input(box, { target: { value: 'sup' } });
-    await waitFor(() => expect(sendMock.mock.calls.some(([r]) => r.t === 'search' && r.q === 'sup')).toBe(true));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(screen.getByText('Word hit')).toBeTruthy();
+    await screen.findByText('Sup word');
+    expect(screen.queryByText('Word hit')).toBeNull();
+    expect(screen.queryByText('Similar by meaning')).toBeNull();
     // Latest wins: a slow older reply that lands after a newer one is dropped.
     let releaseOld!: () => void;
     sendMock.mockImplementation(async (req) => {
@@ -226,6 +226,7 @@ describe('popup', () => {
     serve(state(), (req) => {
       if (req.t !== 'search') return undefined;
       if (req.q === 'sup') return { words: [], meaning: [], superseded: true };
+      if (req.q === 'good') return { words: [item('i1', { title: 'Good hit' })], meaning: [] };
       throw new Error('worker restarted');
     });
     render(<Popup />);
@@ -234,9 +235,39 @@ describe('popup', () => {
     fireEvent.input(box, { target: { value: 'sup' } });
     await waitFor(() => expect(screen.getByRole('main').getAttribute('aria-busy')).toBe('false'));
     expect(screen.queryByText('Searching…')).toBeNull();
+    fireEvent.input(box, { target: { value: 'good' } });
+    await screen.findByText('Good hit');
     fireEvent.input(box, { target: { value: 'boom' } });
     await screen.findByText('Search failed: worker restarted');
     expect(screen.queryByText('No matches')).toBeNull();
+    expect(screen.queryByText('Good hit')).toBeNull(); // results of an older query are never left behind
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(sendMock.mock.calls.some(([r]) => r.t === 'open')).toBe(false);
+  });
+  it('refreshes are coalesced: one in flight plus exactly one more', async () => {
+    const releases: (() => void)[] = [];
+    sendMock.mockImplementation(async (req) => {
+      if (req.t !== 'state') return undefined as never;
+      await new Promise<void>((r) => releases.push(r));
+      return state() as never;
+    });
+    const listeners: ((m: unknown, s: { id: string }) => unknown)[] = [];
+    (chrome.runtime as unknown as { id: string }).id = 'ext';
+    (chrome.runtime as unknown as { onMessage: unknown }).onMessage = {
+      addListener: (l: (typeof listeners)[number]) => listeners.push(l), removeListener: () => undefined,
+    };
+    render(<Popup />);
+    await waitFor(() => expect(releases).toHaveLength(1));
+    for (let k = 0; k < 5; k++) for (const l of listeners) l({ target: 'ui', t: 'changed' }, { id: 'ext' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(releases).toHaveLength(1); // still the first one in flight
+    releases[0]!();
+    await waitFor(() => expect(releases).toHaveLength(2)); // exactly one more for the five broadcasts
+    releases[1]!();
+    await screen.findByText(/5 tabs/);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(releases).toHaveLength(2);
   });
   it('a fast double click runs an action once', async () => {
     serve(state(), (req) => (req.t === 'sleep' ? { slept: 1, skipped: 0 } : undefined));

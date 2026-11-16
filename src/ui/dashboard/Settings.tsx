@@ -138,7 +138,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify }: Sett
           <div class="button-row">
             <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(async () => {
               await exportBackup();
-              notify('Backup saved to your downloads');
+              notify('Backup ready');
             })}>
               <DownloadIcon />Export backup
             </button>
@@ -187,7 +187,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify }: Sett
           <p class="privacy-line">
             <ShieldIcon />
             <span>
-              Nothing leaves your device: grouping runs on your computer, and there are no analytics.{' '}
+              Nothing leaves your device except stashed tabs, which sync through your browser account while
+              sync is on. Grouping runs on your computer, and there are no analytics.{' '}
               <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
             </span>
           </p>

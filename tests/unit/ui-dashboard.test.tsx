@@ -68,6 +68,7 @@ afterEach(() => {
   permissionsRequest.mockClear();
   sessionSet.mockClear();
   delete document.documentElement.dataset.theme;
+  vi.restoreAllMocks();
 });
 const ready = () => screen.findByRole('heading', { level: 1 });
 const rows = (c: Element) => c.querySelectorAll('.item-row');
@@ -208,7 +209,7 @@ describe('dashboard', () => {
   });
 
   it('keyboard: arrows move focus, Space selects, Delete closes with undo, "/" focuses search', async () => {
-    serve(state(), (req) => (req.t === 'close' ? { token: 'tok' } : req.t === 'undo' ? true : undefined));
+    serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
     const { container } = render(<Dashboard />);
     await screen.findByText('Title i1');
     const mains = () => [...container.querySelectorAll<HTMLElement>('.grid-row .item-main')];
@@ -223,6 +224,7 @@ describe('dashboard', () => {
     fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
     await waitFor(() => expect(sent('close')).toHaveLength(1));
     expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['i2', 'i4']); // rows are ordered by window: i1 i2 i4 i3
+    await screen.findByText('Closed 1 tab'); // the count the background actually closed
     fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'tok' }]));
     fireEvent.keyDown(document.body, { key: '/' });
@@ -290,9 +292,8 @@ describe('dashboard', () => {
   });
 
   it('close duplicates asks "Close N duplicate tabs?" before closing; export downloads a dated file', async () => {
-    const create = vi.fn(() => 'blob:x');
-    const revoke = vi.fn();
-    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: create, revokeObjectURL: revoke }));
+    const create = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:x');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     serve(state({ dupCount: 2 }), (req) =>
       (req.t === 'closeExtras' ? { closed: 2, token: 't' } : req.t === 'export' ? '{"schema":1}' : undefined));
@@ -310,6 +311,87 @@ describe('dashboard', () => {
     expect(a.download).toMatch(/^tab-organizer-\d{4}-\d{2}-\d{2}\.json$/);
     expect(create).toHaveBeenCalledWith(expect.any(Blob));
     await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:x'));
-    click.mockRestore();
+    await screen.findByText('Backup ready');
+  });
+
+  it('focus returns to the opener after a dialog opened from an action closes', async () => {
+    serve(state({ dupCount: 2 }), (req) => (req.t === 'closeExtras' ? { closed: 2, token: 't' } : undefined));
+    render(<Dashboard />);
+    await ready();
+    const opener = screen.getByRole('button', { name: 'Close duplicates' });
+    opener.focus();
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: 'Close 2 duplicate tabs?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    expect((opener as HTMLButtonElement).disabled).toBe(false);
+  });
+  it('below 900 px the view select also reaches suggested groups (with watch counts)', async () => {
+    serve(state({
+      groups: [group('programming', 'Programming', 3), group('videos', 'Videos', 1, { watchCount: 1 }), group('sug', 'Rust · async', 4, { suggested: true })],
+    }));
+    render(<Dashboard />);
+    await ready();
+    const select = screen.getByRole('combobox', { name: 'View' });
+    const labels = [...select.querySelectorAll('optgroup')].map((g) => [g.label, [...g.querySelectorAll('option')].map((o) => o.textContent)]);
+    expect(labels).toEqual([
+      ['Groups', ['Programming (3)', 'Videos (1 · ▶ 1 to watch)']],
+      ['Suggested', ['Rust · async (4)']],
+    ]);
+    fireEvent.change(select, { target: { value: 'group:sug' } });
+    await screen.findByRole('heading', { level: 1, name: 'Rust · async' });
+    expect(screen.getByRole('button', { name: 'Accept group' })).toBeTruthy();
+  });
+  it('in-app privacy text names the one exception: browser-account sync of stashed tabs', async () => {
+    serve(state({ settings: DEFAULT_SETTINGS }));
+    render(<Dashboard />);
+    const onboarding = await screen.findByRole('region', { name: 'Welcome to Tab Organizer' });
+    expect(onboarding.textContent).toMatch(/Nothing leaves your device except stashed tabs/);
+    act(() => {
+      location.hash = '#view=settings';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    const privacy = await screen.findByRole('region', { name: 'Privacy' });
+    expect(privacy.textContent).toMatch(/except stashed tabs, which sync through your browser account/);
+  });
+  it('Undo works while another action is still running', async () => {
+    let release!: () => void;
+    serve(state(), async (req) => {
+      if (req.t === 'close') return { token: 'tok', closed: 1 };
+      if (req.t === 'sleep') { await new Promise<void>((r) => (release = r)); return { slept: 1, skipped: 0 }; }
+      if (req.t === 'undo') return true;
+      return undefined;
+    });
+    render(<Dashboard />);
+    await screen.findByText('Title i1');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!);
+    const undoBtn = await screen.findByRole('button', { name: 'Undo' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sleep' })[0]!); // busy now
+    await waitFor(() => expect(release).toBeTypeOf('function'));
+    fireEvent.click(undoBtn);
+    await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'tok' }]));
+    release();
+  });
+  it('a settings overlay is cleared per key, only once the state reflects it', async () => {
+    location.hash = '#view=settings';
+    let settings = { ...DEFAULT_SETTINGS, onboarded: true };
+    let releaseSync!: () => void;
+    serve(() => state({ settings }), async (req) => {
+      const patch = req.patch as Record<string, unknown>;
+      if ('syncEnabled' in patch) await new Promise<void>((r) => (releaseSync = r)); // slow; not stored yet
+      settings = { ...settings, ...patch };
+      return settings;
+    });
+    render(<Dashboard />);
+    const sync = await screen.findByRole('checkbox', { name: /Sync stashed tabs/ });
+    fireEvent.click(sync);
+    await waitFor(() => expect(releaseSync).toBeTypeOf('function'));
+    expect((sync as HTMLInputElement).checked).toBe(false); // optimistic
+    for (const l of listeners) l({ target: 'ui', t: 'changed' }, { id: 'ext' }); // a refresh that predates the write
+    await new Promise((r) => setTimeout(r, 30));
+    expect((sync as HTMLInputElement).checked).toBe(false); // overlay kept: state still says true
+    releaseSync();
+    await waitFor(() => expect(sent('state').length).toBeGreaterThan(2));
+    expect((sync as HTMLInputElement).checked).toBe(false);
   });
 });

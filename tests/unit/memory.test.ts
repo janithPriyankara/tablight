@@ -219,7 +219,8 @@ describe('closeExtras / closeTabs / undo', () => {
   it('undo within 10 s recreates web tabs only; after 10 s returns false', async () => {
     const items = await setup([{ url: 'https://a.com/' }, { url: 'chrome://settings/' }]);
     vi.useFakeTimers({ toFake: ['Date'] });
-    const { token } = await closeTabs(db, items.map((i) => i.id));
+    const { token, closed } = await closeTabs(db, items.map((i) => i.id));
+    expect(closed).toBe(2);
     expect(mock.tabs()).toHaveLength(0);
     vi.advanceTimersByTime(9_000);
     expect(await undo(db, token)).toBe(true);

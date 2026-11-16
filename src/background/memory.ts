@@ -158,7 +158,8 @@ async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Close
   }
   return done;
 }
-export async function closeTabs(db: Db, ids: string[]): Promise<{ token: string }> {
+/** Closes the items' tabs; `closed` counts the tabs actually removed (already-gone tabs are skipped). */
+export async function closeTabs(db: Db, ids: string[]): Promise<{ token: string; closed: number }> {
   const live = await liveTabs();
   const entries: (readonly [Closed, number])[] = [];
   for (const id of new Set(ids)) {
@@ -167,7 +168,8 @@ export async function closeTabs(db: Db, ids: string[]): Promise<{ token: string 
     entries.push([{ item, url: live.get(item.tabId)?.url || item.url, windowId: item.windowId,
       pinned: live.get(item.tabId)?.pinned ?? false }, item.tabId]);
   }
-  return { token: remember({ closed: await removeTabs(entries) }) };
+  const closed = await removeTabs(entries);
+  return { token: remember({ closed }), closed: closed.length };
 }
 /** Closes duplicate tabs, keeping the most recently active copy of each page. */
 export async function closeExtras(db: Db): Promise<{ closed: number; token: string }> {
@@ -187,8 +189,8 @@ export async function closeExtras(db: Db): Promise<{ closed: number; token: stri
     const keep = group.reduce((a, b) => (better(a, b) ? b : a));
     for (const i of group) if (i !== keep) ids.push(i.id);
   }
-  const { token } = await closeTabs(db, ids);
-  return { closed: undos.get(token)?.closed.length ?? 0, token };
+  const { token, closed } = await closeTabs(db, ids);
+  return { closed, token };
 }
 export async function openItem(db: Db, id: string): Promise<void> {
   const item = await db.items.get(id);

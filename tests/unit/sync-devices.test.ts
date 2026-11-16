@@ -106,6 +106,21 @@ const urls = async (d: Device) => (await d.db.items.byState('stashed')).map((i) 
 const titleOf = async (d: Device, url: string) => (await d.db.items.get(await sha1hex(url)))?.title;
 
 describe('two devices sharing storage.sync', () => {
+  it('a pull that only deletes still reports applied (UIs refresh); every stored status is reported', async () => {
+    const [a, b] = await makeDevices();
+    const r = await put(a, 'https://only-delete.com/');
+    await converge(a, b);
+    expect(await urls(b)).toEqual(['https://only-delete.com/']);
+    const applied = vi.fn();
+    const status = vi.fn();
+    b.sync.configureSync({ applied, status });
+    await remove(a, r.id);
+    await pass(a);
+    await pass(b);
+    expect(await urls(b)).toEqual([]);
+    expect(applied).toHaveBeenCalledTimes(1);
+    expect(status).toHaveBeenCalled();
+  });
   it('concurrent edits of the same record: the later edit wins on both, in bounded writes', async () => {
     const [a, b] = await makeDevices();
     const r = await put(a, 'https://r.com/');

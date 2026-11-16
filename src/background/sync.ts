@@ -41,8 +41,10 @@ type Failure = Extract<SyncStatus, { ok: false }>['reason'];
 
 interface SyncHooks {
   ready?: (db: Db) => Promise<void>;
-  /** Called after a pass applied remote changes (index.ts: kick classification for the queued items). */
+  /** Called after a pass applied remote changes, upserts or deletions (index.ts: refresh UIs, classify). */
   applied?: (db: Db) => void;
+  /** Called whenever a pass stores a new sync status (index.ts: refresh UIs). */
+  status?: () => void;
 }
 let hooks: SyncHooks = {};
 /** `ready` runs before each sync (index.ts: seed the starter groups first, so names match them). */
@@ -103,6 +105,7 @@ export async function readSyncStatus(): Promise<SyncStatus> {
 
 async function save(s: SyncStatus): Promise<SyncStatus> {
   await chrome.storage.local.set({ [SYNC_STATUS_KEY]: s }).catch(() => undefined);
+  hooks.status?.();
   return s;
 }
 
@@ -301,7 +304,7 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
     const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
     const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
     await apply(db, m);
-    if (m.upserts.length) hooks.applied?.(db);
+    if (m.upserts.length || m.deletes.length) hooks.applied?.(db);
     const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
     // Before the write: an item opened right after it is pushed must already count as synced.
     await rememberSynced(db, remote, enc.included, m.tombs);
