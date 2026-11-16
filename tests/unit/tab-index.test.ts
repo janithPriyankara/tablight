@@ -4,6 +4,7 @@ import { openDb, type Db } from '../../src/background/db';
 import {
   configureTabIndex,
   BACKFILL_LIMIT,
+  BACKFILL_RETRY_MS,
   backfillEmbKeys,
   BACKOFF_MINUTES,
   embeddingKey,
@@ -431,6 +432,37 @@ describe('queue failures (review 1.4)', () => {
     expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(39);
     expect(items.find((i) => i.title === 'Q 5')!.groupId).toBeNull();
     expect(mock.alarms()).toEqual([]);
+  });
+  it('a given-up item is stamped, not re-queued by backfill within 24 h, and success clears the stamp', async () => {
+    await setup(40);
+    fakeEmbed.mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.startsWith('Q 5 '))) throw new Error('bad input');
+      return texts.map(vecFor);
+    });
+    for (let k = 0; k < 2; k++) await expect(processQueue(db, fakeEmbed)).rejects.toThrow();
+    await processQueue(db, fakeEmbed);
+    const poison = (await db.items.all()).find((i) => i.title === 'Q 5')!;
+    expect(poison.embGaveUpAt).toBeTypeOf('number');
+    expect(poison.embKey).toBeUndefined();
+    expect(await backfillEmbKeys(db)).toBe(0);
+    expect(await db.queue.size()).toBe(0);
+    // After 24 h it is tried again; once embedding works the stamp is lifted.
+    expect(await backfillEmbKeys(db, 200, poison.embGaveUpAt! + BACKFILL_RETRY_MS + 1)).toBe(1);
+    fakeEmbed.mockImplementation(async (texts: string[]) => texts.map(vecFor));
+    await processQueue(db, fakeEmbed);
+    const healed = (await db.items.get(poison.id))!;
+    expect(healed.embGaveUpAt).toBeUndefined();
+    expect(healed.embKey).toBeTypeOf('string');
+  });
+  it('given-up items do not starve other keyless items in the backfill window', async () => {
+    const mk = (id: string, over: Partial<Item> = {}): Item => ({
+      id, url: `https://a.com/${id}`, normUrl: `https://a.com/${id}`, title: id, domain: 'a.com', state: 'stashed',
+      groupId: null, groupSource: 'user', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true, ...over,
+    });
+    for (let k = 0; k < 205; k++) await db.items.put(mk(`gave${k}`, { embGaveUpAt: Date.now() }));
+    await db.items.put(mk('waiting'));
+    expect(await backfillEmbKeys(db)).toBe(1);
+    expect(await db.queue.take(10)).toEqual(['waiting']);
   });
   it('wrong vector count counts as a failure too', async () => {
     await setup(3);

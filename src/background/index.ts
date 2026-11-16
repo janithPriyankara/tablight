@@ -56,6 +56,14 @@ async function ensureStarterGroups(db: Db): Promise<void> {
   });
 }
 
+/** Backfill runs at most this often from pipeline passes (kicks and startup run it at once). */
+const BACKFILL_INTERVAL_MS = 5 * 60_000;
+let lastBackfill = 0;
+async function backfill(db: Db, force: boolean): Promise<void> {
+  if (!force && Date.now() - lastBackfill < BACKFILL_INTERVAL_MS) return;
+  lastBackfill = Date.now();
+  await backfillEmbKeys(db);
+}
 /**
  * After every reconcile: classify the queue; re-cluster Unsorted only when it may have changed;
  * sweep stale embeddings now and then; refresh only the badges whose text changes.
@@ -63,7 +71,7 @@ async function ensureStarterGroups(db: Db): Promise<void> {
 async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
   try {
     await ensureStarterGroups(db);
-    await backfillEmbKeys(db);
+    await backfill(db, false);
     const written = await processQueue(db);
     if (written > 0 || r.deleted > 0) {
       await maybeSuggest(db);
@@ -91,7 +99,7 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
  */
 export async function kickClassification(db: Db): Promise<void> {
   try {
-    await backfillEmbKeys(db); // import/stash/sync records may lack their vector key
+    await backfill(db, true); // import/stash/sync records may lack their vector key
     if ((await db.queue.size()) === 0) return;
     await pipeline(db, { created: 0, deleted: 0, enqueued: 0, navigatedTabIds: [] });
   } catch (e) {

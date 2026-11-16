@@ -219,13 +219,18 @@ export async function sweepEmbeddings(db: Db): Promise<number> {
 
 /** At most this many items are examined per backfill pass. */
 export const BACKFILL_LIMIT = 200;
+/** Items given up on are not backfilled (re-queued) for this long. */
+export const BACKFILL_RETRY_MS = 24 * 3_600_000;
 /**
  * Safety net for items that have no `embKey` (created by stash/import/sync paths that build fresh
  * records): sets it when the cached vector exists, else queues the item so classification embeds it.
  * Bounded per call; returns how many items were queued.
  */
-export async function backfillEmbKeys(db: Db, limit = BACKFILL_LIMIT): Promise<number> {
-  const todo = (await db.items.all()).filter((i) => i.classifiable && i.embKey === undefined).slice(0, limit);
+export async function backfillEmbKeys(db: Db, limit = BACKFILL_LIMIT, now = Date.now()): Promise<number> {
+  // Given-up items are filtered before the slice so they can't starve the others.
+  const todo = (await db.items.all())
+    .filter((i) => i.classifiable && i.embKey === undefined && !(i.embGaveUpAt !== undefined && now - i.embGaveUpAt < BACKFILL_RETRY_MS))
+    .slice(0, limit);
   if (!todo.length) return 0;
   const keys = await Promise.all(todo.map(embeddingKey));
   const have = await db.embeddings.getMany([...new Set(keys)]);
@@ -393,14 +398,16 @@ async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promis
 
 /** Gives up on items: auto items become Unsorted, user items keep their group; they leave the queue. */
 async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
+  const now = Date.now();
   return db.tx(['items', 'queue'], async (s) => {
     let n = 0;
     for (const id of ids) {
       const cur = await s.items.get(id);
-      if (cur && cur.groupSource === 'auto') {
-        await s.items.put({ ...cur, groupId: null, updatedAt: nextStamp(cur.updatedAt) });
+      if (!cur) continue;
+      if (cur.groupSource === 'auto') {
+        await s.items.put({ ...cur, groupId: null, embGaveUpAt: now, updatedAt: nextStamp(cur.updatedAt) });
         n++;
-      }
+      } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
     await s.queue.remove(ids);
     return n;
@@ -460,7 +467,9 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       if (cur.groupSource !== 'user') {
         groupId = autoGroup(cur, vec, groups);
       }
-      await s.items.put({ ...cur, groupId, embKey: keys[k]!, updatedAt: nextStamp(cur.updatedAt) });
+      const { embGaveUpAt: _cleared, ...rest } = cur; // a success lifts any earlier give-up stamp
+      void _cleared;
+      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt: nextStamp(cur.updatedAt) });
       done.push(snap.id);
       written++;
     }

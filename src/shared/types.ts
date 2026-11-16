@@ -19,6 +19,8 @@ export interface Item {
   classifiable: boolean;
   /** Embedding cache key of the content last classified (lets search read vectors without hashing). */
   embKey?: string;
+  /** Local only (never synced or exported, no updatedAt bump): when embedding this item was given up on. */
+  embGaveUpAt?: number;
 }
 export interface Group {
   id: string;
