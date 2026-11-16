@@ -379,8 +379,9 @@ test('side panel: lists its window’s tabs, switches on click; the toolbar sett
   await section.getByRole('button', { name: new RegExp(`^${escapeRe(target.title)}`) }).click();
   await expect.poll(() => page.evaluate((w) => chrome.tabs.query({ active: true, windowId: w }).then(([t]) => t?.id), target.windowId!))
     .toBe(target.tabId);
-  // The panel is off on an empty new tab and on for a normal page.
-  const blankId = await page.evaluate(() => chrome.tabs.create({ url: 'chrome://newtab/', active: false }).then((t) => t.id!));
+  // The panel is off on an empty tab and on for a normal page. (about:blank, not chrome://newtab/: the browser's
+  // own new-tab page loads Google's bar from the network, which the zero-network check would rightly flag.)
+  const blankId = await page.evaluate(() => chrome.tabs.create({ url: 'about:blank', active: false }).then((t) => t.id!));
   await expect.poll(() => page.evaluate((id) => chrome.sidePanel.getOptions({ tabId: id }).then((o) => o.enabled), blankId)).toBe(false);
   await expect.poll(() => page.evaluate((id) => chrome.sidePanel.getOptions({ tabId: id }).then((o) => o.enabled !== false), target.tabId!)).toBe(true);
   await rpc(page, { t: 'settings', patch: { toolbarOpens: 'sidepanel' } });
