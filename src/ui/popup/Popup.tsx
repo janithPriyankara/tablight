@@ -34,7 +34,8 @@ const isWebOpen = (i: Item) => i.state === 'open' && i.classifiable && i.tabId !
 export function Popup() {
   const { state, error, refresh } = useDashboardState();
   const search = useSearch();
-  const { notice, notify, undo } = useUndo();
+  // Popup actions that can be undone close the popup; their Undo lives in the dashboard (Stash this window).
+  const { notice, notify } = useUndo();
   const [busy, setBusy] = useState(false);
   // The ref guards re-entry synchronously (a fast double click lands before the re-render disables buttons).
   const busyRef = useRef(false);
@@ -79,20 +80,16 @@ export function Popup() {
       const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
       notify(r.slept ? `Slept ${plural(r.slept, 'tab')}` : 'Nothing to sleep right now');
     });
+  /** Closing the active tab closes the popup with it, so no Undo is offered (it could never be clicked). */
   const closeThis = (item: Item) =>
     act(async () => {
-      const r = await send<{ token: string }>({ t: 'close', ids: [item.id] });
-      notify('Closed this copy', r.token);
+      await send({ t: 'close', ids: [item.id] });
+      window.close();
     });
   const dashboard = (hash?: string) =>
     act(async () => {
       await openDashboard(hash);
       window.close();
-    });
-  const runUndo = () =>
-    act(async () => {
-      const ok = await undo();
-      if (!ok) notify('Too late to undo');
     });
 
   return (
@@ -173,12 +170,7 @@ export function Popup() {
 
       <footer class="popup-foot">
         <div class="notice" role="status" aria-live="polite">
-          {notice && (
-            <>
-              <span class="notice-text">{notice.message}</span>
-              {notice.token && <button type="button" class="link" onClick={() => void runUndo()}>Undo</button>}
-            </>
-          )}
+          {notice && <span class="notice-text">{notice.message}</span>}
         </div>
         <div class="actions">
           <button type="button" class="btn btn-primary" disabled={busy} onClick={() => void dashboard()}>

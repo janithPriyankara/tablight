@@ -102,8 +102,12 @@ describe('popup', () => {
     expect(alert.textContent).toContain('open 3 times');
     fireEvent.click(screen.getByRole('button', { name: 'Switch' }));
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i2' }));
+    vi.mocked(window.close).mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Close this one' }));
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'close', ids: ['i1'] }));
+    // Closing the active tab closes the popup too: no Undo that could never be clicked.
+    await waitFor(() => expect(window.close).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   });
 
   it('search is debounced 150 ms, shows words then meaning, and ignores superseded and stale replies', async () => {
