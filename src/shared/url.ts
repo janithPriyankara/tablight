@@ -123,6 +123,42 @@ export function cleanTitle(title: string, url: string): string {
   if (!t || t === url.trim() || /^https?:\/\/\S+$/i.test(t)) t = words(t && /^https?:/i.test(t) ? t : url);
   return cap(t);
 }
+const PATH_NOISE = new Set([
+  'www', 'index', 'html', 'htm', 'shtml', 'php', 'asp', 'aspx', 'jsp', 'cgi', 'watch', 'amp', 'en', 'us', 'gb', 'uk',
+]);
+const MAX_PATH_WORDS = 8;
+function isPathWord(t: string): boolean {
+  if (t.length < 2 || t.length > 24 || !/\p{L}/u.test(t)) return false;
+  if (PATH_NOISE.has(t.toLowerCase())) return false;
+  const digits = (t.match(/\p{N}/gu) ?? []).length;
+  // Ids and hashes: tt15398776, B09XS7JWHH, 3f2a1b0c9d8e…
+  return digits === 0 || (t.length < 5 && digits < 3);
+}
+/** Meaningful words from the URL path (spec 7.3.1): no ids, hashes, file extensions or locale noise. */
+export function pathWords(url: string): string {
+  const u = webUrl(url);
+  if (!u) return '';
+  let path: string;
+  try {
+    path = decodeURIComponent(u.pathname);
+  } catch {
+    return '';
+  }
+  let segments = path.split('/');
+  // readableSource already names the GitHub org and repo.
+  if (bareHost(u) === 'github.com') segments = segments.slice(3);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of segments.join('/').split(/[/\-_.\s]+/u)) {
+    const key = t.toLowerCase();
+    if (!isPathWord(t) || seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length === MAX_PATH_WORDS) break;
+  }
+  return out.join(' ');
+}
 export function embedText(item: Pick<Item, 'title' | 'url'>): string {
-  return `${cleanTitle(item.title, item.url)} — ${readableSource(item.url)}`;
+  const words = pathWords(item.url);
+  return `${cleanTitle(item.title, item.url)} — ${readableSource(item.url)}${words ? ` ${words}` : ''}`;
 }

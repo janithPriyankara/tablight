@@ -62,6 +62,14 @@ describe('assign', () => {
     expect(assign(vec(0, 0.15), [a, b], { threshold: 1.01 }).groupId).toBeNull();
   });
 
+  it('uses k nearest exemplars: k=2 by default, overridable', () => {
+    // A: two exact facets plus unrelated ones; B: five mediocre matches.
+    const facets = group('facets', [vec(0, 0, 1), vec(0, 0, 1), vec(5), vec(7), vec(9)]);
+    const uniform = group('uniform', Array.from({ length: 5 }, () => vec(0, 2, 1)));
+    const q = vec(0, 0.3, 1);
+    expect(assign(q, [facets, uniform]).groupId).toBe('facets');
+    expect(assign(q, [facets, uniform], { k: 5 }).groupId).toBe('uniform');
+  });
   it('never assigns to the other group', () => {
     const other = group('other', [vec(9), vec(9, 0.1)]);
     expect(assign(vec(9), [a, b, other]).groupId).toBeNull();

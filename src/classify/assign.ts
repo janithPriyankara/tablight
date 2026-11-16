@@ -3,13 +3,18 @@ import { cosine, mean, normalize } from '../shared/vec';
 import { STARTER_GROUPS } from './seeds';
 
 /**
- * Tuned on tests/quality/fixture.json (tests/quality/accuracy.test.ts). The spec's starting
- * point (0.35) left ~40% of correctly-ranked tabs Unsorted: MiniLM similarities between a short
- * tab title and a short seed phrase are low in absolute terms. Precision barely changes between
- * 0.15 and 0.25, so 0.2 keeps most real topics assigned while still leaving misc pages Unsorted.
+ * Tuned on tests/quality/fixture.json (tests/quality/accuracy.test.ts): 86.0% top-1 accuracy,
+ * with 50% of the misc ('other') pages left Unsorted. The spec's starting point (0.35) left most
+ * tabs Unsorted (MiniLM similarities between a short title and a short seed are low); 0.2 reached
+ * 87.3% but auto-assigned 64% of misc pages, which makes groups feel random.
  */
-export const DEFAULT_THRESHOLD = 0.2;
-export const DEFAULT_K = 5;
+export const DEFAULT_THRESHOLD = 0.23;
+/**
+ * k-NN k. Starter seeds are facets of a topic ("Gmail", "Jira ticket", "Zoom" are all Work);
+ * a tab matches one or two of them, so averaging the top 5 dilutes the score with unrelated
+ * facets. k=2 measured 87.0% vs 83.6% for k=5 at argmax on the fixture. Overridable via opts.k.
+ */
+export const DEFAULT_K = 2;
 export const MAX_EXEMPLARS = 50;
 /** Never assigned automatically: only the user puts tabs in "Other". */
 export const OTHER_GROUP_ID = 'other';

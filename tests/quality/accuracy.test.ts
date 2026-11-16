@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import fixture from './fixture.json';
 import { loadEmbedder } from './model';
-import { assign, buildStarterGroups } from '../../src/classify/assign';
+import { assign, buildStarterGroups, DEFAULT_K, DEFAULT_THRESHOLD } from '../../src/classify/assign';
 import { ruleGroup } from '../../src/classify/rules';
 import { embedText } from '../../src/shared/url';
 import type { Group } from '../../src/shared/types';
@@ -43,9 +43,12 @@ describe('classifier accuracy on the labelled fixture', () => {
       return `  ${label.padEnd(12)} ${ok}/${n}${wrong.length ? `  → ${wrong.join(', ')}` : ''}`;
     });
     const others = rows.filter((r) => r.group === 'other').length;
-    const otherUnsorted = rows.filter((r, i) => r.group === 'other' && predicted[i] === null).length;
+    const otherAssigned = rows.filter((r, i) => r.group === 'other' && predicted[i] !== null).length;
     console.log(
-      `top-1 accuracy ${(acc * 100).toFixed(1)}% (${correct}/${total}); other→unsorted ${otherUnsorted}/${others}\n` +
+      `top-1 accuracy ${(acc * 100).toFixed(1)}% (${correct}/${total}); ` +
+        `threshold ${DEFAULT_THRESHOLD}, k ${DEFAULT_K}; ` +
+        `'other' items falsely auto-assigned ${otherAssigned}/${others} ` +
+        `(${((otherAssigned / others) * 100).toFixed(0)}%)\n` +
         lines.join('\n'),
     );
     expect(acc).toBeGreaterThanOrEqual(0.85);

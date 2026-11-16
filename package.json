@@ -7,7 +7,7 @@
     "prepare:assets": "node scripts/fetch-model.mjs && node scripts/copy-ort.mjs",
     "build": "vite build",
     "test": "vitest run tests/unit",
-    "test:quality": "vitest run tests/quality",
+    "test:quality": "vitest run tests/quality --reporter=verbose",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "preview:ui": "vite --open /src/ui/dashboard/dashboard.html",

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText,
+  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText, pathWords,
 } from '../../src/shared/url';
 describe('normalizeUrl', () => {
   it.each([
@@ -100,5 +100,35 @@ describe('embedText', () => {
   it('joins clean title and readable source', () => {
     expect(embedText({ title: '(3) Agents - YouTube', url: 'https://www.youtube.com/watch?v=1' }))
       .toBe('Agents — YouTube video');
+  });
+  it('appends meaningful path words (spec 7.3.1)', () => {
+    expect(embedText({ title: 'Overview', url: 'https://docs.claude.com/en/docs/agent-sdk/overview' }))
+      .toBe('Overview — docs.claude.com docs agent sdk overview');
+    expect(embedText({ title: 'Fix', url: 'https://github.com/acme/api/pull/4821' }))
+      .toBe('Fix — GitHub repository acme api pull');
+    expect(embedText({ title: 'Home', url: 'https://example.com/' })).toBe('Home — example.com');
+  });
+});
+describe('pathWords', () => {
+  it.each([
+    ['https://www.youtube.com/watch?v=abc', ''],
+    ['https://www.youtube.com/feed/subscriptions', 'feed subscriptions'],
+    ['https://www.imdb.com/title/tt15398776/', 'title'],
+    ['https://www.amazon.com/Sony-WH-1000XM5-Headphones/dp/B09XS7JWHH/', 'Sony WH Headphones dp'],
+    ['https://example.com/en-US/docs/Web/index.html', 'docs Web'],
+    ['https://example.com/blog/2024/05/my_first-post.php', 'blog my first post'],
+    ['https://example.com/f/3f2a1b0c9d8e7f6a5b4c/report', 'report'],
+    ['https://example.com/a/' + 'b'.repeat(40), ''],
+    ['https://example.com/Docs/docs/DOCS', 'Docs'],
+    ['https://example.com/%E6%97%A5%E6%9C%AC/caf%C3%A9', '日本 café'],
+    ['https://example.com/%E0%A4%A', ''],
+    ['https://github.com/org/repo', ''],
+    ['https://github.com/org/repo/issues/12', 'issues'],
+    ['not a url', ''],
+  ])('%s → %j', (url, expected) => {
+    expect(pathWords(url)).toBe(expected);
+  });
+  it('keeps at most 8 words', () => {
+    expect(pathWords('https://e.com/' + 'abcdefghijkl'.split('').map((c) => c + c).join('/')).split(' ')).toHaveLength(8);
   });
 });
