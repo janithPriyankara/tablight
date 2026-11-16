@@ -173,6 +173,37 @@ describe('reconcile', () => {
     expect(await db.embeddings.get(key)).toBeDefined();
   });
 
+  it('waits for the real title: a loading tab with a placeholder title is not classified (restored tab)', async () => {
+    const url = 'https://zzz.example.net/doc/1';
+    mock = installChromeMock({ windows: [{ tabs: [{ url, title: 'Real doc title', status: 'complete' }] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, fakeEmbed);
+    const tabId = mock.tabs()[0]!.id!;
+    await db.items.put({ ...(await db.items.byTabId(tabId))!, groupId: 'work', groupSource: 'auto' });
+    // Restored / reloading: the title falls back to the URL while the page loads.
+    mock.updateTab(tabId, { status: 'loading', title: url });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(await db.queue.size()).toBe(0);
+    mock.updateTab(tabId, { status: 'loading', title: '' });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(await db.queue.size()).toBe(0);
+    expect((await db.items.byTabId(tabId))!.groupId).toBe('work'); // never dropped out of its group
+    mock.updateTab(tabId, { status: 'complete', title: 'Real doc title' });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(await db.queue.size()).toBe(1); // the real title is classified
+  });
+  it('a new loading tab waits; once loaded it is classified even if its title stays a placeholder', async () => {
+    const url = 'https://zzz.example.net/file.pdf';
+    mock = installChromeMock({ windows: [{ tabs: [{ url, title: '', status: 'loading' }, { url: 'https://b.example.org/x', title: 'B', status: 'loading' }] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const tabId = mock.tabs()[0]!.id!;
+    const id = (await db.items.byTabId(tabId))!.id;
+    expect(await db.queue.take(10)).toEqual([(await db.items.byTabId(mock.tabs()[1]!.id!))!.id]); // a real title is fine
+    await db.queue.remove(await db.queue.take(10));
+    mock.updateTab(tabId, { status: 'complete', title: url });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(await db.queue.take(10)).toEqual([id]);
+  });
   it('navigation re-enqueues the item but keeps a user group', async () => {
     mock = installChromeMock({ windows: [{ tabs: [web(1)] }] });
     await reconcile(db, await chrome.tabs.query({}));

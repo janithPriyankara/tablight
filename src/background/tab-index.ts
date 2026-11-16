@@ -55,6 +55,8 @@ export interface ReconcileResult {
 
 /** itemId → when a title-only change last re-enqueued it (memory: lost with the worker, which is fine). */
 const retitledAt = new Map<string, number>();
+/** Items whose classification waits for the page's real title (memory; backfillEmbKeys is the safety net). */
+const awaitingTitle = new Set<string>();
 
 /**
  * Makes the open/sleeping items match `tabs` exactly, in one transaction.
@@ -129,6 +131,7 @@ export async function reconcile(
     for (const id of gone) {
       await s.items.delete(id);
       retitledAt.delete(id);
+      awaitingTitle.delete(id);
     }
     if (gone.length) await s.queue.remove(gone);
     result.deleted = gone.length;
@@ -164,11 +167,19 @@ function itemFor(
     url, normUrl, title, domain: domainOf(url), kind: kindOf(url), classifiable, tabId: t.id!, windowId: t.windowId,
     state: t.discarded ? ('sleeping' as const) : ('open' as const), lastActiveAt,
   };
+  // While a page loads its title is a placeholder (empty or the URL, e.g. a restored tab): classifying that
+  // could move the tab out of its group. Wait for the real title; once loaded, a placeholder is all there is.
+  const waiting = classifiable && t.status !== 'complete' && isPlaceholderTitle(title, url);
+  const settle = (item: Item, enqueue: boolean) => {
+    if (waiting) awaitingTitle.add(item.id);
+    else if (enqueue) awaitingTitle.delete(item.id);
+    return enqueue && !waiting;
+  };
   if (!prev) {
     const item: Item = {
       id: crypto.randomUUID(), ...base, groupId: null, groupSource: 'auto', createdAt: now, updatedAt: now,
     };
-    return { item, enqueue: classifiable, navigated: true };
+    return { item, enqueue: settle(item, classifiable), navigated: true };
   }
   const navigated = prev.normUrl !== normUrl;
   const item: Item = { ...prev, ...base, updatedAt: prev.updatedAt };
@@ -176,7 +187,11 @@ function itemFor(
   if (!classifiable && item.groupSource === 'auto') item.groupId = null;
   let enqueue = classifiable && navigated;
   if (navigated) retitledAt.delete(item.id);
-  else if (classifiable && titleGist(prev.title, prev.url) !== titleGist(title, url)) {
+  else if (waiting) {
+    // no classification on a placeholder title
+  } else if (classifiable && awaitingTitle.has(item.id)) {
+    enqueue = true; // loaded: classify what there is now
+  } else if (classifiable && titleGist(prev.title, prev.url) !== titleGist(title, url)) {
     // The first real title (replacing a placeholder) always counts; later changes are rate-limited.
     const last = retitledAt.get(item.id);
     if (isPlaceholderTitle(prev.title, prev.url) || last === undefined || now - last >= RETITLE_INTERVAL_MS) {
@@ -184,7 +199,7 @@ function itemFor(
       if (!isPlaceholderTitle(prev.title, prev.url)) retitledAt.set(item.id, now);
     }
   }
-  return { item, enqueue, navigated };
+  return { item, enqueue: settle(item, enqueue), navigated };
 }
 
 const TRACKED: (keyof Item)[] = [
