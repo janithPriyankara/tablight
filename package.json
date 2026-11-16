@@ -11,7 +11,8 @@
     "test:quality": "vitest run tests/quality --reporter=verbose",
     "test:e2e": "playwright test",
     "lint": "eslint .",
-    "preview:ui": "vite --open /src/ui/dashboard/dashboard.html",
+    "preview:ui": "vite --config vite.preview.config.ts",
+    "preview:vectors": "node scripts/make-preview-vectors.mjs",
     "package": "node scripts/package.mjs"
   },
   "dependencies": {

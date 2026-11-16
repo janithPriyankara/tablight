@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Tab Organizer popup (preview)</title>
+    <style>
+      /* The real popup is 380x560 (popup.css); in a page it sits in a frame. */
+      html { background: #7a7a85; min-height: 100%; }
+      body.popup-page { margin: 24px auto; box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35); border-radius: 8px; }
+    </style>
+  </head>
+  <body class="popup-page">
+    <div id="app"></div>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
