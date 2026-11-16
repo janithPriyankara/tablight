@@ -22,7 +22,7 @@ describe('settings rpc', () => {
     const before = await db.settings.get();
     const bad: unknown[] = [
       { autoSleepMinutes: 4 }, { autoSleepMinutes: 1441 }, { autoSleepMinutes: 30.5 }, { autoSleepMinutes: '60' },
-      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' },
+      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' }, { autoCreateGroups: 'on' },
       { evil: true }, { __proto__: { onboarded: true } }, JSON.parse('{"__proto__":{"onboarded":true}}'),
       null, [], 'theme', { theme: 'dark', extra: 1 },
     ];
@@ -31,10 +31,10 @@ describe('settings rpc', () => {
     }
     expect(await db.settings.get()).toEqual(before);
     const ok = (await mock.sendMessage({
-      t: 'settings', patch: { autoSleepMinutes: 60, removeOnOpen: false, theme: 'dark', onboarded: true },
+      t: 'settings', patch: { autoSleepMinutes: 60, removeOnOpen: false, theme: 'dark', onboarded: true, autoCreateGroups: true },
     })) as { ok: true; data: Settings };
     expect(ok.ok).toBe(true);
-    expect(ok.data).toMatchObject({ autoSleepMinutes: 60, removeOnOpen: false, theme: 'dark', onboarded: true });
+    expect(ok.data).toMatchObject({ autoSleepMinutes: 60, removeOnOpen: false, theme: 'dark', onboarded: true, autoCreateGroups: true });
     expect(await db.settings.get()).toEqual(ok.data);
     expect(((await mock.sendMessage({ t: 'settings', patch: { autoSleepMinutes: null } })) as { data: Settings }).data.autoSleepMinutes).toBeNull();
     for (const m of [5, 1440]) {
@@ -64,6 +64,18 @@ describe('settings rpc', () => {
     mock.uninstall();
   });
 
+  it('turning auto-create on also turns waiting suggestions into groups', async () => {
+    const mock = installChromeMock();
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    await db.groups.put({
+      id: 'suggested-1', name: 'Rust · async', color: '#0090ff', icon: '✨', builtIn: false, exemplars: [],
+      centroid: null, createdAt: 1, suggested: true,
+    });
+    expect(await mock.sendMessage({ t: 'settings', patch: { autoCreateGroups: true } })).toMatchObject({ ok: true });
+    expect((await db.groups.get('suggested-1'))!.suggested).toBeUndefined();
+    mock.uninstall();
+  });
   it('broadcasts a debounced "changed" message to the UI after a mutation, not after reads', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

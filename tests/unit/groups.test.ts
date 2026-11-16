@@ -213,6 +213,39 @@ describe('suggestions', () => {
     await maybeSuggest(db);
     expect((await db.groups.all()).filter((g) => g.suggested)).toHaveLength(1);
   });
+  it('with auto-create on, a found topic becomes a normal group right away and teaches it', async () => {
+    await db.settings.set({ autoCreateGroups: true });
+    await unsorted(4, 'rust', vecFor('rust-base'));
+    await maybeSuggest(db);
+    const created = (await db.groups.all()).filter((g) => !g.builtIn);
+    expect(created).toHaveLength(1);
+    const g = created[0]!;
+    expect(g.suggested).toBeUndefined();
+    expect(g.exemplars.length).toBe(4);
+    const members = (await db.items.all()).filter((i) => i.groupId === g.id);
+    expect(members).toHaveLength(4);
+    expect(members.every((i) => i.groupSource === 'user')).toBe(true);
+  });
+  it('with auto-create off (the default), a found topic is only suggested', async () => {
+    expect((await db.settings.get()).autoCreateGroups).toBe(false);
+    await unsorted(4, 'rust', vecFor('rust-base'));
+    await maybeSuggest(db);
+    expect((await db.groups.all()).filter((g) => g.suggested)).toHaveLength(1);
+  });
+  it('a deleted auto-created group does not come straight back', async () => {
+    await db.settings.set({ autoCreateGroups: true });
+    await unsorted(4, 'rust', vecFor('rust-base'));
+    await maybeSuggest(db);
+    const [g] = (await db.groups.all()).filter((x) => !x.builtIn);
+    await deleteGroup(db, g!.id);
+    expect((await db.items.all()).every((i) => i.groupId === null)).toBe(true);
+    await maybeSuggest(db);
+    expect((await db.groups.all()).filter((x) => !x.builtIn)).toEqual([]);
+    // A new topic is still created.
+    await unsorted(4, 'gardening', vecFor('garden-base'));
+    await maybeSuggest(db);
+    expect((await db.groups.all()).filter((x) => !x.builtIn)).toHaveLength(1);
+  });
   it('keeps only the newest 200 dismissed fingerprints', async () => {
     for (let k = 0; k < MAX_DISMISSED + 5; k++) await recordDismissed([`h${k}`]);
     const all = await loadDismissed();

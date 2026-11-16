@@ -249,7 +249,7 @@ const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'undo', 'sessionAction', 'regroupApply',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
-  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded',
+  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups',
 ]);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 /**
@@ -275,7 +275,7 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
         if (val !== 'system' && val !== 'light' && val !== 'dark') throw new Error('invalid theme');
         out.theme = val;
         break;
-      case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded':
+      case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups':
         if (!isBool(val)) throw new Error(`${key} must be true or false`);
         out[key as 'syncEnabled'] = val;
         break;
@@ -292,6 +292,10 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
   }
   if (Object.keys(rest).length) await db.settings.set(rest);
   if (syncEnabled !== undefined) await setSyncEnabled(db, syncEnabled);
+  // Turning auto-create on also accepts the suggestions already waiting, so the setting means one thing.
+  if (rest.autoCreateGroups === true) {
+    for (const g of (await db.groups.all()).filter((x) => x.suggested)) await acceptSuggestion(db, g.id);
+  }
   return db.settings.get();
 }
 /** Group RPCs. Payloads come from extension pages but are still validated. */

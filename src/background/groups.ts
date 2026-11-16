@@ -133,6 +133,13 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
 /** Deletes a group; its items go back to Unsorted for the next classification. 'other' is permanent. */
 export async function deleteGroup(db: Db, id: string): Promise<void> {
   if (id === OTHER_GROUP_ID) throw new Error('the Other group cannot be deleted');
+  // A deleted group of the user's (or one created automatically) is remembered like a dismissed suggestion,
+  // so topic discovery does not put the same tabs straight back into a new group.
+  const g = await db.groups.get(id);
+  if (g && !g.builtIn) {
+    const members = (await db.items.all()).filter((i) => i.groupId === id);
+    if (members.length) await recordDismissed(await fingerprintOf(members));
+  }
   await db.tx(['items', 'groups', 'queue'], async (s) => {
     if (!(await s.groups.get(id))) throw new Error('unknown group');
     for (const i of await s.items.all()) {

@@ -2,7 +2,7 @@ The same zip (`release/tab-organizer-<version>.zip`) goes to both stores.
 Tab Organizer (placeholder; the owner chooses the final name)
 Group, search and stash hundreds of tabs by topic, with an AI model that runs on your device. No servers, no tracking.
 Tab Organizer helps when you have too many tabs open.
-- See all your tabs from every window in one dashboard, automatically grouped by topic such as Movies, Programming, Shopping or News. Drag a tab into another group and it learns your choice.
+- See all your tabs from every window in one dashboard, automatically grouped by topic such as Movies, Programming, Shopping or News. Drag a tab into another group and it learns your choice. New topics are spotted on their own and offered as new groups, or created automatically if you turn that on.
 - Find duplicates and close the extras, with a 10 second undo.
 - Put tabs to sleep to free memory, or stash a tab, a group or a whole window: the tab closes and the link is kept until you open it again.
 - Hourly snapshots of your windows let you continue where you left off after a restart.

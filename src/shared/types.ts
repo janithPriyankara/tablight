@@ -45,6 +45,8 @@ export interface Settings {
   removeOnOpen: boolean;
   theme: 'system' | 'light' | 'dark';
   onboarded: boolean;
+  /** Found topics become groups right away instead of waiting as suggestions. */
+  autoCreateGroups: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -53,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   removeOnOpen: true,
   theme: 'system',
   onboarded: false,
+  autoCreateGroups: false,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.

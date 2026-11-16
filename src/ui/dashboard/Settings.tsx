@@ -91,6 +91,26 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
   return (
     <div class="page-scroll">
       <form class="settings" onSubmit={(e) => e.preventDefault()}>
+        <section class="settings-group" aria-labelledby="set-grouping-h">
+          <h2 class="settings-h" id="set-grouping-h">Grouping</h2>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Create new groups automatically</span>
+              <span class="setting-help">
+                When 3 or more unsorted tabs share a topic, make a group for them right away instead of suggesting
+                one. You can rename or delete it; a deleted group doesn’t come back.
+              </span>
+            </span>
+            <input
+              type="checkbox" class="switch" checked={settings.autoCreateGroups} disabled={busy}
+              onChange={(e) => {
+                const on = e.currentTarget.checked;
+                void act(() => save({ autoCreateGroups: on }));
+              }}
+            />
+          </label>
+        </section>
+
         <section class="settings-group" aria-labelledby="set-memory-h">
           <h2 class="settings-h" id="set-memory-h">Memory</h2>
           <label class="setting">

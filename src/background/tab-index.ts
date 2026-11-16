@@ -9,6 +9,7 @@ import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
 import { nextStamp } from '../shared/stamp';
+import { acceptSuggestion } from './groups';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -545,6 +546,7 @@ export async function recordDismissed(fp: string[]): Promise<void> {
  * so a topic already suggested is recognised) and stores each new cluster as a Group{suggested:true}
  * whose items move into it (groupSource stays 'auto': accepting flips `suggested`, dismissing deletes it).
  * Clusters overlapping a current suggestion by ≥ 60% are skipped; at most 5 suggestions exist at once.
+ * With settings.autoCreateGroups on, each new suggestion is accepted straight away.
  */
 export async function maybeSuggest(db: Db): Promise<void> {
   const groups = await db.groups.all();
@@ -607,4 +609,8 @@ export async function maybeSuggest(db: Db): Promise<void> {
       }
     }
   });
+  // Settings → "Create new groups automatically": accept each one now, exactly as the Accept button does.
+  if ((await db.settings.get()).autoCreateGroups) {
+    for (const { group } of created) await acceptSuggestion(db, group.id);
+  }
 }
