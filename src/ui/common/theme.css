@@ -1,5 +1,5 @@
 /*
- * Tab Organizer design tokens + shared component styles (popup and dashboard).
+ * Tablight design tokens + shared component styles (popup and dashboard).
  * System fonts only (CSP + zero network). Light by default, dark via the OS preference,
  * and `<html data-theme="light|dark">` overrides both (settings toggle).
  */

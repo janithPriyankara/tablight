@@ -26,7 +26,7 @@ export async function exportBackup(): Promise<void> {
   try {
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tab-organizer-${isoDate()}.json`;
+    a.download = `tablight-${isoDate()}.json`;
     document.body.append(a);
     a.click();
     a.remove();
@@ -39,7 +39,7 @@ export async function exportBackup(): Promise<void> {
 /** Reads a backup file and imports it; files over 20 MB are refused before reading. */
 export interface ImportResult { added: number; skipped: number; skippedSessions?: number }
 export async function importBackup(file: File): Promise<ImportResult> {
-  if (file.size > MAX_IMPORT_BYTES) throw new Error('That file is larger than 20 MB, so it can’t be a Tab Organizer backup.');
+  if (file.size > MAX_IMPORT_BYTES) throw new Error('That file is larger than 20 MB, so it can’t be a Tablight backup.');
   const json = await file.text();
   return send<ImportResult>({ t: 'import', json });
 }
@@ -102,7 +102,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
             <div class="setting">
               <span class="setting-text">
                 <span class="setting-name">Guided tour</span>
-                <span class="setting-help">A short walk through every part of Tab Organizer, using your own tabs.</span>
+                <span class="setting-help">A short walk through every part of Tablight, using your own tabs.</span>
               </span>
               <button type="button" class="btn btn-sm" onClick={onTour}>Start the tour</button>
             </div>
@@ -265,7 +265,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
             <span class="setting-text">
               <span class="setting-name">Delete all data</span>
               <span class="setting-help">
-                Deletes everything Tab Organizer stored on this device and the synced copy of your saved tabs in your
+                Deletes everything Tablight stored on this device and the synced copy of your saved tabs in your
                 browser account, and turns sync off here. Open tabs stay open. Uninstalling also removes the data on
                 this device.
               </span>

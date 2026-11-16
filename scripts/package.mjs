@@ -1,4 +1,4 @@
-// Builds dist/ (the build runs the release gate), then packages it into release/tab-organizer-<version>.zip.
+// Builds dist/ (the build runs the release gate), then packages it into release/tablight-<version>.zip.
 import { ZipArchive } from 'archiver';
 import { spawnSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
@@ -13,7 +13,7 @@ const build = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run'
 });
 if (build.status !== 0) process.exit(build.status ?? 1);
 const { version } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-const out = join(root, 'release', `tab-organizer-${version}.zip`);
+const out = join(root, 'release', `tablight-${version}.zip`);
 await mkdir(dirname(out), { recursive: true });
 await rm(out, { force: true });
 await new Promise((resolve, reject) => {

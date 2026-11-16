@@ -442,7 +442,7 @@ export function Dashboard() {
         <aside class="dash-side">
           <div class="brand">
             <LogoMark />
-            <span class="brand-name">Tab Organizer</span>
+            <span class="brand-name">Tablight</span>
           </div>
           <GroupList
             view={searching ? { kind: 'all' } : view} groups={groups} counts={counts} onView={go} dragging={dragging}

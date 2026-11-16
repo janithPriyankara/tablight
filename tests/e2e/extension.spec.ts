@@ -287,7 +287,7 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   ]);
   const backup = join(tempDir(), download.suggestedFilename());
   await download.saveAs(backup);
-  expect(download.suggestedFilename()).toMatch(/^tab-organizer-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^tablight-\d{4}-\d{2}-\d{2}\.json$/);
   const exported = readFileSync(backup, 'utf8');
   for (const url of stillStashed) expect(exported).toContain(url);
 

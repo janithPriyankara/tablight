@@ -202,7 +202,7 @@ export function SidePanel() {
       <header class="sp-top">
         <div class="brand">
           <LogoMark />
-          <span class="brand-name">Tab Organizer</span>
+          <span class="brand-name">Tablight</span>
         </div>
         {state && !state.modelReady && (
           <span class="status-pill" title="The on-device model is grouping your tabs">

@@ -120,7 +120,7 @@ export function parseImport(json: string): ParseResult {
     return { ok: false, error: 'not valid JSON' };
   }
   if (!isObj(root) || root['format'] !== FORMAT || root['version'] !== VERSION) {
-    return { ok: false, error: 'not a Tab Organizer backup' };
+    return { ok: false, error: 'not a Tablight backup' };
   }
   const rawItems = root['items'] ?? [];
   const rawGroups = root['groups'] ?? [];

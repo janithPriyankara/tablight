@@ -13,7 +13,8 @@ import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { openDashboard } from '../shared/nav';
 import { isClutterTab } from '../shared/url';
-import { semanticSearch, wordSearch } from '../search/search';
+import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
+import { HEAD } from '../classify/head';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
@@ -169,7 +170,7 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
       return vec ? [{ item, vec }] : [];
     });
     if (ticket !== searchTicket) return { words, meaning: [], superseded: true };
-    return { words, meaning: semanticSearch(qVec, withVec) };
+    return { words, meaning: semanticSearch(qVec, withVec, 20, semanticMinFor(HEAD.model)) };
   } catch (e) {
     console.error('semantic search failed', e);
     return { words, meaning: [] };

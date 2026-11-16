@@ -1,4 +1,6 @@
-A browser extension for Microsoft Edge and Google Chrome (desktop) that keeps large numbers of open tabs under control.
+# Tablight
+
+Private AI tab organizer. A browser extension for Microsoft Edge and Google Chrome (desktop) that keeps large numbers of open tabs under control.
 - Lists every open tab in one dashboard and groups them by topic (Movies, Programming, Shopping, ...). Grouping uses a small AI model that ships inside the extension and runs on your computer.
 - Finds duplicate tabs and closes the extras (with undo).
 - Pauses tabs to free memory (they stay in your tab strip), or saves them for later (closes the tab, keeps it in a list) and opens them again when you want.
@@ -26,7 +28,7 @@ npm run test:e2e         # loads dist/ in real Chromium, checks flows, performan
 ```
 npm run package
 ```
-This runs the release checks again and writes `release/tab-organizer-<version>.zip`. Upload that same zip to the Chrome Web Store and to Edge Add-ons. Store text and permission justifications are in [store/listing.md](store/listing.md). The build fails if the manifest permissions or CSP change, an unexpected URL appears in the code, a model file hash differs, a DOM-injection API appears in app code, a bundled package has a license outside MIT / Apache-2.0 / BSD / ISC / 0BSD, or the package is 45 MB or larger.
+This runs the release checks again and writes `release/tablight-<version>.zip`. Upload that same zip to the Chrome Web Store and to Edge Add-ons. Store text and permission justifications are in [store/listing.md](store/listing.md). The build fails if the manifest permissions or CSP change, an unexpected URL appears in the code, a model file hash differs, a DOM-injection API appears in app code, a bundled package has a license outside MIT / Apache-2.0 / BSD / ISC / 0BSD, or the package is 45 MB or larger.
 - Desktop browsers only.
 - Edge and Chrome do not sync with each other. Use export/import to move your saved tabs between them.
 - Grouping works best for English titles.

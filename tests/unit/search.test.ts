@@ -76,3 +76,14 @@ describe('semanticSearch', () => {
     expect(semanticSearch([1, 0], vs, 2)).toHaveLength(2);
   });
 });
+describe('semanticMinFor', () => {
+  it('uses the cut-off measured for each bundled model, and a strict default for unknown ones', async () => {
+    const { semanticMinFor } = await import('../../src/search/search');
+    const { HEAD } = await import('../../src/classify/head');
+    expect(semanticMinFor('Xenova/bge-small-en-v1.5')).toBe(0.55);
+    expect(semanticMinFor('Xenova/all-MiniLM-L6-v2')).toBe(0.3);
+    expect(semanticMinFor('some/other-model')).toBe(0.5);
+    // The shipped model has a measured cut-off (not the fallback).
+    expect(['Xenova/bge-small-en-v1.5', 'Xenova/all-MiniLM-L6-v2']).toContain(HEAD.model);
+  });
+});

@@ -80,6 +80,18 @@ export function wordSearch(items: Item[], groups: Group[], q: string, limit = 50
   return hits.slice(0, limit).map((h) => h.item);
 }
 /** Items by cosine similarity to the query vector, best first, dropping anything below `min`. */
+/**
+ * Lowest cosine counted as "similar by meaning", per embedding model: each model has its own similarity scale.
+ * Measured on the training pool with sample queries: for bge-small, 99% of unrelated tabs score below 0.55
+ * while real matches mostly score 0.55–0.82; for MiniLM the same split sat near 0.30.
+ */
+const SEMANTIC_MIN: Record<string, number> = {
+  'Xenova/all-MiniLM-L6-v2': 0.3,
+  'Xenova/bge-small-en-v1.5': 0.55,
+};
+export function semanticMinFor(model: string): number {
+  return SEMANTIC_MIN[model] ?? 0.5;
+}
 export function semanticSearch(
   qVec: ArrayLike<number>,
   items: { item: Item; vec: ArrayLike<number> }[],

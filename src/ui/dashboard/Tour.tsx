@@ -12,7 +12,7 @@ export interface TourStep {
 /** The guided tour, in the order a new user meets things. Plain words, one idea per step. */
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: 'Welcome to Tab Organizer',
+    title: 'Welcome to Tablight',
     body: (
       <>
         <p>This short tour shows you around, using your own tabs.</p>
@@ -55,7 +55,7 @@ export const TOUR_STEPS: TourStep[] = [
     body: (
       <>
         <p>Drag a tab onto a group to move it there. Select several with their checkboxes to move them together.</p>
-        <p>Tab Organizer learns from this: similar tabs go to that group next time, on your other devices too when sync is on.</p>
+        <p>Tablight learns from this: similar tabs go to that group next time, on your other devices too when sync is on.</p>
       </>
     ),
   },
@@ -87,7 +87,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="sessions"]',
     title: 'Pick up where you left off',
-    body: <p>Every hour Tab Organizer remembers your windows. After a restart, or the next morning, open them all again or save them for later.</p>,
+    body: <p>Every hour Tablight remembers your windows. After a restart, or the next morning, open them all again or save them for later.</p>,
   },
   {
     title: 'Popup and side panel',
@@ -96,7 +96,7 @@ export const TOUR_STEPS: TourStep[] = [
         <p><strong>Toolbar icon</strong>: a quick popup with search and your top groups.</p>
         <p><strong>Side panel</strong> (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>): stays open next to your pages, showing this window’s tabs and your groups.</p>
         <p><strong>This dashboard</strong>: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>.</p>
-        <p>Tip: pin Tab Organizer with the puzzle-piece icon in your browser’s toolbar, so it’s always one click away.</p>
+        <p>Tip: pin Tablight with the puzzle-piece icon in your browser’s toolbar, so it’s always one click away.</p>
       </>
     ),
   },

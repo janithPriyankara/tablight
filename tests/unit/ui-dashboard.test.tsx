@@ -271,7 +271,7 @@ describe('dashboard', () => {
     serve(state({ settings: DEFAULT_SETTINGS }), (req) => (req.t === 'settings' ? { ...DEFAULT_SETTINGS, ...(req.patch as object) } : undefined));
     render(<Dashboard />);
     fireEvent.click(await screen.findByRole('button', { name: 'Take the tour' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Welcome to Tab Organizer' });
+    const dialog = await screen.findByRole('dialog', { name: 'Welcome to Tablight' });
     expect(within(dialog).getByText(/1 of \d+/)).toBeTruthy();
     expect((within(dialog).getByRole('button', { name: 'Back' }) as HTMLButtonElement).disabled).toBe(true);
     expect(document.activeElement && dialog.contains(document.activeElement)).toBe(true); // focus moves into the tour
@@ -299,7 +299,7 @@ describe('dashboard', () => {
     serve(state());
     render(<Dashboard />);
     fireEvent.click(await screen.findByRole('button', { name: 'Guided tour' }));
-    await screen.findByRole('dialog', { name: 'Welcome to Tab Organizer' });
+    await screen.findByRole('dialog', { name: 'Welcome to Tablight' });
     for (let k = 0; k < 40 && !screen.queryByRole('button', { name: 'Done' }); k++) {
       fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     }
@@ -355,13 +355,13 @@ describe('dashboard', () => {
     (chrome as unknown as { action: unknown }).action = { getUserSettings };
     serve(state({ settings: DEFAULT_SETTINGS }));
     render(<Dashboard />);
-    await screen.findByText(/Pin Tab Organizer/);
+    await screen.findByText(/Pin Tablight/);
     cleanup();
     getUserSettings.mockResolvedValue({ isOnToolbar: true });
     render(<Dashboard />);
     await screen.findByText(/Nothing leaves your device/);
     await new Promise((r) => setTimeout(r, 20));
-    expect(screen.queryByText(/Pin Tab Organizer/)).toBeNull();
+    expect(screen.queryByText(/Pin Tablight/)).toBeNull();
   });
 
   it('first run shows onboarding; model-not-ready shows the grouping banner; the last session card', async () => {
@@ -398,7 +398,7 @@ describe('dashboard', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Export backup' }));
     await waitFor(() => expect(click).toHaveBeenCalled());
     const a = click.mock.contexts[0] as HTMLAnchorElement;
-    expect(a.download).toMatch(/^tab-organizer-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(a.download).toMatch(/^tablight-\d{4}-\d{2}-\d{2}\.json$/);
     expect(create).toHaveBeenCalledWith(expect.any(Blob));
     await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:x'));
     await screen.findByText('Backup ready');
@@ -435,7 +435,7 @@ describe('dashboard', () => {
   it('in-app privacy text names the one exception: browser-account sync of stashed tabs', async () => {
     serve(state({ settings: DEFAULT_SETTINGS }));
     render(<Dashboard />);
-    const onboarding = await screen.findByRole('region', { name: 'Welcome to Tab Organizer' });
+    const onboarding = await screen.findByRole('region', { name: 'Welcome to Tablight' });
     expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later and the examples you teach your groups/);
     act(() => {
       location.hash = '#view=settings';

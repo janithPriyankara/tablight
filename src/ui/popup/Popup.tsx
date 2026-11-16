@@ -110,7 +110,7 @@ export function Popup() {
       <header class="popup-head">
         <div class="brand">
           <LogoMark />
-          <span class="brand-name">Tab Organizer</span>
+          <span class="brand-name">Tablight</span>
         </div>
         {state && !state.modelReady && (
           <span class="status-pill" title="The on-device model is grouping your tabs">
@@ -195,7 +195,7 @@ export function Popup() {
             <GridIcon />Open dashboard
           </button>
           {hasPanel && (
-            <button type="button" class="btn" disabled={windowId === null} onClick={openPanel} title="Keep Tab Organizer open beside your pages (Alt+Shift+S)">
+            <button type="button" class="btn" disabled={windowId === null} onClick={openPanel} title="Keep Tablight open beside your pages (Alt+Shift+S)">
               <PanelIcon />Side panel
             </button>
           )}

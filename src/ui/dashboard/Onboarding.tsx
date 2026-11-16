@@ -16,14 +16,14 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
     <section class="card onboarding" aria-labelledby="onboarding-h">
       <LogoMark size={28} />
       <div class="card-text">
-        <h2 id="onboarding-h" class="card-title">Welcome to Tab Organizer</h2>
+        <h2 id="onboarding-h" class="card-title">Welcome to Tablight</h2>
         <ul class="onboarding-points">
           <li>Grouping runs on your computer, using only each tab’s title and address. No servers, no analytics.</li>
           <li>Nothing leaves your device except tabs you save for later and the examples you teach your groups, which sync through your own browser account. You can turn that off in Settings.</li>
           {unpinned && (
             <li>
-              <strong>Pin Tab Organizer</strong> so it’s one click away: click the puzzle-piece icon in the toolbar, then
-              the pin next to Tab Organizer.
+              <strong>Pin Tablight</strong> so it’s one click away: click the puzzle-piece icon in the toolbar, then
+              the pin next to Tablight.
             </li>
           )}
         </ul>
