@@ -79,39 +79,10 @@ body.popup-page > #app {
   margin-top: var(--space-1);
 }
 
-/* Search */
-.search {
-  position: relative;
-  display: block;
+/* Search (shared styles in theme.css) */
+.popup .search {
   margin: var(--space-3) var(--space-4) 0;
 }
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 11px;
-  color: var(--text-subtle);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-.search input {
-  width: 100%;
-  height: 36px;
-  padding: 0 var(--space-3) 0 34px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-sm);
-}
-.search input::placeholder {
-  color: var(--text-subtle);
-}
-.search input:focus-visible {
-  border-color: var(--accent);
-}
-.search input::-webkit-search-cancel-button {
-  cursor: pointer;
-}
-
 /* Scrolling body */
 .popup-body {
   flex: 1;

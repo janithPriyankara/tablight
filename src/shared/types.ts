@@ -83,6 +83,11 @@ export interface DashboardState {
   syncStatus: SyncStatus;
   /** The previous browser session, when the startup check found it was not restored. */
   lastSession?: Snapshot;
-  /** Starter groups exist and the queue is empty or the model produced a vector this session. */
+  /** Nothing waits for classification, or (with groups to classify into) the model produced a vector this session. */
   modelReady: boolean;
+  settings: Settings;
 }
+/** chrome.storage.session key of the startup check's result: `{ snapshotId: string | null }`. */
+export const LAST_SESSION_KEY = 'lastSession';
+/** The background's broadcast to open extension pages after data changed (debounced). */
+export interface ChangedMessage { target: 'ui'; t: 'changed' }

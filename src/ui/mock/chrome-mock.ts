@@ -82,6 +82,8 @@ export interface ChromeMockControl {
   tabGroups(): chrome.tabGroups.TabGroup[];
   /** Sends a runtime message as the extension's own page (or `sender`) and resolves the reply. */
   sendMessage(message: unknown, sender?: Partial<chrome.runtime.MessageSender>): Promise<unknown>;
+  /** Messages the extension sent with chrome.runtime.sendMessage (e.g. the worker's "changed" broadcasts). */
+  broadcasts(): unknown[];
   /** Call counts of the tab-group APIs (to assert "never called"). */
   calls: { group: number; ungroup: number; update: number };
   uninstall(): void;
@@ -129,6 +131,8 @@ export interface MockChrome {
     onMessage: MockEvent<
       (m: unknown, s: chrome.runtime.MessageSender, respond: (r?: unknown) => void) => boolean | void
     >;
+    /** A message sent by the extension itself (the worker's broadcasts): recorded, never delivered back. */
+    sendMessage(message: unknown): Promise<unknown>;
   };
   permissions: { contains(p: chrome.permissions.Permissions): Promise<boolean> };
   tabGroups: {
@@ -201,6 +205,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const area = (data: Map<string, unknown>, name: string) =>
     storageArea(data, (changes) => onStorageChanged.fire(changes, name));
   const granted = new Set<string>();
+  const broadcasts: unknown[] = [];
   const groups = new Map<number, chrome.tabGroups.TabGroup>();
   let nextGroupId = 1;
   const calls = { group: 0, ungroup: 0, update: 0 };
@@ -221,6 +226,10 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       onInstalled: new MockEvent(),
       onStartup: new MockEvent(),
       onMessage: new MockEvent(),
+      async sendMessage(message) {
+        broadcasts.push(clone(message));
+        return undefined;
+      },
     },
     permissions: {
       async contains(p) {
@@ -489,6 +498,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       else granted.delete(name);
     },
     tabGroups: () => [...groups.values()].map(clone),
+    broadcasts: () => broadcasts.map(clone),
     calls,
     sendMessage(message, sender = {}) {
       return new Promise((resolve) => {

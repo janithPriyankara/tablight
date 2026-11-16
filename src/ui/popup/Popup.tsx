@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import type { DashboardState, GroupSummary, Item, SyncStatus } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
@@ -6,6 +6,7 @@ import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
 import { CloseIcon, CopyIcon, GridIcon, LogoMark, MoonIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../common/nav';
+import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
@@ -35,16 +36,22 @@ export function Popup() {
   const search = useSearch();
   const { notice, notify, undo } = useUndo();
   const [busy, setBusy] = useState(false);
+  // The ref guards re-entry synchronously (a fast double click lands before the re-render disables buttons).
+  const busyRef = useRef(false);
+  const theme = state?.settings?.theme;
+  useEffect(() => applyTheme(theme), [theme]);
 
   /** Runs an action, reports failures in the notice bar, then re-reads the state. */
   const act = async (fn: () => Promise<void>) => {
-    if (busy) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       await fn();
     } catch (e) {
       notify(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
+      busyRef.current = false;
       setBusy(false);
       await refresh();
     }
@@ -104,6 +111,12 @@ export function Popup() {
           <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
         </div>
       )}
+      {error && state && (
+        <div class="callout callout-error" role="alert">
+          <span>Couldn’t refresh: showing the last known tabs.</span>
+          <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
+        </div>
+      )}
       {!state && !error && <p class="totals totals-loading" aria-busy="true">Counting tabs…</p>}
       {state && <p class="totals">{totalsLine(state)}</p>}
 
@@ -133,7 +146,8 @@ export function Popup() {
           onInput={(e) => search.setQuery(e.currentTarget.value)}
           onKeyDown={(e) => {
             const first = search.results?.words[0] ?? search.results?.meaning[0];
-            if (e.key === 'Enter' && first) void openItem(first);
+            // Only once the results match what was typed (no opening a stale result).
+            if (e.key === 'Enter' && first && !search.pending) void openItem(first);
             if (e.key === 'Escape' && search.query) {
               e.preventDefault();
               search.setQuery('');
@@ -144,7 +158,10 @@ export function Popup() {
 
       <main class="popup-body" aria-busy={search.pending}>
         {search.query.trim() ? (
-          <SearchResultsView results={search.results} pending={search.pending} groups={state?.groups ?? []} onOpen={openItem} />
+          <SearchResultsView
+            results={search.results} pending={search.pending} error={search.error} groups={state?.groups ?? []}
+            onOpen={(i) => void openItem(i)}
+          />
         ) : (
           state && <TopGroups groups={state.groups} onPick={(id) => void dashboard(`group=${encodeURIComponent(id)}`)} />
         )}
@@ -203,15 +220,17 @@ function TopGroups({ groups, onPick }: { groups: GroupSummary[]; onPick: (id: st
 function SearchResultsView(props: {
   results: { words: Item[]; meaning: Item[] } | null;
   pending: boolean;
+  error: string | null;
   groups: GroupSummary[];
   onOpen: (item: Item) => void;
 }) {
-  const { results, pending, groups, onOpen } = props;
+  const { results, pending, error, groups, onOpen } = props;
+  if (error && !pending) return <p class="empty" role="alert">Search failed: {error}</p>;
   if (!results) return <p class="empty">{pending ? 'Searching…' : ''}</p>;
   const byId = new Map(groups.map((g) => [g.id, g]));
   const row = (i: Item) => {
     const g = i.groupId !== null ? byId.get(i.groupId) : undefined;
-    return <ItemRow key={i.id} item={i} onOpen={onOpen} {...(g ? { group: g } : {})} />;
+    return <ItemRow key={i.id} item={i} onOpen={() => onOpen(i)} {...(g ? { group: g } : {})} />;
   };
   if (!results.words.length && !results.meaning.length) {
     return <p class="empty">{pending ? 'Searching…' : 'No matches'}</p>;

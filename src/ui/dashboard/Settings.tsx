@@ -1,0 +1,198 @@
+import { useRef } from 'preact/hooks';
+import { send } from '../../shared/rpc';
+import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
+import { ago, plural } from '../common/format';
+import { DownloadIcon, ShieldIcon, UploadIcon } from '../common/icons';
+import { isoDate, syncStatusLine } from './views';
+
+/** Same limit the background's import enforces; checked before the file is read. */
+export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+const AUTO_SLEEP_CHOICES: { value: number | null; label: string }[] = [
+  { value: null, label: 'Off' }, { value: 15, label: '15 minutes' }, { value: 30, label: '30 minutes' },
+  { value: 60, label: '1 hour' }, { value: 120, label: '2 hours' }, { value: 240, label: '4 hours' },
+  { value: 480, label: '8 hours' }, { value: 1440, label: '1 day' },
+];
+const THEMES: { value: SettingsT['theme']; label: string }[] = [
+  { value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' },
+];
+
+/** Saves a backup: the JSON from the `export` RPC as a download (Blob + a[download], no downloads permission). */
+export async function exportBackup(): Promise<void> {
+  const json = await send<string>({ t: 'export' });
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tab-organizer-${isoDate()}.json`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+  } finally {
+    // Revoke after the click has been handled (the download keeps its own reference).
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+}
+
+/** Reads a backup file and imports it; files over 20 MB are refused before reading. */
+export async function importBackup(file: File): Promise<{ added: number; skipped: number }> {
+  if (file.size > MAX_IMPORT_BYTES) throw new Error('That file is larger than 20 MB, so it can’t be a Tab Organizer backup.');
+  const json = await file.text();
+  return send<{ added: number; skipped: number }>({ t: 'import', json });
+}
+
+export interface SettingsProps {
+  settings: SettingsT;
+  syncStatus: SyncStatus;
+  busy: boolean;
+  save: (patch: Partial<SettingsT>) => Promise<void>;
+  /** Runs an action with the dashboard's busy guard, error reporting and refresh. */
+  act: (fn: () => Promise<void>) => Promise<void>;
+  notify: (message: string) => void;
+}
+
+export function Settings({ settings, syncStatus, busy, save, act, notify }: SettingsProps) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const autoValue = settings.autoSleepMinutes === null ? 'off' : String(settings.autoSleepMinutes);
+  const choices = AUTO_SLEEP_CHOICES.some((c) => c.value === settings.autoSleepMinutes)
+    ? AUTO_SLEEP_CHOICES
+    : [...AUTO_SLEEP_CHOICES, { value: settings.autoSleepMinutes, label: plural(settings.autoSleepMinutes ?? 0, 'minute') }];
+
+  /** The permission prompt needs the click's user gesture: request it first, before anything awaits. */
+  const onMirror = (on: boolean) => {
+    if (!on) return void act(() => save({ mirrorTabGroups: false }));
+    const asked = chrome.permissions.request({ permissions: ['tabGroups'] });
+    void act(async () => {
+      const granted = await asked.catch(() => false);
+      if (!granted) return notify('Permission not granted, so tab groups are not mirrored.');
+      await save({ mirrorTabGroups: true });
+    });
+  };
+  const onImport = (input: HTMLInputElement) => {
+    const file = input.files?.[0];
+    input.value = ''; // the same file can be picked again
+    if (!file) return;
+    void act(async () => {
+      const r = await importBackup(file);
+      notify(`Imported ${plural(r.added, 'tab')}${r.skipped ? ` · skipped ${r.skipped}` : ''}`);
+    });
+  };
+
+  return (
+    <div class="page-scroll">
+      <form class="settings" onSubmit={(e) => e.preventDefault()}>
+        <section class="settings-group" aria-labelledby="set-memory-h">
+          <h2 class="settings-h" id="set-memory-h">Memory</h2>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Auto-sleep tabs I haven’t used for</span>
+              <span class="setting-help">Sleeping tabs stay in the tab strip but free their memory. Active, pinned and playing tabs are never slept.</span>
+            </span>
+            <select
+              class="field field-inline" value={autoValue} disabled={busy}
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                void act(() => save({ autoSleepMinutes: v === 'off' ? null : Number(v) }));
+              }}
+            >
+              {choices.map((c) => <option key={String(c.value)} value={c.value === null ? 'off' : String(c.value)}>{c.label}</option>)}
+            </select>
+          </label>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Remove a stashed tab from the stash when I open it</span>
+              <span class="setting-help">Turn off to keep stashed tabs as a reading list.</span>
+            </span>
+            <input
+              type="checkbox" class="switch" checked={settings.removeOnOpen} disabled={busy}
+              onChange={(e) => {
+                const on = e.currentTarget.checked;
+                void act(() => save({ removeOnOpen: on }));
+              }}
+            />
+          </label>
+        </section>
+
+        <section class="settings-group" aria-labelledby="set-sync-h">
+          <h2 class="settings-h" id="set-sync-h">Sync and backup</h2>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Sync stashed tabs through my browser account</span>
+              <span class="setting-help">Only stashed tabs sync (address, short title, group). Open tabs and sessions stay on this device.</span>
+            </span>
+            <input
+              type="checkbox" class="switch" checked={settings.syncEnabled} disabled={busy}
+              onChange={(e) => {
+                const on = e.currentTarget.checked;
+                void act(() => save({ syncEnabled: on }));
+              }}
+            />
+          </label>
+          <p class={syncStatus.ok ? 'sync-status' : 'sync-status is-error'} role="status">
+            {syncStatusLine(syncStatus)}
+            {syncStatus.lastSyncAt !== null && <span class="muted">{` · last synced ${ago(syncStatus.lastSyncAt)}`}</span>}
+          </p>
+          <p class="setting-help">
+            Edge and Chrome don’t sync with each other: use Export and Import to move your stash between them.
+          </p>
+          <p class="setting-help">A device that stays offline for more than 30 days may bring back stashed tabs you removed elsewhere.</p>
+          <div class="button-row">
+            <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(async () => {
+              await exportBackup();
+              notify('Backup saved to your downloads');
+            })}>
+              <DownloadIcon />Export backup
+            </button>
+            <button type="button" class="btn btn-sm" disabled={busy} onClick={() => fileInput.current?.click()}>
+              <UploadIcon />Import backup…
+            </button>
+            <input
+              ref={fileInput} type="file" accept="application/json,.json" class="sr-only" tabIndex={-1}
+              aria-label="Import backup file" onChange={(e) => onImport(e.currentTarget)}
+            />
+          </div>
+        </section>
+
+        <section class="settings-group" aria-labelledby="set-look-h">
+          <h2 class="settings-h" id="set-look-h">Look and browser</h2>
+          <div class="setting" role="radiogroup" aria-labelledby="theme-label">
+            <span class="setting-text">
+              <span class="setting-name" id="theme-label">Theme</span>
+            </span>
+            <span class="segmented">
+              {THEMES.map((t) => (
+                <label key={t.value} class={settings.theme === t.value ? 'segment is-on' : 'segment'}>
+                  <input
+                    type="radio" name="theme" value={t.value} checked={settings.theme === t.value} disabled={busy}
+                    onChange={() => void act(() => save({ theme: t.value }))}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </span>
+          </div>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Mirror groups as browser tab groups</span>
+              <span class="setting-help">Shows your groups in the tab strip too. Asks for the “tab groups” permission.</span>
+            </span>
+            <input
+              type="checkbox" class="switch" checked={settings.mirrorTabGroups} disabled={busy}
+              onChange={(e) => onMirror(e.currentTarget.checked)}
+            />
+          </label>
+        </section>
+
+        <section class="settings-group" aria-labelledby="set-privacy-h">
+          <h2 class="settings-h" id="set-privacy-h">Privacy</h2>
+          <p class="privacy-line">
+            <ShieldIcon />
+            <span>
+              Nothing leaves your device: grouping runs on your computer, and there are no analytics.{' '}
+              <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
+            </span>
+          </p>
+        </section>
+      </form>
+    </div>
+  );
+}

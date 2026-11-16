@@ -11,7 +11,7 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import { semanticSearch, wordSearch } from '../search/search';
-import type { DashboardState, GroupSummary, Item, Snapshot } from '../shared/types';
+import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
   LAST_SESSION_KEY, SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
@@ -20,7 +20,7 @@ import {
 import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, openItem, sleepTabs, stash, undo } from './memory';
 import {
   SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, readSyncStatus, scheduleSync,
-  touchStashedInGroup,
+  setSyncEnabled, touchStashedInGroup,
 } from './sync';
 import {
   KICK_ALARM,
@@ -57,6 +57,25 @@ async function ensureStarterGroups(db: Db): Promise<void> {
   });
 }
 
+/** Open extension pages hear about changes at most this often (the first change starts the wait). */
+export const CHANGED_DEBOUNCE_MS = 300;
+let changedTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * Tells open dashboards/popups that the data changed, so they re-read the state. Coalesced: one message
+ * CHANGED_DEBOUNCE_MS after the first change of a burst. No page open is not an error.
+ */
+export function notifyChanged(): void {
+  if (changedTimer !== undefined) return;
+  changedTimer = setTimeout(() => {
+    changedTimer = undefined;
+    const msg: ChangedMessage = { target: 'ui', t: 'changed' };
+    try {
+      void Promise.resolve(chrome.runtime.sendMessage(msg)).catch(() => undefined);
+    } catch {
+      // no receiver: nothing to do
+    }
+  }, CHANGED_DEBOUNCE_MS);
+}
 /** Backfill runs at most this often from pipeline passes (kicks and startup run it at once). */
 const BACKFILL_INTERVAL_MS = 5 * 60_000;
 let lastBackfill = 0;
@@ -90,6 +109,7 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
   } finally {
     invalidateBadges(r.navigatedTabIds);
     await updateBadge(db).catch((e: unknown) => console.error('badge update failed', e));
+    notifyChanged();
   }
 }
 
@@ -166,7 +186,9 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
  * for classification or the model already produced a vector in this worker's lifetime.
  */
 async function dashboardState(db: Db): Promise<DashboardState> {
-  const [items, groups, queued] = await Promise.all([db.items.all(), db.groups.all(), db.queue.size()]);
+  const [items, groups, queued, settings] = await Promise.all([
+    db.items.all(), db.groups.all(), db.queue.size(), db.settings.get(),
+  ]);
   const counts = new Map<string, { count: number; watchCount: number }>();
   const windows = new Set<number>();
   let sleeping = 0;
@@ -191,8 +213,9 @@ async function dashboardState(db: Db): Promise<DashboardState> {
     activeDuplicate(items, dups), readSyncStatus(), readLastSession(db),
   ]);
   return {
-    items, groups: summaries, dupCount, windows: windows.size, sleeping, syncStatus,
-    modelReady: groups.length > 0 && (queued === 0 || isWarm()),
+    items, groups: summaries, dupCount, windows: windows.size, sleeping, syncStatus, settings,
+    // An empty queue is ready even with no groups (e.g. the user deleted them all): nothing is pending.
+    modelReady: queued === 0 || (groups.length > 0 && isWarm()),
     ...(activeDup ? { activeDup } : {}),
     ...(lastSession ? { lastSession } : {}),
   };
@@ -214,6 +237,52 @@ const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'open',
   'undo', 'sessionAction', 'regroupApply',
 ]);
+const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
+  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded',
+]);
+const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
+/**
+ * Validates a `settings` patch: a plain object holding only known keys, each with a valid value
+ * (autoSleepMinutes: null or an integer 5..1440). Anything else is rejected as a whole.
+ */
+export function parseSettingsPatch(v: unknown): Partial<Settings> {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) throw new Error('invalid settings');
+  const proto: unknown = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) throw new Error('invalid settings');
+  const out: Partial<Settings> = {};
+  for (const key of Object.keys(v)) {
+    if (!SETTING_KEYS.has(key)) throw new Error(`unknown setting: ${key.slice(0, 40)}`);
+    const val = (v as Record<string, unknown>)[key];
+    switch (key as keyof Settings) {
+      case 'autoSleepMinutes':
+        if (val !== null && !(Number.isInteger(val) && (val as number) >= 5 && (val as number) <= 1440)) {
+          throw new Error('autoSleepMinutes must be off or 5-1440 minutes');
+        }
+        out.autoSleepMinutes = val as number | null;
+        break;
+      case 'theme':
+        if (val !== 'system' && val !== 'light' && val !== 'dark') throw new Error('invalid theme');
+        out.theme = val;
+        break;
+      case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded':
+        if (!isBool(val)) throw new Error(`${key} must be true or false`);
+        out[key as 'syncEnabled'] = val;
+        break;
+    }
+  }
+  return out;
+}
+/** `settings` RPC: applies a validated patch and returns the new settings. */
+async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
+  const { syncEnabled, ...rest } = parseSettingsPatch(raw);
+  // The UI requests the optional permission (it needs a user gesture); never enable mirroring without it.
+  if (rest.mirrorTabGroups === true && !(await chrome.permissions.contains({ permissions: ['tabGroups'] }))) {
+    throw new Error('tab groups permission not granted');
+  }
+  if (Object.keys(rest).length) await db.settings.set(rest);
+  if (syncEnabled !== undefined) await setSyncEnabled(db, syncEnabled);
+  return db.settings.get();
+}
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
   const db = await getDb();
@@ -231,7 +300,11 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'groupDelete': await deleteGroup(db, parseId(req.id)); break;
     case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id)); break;
     case 'dismissSuggestion': await dismissSuggestion(db, parseId(req.id)); break;
-    case 'sleep': return sleepTabs(db, parseIds(req.ids));
+    case 'sleep': {
+      const r = await sleepTabs(db, parseIds(req.ids));
+      notifyChanged();
+      return r;
+    }
     case 'stash': out = await stash(db, parseIds(req.ids)); break;
     case 'open': await openItem(db, parseId(req.id)); break;
     case 'close': out = await closeTabs(db, parseIds(req.ids)); break;
@@ -253,6 +326,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'search': return search(db, req);
     case 'state': return dashboardState(db);
     case 'regroupApply': out = await regroupApply(db); break;
+    case 'settings': out = await updateSettings(db, req.patch); break;
     case 'export': return exportJson(db);
     case 'import': {
       if (typeof req.json !== 'string') throw new Error('invalid import');
@@ -264,6 +338,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     }
     default: throw new Error(`unsupported request: ${req.t}`);
   }
+  notifyChanged();
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
   if (req.t === 'import' || req.t === 'sessionAction') void kickClassification(db);
   await mirrorAll(db);
@@ -271,7 +346,13 @@ export async function handleRequest(req: Req): Promise<unknown> {
 }
 configureTabIndex({ db: getDb, after: pipeline });
 // Remote group names must match the built-in groups, so they are seeded before any sync.
-configureSync({ ready: ensureStarterGroups, applied: (db) => void kickClassification(db) });
+configureSync({
+  ready: ensureStarterGroups,
+  applied: (db) => {
+    notifyChanged();
+    void kickClassification(db);
+  },
+});
 
 handle((req) => handleRequest(req), 'background');
 

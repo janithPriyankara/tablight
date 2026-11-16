@@ -3,11 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title>Tab Organizer - Privacy</title>
+    <style>
+      body { max-width: 680px; margin: 0 auto; padding: 40px 16px; font: 15px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      h1 { font-size: 24px; line-height: 1.25; }
+      h2 { margin-top: 28px; font-size: 17px; }
+    </style>
   </head>
   <body>
     <h1>Tab Organizer privacy statement</h1>
-    <p>Tab Organizer groups your tabs using a model that runs entirely on your device. It makes no network requests and collects no analytics.</p>
-    <p>Nothing leaves your device except your browser's own sync of stashed tabs (via the browser's extension sync storage), which you can switch off in Settings.</p>
+    <p>Tab Organizer is built so that your browsing stays on your device. In short: nothing leaves your device, except the optional sync of stashed tabs through your own browser account.</p>
+    <h2>No network, no analytics</h2>
+    <p>The extension makes no network requests. It has no servers, no accounts, no analytics, no tracking and no ads. Site icons are read from the browser's own icon cache, never downloaded from websites.</p>
+    <h2>Grouping runs on your computer</h2>
+    <p>Tabs are grouped by an AI model that ships inside the extension and runs on your device. It only uses each tab's title and address. Page contents are never read.</p>
+    <h2>What is stored</h2>
+    <p>The list of your tabs (address, title, group, open/sleeping/stashed state), your groups, stashed tabs, saved sessions and settings are kept in the extension's local storage on your device. Private (incognito) windows are never recorded.</p>
+    <h2>Sync of stashed tabs (optional)</h2>
+    <p>If sync is on (the default), stashed tabs are synced through your browser's own extension sync storage, which is tied to your Microsoft account in Edge or your Google account in Chrome. Only the address, a short title, the group name and the date are synced. Open tabs and saved sessions are never synced. You can turn sync off at any time in Settings.</p>
+    <h2>Export and import</h2>
+    <p>Export saves a backup file to your computer; import reads a backup file you choose. These files are only ever written or read locally, by you.</p>
+    <h2>Permissions</h2>
+    <p>Tab Organizer reads your tabs to list and group them, uses storage to keep its data, alarms for auto-sleep and hourly snapshots, and the browser's icon cache for site icons. The optional "tab groups" permission is only requested if you turn on mirroring to the browser's tab groups.</p>
   </body>
 </html>

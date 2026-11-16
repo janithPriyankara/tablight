@@ -45,3 +45,45 @@ export const LogoMark = ({ size = 20 }: { size?: number }) => (
     <path d="M6 8h8M6 11h5.5" stroke="var(--accent-contrast)" stroke-width="1.6" stroke-linecap="round" />
   </svg>
 );
+export const ListIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><path d="M2.5 4h.01M2.5 8h.01M2.5 12h.01" /></Svg>
+);
+export const InboxIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M2.5 9.5h3l1 1.5h3l1-1.5h3" /><path d="M4.2 3.5h7.6l1.7 6v3a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-3z" /></Svg>
+);
+export const ClockIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="8" cy="8" r="5.75" /><path d="M8 5v3l2 1.5" /></Svg>
+);
+export const GearIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="8" cy="8" r="2" /><path d="M8 1.75v1.5M8 12.75v1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M1.75 8h1.5M12.75 8h1.5M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05" /></Svg>
+);
+export const MoveIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M2.5 4.5a1 1 0 0 1 1-1h3l1.5 1.5h4.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" /><path d="M6.5 9h4M9 7l1.5 2L9 11" /></Svg>
+);
+export const SparkIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l1.8 1.8M10.2 10.2 12 12M4 12l1.8-1.8M10.2 5.8 12 4" /></Svg>
+);
+export const TrashIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5M4 4.25l.6 8.6a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8.6" /></Svg>
+);
+export const PencilIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M10.5 2.75 13.25 5.5 6 12.75H3.25V10z" /></Svg>
+);
+export const MergeIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M4 2.5v3.5a3 3 0 0 0 3 3h5.5M12 2.5v4" /><path d="m10.5 7.5 2 1.5-2 1.5" /><path d="M4 13.5V9" /></Svg>
+);
+export const PlusIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M8 3v10M3 8h10" /></Svg>
+);
+export const CheckIcon = (p: IconProps) => (
+  <Svg {...p}><path d="m3.5 8.5 3 3 6-7" /></Svg>
+);
+export const DownloadIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M8 2.5v8M4.75 7.5 8 10.75l3.25-3.25M2.75 13.25h10.5" /></Svg>
+);
+export const UploadIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M8 10.75v-8M4.75 5.75 8 2.5l3.25 3.25M2.75 13.25h10.5" /></Svg>
+);
+export const ShieldIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M8 1.75 13 3.5v4c0 3.1-2.1 5.6-5 6.75-2.9-1.15-5-3.65-5-6.75v-4z" /></Svg>
+);

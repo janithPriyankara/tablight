@@ -9,7 +9,7 @@ export function faviconUrl(pageUrl: string): string {
 export function Favicon({ url, size = 16 }: { url: string; size?: number }) {
   const [failed, setFailed] = useState<string | null>(null);
   if (!isWebUrl(url) || failed === url) {
-    return <span class="favicon favicon-placeholder" style={{ width: size, height: size }}><PageIcon size={size - 2} /></span>;
+    return <span class="favicon favicon-placeholder" style={{ width: `${size}px`, height: `${size}px` }}><PageIcon size={size - 2} /></span>;
   }
   return (
     <img

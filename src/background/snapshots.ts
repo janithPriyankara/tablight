@@ -1,6 +1,6 @@
 // Session snapshots: web tabs (url + title) per window, kept local only. Separate from the stash.
 import { sha1hex } from '../shared/hash';
-import type { Item, Snapshot } from '../shared/types';
+import { LAST_SESSION_KEY, type Item, type Snapshot } from '../shared/types';
 import { isSafeToOpen, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
 import type { Db } from './db';
 import { restashTime, stashRecord } from './memory';
@@ -13,7 +13,7 @@ export const OPEN_ALL_CONFIRM_ABOVE = 20;
 /** Fewer than this share of the last snapshot's pages open at startup → the windows were not restored. */
 export const RESTORED_THRESHOLD = 0.3;
 /** chrome.storage.session: `{ snapshotId: string | null }` written by the startup check, read by the dashboard. */
-export const LAST_SESSION_KEY = 'lastSession';
+export { LAST_SESSION_KEY };
 /** chrome.storage.session: set once this browser session's startup check finished (or was given up). */
 export const STARTUP_DONE_KEY = 'startupCheckDone';
 /** chrome.storage.session: how many times the startup check was started this browser session. */

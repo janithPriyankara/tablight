@@ -1,4 +1,4 @@
-import type { ComponentChildren } from 'preact';
+import type { ComponentChildren, LiHTMLAttributes } from 'preact';
 import type { Item } from '../../shared/types';
 import { Favicon } from './Favicon';
 import { GroupChip } from './GroupChip';
@@ -8,8 +8,14 @@ export interface ItemRowProps {
   item: Item;
   /** Shown as a chip after the domain. */
   group?: { name: string; color: string };
-  /** Makes the row's main area a button (switch to / open the item). */
-  onOpen?: (item: Item) => void;
+  /** Makes the row's main area a button (switch to / open the item); gets the click for its modifier keys. */
+  onOpen?: (item: Item, e: MouseEvent) => void;
+  /** Controls before the main area (e.g. a selection checkbox). */
+  leading?: ComponentChildren;
+  /** Extra attributes for the <li> (drag-and-drop, data-index, positioning). */
+  rowProps?: LiHTMLAttributes<HTMLLIElement>;
+  /** tabIndex of the main button (roving focus in long lists). */
+  mainTabIndex?: number;
   /** Trailing controls (icon buttons). */
   actions?: ComponentChildren;
   selected?: boolean;
@@ -20,7 +26,7 @@ export interface ItemRowProps {
  * One tab/stash entry: favicon, title (single line, full title + URL in the tooltip), and a meta line.
  * Title, URL and domain are untrusted: they are only ever rendered as text nodes and attributes.
  */
-export function ItemRow({ item, group, onOpen, actions, selected, meta }: ItemRowProps) {
+export function ItemRow({ item, group, onOpen, actions, selected, meta, leading, rowProps, mainTabIndex }: ItemRowProps) {
   const title = displayTitle(item);
   const state = STATE_LABEL[item.state];
   const body = (
@@ -38,9 +44,13 @@ export function ItemRow({ item, group, onOpen, actions, selected, meta }: ItemRo
     </>
   );
   return (
-    <li class={selected ? 'item-row is-selected' : 'item-row'} data-state={item.state}>
+    <li {...rowProps} class={['item-row', selected ? 'is-selected' : '', rowProps?.class ?? ''].filter(Boolean).join(' ')} data-state={item.state}>
+      {leading}
       {onOpen ? (
-        <button type="button" class="item-main" title={`${title}\n${item.url}`} onClick={() => onOpen(item)}>
+        <button
+          type="button" class="item-main" title={`${title}\n${item.url}`} tabIndex={mainTabIndex}
+          onClick={(e) => onOpen(item, e)}
+        >
           {body}
         </button>
       ) : (

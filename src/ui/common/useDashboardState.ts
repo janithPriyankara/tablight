@@ -4,12 +4,22 @@ import type { DashboardState } from '../../shared/types';
 export interface DashboardStateHook {
   /** null until the first reply. Kept (stale) while a refresh is in flight or after a failed one. */
   state: DashboardState | null;
-  /** Message of the last failed load, cleared by the next successful one. */
+  /** Message of the last failed load (also when stale state is still shown), cleared by the next success. */
   error: string | null;
   /** Re-reads the state; overlapping calls resolve in order and only the latest reply is applied. */
   refresh: () => Promise<void>;
 }
-/** Loads the `state` RPC on mount and whenever the page becomes visible again. */
+/** The worker's broadcast after data changed, sent by our own extension only. */
+export function isChangedBroadcast(message: unknown, sender: chrome.runtime.MessageSender | undefined): boolean {
+  if (sender?.id === undefined || sender.id !== chrome.runtime.id) return false;
+  if (typeof message !== 'object' || message === null) return false;
+  const m = message as { target?: unknown; t?: unknown };
+  return m.target === 'ui' && m.t === 'changed';
+}
+/**
+ * Loads the `state` RPC on mount, whenever the page becomes visible again, and whenever the background
+ * broadcasts `{target:'ui', t:'changed'}` (long-lived pages stay current).
+ */
 export function useDashboardState(): DashboardStateHook {
   const [state, setState] = useState<DashboardState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +41,18 @@ export function useDashboardState(): DashboardStateHook {
     const onVisible = () => {
       if (document.visibilityState === 'visible') void refresh();
     };
+    // Never returns true: this listener only observes, it never answers a request.
+    const onMessage = (message: unknown, sender: chrome.runtime.MessageSender) => {
+      if (isChangedBroadcast(message, sender)) void refresh();
+      return false;
+    };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    const events = typeof chrome !== 'undefined' ? chrome.runtime?.onMessage : undefined;
+    events?.addListener(onMessage);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      events?.removeListener(onMessage);
+    };
   }, [refresh]);
   return { state, error, refresh };
 }

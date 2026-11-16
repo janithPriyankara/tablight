@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DashboardState, GroupSummary, Item } from '../../src/shared/types';
+import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } from '../../src/shared/types';
 
 vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
 const { send } = await import('../../src/shared/rpc');
 const { Popup } = await import('../../src/ui/popup/Popup');
 const { Favicon } = await import('../../src/ui/common/Favicon');
 const { readableTextOn } = await import('../../src/ui/common/color');
+const { GroupChip, GroupDot } = await import('../../src/ui/common/GroupChip');
 const sendMock = vi.mocked(send);
 
 const XSS = '<img src=x onerror=alert(1)>';
@@ -36,6 +37,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
     dupCount: 1, windows: 2, sleeping: 1,
     syncStatus: { ok: true, synced: 1, localOnly: 0, lastSyncAt: null },
     modelReady: true,
+    settings: DEFAULT_SETTINGS,
     ...p,
   };
 }
@@ -199,6 +201,64 @@ describe('popup', () => {
     expect(tabsCreate).toHaveBeenCalledTimes(1);
   });
 
+  it('Enter opens the first result only once the latest query answered', async () => {
+    let release!: () => void;
+    serve(state(), async (req) => {
+      if (req.t !== 'search') return undefined;
+      if (req.q === 'slow') await new Promise<void>((r) => (release = r));
+      return { words: [item('i1', { title: `Hit ${String(req.q)}` })], meaning: [] };
+    });
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    const box = screen.getByRole('searchbox', { name: 'Search tabs' });
+    fireEvent.input(box, { target: { value: 'fast' } });
+    await screen.findByText('Hit fast');
+    fireEvent.input(box, { target: { value: 'slow' } });
+    fireEvent.keyDown(box, { key: 'Enter' }); // "Hit fast" is stale now
+    await waitFor(() => expect(release).toBeTypeOf('function'));
+    expect(sendMock.mock.calls.some(([r]) => r.t === 'open')).toBe(false);
+    release();
+    await screen.findByText('Hit slow');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i1' }));
+  });
+  it('a superseded reply ends the pending state; a failed search says so instead of "No matches"', async () => {
+    serve(state(), (req) => {
+      if (req.t !== 'search') return undefined;
+      if (req.q === 'sup') return { words: [], meaning: [], superseded: true };
+      throw new Error('worker restarted');
+    });
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    const box = screen.getByRole('searchbox', { name: 'Search tabs' });
+    fireEvent.input(box, { target: { value: 'sup' } });
+    await waitFor(() => expect(screen.getByRole('main').getAttribute('aria-busy')).toBe('false'));
+    expect(screen.queryByText('Searching…')).toBeNull();
+    fireEvent.input(box, { target: { value: 'boom' } });
+    await screen.findByText('Search failed: worker restarted');
+    expect(screen.queryByText('No matches')).toBeNull();
+  });
+  it('a fast double click runs an action once', async () => {
+    serve(state(), (req) => (req.t === 'sleep' ? { slept: 1, skipped: 0 } : undefined));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    const btn = screen.getByRole('button', { name: 'Sleep inactive' });
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    await screen.findByText('Slept 1 tab');
+    expect(sendMock.mock.calls.filter(([r]) => r.t === 'sleep')).toHaveLength(1);
+  });
+  it('applies the theme setting and surfaces a failed refresh while showing stale state', async () => {
+    serve(state({ settings: { ...DEFAULT_SETTINGS, theme: 'dark' } }));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    sendMock.mockRejectedValue(new Error('gone'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await screen.findByRole('alert');
+    expect(screen.getByText(/5 tabs/)).toBeTruthy();
+    delete document.documentElement.dataset.theme;
+  });
   it('shows an error with a retry when the state RPC fails', async () => {
     sendMock.mockRejectedValueOnce(new Error('worker asleep'));
     render(<Popup />);
@@ -220,6 +280,7 @@ describe('Favicon', () => {
     rerender(<Favicon url="chrome://settings" />);
     expect(container.querySelector('img')).toBeNull();
     expect(container.querySelector('svg')).not.toBeNull();
+    expect(container.querySelector<HTMLElement>('.favicon-placeholder')!.style.width).toBe('16px');
   });
 });
 
@@ -228,5 +289,16 @@ describe('readableTextOn', () => {
     expect(readableTextOn('#ffb224')).toBe('#111113');
     expect(readableTextOn('#3e63dd')).toBe('#ffffff');
     expect(readableTextOn('not a color')).toBe('#111113');
+  });
+});
+
+describe('group colors', () => {
+  it('never pass arbitrary CSS through: an injected color falls back to grey', () => {
+    const evil = 'red; background:url(x)';
+    const { container } = render(<><GroupChip name="G" color={evil} /><GroupDot color={evil} /></>);
+    for (const el of container.querySelectorAll<HTMLElement>('.chip, .group-dot')) {
+      expect(el.getAttribute('style') ?? '').not.toContain('url(');
+      expect(el.style.backgroundColor).toBe('rgb(141, 141, 141)');
+    }
   });
 });
