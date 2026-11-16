@@ -62,6 +62,14 @@ describe('db stores', () => {
     expect(await db.queue.take(5)).toEqual(['b']);
     expect(await db.queue.size()).toBe(1);
   });
+  it('queue take returns nothing for n <= 0 or NaN', async () => {
+    await db.queue.add('a');
+    await db.queue.add('b');
+    expect(await db.queue.take(0)).toEqual([]);
+    expect(await db.queue.take(-1)).toEqual([]);
+    expect(await db.queue.take(NaN)).toEqual([]);
+    expect(await db.queue.take(1.5)).toEqual(['a']);
+  });
   it('queue add does not duplicate or reorder', async () => {
     await db.queue.add('a');
     await db.queue.add('b');

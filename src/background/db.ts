@@ -102,6 +102,9 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
         }),
       take: (n) =>
         one('queue', async (tx) => {
+          // count 0 means "unlimited" in IndexedDB, so guard it here.
+          if (!Number.isFinite(n) || n < 1) return [];
+          n = Math.floor(n);
           const entries: QueueEntry[] = await tx.objectStore('queue').index('addedAt').getAll(undefined, n);
           return entries.map((e) => e.itemId);
         }),
