@@ -1,0 +1,128 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } from '../../src/shared/types';
+
+vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
+const { send } = await import('../../src/shared/rpc');
+const { SidePanel } = await import('../../src/ui/sidepanel/SidePanel');
+const sendMock = vi.mocked(send);
+
+const XSS = '<img src=x onerror=alert(1)>';
+function item(id: string, p: Partial<Item> = {}): Item {
+  const url = p.url ?? `https://example.com/${id}`;
+  return {
+    id, url, normUrl: url, title: `Title ${id}`, domain: 'example.com', state: 'open', tabId: Number(id.replace(/\D/g, '')),
+    windowId: 1, groupId: 'programming', groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1,
+    classifiable: true, ...p,
+  };
+}
+function group(id: string, name: string, count: number, watchCount = 0): GroupSummary {
+  return { id, name, color: '#0090ff', icon: '', builtIn: true, exemplars: [], centroid: null, createdAt: 1, count, watchCount };
+}
+function state(): DashboardState {
+  return {
+    items: [
+      item('i1', { title: 'Rust async guide' }),
+      item('i2', { title: 'Dune trailer', groupId: 'movies', kind: 'watch' }),
+      item('i3', { title: 'Other window tab', windowId: 2, groupId: 'movies' }),
+      item('i4', { title: XSS, groupId: null }),
+      item('i5', { title: 'Stashed film', state: 'stashed', tabId: undefined, windowId: undefined, groupId: 'movies' }),
+    ],
+    groups: [group('programming', 'Programming', 1), group('movies', 'Movies', 3, 2), group('empty', 'Empty', 0)],
+    dupCount: 0, windows: 2, sleeping: 0,
+    syncStatus: { ok: true, synced: 0, localOnly: 0, lastSyncAt: null },
+    modelReady: true, queued: 0, settings: DEFAULT_SETTINGS,
+  };
+}
+type Handler = (req: { t: string; [k: string]: unknown }) => unknown;
+function serve(s: DashboardState, extra: Handler = () => undefined): void {
+  sendMock.mockImplementation(async (req) => (req.t === 'state' ? s : extra(req as never)) as never);
+}
+// Tab order in window 1: i4, i2, i1 (so the list follows the tab strip, not item order); i2 is active.
+const windowTabs = [
+  { id: 4, index: 0, active: false, windowId: 1 }, { id: 2, index: 1, active: true, windowId: 1 },
+  { id: 1, index: 2, active: false, windowId: 1 },
+] as chrome.tabs.Tab[];
+const onActivated = { addListener: vi.fn(), removeListener: vi.fn() };
+beforeEach(() => {
+  localStorage.clear();
+  vi.stubGlobal('chrome', {
+    runtime: { getURL: (p: string) => `chrome-extension://ext/${p.replace(/^\//, '')}`, onMessage: { addListener: vi.fn(), removeListener: vi.fn() } },
+    windows: { getCurrent: vi.fn(async () => ({ id: 1 })) },
+    tabs: { query: vi.fn(async () => windowTabs), onActivated },
+  });
+  vi.spyOn(window, 'close').mockImplementation(() => undefined);
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  sendMock.mockReset();
+});
+
+const windowSection = () => screen.getByRole('region', { name: /This window/ });
+const loaded = () => screen.findByRole('region', { name: /This window/ });
+
+describe('SidePanel', () => {
+  it('lists only this window’s tabs, in tab-strip order, with the active one marked', async () => {
+    serve(state());
+    render(<SidePanel />);
+    await waitFor(() => expect(within(windowSection()).getAllByRole('listitem')).toHaveLength(3));
+    await waitFor(() => expect(within(windowSection()).getAllByRole('listitem')[0]!.textContent).toContain(XSS));
+    const rows = within(windowSection()).getAllByRole('listitem');
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining(XSS), expect.stringContaining('Dune trailer'), expect.stringContaining('Rust async guide'),
+    ]);
+    expect(rows[1]!.className).toContain('is-active');
+    expect(within(windowSection()).queryByText('Other window tab')).toBeNull();
+    // Untrusted titles are text, never markup.
+    expect(document.querySelector('img[src="x"]')).toBeNull();
+  });
+
+  it('clicking an entry switches to it and keeps the panel open', async () => {
+    serve(state());
+    render(<SidePanel />);
+    await loaded();
+    fireEvent.click(await within(windowSection()).findByRole('button', { name: /Rust async guide/ }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i1' }));
+    expect(window.close).not.toHaveBeenCalled();
+  });
+
+  it('groups start collapsed, expand on click to show every tab in them, and skip empty groups', async () => {
+    serve(state());
+    render(<SidePanel />);
+    const header = await screen.findByRole('button', { name: /^Movies/ });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+    expect(header.textContent).toContain('2'); // to watch
+    expect(screen.queryByRole('button', { name: /^Empty/ })).toBeNull();
+    fireEvent.click(header);
+    expect(header.getAttribute('aria-expanded')).toBe('true');
+    const region = screen.getByRole('region', { name: /^Movies/ });
+    expect(within(region).getByText('Other window tab')).toBeTruthy();
+    expect(within(region).getByText('Stashed film')).toBeTruthy();
+    // Expanded groups are remembered for the next time the panel opens.
+    cleanup();
+    render(<SidePanel />);
+    expect((await screen.findByRole('button', { name: /^Movies/ })).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('closing a tab from its row offers Undo', async () => {
+    serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
+    render(<SidePanel />);
+    await loaded();
+    const row = (await within(windowSection()).findByText('Rust async guide')).closest('li')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'close', ids: ['i1'] }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok' }));
+  });
+
+  it('search replaces the lists with matches', async () => {
+    serve(state(), (req) => (req.t === 'search' ? { words: [item('i1', { title: 'Rust async guide' })], meaning: [] } : undefined));
+    render(<SidePanel />);
+    await screen.findByRole('region', { name: /This window/ });
+    fireEvent.input(screen.getByRole('searchbox', { name: 'Search tabs' }), { target: { value: 'rust' } });
+    await screen.findByRole('list', { name: 'Matches' });
+    expect(screen.queryByRole('region', { name: /This window/ })).toBeNull();
+  });
+});

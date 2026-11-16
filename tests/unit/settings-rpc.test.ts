@@ -22,7 +22,7 @@ describe('settings rpc', () => {
     const before = await db.settings.get();
     const bad: unknown[] = [
       { autoSleepMinutes: 4 }, { autoSleepMinutes: 1441 }, { autoSleepMinutes: 30.5 }, { autoSleepMinutes: '60' },
-      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' }, { autoCreateGroups: 'on' },
+      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' }, { autoCreateGroups: 'on' }, { toolbarOpens: 'tab' }, { toolbarOpens: true },
       { evil: true }, { __proto__: { onboarded: true } }, JSON.parse('{"__proto__":{"onboarded":true}}'),
       null, [], 'theme', { theme: 'dark', extra: 1 },
     ];
@@ -89,6 +89,27 @@ describe('settings rpc', () => {
     expect(r).toMatchObject({ ok: false });
     expect(JSON.stringify(r)).toContain('That tab was already closed');
     expect(await db.items.get(a.id)).toBeUndefined();
+    mock.uninstall();
+  });
+  it('toolbarOpens switches the toolbar icon between the popup and the side panel', async () => {
+    const mock = installChromeMock();
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    expect((await db.settings.get()).toolbarOpens).toBe('popup');
+    expect(await mock.sendMessage({ t: 'settings', patch: { toolbarOpens: 'sidepanel' } })).toMatchObject({ ok: true });
+    expect(await chrome.action.getPopup({})).toBe('');
+    expect(await chrome.sidePanel.getPanelBehavior()).toEqual({ openPanelOnActionClick: true });
+    expect(await mock.sendMessage({ t: 'settings', patch: { toolbarOpens: 'popup' } })).toMatchObject({ ok: true });
+    expect(await chrome.action.getPopup({})).toBe('popup.html');
+    expect(await chrome.sidePanel.getPanelBehavior()).toEqual({ openPanelOnActionClick: false });
+    mock.uninstall();
+  });
+  it('the open-side-panel shortcut opens the panel in the window of the current tab', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example.com/', title: 'A' }] }] });
+    await import('../../src/background/index');
+    const tab = mock.tabs()[0]!;
+    mock.chrome.commands.onCommand.fire('open-side-panel', tab);
+    expect(mock.sidePanelOpenedIn()).toEqual([tab.windowId]);
     mock.uninstall();
   });
   it('broadcasts a debounced "changed" message to the UI after a mutation, not after reads', async () => {

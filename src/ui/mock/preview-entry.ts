@@ -6,7 +6,7 @@
 import { installChromeMock } from './chrome-mock';
 import { previewSeed } from './fixtures';
 const REAL_DB = 'tab-organizer';
-export async function startPreview(page: 'popup' | 'dashboard'): Promise<void> {
+export async function startPreview(page: 'popup' | 'dashboard' | 'sidepanel'): Promise<void> {
   // A preview-specific database name, wiped on every load, so it never touches anything else.
   const dbName = `tab-organizer-preview-${page}`;
   const realOpen = indexedDB.open.bind(indexedDB);
@@ -32,6 +32,7 @@ export async function startPreview(page: 'popup' | 'dashboard'): Promise<void> {
   const { render, createElement } = await import('preact');
   const root = document.getElementById('app')!;
   if (page === 'popup') render(createElement((await import('../popup/Popup')).Popup, null), root);
+  else if (page === 'sidepanel') render(createElement((await import('../sidepanel/SidePanel')).SidePanel, null), root);
   else render(createElement((await import('../dashboard/Dashboard')).Dashboard, null), root);
   (globalThis as { __preview?: unknown }).__preview = control;
 }

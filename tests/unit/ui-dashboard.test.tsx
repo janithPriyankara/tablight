@@ -272,6 +272,21 @@ describe('dashboard', () => {
     expect(sent('settings')).toHaveLength(1);
     fireEvent.click(mirror);
     await waitFor(() => expect(sent('settings').at(-1)).toEqual({ t: 'settings', patch: { mirrorTabGroups: true } }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Side panel' }));
+    await waitFor(() => expect(sent('settings').at(-1)).toEqual({ t: 'settings', patch: { toolbarOpens: 'sidepanel' } }));
+  });
+  it('onboarding asks to pin the extension only while it is not on the toolbar', async () => {
+    const getUserSettings = vi.fn(async () => ({ isOnToolbar: false }));
+    (chrome as unknown as { action: unknown }).action = { getUserSettings };
+    serve(state({ settings: DEFAULT_SETTINGS }));
+    render(<Dashboard />);
+    await screen.findByText(/Pin Tab Organizer/);
+    cleanup();
+    getUserSettings.mockResolvedValue({ isOnToolbar: true });
+    render(<Dashboard />);
+    await screen.findByText(/Nothing leaves your device/);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText(/Pin Tab Organizer/)).toBeNull();
   });
 
   it('first run shows onboarding; model-not-ready shows the grouping banner; the last session card', async () => {

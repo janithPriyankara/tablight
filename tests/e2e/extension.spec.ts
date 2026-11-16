@@ -350,6 +350,36 @@ test('clicking an entry switches to its tab, wakes a sleeping one, and drops one
   await expect(row(gone.title)).toHaveCount(0);
   await expect.poll(async () => (await state(page)).items.some((i) => i.url === urls[5])).toBe(false);
 });
+test('side panel: lists its window’s tabs, switches on click; the toolbar setting points the icon at it', async () => {
+  const ext = await launch();
+  const page = ext.dashboard;
+  const urls = PAGES.slice(0, 4).map((p) => server.url(p.slug));
+  await openWindows(page, [urls.slice(0, 2), urls.slice(2, 4)]);
+  const s = await waitSettled(page, 4);
+  const target = s.items.find((i) => i.url === urls[3])!;
+  // The panel page, opened as a tab in the second window (headless Chromium has no visible side panel).
+  const panel = await ext.context.newPage();
+  await panel.goto(`chrome-extension://${ext.id}/sidepanel.html`);
+  await panel.evaluate(async (w) => {
+    const [me] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.move(me!.id!, { windowId: w, index: -1 });
+  }, target.windowId!);
+  await panel.reload();
+  const section = panel.getByRole('region', { name: /This window/ });
+  for (const u of [urls[2]!, urls[3]!]) {
+    const title = s.items.find((i) => i.url === u)!.title;
+    await expect(section.getByRole('button', { name: new RegExp(`^${escapeRe(title)}`) })).toBeVisible();
+  }
+  await expect(section.getByText(s.items.find((i) => i.url === urls[0])!.title)).toHaveCount(0);
+  await section.getByRole('button', { name: new RegExp(`^${escapeRe(target.title)}`) }).click();
+  await expect.poll(() => page.evaluate((w) => chrome.tabs.query({ active: true, windowId: w }).then(([t]) => t?.id), target.windowId!))
+    .toBe(target.tabId);
+  await rpc(page, { t: 'settings', patch: { toolbarOpens: 'sidepanel' } });
+  expect(await page.evaluate(() => chrome.action.getPopup({}))).toBe('');
+  expect(await page.evaluate(() => chrome.sidePanel.getPanelBehavior())).toEqual({ openPanelOnActionClick: true });
+  await rpc(page, { t: 'settings', patch: { toolbarOpens: 'popup' } });
+  expect(await page.evaluate(() => chrome.action.getPopup({}))).toMatch(/popup\.html$/);
+});
 test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the last load', async () => {
   test.slow();
   const ext = await launch();

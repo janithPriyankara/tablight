@@ -8,6 +8,7 @@ describe('manifest', () => {
       'alarms',
       'favicon',
       'offscreen',
+      'sidePanel',
       'storage',
       'tabs',
       'unlimitedStorage',

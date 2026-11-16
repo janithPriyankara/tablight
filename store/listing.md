@@ -6,6 +6,7 @@ Tab Organizer helps when you have too many tabs open.
 - Find duplicates and close the extras, with a 10 second undo.
 - Put tabs to sleep to free memory, or stash a tab, a group or a whole window: the tab closes and the link is kept until you open it again.
 - Hourly snapshots of your windows let you continue where you left off after a restart.
+- Keep it open in the browser's side panel next to your pages: this window's tabs and every group, one click to switch.
 - Search by words (typos are fine) or by meaning.
 - Export and import a backup file. Stashed tabs can sync between your own devices through your browser account.
 Private by design: the grouping model is bundled in the extension and runs on your computer. The extension makes no network requests, has no accounts or analytics, never reads page contents and ignores private (incognito) windows.
@@ -17,6 +18,7 @@ Organize the user's open browser tabs: list, group by topic, find duplicates, sl
 | `unlimitedStorage` | Store the tab index and the numeric summaries (embeddings) of tab titles locally, which can exceed the default quota with thousands of tabs. |
 | `alarms` | Run auto-sleep (off by default) and hourly snapshots while the background worker is idle. |
 | `offscreen` | Run the bundled on-device model in an offscreen document, because a service worker cannot host it reliably. |
+| `sidePanel` | Show Tab Organizer in the browser's side panel when you open it there (toolbar icon, popup button or Alt+Shift+S). |
 | `favicon` | Show site icons from the browser's own icon cache; no icon is downloaded from a website. |
 | `tabGroups` (optional) | Requested only if the user turns on mirroring of groups into the browser's native tab groups. |
 No host permissions, no content scripts, no remote code.

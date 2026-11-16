@@ -1,6 +1,17 @@
+import { useEffect, useState } from 'preact/hooks';
 import { LogoMark, MoonIcon } from '../common/icons';
+/** True once the browser says the toolbar icon is not pinned (unknown where the API is missing: no hint). */
+function useUnpinned(): boolean {
+  const [unpinned, setUnpinned] = useState(false);
+  useEffect(() => {
+    const get = typeof chrome.action?.getUserSettings === 'function' ? chrome.action.getUserSettings : undefined;
+    get?.().then((s) => setUnpinned(s.isOnToolbar === false), () => undefined);
+  }, []);
+  return unpinned;
+}
 /** First run (settings.onboarded false): privacy in three lines, and an offer to turn on auto-sleep. */
 export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDone: () => void }) {
+  const unpinned = useUnpinned();
   return (
     <section class="card onboarding" aria-labelledby="onboarding-h">
       <LogoMark size={28} />
@@ -10,6 +21,12 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
           <li>Nothing leaves your device except stashed tabs: no servers, no analytics.</li>
           <li>Grouping runs on your computer, using only each tab’s title and address.</li>
           <li>Stashed tabs sync only through your browser account, and you can turn that off in Settings.</li>
+          {unpinned && (
+            <li>
+              <strong>Pin Tab Organizer</strong> so it’s one click away: click the puzzle-piece icon in the toolbar, then
+              the pin next to Tab Organizer.
+            </li>
+          )}
         </ul>
         <div class="card-actions">
           <button type="button" class="btn btn-sm btn-primary" disabled={props.busy} onClick={props.onAutoSleep}>

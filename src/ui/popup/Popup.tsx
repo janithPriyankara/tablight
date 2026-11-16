@@ -4,7 +4,7 @@ import type { DashboardState, GroupSummary, Item, SyncStatus } from '../../share
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
-import { CloseIcon, CopyIcon, GridIcon, LogoMark, MoonIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
+import { CloseIcon, CopyIcon, GridIcon, LogoMark, MoonIcon, PanelIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../../shared/nav';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
@@ -41,6 +41,17 @@ export function Popup() {
   const busyRef = useRef(false);
   const theme = state?.settings?.theme;
   useEffect(() => applyTheme(theme), [theme]);
+  // The side panel must open inside the click (it needs the user gesture), so the window id is read up front.
+  const hasPanel = typeof chrome.sidePanel?.open === 'function';
+  const [windowId, setWindowId] = useState<number | null>(null);
+  useEffect(() => {
+    if (hasPanel) chrome.windows.getCurrent().then((w) => setWindowId(w.id ?? null), () => undefined);
+  }, [hasPanel]);
+  const openPanel = () => {
+    if (windowId === null) return;
+    chrome.sidePanel.open({ windowId }).catch(() => undefined);
+    window.close();
+  };
 
   /** Runs an action, reports failures in the notice bar, then re-reads the state. */
   const act = async (fn: () => Promise<void>) => {
@@ -172,10 +183,15 @@ export function Popup() {
         <div class="notice" role="status" aria-live="polite">
           {notice && <span class="notice-text">{notice.message}</span>}
         </div>
-        <div class="actions">
+        <div class={hasPanel ? 'actions has-panel' : 'actions'}>
           <button type="button" class="btn btn-primary" disabled={busy} onClick={() => void dashboard()}>
             <GridIcon />Open dashboard
           </button>
+          {hasPanel && (
+            <button type="button" class="btn" disabled={windowId === null} onClick={openPanel} title="Keep Tab Organizer open beside your pages (Alt+Shift+S)">
+              <PanelIcon />Side panel
+            </button>
+          )}
           <button type="button" class="btn" disabled={busy || !state} onClick={() => void stashWindow()}>
             <StashIcon />Stash this window
           </button>
@@ -213,7 +229,7 @@ function TopGroups({ groups, onPick }: { groups: GroupSummary[]; onPick: (id: st
   );
 }
 
-function SearchResultsView(props: {
+export function SearchResultsView(props: {
   results: { words: Item[]; meaning: Item[] } | null;
   pending: boolean;
   error: string | null;

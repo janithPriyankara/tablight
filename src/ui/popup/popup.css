@@ -179,6 +179,9 @@ body.popup-page > #app {
 .actions .btn-primary {
   grid-column: 1 / -1;
 }
+.actions.has-panel .btn-primary {
+  grid-column: auto;
+}
 .sync-line {
   margin-top: var(--space-2);
   color: var(--text-subtle);

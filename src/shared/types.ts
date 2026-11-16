@@ -47,6 +47,8 @@ export interface Settings {
   onboarded: boolean;
   /** Found topics become groups right away instead of waiting as suggestions. */
   autoCreateGroups: boolean;
+  /** What a click on the toolbar icon opens. */
+  toolbarOpens: 'popup' | 'sidepanel';
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -56,6 +58,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   onboarded: false,
   autoCreateGroups: false,
+  toolbarOpens: 'popup',
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.

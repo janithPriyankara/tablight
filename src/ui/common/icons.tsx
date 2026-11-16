@@ -87,3 +87,6 @@ export const UploadIcon = (p: IconProps) => (
 export const ShieldIcon = (p: IconProps) => (
   <Svg {...p}><path d="M8 1.75 13 3.5v4c0 3.1-2.1 5.6-5 6.75-2.9-1.15-5-3.65-5-6.75v-4z" /></Svg>
 );
+export const PanelIcon = (p: IconProps) => (
+  <Svg {...p}><rect x="2" y="2.75" width="12" height="10.5" rx="1.5" /><path d="M10 2.75v10.5" /></Svg>
+);

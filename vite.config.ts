@@ -94,6 +94,7 @@ export default defineConfig({
         offscreen: resolve(import.meta.dirname, 'src/offscreen/offscreen.html'),
         popup: resolve(import.meta.dirname, 'src/ui/popup/popup.html'),
         dashboard: resolve(import.meta.dirname, 'src/ui/dashboard/dashboard.html'),
+        sidepanel: resolve(import.meta.dirname, 'src/ui/sidepanel/sidepanel.html'),
       },
       output: {
         entryFileNames: (chunk) =>

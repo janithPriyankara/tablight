@@ -251,7 +251,7 @@ const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'undo', 'sessionAction', 'regroupApply',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
-  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups',
+  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens',
 ]);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 /**
@@ -277,6 +277,10 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
         if (val !== 'system' && val !== 'light' && val !== 'dark') throw new Error('invalid theme');
         out.theme = val;
         break;
+      case 'toolbarOpens':
+        if (val !== 'popup' && val !== 'sidepanel') throw new Error('toolbarOpens must be popup or sidepanel');
+        out.toolbarOpens = val;
+        break;
       case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups':
         if (!isBool(val)) throw new Error(`${key} must be true or false`);
         out[key as 'syncEnabled'] = val;
@@ -284,6 +288,17 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
     }
   }
   return out;
+}
+/**
+ * Points the toolbar icon at the popup or the side panel. Re-applied on every background start: the browser
+ * keeps neither choice reliably across restarts. Browsers without the side panel API keep the popup.
+ */
+export async function applyToolbar(opens: Settings['toolbarOpens']): Promise<void> {
+  const panel = opens === 'sidepanel' && typeof chrome.sidePanel?.setPanelBehavior === 'function';
+  await chrome.action.setPopup({ popup: panel ? '' : 'popup.html' });
+  if (typeof chrome.sidePanel?.setPanelBehavior === 'function') {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: panel });
+  }
 }
 /** `settings` RPC: applies a validated patch and returns the new settings. */
 async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
@@ -293,6 +308,7 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
     throw new Error('tab groups permission not granted');
   }
   if (Object.keys(rest).length) await db.settings.set(rest);
+  if (rest.toolbarOpens !== undefined) await applyToolbar(rest.toolbarOpens);
   if (syncEnabled !== undefined) await setSyncEnabled(db, syncEnabled);
   // Turning auto-create on also accepts the suggestions already waiting, so the setting means one thing.
   if (rest.autoCreateGroups === true) {
@@ -402,10 +418,23 @@ handle((req) => handleRequest(req), 'background');
 
 /** The manifest's `open-dashboard` command (Alt+Shift+T): focus the dashboard tab or open one. */
 export const OPEN_DASHBOARD_COMMAND = 'open-dashboard';
-chrome.commands.onCommand.addListener((command) => {
+/** The manifest's `open-side-panel` command (Alt+Shift+S). */
+export const OPEN_SIDE_PANEL_COMMAND = 'open-side-panel';
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command === OPEN_SIDE_PANEL_COMMAND) {
+    // open() needs the shortcut's user gesture: call it right away, before anything is awaited.
+    if (tab?.windowId !== undefined && typeof chrome.sidePanel?.open === 'function') {
+      chrome.sidePanel.open({ windowId: tab.windowId }).catch((e: unknown) => console.error('open side panel failed', e));
+    }
+    return;
+  }
   if (command !== OPEN_DASHBOARD_COMMAND) return;
   openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
 });
+void getDb()
+  .then((db) => db.settings.get())
+  .then((s) => applyToolbar(s.toolbarOpens))
+  .catch((e: unknown) => console.error('toolbar setup failed', e));
 chrome.tabs.onCreated.addListener(() => onTabEvent());
 chrome.tabs.onUpdated.addListener((_id, info) => {
   // Favicon/audible/mute churn doesn't change the index.

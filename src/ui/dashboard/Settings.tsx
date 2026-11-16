@@ -12,6 +12,9 @@ const AUTO_SLEEP_CHOICES: { value: number | null; label: string }[] = [
   { value: 60, label: '1 hour' }, { value: 120, label: '2 hours' }, { value: 240, label: '4 hours' },
   { value: 480, label: '8 hours' }, { value: 1440, label: '1 day' },
 ];
+const TOOLBAR: { value: SettingsT['toolbarOpens']; label: string }[] = [
+  { value: 'popup', label: 'Popup' }, { value: 'sidepanel', label: 'Side panel' },
+];
 const THEMES: { value: SettingsT['theme']; label: string }[] = [
   { value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' },
 ];
@@ -199,6 +202,23 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                   <input
                     type="radio" name="theme" value={t.value} checked={settings.theme === t.value} disabled={busy}
                     onChange={() => void act(() => save({ theme: t.value }))}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </span>
+          </div>
+          <div class="setting" role="radiogroup" aria-labelledby="toolbar-label">
+            <span class="setting-text">
+              <span class="setting-name" id="toolbar-label">Toolbar icon opens</span>
+              <span class="setting-help">The side panel stays open beside your pages. Alt+Shift+S opens it either way.</span>
+            </span>
+            <span class="segmented">
+              {TOOLBAR.map((t) => (
+                <label key={t.value} class={settings.toolbarOpens === t.value ? 'segment is-on' : 'segment'}>
+                  <input
+                    type="radio" name="toolbar" value={t.value} checked={settings.toolbarOpens === t.value} disabled={busy}
+                    onChange={() => void act(() => save({ toolbarOpens: t.value }))}
                   />
                   {t.label}
                 </label>

@@ -10,7 +10,7 @@ export const manifest = {
   description: 'Groups your tabs by topic with an AI model that runs on your device. No servers, no tracking.',
   minimum_chrome_version: '120',
   incognito: 'not_allowed',
-  permissions: ['tabs', 'storage', 'unlimitedStorage', 'alarms', 'offscreen', 'favicon'],
+  permissions: ['tabs', 'storage', 'unlimitedStorage', 'alarms', 'offscreen', 'favicon', 'sidePanel'],
   optional_permissions: ['tabGroups'],
   background: { service_worker: 'background.js', type: 'module' },
   action: {
@@ -18,6 +18,7 @@ export const manifest = {
     default_title: 'Tab Organizer',
     default_icon: { '16': 'icons/16.png', '32': 'icons/32.png' },
   },
+  side_panel: { default_path: 'sidepanel.html' },
   icons: {
     '16': 'icons/16.png',
     '32': 'icons/32.png',
@@ -28,6 +29,10 @@ export const manifest = {
     'open-dashboard': {
       suggested_key: { default: 'Alt+Shift+T' },
       description: 'Open the Tab Organizer dashboard',
+    },
+    'open-side-panel': {
+      suggested_key: { default: 'Alt+Shift+S' },
+      description: 'Open Tab Organizer in the side panel',
     },
   },
   content_security_policy: { extension_pages: CSP },

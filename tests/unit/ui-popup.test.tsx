@@ -216,6 +216,22 @@ describe('popup', () => {
     expect(tabsCreate).toHaveBeenCalledTimes(1);
   });
 
+  it('"Side panel" opens the panel in this window (before awaiting anything) and closes the popup', async () => {
+    const open = vi.fn(() => Promise.resolve());
+    (chrome as unknown as { sidePanel: unknown }).sidePanel = { open };
+    serve(state());
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    fireEvent.click(await screen.findByRole('button', { name: 'Side panel' }));
+    expect(open).toHaveBeenCalledWith({ windowId: 1 }); // synchronously, inside the click
+    expect(window.close).toHaveBeenCalled();
+  });
+  it('has no "Side panel" button where the browser lacks the side panel API', async () => {
+    serve(state());
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    expect(screen.queryByRole('button', { name: 'Side panel' })).toBeNull();
+  });
   it('Enter opens the first result only once the latest query answered', async () => {
     let release!: () => void;
     serve(state(), async (req) => {

@@ -17,7 +17,7 @@ export const SIZE_LIMIT = 45_000_000;
 const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
   "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
-const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'storage', 'tabs', 'unlimitedStorage'];
+const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', 'tabs', 'unlimitedStorage'];
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
 /**

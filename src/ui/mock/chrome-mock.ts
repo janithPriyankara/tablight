@@ -84,6 +84,8 @@ export interface ChromeMockControl {
   tabGroups(): chrome.tabGroups.TabGroup[];
   /** Sends a runtime message as the extension's own page (or `sender`) and resolves the reply. */
   sendMessage(message: unknown, sender?: Partial<chrome.runtime.MessageSender>): Promise<unknown>;
+  /** Window ids sidePanel.open() was called for, in order. */
+  sidePanelOpenedIn(): number[];
   /** Messages the extension sent with chrome.runtime.sendMessage (e.g. the worker's "changed" broadcasts). */
   broadcasts(): unknown[];
   /** Call counts of the tab-group APIs (to assert "never called"). */
@@ -167,11 +169,19 @@ export interface MockChrome {
     onFocusChanged: MockEvent<(windowId: number) => void>;
   };
   action: {
+    setPopup(d: { popup: string }): Promise<void>;
+    getPopup(d: { tabId?: number }): Promise<string>;
+    getUserSettings(): Promise<{ isOnToolbar: boolean }>;
     setBadgeText(d: chrome.action.BadgeTextDetails): Promise<void>;
     getBadgeText(d: { tabId?: number }): Promise<string>;
     setBadgeBackgroundColor(d: chrome.action.BadgeColorDetails): Promise<void>;
   };
-  commands: { onCommand: MockEvent<(command: string) => void> };
+  sidePanel: {
+    setPanelBehavior(b: { openPanelOnActionClick?: boolean }): Promise<void>;
+    getPanelBehavior(): Promise<{ openPanelOnActionClick: boolean }>;
+    open(o: { windowId?: number; tabId?: number }): Promise<void>;
+  };
+  commands: { onCommand: MockEvent<(command: string, tab?: Tab) => void> };
   alarms: {
     create(name: string, info: chrome.alarms.AlarmCreateInfo): Promise<void>;
     get(name: string): Promise<Alarm | undefined>;
@@ -200,6 +210,9 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const badges = new Map<number, string>();
   let globalBadge = '';
   let badgeColor: string | undefined;
+  let popup = 'popup.html';
+  let panelOnClick = false;
+  const panelOpens: number[] = [];
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
   const session = new Map<string, unknown>();
@@ -341,6 +354,15 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       onFocusChanged: new MockEvent(),
     },
     action: {
+      async setPopup({ popup: p }) {
+        popup = p;
+      },
+      async getPopup() {
+        return popup;
+      },
+      async getUserSettings() {
+        return { isOnToolbar: false };
+      },
       async setBadgeText({ tabId, text }) {
         if (tabId === undefined) globalBadge = text ?? '';
         else if (tabs.has(tabId)) badges.set(tabId, text ?? '');
@@ -351,6 +373,21 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       },
       async setBadgeBackgroundColor({ color }) {
         badgeColor = typeof color === 'string' ? color : `rgba(${color.join(',')})`;
+      },
+    },
+    sidePanel: {
+      async setPanelBehavior(b) {
+        if (b.openPanelOnActionClick !== undefined) panelOnClick = b.openPanelOnActionClick;
+      },
+      async getPanelBehavior() {
+        return { openPanelOnActionClick: panelOnClick };
+      },
+      // Synchronous record: the real open() must be called before any await (it needs the user gesture).
+      open(o) {
+        const w = o.windowId ?? (o.tabId !== undefined ? tabs.get(o.tabId)?.windowId : undefined);
+        if (w === undefined) return Promise.reject(new Error('No window'));
+        panelOpens.push(w);
+        return Promise.resolve();
       },
     },
     commands: { onCommand: new MockEvent() },
@@ -424,6 +461,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
 
   const control: ChromeMockControl = {
     chrome: mock,
+    sidePanelOpenedIn: () => [...panelOpens],
     tabs: () => ordered().map(clone),
     windowIds: () => [...windows],
     addWindow,
