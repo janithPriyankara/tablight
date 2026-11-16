@@ -231,6 +231,42 @@ describe('dashboard', () => {
     expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Search tabs' }));
   });
 
+  it('Delete acts on the focused row even after a live update moved it', async () => {
+    let items = ['i1', 'i2', 'i3', 'i4', 'i5'].map((id) => item(id, { windowId: 1 }));
+    serve(() => state({ items }), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : undefined));
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title i5');
+    const mainFor = (id: string) =>
+      [...container.querySelectorAll<HTMLElement>('.grid-row .item-main')].find((m) => m.textContent?.includes(`Title ${id}`))!;
+    mainFor('i4').focus();
+    fireEvent.focusIn(mainFor('i4'));
+    // i1 closes elsewhere: the list refreshes and i4 moves up one row, keeping DOM focus.
+    items = items.filter((i) => i.id !== 'i1');
+    for (const l of listeners) l({ target: 'ui', t: 'changed' }, { id: 'ext' });
+    await waitFor(() => expect(screen.queryByText('Title i1')).toBeNull());
+    fireEvent.keyDown(mainFor('i4'), { key: 'Delete' });
+    await waitFor(() => expect(sent('close')).toHaveLength(1));
+    expect(sent('close')[0]!.ids).toEqual(['i4']);
+  });
+  it('search results follow live updates: a closed tab disappears from them', async () => {
+    let items = [item('i1', { title: 'Rust one' }), item('i2', { title: 'Rust two' })];
+    serve(() => state({ items }), (req) => {
+      if (req.t === 'search') return { words: items, meaning: [] }; // the background searches its current items
+      if (req.t === 'close') {
+        items = items.filter((i) => i.id !== 'i1');
+        return { token: 'tok', closed: 1 };
+      }
+      return undefined;
+    });
+    render(<Dashboard />);
+    await screen.findByText('Rust one');
+    fireEvent.input(screen.getByRole('searchbox', { name: 'Search tabs' }), { target: { value: 'rust' } });
+    await screen.findByText(/Results for/);
+    const row = (await screen.findByText('Rust one')).closest('li')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByText('Rust one')).toBeNull());
+    expect(screen.getByText('Rust two')).toBeTruthy();
+  });
   it('import refuses files over 20 MB before reading them', async () => {
     location.hash = '#view=settings';
     serve(state(), (req) => (req.t === 'import' ? { added: 2, skipped: 1 } : undefined));

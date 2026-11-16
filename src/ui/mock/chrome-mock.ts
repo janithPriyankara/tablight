@@ -145,6 +145,7 @@ export interface MockChrome {
   };
   tabs: {
     group(o: chrome.tabs.GroupOptions): Promise<number>;
+    ungroup(tabIds: number | [number, ...number[]]): Promise<void>;
     query(q: chrome.tabs.QueryInfo): Promise<Tab[]>;
     get(tabId: number): Promise<Tab>;
     /** Rejects for a missing tab or the active tab of a window (Chrome does not discard those). */
@@ -284,6 +285,11 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         for (const id of ids) mustGet(id).groupId = gid;
         for (const k of [...groups.keys()]) if (![...tabs.values()].some((t) => t.groupId === k)) groups.delete(k);
         return gid;
+      },
+      async ungroup(tabIds) {
+        calls.ungroup++;
+        for (const id of Array.isArray(tabIds) ? tabIds : [tabIds]) mustGet(id).groupId = -1;
+        for (const k of [...groups.keys()]) if (![...tabs.values()].some((t) => t.groupId === k)) groups.delete(k);
       },
       async query(q) {
         return ordered()

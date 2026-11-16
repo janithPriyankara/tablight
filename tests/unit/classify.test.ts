@@ -191,6 +191,14 @@ describe('nameCluster', () => {
     expect(name).toContain('doc.rust-lang.org');
   });
 
+  it('never repeats the domain, and caps names at 60 characters', () => {
+    const untitled = nameCluster(['docs.foo.dev page one', 'docs.foo.dev page two', 'docs.foo.dev page three'],
+      ['docs.foo.dev', 'docs.foo.dev', 'docs.foo.dev']);
+    expect(untitled.split(' · ').filter((p) => p === 'docs.foo.dev')).toHaveLength(1);
+    const long = nameCluster(['x'.repeat(200) + ' a', 'x'.repeat(200) + ' b', 'x'.repeat(200) + ' c'], ['', '', '']);
+    expect(long.length).toBeLessThanOrEqual(60);
+    expect(long.length).toBeGreaterThan(0);
+  });
   it('never returns an empty name', () => {
     expect(nameCluster(['', 'the a'], ['', ''])).not.toBe('');
   });

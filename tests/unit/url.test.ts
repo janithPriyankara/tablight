@@ -8,6 +8,11 @@ describe('normalizeUrl', () => {
     ['https://www.youtube.com/watch?v=abc&t=42s&si=zz&list=L1', 'https://youtube.com/watch?v=abc&list=L1'],
     ['https://youtu.be/abc?t=3', 'https://youtube.com/watch?v=abc'],
     ['https://app.com/#/inbox/3', 'https://app.com/#/inbox/3'],
+    // Gmail / Keep route by "#view/id": different threads are different pages.
+    ['https://mail.google.com/mail/u/0/#inbox/FMfcgzQ', 'https://mail.google.com/mail/u/0#inbox/FMfcgzQ'],
+    ['https://keep.google.com/#NOTE/1abc', 'https://keep.google.com/#NOTE/1abc'],
+    // A plain anchor is the same page.
+    ['https://docs.rs/tokio/#examples', 'https://docs.rs/tokio'],
     ['https://x.com/?fbclid=1&gclid=2&mc_eid=3&ref=hn', 'https://x.com/'],
     ['https://a.com/path/', 'https://a.com/path'],
     ['https://a.com/?z=1&a=2', 'https://a.com/?a=2&z=1'],

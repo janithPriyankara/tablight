@@ -109,31 +109,41 @@ export function ItemGrid(props: ItemGridProps) {
     return idx;
   };
 
+  // A live update can move the focused row (a tab above it closed): follow it, so the roving tab stop and
+  // the keys below act on the row that really has focus, never on whatever now sits at the old index.
+  useEffect(() => {
+    const li = document.activeElement?.closest<HTMLElement>('[data-index]');
+    if (!li || !scroller.current?.contains(li)) return;
+    const idx = Number(li.dataset.index);
+    if (Number.isInteger(idx) && idx !== focus) setFocus(idx);
+  });
   const onKeyDown = (e: KeyboardEvent) => {
     if (!count) return;
     const target = e.target as HTMLElement;
     const onMain = target.classList.contains('item-main');
+    const rowIdx = Number(target.closest<HTMLElement>('[data-index]')?.dataset.index);
+    const cur = Number.isInteger(rowIdx) && rowIdx >= 0 && rowIdx < count ? rowIdx : focusIdx;
     const step = (to: number) => {
       e.preventDefault();
       const idx = moveFocus(to);
       if (e.shiftKey) onSelect(items[idx]!.id, 'range');
     };
     switch (e.key) {
-      case 'ArrowDown': return step(focusIdx + 1);
-      case 'ArrowUp': return step(focusIdx - 1);
+      case 'ArrowDown': return step(cur + 1);
+      case 'ArrowUp': return step(cur - 1);
       case 'Home': return step(0);
       case 'End': return step(count - 1);
-      case 'PageDown': return step(focusIdx + Math.max(1, Math.floor(height / ROW_HEIGHT) - 1));
-      case 'PageUp': return step(focusIdx - Math.max(1, Math.floor(height / ROW_HEIGHT) - 1));
+      case 'PageDown': return step(cur + Math.max(1, Math.floor(height / ROW_HEIGHT) - 1));
+      case 'PageUp': return step(cur - Math.max(1, Math.floor(height / ROW_HEIGHT) - 1));
       case ' ':
         if (!onMain) return; // checkboxes and buttons keep their own Space
         e.preventDefault();
-        onSelect(items[focusIdx]!.id, 'toggle');
+        onSelect(items[cur]!.id, 'toggle');
         return;
       case 'Delete':
       case 'Backspace':
         e.preventDefault();
-        props.onDelete(items[focusIdx]!);
+        props.onDelete(items[cur]!);
         return;
       case 'Escape':
         if (selected.size) {

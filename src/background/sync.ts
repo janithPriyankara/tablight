@@ -297,7 +297,10 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
     if (!(await db.settings.get()).syncEnabled) return await fail('disabled', 'Sync is turned off');
     await hooks.ready?.(db);
     const now = Date.now();
-    await db.tombstones.prune(now - TOMB_TTL_MS);
+    // Tombstones age from the last successful sync, not the wall clock: a delete made while sync was off
+    // (or offline) for a month has never been sent, and pruning it would let the remote copy come back.
+    const lastSyncAt = (await readSyncStatus()).lastSyncAt;
+    await db.tombstones.prune(Math.min(now, lastSyncAt ?? now) - TOMB_TTL_MS);
     const store = await chrome.storage.sync.get(null);
     const decoded = decodeChunks(store);
     const remote = await verifyIds(decoded.recs);

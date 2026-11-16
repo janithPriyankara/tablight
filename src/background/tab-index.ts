@@ -397,16 +397,20 @@ async function drain(db: Db, embedFn: EmbedFn): Promise<number> {
   let total = 0;
   try {
     if ((await db.queue.size()) > 0) await setKick(1, true);
-    do {
-      again = false;
-      for (;;) {
-        const ids = await db.queue.take(BATCH);
-        if (!ids.length) break;
-        total += await processWithRetry(db, ids, embedFn);
-      }
-    } while (again);
-    await setKick(0);
-    return total;
+    for (;;) {
+      do {
+        again = false;
+        for (;;) {
+          const ids = await db.queue.take(BATCH);
+          if (!ids.length) break;
+          total += await processWithRetry(db, ids, embedFn);
+        }
+      } while (again);
+      await setKick(0);
+      // Work queued while the alarm was being cleared joined this pass (its caller got our promise): do it.
+      if (!again && (await db.queue.size()) === 0) return total;
+      await setKick(1, true);
+    }
   } catch (e) {
     again = false;
     await setKick(e instanceof EmbedderDown ? BACKOFF_MINUTES : 1);
@@ -450,7 +454,7 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
       const cur = await s.items.get(id);
       if (!cur) continue;
       if (cur.groupSource === 'auto') {
-        await s.items.put({ ...cur, groupId: null, embGaveUpAt: now, updatedAt: nextStamp(cur.updatedAt) });
+        await s.items.put({ ...cur, groupId: null, embGaveUpAt: now, updatedAt: cur.groupId === null ? cur.updatedAt : nextStamp(cur.updatedAt) });
         n++;
       } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
@@ -514,7 +518,10 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       }
       const { embGaveUpAt: _cleared, ...rest } = cur; // a success lifts any earlier give-up stamp
       void _cleared;
-      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt: nextStamp(cur.updatedAt) });
+      // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
+      // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
+      const updatedAt = groupId === cur.groupId ? cur.updatedAt : nextStamp(cur.updatedAt);
+      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt });
       done.push(snap.id);
       written++;
     }
@@ -577,7 +584,7 @@ export async function recordDismissed(fp: string[]): Promise<void> {
  * Clusters overlapping a current suggestion by ≥ 60% are skipped; at most 5 suggestions exist at once.
  * With settings.autoCreateGroups on, each new suggestion is accepted straight away.
  */
-export async function maybeSuggest(db: Db): Promise<void> {
+async function suggestPass(db: Db): Promise<void> {
   const groups = await db.groups.all();
   const suggested = groups.filter((g) => g.suggested);
   if (suggested.length >= MAX_SUGGESTED) return;
@@ -616,9 +623,13 @@ export async function maybeSuggest(db: Db): Promise<void> {
     if (!itemIds.length) continue;
     const id = `suggested-${crypto.randomUUID()}`;
     const color = SUGGEST_COLORS[(suggested.length + created.length) % SUGGEST_COLORS.length]!;
+    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2".
+    const taken = new Set([...groups, ...created.map((x) => x.group)].map((g) => g.name.toLowerCase()));
+    let name = c.name;
+    for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${c.name.slice(0, 56)} ${n}`;
     created.push({
       group: {
-        id, name: c.name, color, icon: '✨', builtIn: false, exemplars: [], suggested: true, createdAt: now,
+        id, name, color, icon: '✨', builtIn: false, exemplars: [], suggested: true, createdAt: now,
         centroid: normalize(mean(c.itemIds.map((x) => vecOf.get(x)!))),
       },
       itemIds,
@@ -626,20 +637,46 @@ export async function maybeSuggest(db: Db): Promise<void> {
     slots--;
   }
   if (!created.length) return;
+  const saved: string[] = [];
   await db.tx(['items', 'groups'], async (s) => {
     for (const { group, itemIds } of created) {
-      await s.groups.put(group);
+      let moved = 0;
       for (const id of itemIds) {
         const cur = await s.items.get(id);
         // Only still-Unsorted auto items move; anything the user or the queue touched meanwhile stays.
         if (cur && cur.groupId === null && cur.groupSource === 'auto') {
           await s.items.put({ ...cur, groupId: group.id, updatedAt: nextStamp(cur.updatedAt, now) });
+          moved++;
         }
+      }
+      // A group whose tabs were all taken meanwhile would be an empty suggestion: don't create it.
+      if (moved) {
+        await s.groups.put(group);
+        saved.push(group.id);
       }
     }
   });
   // Settings → "Create new groups automatically": accept each one now, exactly as the Accept button does.
-  if ((await db.settings.get()).autoCreateGroups) {
-    for (const { group } of created) await acceptSuggestion(db, group.id);
+  if (saved.length && (await db.settings.get()).autoCreateGroups) {
+    for (const id of saved) await acceptQuietly(db, id);
   }
+}
+/** Accepts a suggestion unless it is already gone or accepted (the user or another path got there first). */
+export async function acceptQuietly(db: Db, id: string): Promise<void> {
+  try {
+    await acceptSuggestion(db, id);
+  } catch (e) {
+    const g = await db.groups.get(id);
+    if (g?.suggested) throw e; // still a suggestion: a real failure
+  }
+}
+/**
+ * Topic discovery runs one pass at a time: two overlapping passes (a tab-event pipeline and an import's
+ * classification) would otherwise both see the same Unsorted tabs and create the same group twice.
+ */
+let suggesting: Promise<void> = Promise.resolve();
+export function maybeSuggest(db: Db): Promise<void> {
+  const run = suggesting.then(() => suggestPass(db));
+  suggesting = run.catch(() => undefined);
+  return run;
 }

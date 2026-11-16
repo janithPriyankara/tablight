@@ -252,7 +252,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
               <span class="setting-name">Delete all data</span>
               <span class="setting-help">
                 Deletes everything Tab Organizer stored on this device and the synced copy of your stash in your
-                browser account. Open tabs stay open. Uninstalling also removes the data on this device.
+                browser account, and turns sync off here. Open tabs stay open. Uninstalling also removes the data on
+                this device.
               </span>
             </span>
             <button type="button" class="btn btn-sm btn-danger" disabled={busy} onClick={onDeleteAll}>

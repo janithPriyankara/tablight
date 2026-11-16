@@ -155,7 +155,12 @@ export function nameCluster(titles: string[], domains: string[], corpus: string[
   const domainCount = new Map<string, number>();
   for (const d of domains) if (d) domainCount.set(d, (domainCount.get(d) ?? 0) + 1);
   const [topDomain, topCount] = [...domainCount.entries()].sort((p, q) => q[1] - p[1])[0] ?? ['', 0];
-  const parts = [...terms];
-  if (topDomain && domains.length && topCount / domains.length >= 0.6) parts.push(topDomain);
-  return parts.length ? parts.join(' · ') : 'New group';
+  // Each part short enough that the name fits a group name (60 characters); the domain only once.
+  const parts = terms.map((t) => (t.length > 28 ? `${t.slice(0, 27)}…` : t));
+  const lower = new Set(parts.map((p) => p.toLowerCase()));
+  if (topDomain && domains.length && topCount / domains.length >= 0.6 && !lower.has(topDomain.toLowerCase())) {
+    parts.push(topDomain.length > 28 ? `${topDomain.slice(0, 27)}…` : topDomain);
+  }
+  const name = parts.join(' · ').slice(0, 60);
+  return name || 'New group';
 }

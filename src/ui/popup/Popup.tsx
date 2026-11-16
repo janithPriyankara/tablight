@@ -33,7 +33,7 @@ const isWebOpen = (i: Item) => i.state === 'open' && i.classifiable && i.tabId !
 
 export function Popup() {
   const { state, error, refresh } = useDashboardState();
-  const search = useSearch();
+  const search = useSearch(undefined, state);
   // Popup actions that can be undone close the popup; their Undo lives in the dashboard (Stash this window).
   const { notice, notify } = useUndo();
   const [busy, setBusy] = useState(false);

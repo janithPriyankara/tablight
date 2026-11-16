@@ -20,14 +20,16 @@ export interface SearchHook {
  * Debounced word + meaning search. A client-side sequence number drops replies to older queries. A reply
  * the background marked `superseded` (another page searched meanwhile) still answers this query: its word
  * matches are shown, without meaning results. A failure clears the results, so nothing stale is shown or
- * opened.
+ * opened. Whenever `refreshKey` changes (pass the tab state), the current query is asked again at once, so
+ * results never offer a tab that has closed since (or miss one that opened).
  */
-export function useSearch(delay = SEARCH_DEBOUNCE_MS): SearchHook {
+export function useSearch(delay = SEARCH_DEBOUNCE_MS, refreshKey?: unknown): SearchHook {
   const [query, setQueryState] = useState('');
   const [results, setResults] = useState<SearchResults | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const seq = useRef(0);
+  const lastQuery = useRef('');
   const setQuery = (q: string) => setQueryState(q.slice(0, MAX_QUERY));
   useEffect(() => {
     const q = query.trim();
@@ -36,9 +38,13 @@ export function useSearch(delay = SEARCH_DEBOUNCE_MS): SearchHook {
       setResults(null);
       setPending(false);
       setError(null);
+      lastQuery.current = '';
       return;
     }
-    setPending(true);
+    // A refresh of the same query keeps showing the current results and asks again without a debounce.
+    const refreshOnly = q === lastQuery.current;
+    lastQuery.current = q;
+    if (!refreshOnly) setPending(true);
     const timer = setTimeout(() => {
       send<Reply>({ t: 'search', q, semantic: true }).then(
         (r) => {
@@ -54,8 +60,8 @@ export function useSearch(delay = SEARCH_DEBOUNCE_MS): SearchHook {
           setError(e instanceof Error ? e.message : String(e));
         },
       );
-    }, delay);
+    }, refreshOnly ? 0 : delay);
     return () => clearTimeout(timer);
-  }, [query, delay]);
+  }, [query, delay, refreshKey]);
   return { query, setQuery, results, pending, error };
 }

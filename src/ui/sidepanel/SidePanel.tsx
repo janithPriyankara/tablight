@@ -47,7 +47,7 @@ const byUse = (a: Item, b: Item) => STATE_RANK[a.state] - STATE_RANK[b.state] ||
  */
 export function SidePanel() {
   const { state, error, refresh } = useDashboardState();
-  const search = useSearch();
+  const search = useSearch(undefined, state);
   const { notice, notify, undo } = useUndo();
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -87,6 +87,15 @@ export function SidePanel() {
     } finally {
       busyRef.current = false;
       setBusy(false);
+      await refresh();
+    }
+  };
+  const runUndo = async () => {
+    try {
+      notify((await undo()) ? 'Undone' : 'Too late to undo');
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Something went wrong');
+    } finally {
       await refresh();
     }
   };
@@ -245,7 +254,7 @@ export function SidePanel() {
         <div class="notice" role="status" aria-live="polite">
           {notice && <span class="notice-text">{notice.message}</span>}
           {notice?.token && (
-            <button type="button" class="btn btn-ghost btn-sm" onClick={() => void undo().then(() => refresh())}>Undo</button>
+            <button type="button" class="btn btn-ghost btn-sm" onClick={() => void runUndo()}>Undo</button>
           )}
         </div>
         <div class="sp-actions">

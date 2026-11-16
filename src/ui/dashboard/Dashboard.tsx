@@ -41,7 +41,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : 'Something w
 
 export function Dashboard() {
   const { state, error, refresh } = useDashboardState();
-  const search = useSearch();
+  const search = useSearch(undefined, state);
   const { notice, notify, undo, dismiss } = useUndo();
   const [view, setViewState] = useState<View>(() => parseHash(location.hash));
   const [busy, setBusy] = useState(false);
@@ -106,11 +106,12 @@ export function Dashboard() {
   const items = state?.items ?? [];
   const windowNo = useMemo(() => windowNumbers(items), [items]);
   const searching = search.query.trim().length > 0;
-  const meaningIds = useMemo(() => new Set(search.results?.meaning.map((i) => i.id) ?? []), [search.results]);
+  const results = search.results;
+  const meaningIds = useMemo(() => new Set(results?.meaning.map((i) => i.id) ?? []), [results]);
   const list = useMemo(() => {
-    if (searching) return search.results ? [...search.results.words, ...search.results.meaning] : [];
+    if (searching) return results ? [...results.words, ...results.meaning] : [];
     return itemsForView(view, items, groups);
-  }, [searching, search.results, view, items, groups]);
+  }, [searching, results, view, items, groups]);
   const byId = useMemo(() => new Map(list.map((i) => [i.id, i])), [list]);
   // The selection only ever holds items still listed (live updates remove closed tabs).
   const selection = useMemo(() => list.filter((i) => selected.has(i.id)), [list, selected]);
@@ -198,7 +199,9 @@ export function Dashboard() {
   };
   const stashIds = async (ids: string[]) => {
     const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids });
-    notify(`Stashed ${plural(ids.length - r.skipped, 'tab')}`, r.token);
+    const stashed = ids.length - r.skipped;
+    if (stashed > 0) notify(`Stashed ${plural(stashed, 'tab')}`, r.token);
+    else notify('Nothing stashed: those tabs can’t be stashed');
   };
   const closeIds = async (ids: string[]) => {
     const r = await send<{ token: string; closed?: number }>({ t: 'close', ids });
@@ -290,7 +293,7 @@ export function Dashboard() {
     act(async () => {
       if (!(await confirm({
         title: 'Delete all data?',
-        body: 'This deletes your groups, stash, saved sessions, settings and the synced copy of your stash in your browser account. Open tabs stay open. This can’t be undone; export a backup first if you may need it.',
+        body: 'This deletes your groups, stash, saved sessions and settings on this device, removes the synced copy of your stash from your browser account, and turns sync off here so it can’t come back. Your other devices keep their own stash. Open tabs stay open. This can’t be undone; export a backup first if you may need it.',
         confirmLabel: 'Delete all data', danger: true,
       }))) return;
       await send({ t: 'deleteAllData' });

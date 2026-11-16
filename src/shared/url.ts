@@ -50,8 +50,9 @@ export function normalizeUrl(url: string): string {
   params.sort((a, b) => rank(a[0]) - rank(b[0]) || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
   if (path.length > 1) path = path.replace(/\/+$/, '') || '/';
   const q = new URLSearchParams(params).toString();
-  // Keep SPA-style routes (#/ or #!), drop plain anchors.
-  const hash = /^#[/!]/.test(u.hash) ? u.hash : '';
+  // Keep app routes, drop plain anchors: "#/x" and "#!x" (SPA routers) and "#view/id" (Gmail, Keep) name a
+  // different page; "#section" only scrolls the same one.
+  const hash = /^#.*[/!]/.test(u.hash) ? u.hash : '';
   const port = u.port ? `:${u.port}` : '';
   return `${u.protocol}//${outHost}${port}${path}${q ? `?${q}` : ''}${hash}`;
 }

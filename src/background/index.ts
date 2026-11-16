@@ -32,7 +32,7 @@ import {
   backfillEmbKeys,
   configureTabIndex,
   flushIfPending, flushTabEvents,
-  maybeSuggest,
+  acceptQuietly, maybeSuggest,
   onTabEvent,
   processQueue,
   sweepEmbeddings,
@@ -147,7 +147,9 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
   if (typeof req.semantic !== 'boolean') throw new Error('invalid semantic flag');
   const q = req.q.trim();
   if (!q) return { words: [], meaning: [] };
-  const items = await db.items.all();
+  // Same rule as the lists: the dashboard itself and blank new tabs are never results.
+  const own = chrome.runtime.getURL('');
+  const items = (await db.items.all()).filter((i) => !isClutterTab(i.url, own));
   const words = wordSearch(items, await db.groups.all(), q);
   if (!req.semantic) return { words, meaning: [] };
   const ticket = ++searchTicket;
@@ -312,7 +314,7 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
   if (syncEnabled !== undefined) await setSyncEnabled(db, syncEnabled);
   // Turning auto-create on also accepts the suggestions already waiting, so the setting means one thing.
   if (rest.autoCreateGroups === true) {
-    for (const g of (await db.groups.all()).filter((x) => x.suggested)) await acceptSuggestion(db, g.id);
+    for (const g of (await db.groups.all()).filter((x) => x.suggested)) await acceptQuietly(db, g.id);
   }
   return db.settings.get();
 }

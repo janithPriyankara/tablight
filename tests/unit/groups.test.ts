@@ -150,6 +150,14 @@ describe('regroup', () => {
     expect(rows).toContainEqual({ groupId: null, before: 3, after: 1 }); // auto, learned and noVec start Unsorted
     void auto; void learned;
   });
+  it('merged items stay in the merge target when everything is re-grouped', async () => {
+    await db.groups.put(group('tv'));
+    await db.groups.put(group('movies'));
+    const a = await addItem({ url: 'https://www.netflix.com/title/42', title: 'Some Show', groupId: 'tv' });
+    await mergeGroups(db, 'tv', 'movies');
+    await regroupApply(db);
+    expect((await db.items.get(a.id))!.groupId).toBe('movies');
+  });
   it('apply changes only auto items with a cached vector and never user items', async () => {
     const { auto, learned, user, noVec } = await setup();
     expect(await regroupApply(db)).toBe(2);
@@ -309,6 +317,42 @@ describe('mirrorTabGroups', () => {
     await mirrorTabGroups(db, w);
     expect(mock.calls.group).toBe(calls);
     expect(mock.tabGroups()).toHaveLength(1);
+  });
+  it('takes tabs back out of a native group when they leave our group (deleted group, moved to Unsorted)', async () => {
+    const { w, t1, t2 } = await setup();
+    await mirrorTabGroups(db, w);
+    const i1 = (await db.items.byTabId(t1.id!))!;
+    await db.items.put({ ...i1, groupId: null }); // t1 moved to Unsorted
+    await mirrorTabGroups(db, w);
+    const byId = () => new Map(mock.tabs().map((t) => [t.id, t]));
+    expect(byId().get(t1.id)!.groupId).toBe(-1);
+    expect(byId().get(t2.id)!.groupId).not.toBe(-1);
+    await deleteGroup(db, 'games');
+    await mirrorTabGroups(db, w);
+    expect(byId().get(t2.id)!.groupId).toBe(-1);
+  });
+  it('never touches native groups the user made themselves', async () => {
+    const { w, other } = await setup();
+    await chrome.tabs.group({ tabIds: [other.id!], createProperties: { windowId: w } });
+    await mirrorTabGroups(db, w);
+    expect(mock.tabs().find((t) => t.id === other.id)!.groupId).not.toBe(-1);
+  });
+  it('two groups with the same name stay in separate native groups', async () => {
+    const { w, t1, t2 } = await setup();
+    await db.groups.put(group('games2', { name: 'Games', color: '#e5484d', builtIn: false }));
+    const i2 = (await db.items.byTabId(t2.id!))!;
+    await db.items.put({ ...i2, groupId: 'games2', groupSource: 'user' });
+    await mirrorTabGroups(db, w);
+    await mirrorTabGroups(db, w);
+    const byId = new Map(mock.tabs().map((t) => [t.id, t]));
+    expect(byId.get(t1.id)!.groupId).not.toBe(byId.get(t2.id)!.groupId);
+  });
+  it('create and rename refuse a name another group already has (any case)', async () => {
+    await db.groups.put(group('games', { name: 'Games' }));
+    await expect(createGroup(db, 'games', [])).rejects.toThrow(/already/);
+    const g = await createGroup(db, 'Chess', []);
+    await expect(renameGroup(db, g.id, ' GAMES ')).rejects.toThrow(/already/);
+    await renameGroup(db, g.id, 'chess'); // its own name in another case is fine
   });
   it('maps colors to the nearest Chrome color', () => {
     expect(nearestChromeColor('#e5484d')).toBe('red');

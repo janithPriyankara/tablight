@@ -81,6 +81,13 @@ export async function moveItems(db: Db, ids: string[], groupId: string): Promise
 }
 
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */
+/** Group names are unique (ignoring case): sync and tab-group mirroring match groups by name. */
+function assertFreeName(all: Group[], name: string, self?: string): void {
+  const key = name.toLowerCase();
+  if (all.some((g) => g.id !== self && !g.suggested && g.name.toLowerCase() === key)) {
+    throw new Error(`A group called “${name}” already exists`);
+  }
+}
 export async function createGroup(db: Db, name: string, ids: string[]): Promise<Group> {
   const clean = parseName(name);
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
@@ -89,6 +96,7 @@ export async function createGroup(db: Db, name: string, ids: string[]): Promise<
   const vecs = await vectorsOf(db, items);
   return db.tx(['items', 'groups'], async (s) => {
     const all = await s.groups.all();
+    assertFreeName(all, clean);
     const base: Group = {
       id: `g-${crypto.randomUUID()}`, name: clean, color: USER_COLORS[all.length % USER_COLORS.length]!,
       icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: Date.now(),
@@ -108,6 +116,7 @@ export async function renameGroup(db: Db, id: string, name: string): Promise<voi
   await db.tx(['groups'], async (s) => {
     const g = await s.groups.get(id);
     if (!g) throw new Error('unknown group');
+    assertFreeName(await s.groups.all(), clean, id);
     await s.groups.put({ ...g, name: clean });
   });
 }
@@ -124,7 +133,9 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
     const centroid = exemplars.length ? normalize(mean(exemplars)) : (dst.centroid ?? src.centroid);
     await s.groups.put({ ...dst, exemplars, centroid, suggested: dst.suggested && src.suggested });
     for (const i of await s.items.all()) {
-      if (i.groupId === from) await s.items.put({ ...i, groupId: into, updatedAt: nextStamp(i.updatedAt) });
+      // A merge is the user's decision for every item in it: auto-sorting must not pull them back out
+      // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
+      if (i.groupId === from) await s.items.put({ ...i, groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
     }
     await s.groups.delete(from);
   });
@@ -281,23 +292,54 @@ export function nearestChromeColor(hex: string): ChromeColor {
   return best;
 }
 
+/** chrome.storage.session: native tab group id → our group id, for native groups this extension made. */
+export const MIRRORED_KEY = 'mirroredGroups';
+async function loadMirrored(): Promise<Map<number, string>> {
+  try {
+    const raw = (await chrome.storage.session.get(MIRRORED_KEY))[MIRRORED_KEY] as unknown;
+    if (raw && typeof raw === 'object') {
+      return new Map(Object.entries(raw as Record<string, unknown>)
+        .filter((e): e is [string, string] => typeof e[1] === 'string')
+        .map(([k, v]) => [Number(k), v]));
+    }
+  } catch { /* none yet */ }
+  return new Map();
+}
 /**
  * Mirrors our groups as native tab groups in one window. Only when settings.mirrorTabGroups is on and the
  * optional `tabGroups` permission is granted. Open/sleeping, unpinned tabs with a (non-suggested) group are
- * grouped; an existing native group with the same title is reused; empty groups are never created.
+ * grouped; empty groups are never created. Native groups are tracked by id (storage.session, which lives as
+ * long as native group ids do), so two groups with the same name stay apart, and a tab that left our group
+ * (moved, Unsorted, group deleted) is taken back out. Native groups the user made are never touched, except
+ * that one titled like our group is adopted when we have none for it yet.
  */
 export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
   if (!(await db.settings.get()).mirrorTabGroups) return;
   if (!(await chrome.permissions.contains({ permissions: ['tabGroups'] }))) return;
-  const [groups, items, tabs, native] = await Promise.all([
+  const [groups, items, tabs, allNative, known] = await Promise.all([
     db.groups.all(),
     db.items.all(),
     chrome.tabs.query({ windowId }),
-    chrome.tabGroups.query({ windowId }),
+    chrome.tabGroups.query({}),
+    loadMirrored(),
   ]);
+  const native = allNative.filter((n) => n.windowId === windowId);
+  // Ours: native groups we made that still exist, in any window (only this window's are touched here).
+  const live = new Set(allNative.map((n) => n.id));
+  const ours = new Map([...known].filter(([nid]) => live.has(nid)));
   const tabById = new Map(tabs.flatMap((t) => (t.id !== undefined ? [[t.id, t] as const] : [])));
-  for (const g of groups) {
-    if (g.suggested) continue;
+  const itemByTab = new Map(items.flatMap((i) => (i.tabId !== undefined && i.state !== 'stashed' ? [[i.tabId, i] as const] : [])));
+  const active = new Map(groups.filter((g) => !g.suggested).map((g) => [g.id, g]));
+  // 1. Tabs in a native group of ours whose item no longer belongs to that group leave it.
+  const leave = tabs.filter((t) => {
+    if (t.id === undefined || t.groupId === undefined || t.groupId < 0) return false;
+    const owner = ours.get(t.groupId);
+    if (owner === undefined) return false;
+    return itemByTab.get(t.id)?.groupId !== owner || !active.has(owner);
+  }).map((t) => t.id!);
+  if (leave.length) await chrome.tabs.ungroup(leave as [number, ...number[]]);
+  // 2. Each group's tabs join its native group (ours by id; else a same-titled one nobody owns; else new).
+  for (const g of active.values()) {
     const tabIds = items
       .filter((i) => i.groupId === g.id && (i.state === 'open' || i.state === 'sleeping') && i.tabId !== undefined)
       .map((i) => i.tabId!)
@@ -306,13 +348,17 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
         return t !== undefined && !t.pinned;
       });
     if (!tabIds.length) continue;
-    const existing = native.find((n) => n.title === g.name);
+    const mine = native.find((n) => ours.get(n.id) === g.id);
+    const existing = mine ?? native.find((n) => n.title === g.name && !ours.has(n.id));
     const todo = existing ? tabIds.filter((id) => tabById.get(id)!.groupId !== existing.id) : tabIds;
+    if (existing) ours.set(existing.id, g.id);
     if (!todo.length) continue;
     const ids = todo as [number, ...number[]];
     const nativeId = (await (existing
       ? chrome.tabs.group({ tabIds: ids, groupId: existing.id })
       : chrome.tabs.group({ tabIds: ids, createProperties: { windowId } }))) as unknown as number;
+    ours.set(nativeId, g.id);
     await chrome.tabGroups.update(nativeId, { title: g.name, color: nearestChromeColor(g.color) });
   }
+  await chrome.storage.session.set({ [MIRRORED_KEY]: Object.fromEntries(ours) }).catch(() => undefined);
 }

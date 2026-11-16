@@ -112,6 +112,19 @@ describe('settings rpc', () => {
     expect(mock.sidePanelOpenedIn()).toEqual([tab.windowId]);
     mock.uninstall();
   });
+  it('search never returns the extension’s own pages or blank new tabs', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://organizer-tips.example.com/', title: 'Tab organizer tips' }] }] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    mock.addTab({ url: chrome.runtime.getURL('dashboard.html'), title: 'Tab Organizer', windowId: mock.windowIds()[0]! });
+    mock.addTab({ url: 'about:blank', title: 'organizer blank', windowId: mock.windowIds()[0]! });
+    const { flushTabEvents } = await import('../../src/background/tab-index');
+    await flushTabEvents();
+    expect((await db.items.all()).length).toBe(3);
+    const r = (await bg.handleRequest({ t: 'search', q: 'organizer', semantic: false })) as { words: { url: string }[] };
+    expect(r.words.map((i) => i.url)).toEqual(['https://organizer-tips.example.com/']);
+    mock.uninstall();
+  });
   it('broadcasts a debounced "changed" message to the UI after a mutation, not after reads', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

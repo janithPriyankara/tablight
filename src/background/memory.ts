@@ -24,6 +24,15 @@ interface UndoEntry {
 }
 // In memory only: a service-worker restart forgets pending undos, which is acceptable for a 10 s window.
 const undos = new Map<string, UndoEntry>();
+/**
+ * Another tab of the same page was stashed into record `stashId`: earlier actions that created it must no
+ * longer delete it on undo, or that second tab would be closed and not stashed anywhere.
+ */
+function disownStash(stashId: string): void {
+  for (const e of undos.values()) {
+    for (const c of e.closed) if (c.createdStash === stashId) delete c.createdStash;
+  }
+}
 function remember(entry: Omit<UndoEntry, 'expires'>): string {
   const now = Date.now();
   for (const [k, v] of undos) if (v.expires <= now) undos.delete(k);
@@ -144,6 +153,7 @@ export async function stash(db: Db, ids: string[]): Promise<{ token: string; ski
       const prev = await s.items.get(stashId);
       const rec = stashRecord(item, prev, stashId, await restashTime(s, stashId, now));
       if (!prev) createdStash.add(stashId);
+      else disownStash(stashId);
       await s.items.put(rec);
       await s.items.delete(item.id);
       await s.queue.remove([item.id]);

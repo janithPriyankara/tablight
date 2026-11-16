@@ -48,7 +48,7 @@ const onActivated = { addListener: vi.fn(), removeListener: vi.fn() };
 beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal('chrome', {
-    runtime: { getURL: (p: string) => `chrome-extension://ext/${p.replace(/^\//, '')}`, onMessage: { addListener: vi.fn(), removeListener: vi.fn() } },
+    runtime: { id: 'ext', getURL: (p: string) => `chrome-extension://ext/${p.replace(/^\//, '')}`, onMessage: { addListener: vi.fn(), removeListener: vi.fn() } },
     windows: { getCurrent: vi.fn(async () => ({ id: 1 })) },
     tabs: { query: vi.fn(async () => windowTabs), onActivated },
   });
@@ -117,6 +117,31 @@ describe('SidePanel', () => {
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok' }));
   });
 
+  it('a late Undo says so instead of failing silently', async () => {
+    serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? false : undefined));
+    render(<SidePanel />);
+    await loaded();
+    const row = (await within(windowSection()).findByText('Rust async guide')).closest('li')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Close' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await screen.findByText('Too late to undo');
+  });
+  it('search asks again when the tabs change, so a closed tab drops out of the matches', async () => {
+    let s = state();
+    const matches = () => s.items.filter((i) => /Rust|Dune/.test(i.title));
+    sendMock.mockImplementation(async (req) =>
+      (req.t === 'state' ? s : req.t === 'search' ? { words: matches(), meaning: [] } : undefined) as never);
+    render(<SidePanel />);
+    await loaded();
+    fireEvent.input(screen.getByRole('searchbox', { name: 'Search tabs' }), { target: { value: 'rust' } });
+    const list = await screen.findByRole('list', { name: 'Matches' });
+    expect(within(list).getByText('Dune trailer')).toBeTruthy();
+    // Dune closes elsewhere; the background's "changed" broadcast refreshes the state, then the search.
+    s = { ...s, items: s.items.filter((i) => i.id !== 'i2') };
+    const onMessage = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls[0]![0] as (m: unknown, x: unknown) => void;
+    onMessage({ target: 'ui', t: 'changed' }, { id: 'ext' });
+    await waitFor(() => expect(within(screen.getByRole('list', { name: 'Matches' })).queryByText('Dune trailer')).toBeNull());
+  });
   it('search replaces the lists with matches', async () => {
     serve(state(), (req) => (req.t === 'search' ? { words: [item('i1', { title: 'Rust async guide' })], meaning: [] } : undefined));
     render(<SidePanel />);
