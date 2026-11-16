@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText, pathWords, isClutterTab,
+  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText, pathWords, isClutterTab, startAt,
 } from '../../src/shared/url';
 describe('normalizeUrl', () => {
   it.each([
@@ -178,5 +178,23 @@ describe('hostile URLs stay cheap', () => {
     normalizeUrl(`https://evil.example/a${'/'.repeat(200_000)}`);
     expect(performance.now() - t0).toBeLessThan(250);
     expect(normalizeUrl('https://x.example/a/b///')).toBe('https://x.example/a/b');
+  });
+});
+
+describe('startAt (YouTube start time)', () => {
+  it.each([
+    ['https://www.youtube.com/watch?v=abc&t=754s', 754],
+    ['https://www.youtube.com/watch?v=abc&t=754', 754],
+    ['https://youtu.be/abc?t=12m34s', 754],
+    ['https://www.youtube.com/watch?v=abc&t=1h2m3s', 3723],
+    ['https://m.youtube.com/watch?v=abc&start=90', 90],
+  ])('%s → %i s', (url, secs) => {
+    expect(startAt(url)).toBe(secs);
+  });
+  it.each([
+    'https://www.youtube.com/watch?v=abc', 'https://www.youtube.com/watch?v=abc&t=0', 'https://www.youtube.com/watch?v=abc&t=nope',
+    'https://example.com/?t=754', 'not a url',
+  ])('%s → null', (url) => {
+    expect(startAt(url)).toBeNull();
   });
 });

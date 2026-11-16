@@ -21,6 +21,11 @@ export interface Item {
   embKey?: string;
   /** Local only (never synced or exported, no updatedAt bump): when embedding this item was given up on. */
   embGaveUpAt?: number;
+  /**
+   * Local only: false while the tab has never been the active tab since it appeared ("New"); true once it has.
+   * Missing (older data, tabs whose past is unknown) counts as opened.
+   */
+  opened?: boolean;
 }
 export interface Group {
   id: string;

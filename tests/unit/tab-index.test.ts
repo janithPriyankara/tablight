@@ -555,6 +555,34 @@ describe('queue failures (review 1.4)', () => {
     expect((await db.items.all()).map((i) => i.groupId)).toEqual([null, null]);
   });
 });
+describe('never-opened tabs ("New")', () => {
+  it('a tab opened in the background during a session is new until it is switched to', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [{ ...web(1), active: true }] }] });
+    await reconcile(db, await chrome.tabs.query({}), { newSession: true });
+    const bg = mock.addTab({ ...web(2), windowId: mock.windowIds()[0]!, active: false });
+    const fg = mock.addTab({ ...web(3), windowId: mock.windowIds()[0]!, active: true });
+    await reconcile(db, await chrome.tabs.query({}));
+    expect((await db.items.byTabId(bg.id!))!.opened).toBe(false);
+    expect((await db.items.byTabId(fg.id!))!.opened).toBe(true);
+    await touchTab(db, bg.id!);
+    expect((await db.items.byTabId(bg.id!))!.opened).toBe(true);
+  });
+  it('tabs that already existed when the index starts (install, browser start) are not marked new', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1), web(2), web(3)] }] });
+    await reconcile(db, await chrome.tabs.query({}), { newSession: true });
+    expect((await db.items.all()).every((i) => i.opened !== false)).toBe(true);
+  });
+  it('a tab still unopened at a browser restart stays new afterwards', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [{ ...web(1), active: true }] }] });
+    await reconcile(db, await chrome.tabs.query({}), { newSession: true });
+    mock.addTab({ ...web(2), windowId: mock.windowIds()[0]!, active: false });
+    await reconcile(db, await chrome.tabs.query({}));
+    mock.restartBrowser();
+    await reconcile(db, await chrome.tabs.query({}), { newSession: true });
+    const it2 = (await db.items.all()).find((i) => i.url === web(2).url)!;
+    expect(it2.opened).toBe(false);
+  });
+});
 describe('lastActiveAt (review minor 5)', () => {
   it('touchTab records activation; reconcile never moves it back', async () => {
     mock = installChromeMock({ windows: [{ tabs: [{ ...web(1), lastAccessed: 5 }] }] });

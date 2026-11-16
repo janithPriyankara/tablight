@@ -125,7 +125,7 @@ export async function reconcile(
     }
 
     for (const [t, prev] of pairs) {
-      const { item, enqueue, navigated } = itemFor(t, prev, now);
+      const { item, enqueue, navigated } = itemFor(t, prev, now, opts.newSession);
       if (!prev) result.created++;
       if (navigated) result.navigatedTabIds.push(item.tabId!);
       if (!prev || changed(prev, item)) await s.items.put(item);
@@ -163,6 +163,7 @@ function itemFor(
   t: chrome.tabs.Tab,
   prev: Item | undefined,
   now: number,
+  newSession = false,
 ): { item: Item; enqueue: boolean; navigated: boolean } {
   const url = tabUrl(t);
   const normUrl = normalizeUrl(url);
@@ -170,9 +171,12 @@ function itemFor(
   const classifiable = isWebUrl(url);
   // tabs.Tab.lastAccessed is Chrome 121+; onActivated (touchTab) keeps lastActiveAt current too.
   const lastActiveAt = Math.max(t.lastAccessed ?? 0, prev?.lastActiveAt ?? 0) || now;
+  // "Opened": the tab has been the active tab at least once. Only tabs that appear during a session can be known
+  // to be unopened; tabs already there when the index starts (install, browser start) have an unknown past.
+  const opened = t.active === true || (prev ? prev.opened !== false : newSession);
   const base = {
     url, normUrl, title, domain: domainOf(url), kind: kindOf(url), classifiable, tabId: t.id!, windowId: t.windowId,
-    state: t.discarded ? ('sleeping' as const) : ('open' as const), lastActiveAt,
+    state: t.discarded ? ('sleeping' as const) : ('open' as const), lastActiveAt, opened,
   };
   // While a page loads its title is a placeholder (empty or the URL, e.g. a restored tab): classifying that
   // could move the tab out of its group. Wait for the real title; once loaded, a placeholder is all there is.
@@ -210,7 +214,7 @@ function itemFor(
 }
 
 const TRACKED: (keyof Item)[] = [
-  'url', 'normUrl', 'title', 'domain', 'kind', 'classifiable', 'tabId', 'windowId', 'state', 'lastActiveAt', 'groupId',
+  'url', 'normUrl', 'title', 'domain', 'kind', 'classifiable', 'tabId', 'windowId', 'state', 'lastActiveAt', 'groupId', 'opened',
 ];
 function changed(a: Item, b: Item): boolean {
   if (!TRACKED.some((k) => a[k] !== b[k])) return false;
@@ -222,7 +226,9 @@ function changed(a: Item, b: Item): boolean {
 export async function touchTab(db: Db, tabId: number, now = Date.now()): Promise<void> {
   await db.tx(['items'], async (s) => {
     const i = await s.items.byTabId(tabId);
-    if (i && i.state !== 'stashed' && i.lastActiveAt < now) await s.items.put({ ...i, lastActiveAt: now });
+    if (i && i.state !== 'stashed' && (i.lastActiveAt < now || i.opened === false)) {
+      await s.items.put({ ...i, lastActiveAt: Math.max(i.lastActiveAt, now), opened: true });
+    }
   });
 }
 

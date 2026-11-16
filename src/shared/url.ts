@@ -60,6 +60,22 @@ export function normalizeUrl(url: string): string {
   const port = u.port ? `:${u.port}` : '';
   return `${u.protocol}//${outHost}${port}${path}${q ? `?${q}` : ''}${hash}`;
 }
+/**
+ * The start time (seconds) a YouTube link carries (t=754, t=754s, t=12m34s, t=1h2m3s, start=90), or null.
+ * Shown as "from 12:34" so a half-watched video shared or resumed at a time is recognisable.
+ */
+export function startAt(url: string): number | null {
+  const u = webUrl(url);
+  if (!u) return null;
+  const host = bareHost(u);
+  if (host !== 'youtube.com' && host !== 'youtu.be') return null;
+  const raw = u.searchParams.get('t') ?? u.searchParams.get('start');
+  if (!raw) return null;
+  const m = /^(?:(\d{1,2})h)?(?:(\d{1,4})m)?(?:(\d{1,6})s?)?$/.exec(raw);
+  if (!m || (!m[1] && !m[2] && !m[3])) return null;
+  const secs = Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
+  return secs > 0 ? secs : null;
+}
 export function isWebUrl(url: string): boolean {
   return webUrl(url) !== null;
 }

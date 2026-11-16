@@ -12,6 +12,14 @@ export function ago(at: number, now = Date.now()): string {
   if (h < 48) return `${h} h ago`;
   return `${Math.round(h / 24)} d ago`;
 }
+/** 754 → "12:34", 3723 → "1:02:03". */
+export function clock(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = Math.floor(secs % 60);
+  const mm = h ? String(m).padStart(2, '0') : String(m);
+  return `${h ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
+}
 /** A title for display: the cleaned title, else the URL. */
 export function displayTitle(i: { title: string; url: string }): string {
   return i.title.trim() || i.url;

@@ -38,6 +38,8 @@ type Dialog =
 
 const hasTab = (i: Item) => i.state !== 'stashed' && i.tabId !== undefined;
 const isStashed = (i: Item) => i.state === 'stashed';
+/** A tab that was never switched to (see Item.opened). */
+const isNewTab = (i: Item) => i.state !== 'stashed' && i.opened === false;
 const isWebOpen = (i: Item) => i.state === 'open' && i.classifiable && i.tabId !== undefined;
 const errorText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
 
@@ -96,6 +98,7 @@ export function Dashboard() {
   };
   const go = (v: View) => {
     search.setQuery('');
+    setNewOnly(false);
     setViewState(v);
     const hash = `#${viewHash(v)}`;
     if (location.hash !== hash) location.hash = hash;
@@ -121,10 +124,15 @@ export function Dashboard() {
   const searching = search.query.trim().length > 0;
   const results = search.results;
   const meaningIds = useMemo(() => new Set(results?.meaning.map((i) => i.id) ?? []), [results]);
-  const list = useMemo(() => {
+  const fullList = useMemo(() => {
     if (searching) return results ? [...results.words, ...results.meaning] : [];
     return itemsForView(view, items, groups);
   }, [searching, results, view, items, groups]);
+  // "New" = tabs that were never switched to. "Show new only" narrows the current view to them.
+  const newCount = useMemo(() => (searching ? 0 : fullList.filter(isNewTab).length), [searching, fullList]);
+  const [newOnly, setNewOnly] = useState(false);
+  const showNewOnly = newOnly && newCount > 0 && !searching;
+  const list = useMemo(() => (showNewOnly ? fullList.filter(isNewTab) : fullList), [showNewOnly, fullList]);
   const byId = useMemo(() => new Map(list.map((i) => [i.id, i])), [list]);
   // The selection only ever holds items still listed (live updates remove closed tabs).
   const selection = useMemo(() => list.filter((i) => selected.has(i.id)), [list, selected]);
@@ -417,11 +425,13 @@ export function Dashboard() {
     if (searching) return search.pending ? 'Searching…' : plural(list.length, 'match', 'matches');
     if (view.kind === 'all') {
       const tabs = items.filter((i) => i.state !== 'stashed').length;
-      return [plural(tabs, 'tab'), plural(state.windows, 'window'), `${state.sleeping} paused`, `${counts.stashed} saved`].join(' · ');
+      return [plural(tabs, 'tab'), plural(state.windows, 'window'), `${state.sleeping} paused`, `${counts.stashed} saved`,
+        newCount ? `${newCount} new` : ''].filter(Boolean).join(' · ');
     }
     if (view.kind === 'duplicates') return `${plural(state.dupCount, 'extra copy', 'extra copies')}`;
     const watch = currentGroup?.watchCount ?? 0;
-    return [plural(list.length, 'item'), watch ? `${watch} to watch` : ''].filter(Boolean).join(' · ');
+    return [plural(fullList.length, 'item'), watch ? `${watch} to watch` : '', newCount ? `${newCount} new` : '']
+      .filter(Boolean).join(' · ');
   })();
   const emptyText = (() => {
     if (searching) return search.pending ? 'Searching…' : 'No matches';
@@ -518,7 +528,16 @@ export function Dashboard() {
               <h1 class="view-title">{title}</h1>
               {currentGroup?.suggested && !searching && <span class="status-pill">Suggested</span>}
             </div>
-            {subtitle && <p class="view-sub">{subtitle}</p>}
+            {subtitle && (
+              <p class="view-sub">
+                <span>{subtitle}</span>
+                {newCount > 0 && (
+                  <button type="button" class="link view-filter" aria-pressed={showNewOnly} onClick={() => setNewOnly(!showNewOnly)}>
+                    {showNewOnly ? 'Show all' : 'Show new only'}
+                  </button>
+                )}
+              </p>
+            )}
             <div class="view-actions">
               {view.kind === 'stashed' && !searching && list.length > 0 && (
                 <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void removeAllStashed()}>

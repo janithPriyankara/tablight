@@ -306,6 +306,31 @@ describe('dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
+  it('never-opened tabs are marked New, counted in the summary, and can be shown on their own', async () => {
+    location.hash = '#group=videos';
+    serve(state({
+      items: [
+        item('i1', { groupId: 'videos', kind: 'watch', opened: false, title: 'Unwatched one' }),
+        item('i2', { groupId: 'videos', kind: 'watch', opened: false, title: 'Unwatched two' }),
+        item('i3', { groupId: 'videos', kind: 'watch', opened: true, title: 'Seen already', url: 'https://www.youtube.com/watch?v=x&t=754s' }),
+        item('i4', { groupId: 'videos', kind: 'watch', state: 'stashed', tabId: undefined, windowId: undefined, opened: false, title: 'Saved one' }),
+      ],
+      groups: [group('videos', 'Videos', 4, { watchCount: 4 })],
+    }));
+    render(<Dashboard />);
+    await screen.findByText('Unwatched one');
+    expect(screen.getByText('4 items · 4 to watch · 2 new')).toBeTruthy();
+    const rowOf = (t: string) => screen.getByText(t).closest('li')!;
+    expect(within(rowOf('Unwatched one')).getByText('New')).toBeTruthy();
+    expect(within(rowOf('Seen already')).queryByText('New')).toBeNull();
+    expect(within(rowOf('Saved one')).queryByText('New')).toBeNull(); // saved tabs aren't "new" tabs
+    expect(within(rowOf('Seen already')).getByText('from 12:34')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show new only' }));
+    await waitFor(() => expect(screen.queryByText('Seen already')).toBeNull());
+    expect(screen.getByText('Unwatched two')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show all' }));
+    await screen.findByText('Seen already');
+  });
   it('import refuses files over 20 MB before reading them', async () => {
     location.hash = '#view=settings';
     serve(state(), (req) => (req.t === 'import' ? { added: 2, skipped: 1 } : undefined));

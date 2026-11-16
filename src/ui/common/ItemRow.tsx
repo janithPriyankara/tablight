@@ -2,7 +2,8 @@ import type { ComponentChildren, LiHTMLAttributes } from 'preact';
 import type { Item } from '../../shared/types';
 import { Favicon } from './Favicon';
 import { GroupChip } from './GroupChip';
-import { displayTitle } from './format';
+import { clock, displayTitle } from './format';
+import { startAt } from '../../shared/url';
 const STATE_LABEL: Record<Item['state'], string | null> = { open: null, sleeping: 'Paused', stashed: 'Saved' };
 export interface ItemRowProps {
   item: Item;
@@ -29,6 +30,8 @@ export interface ItemRowProps {
 export function ItemRow({ item, group, onOpen, actions, selected, meta, leading, rowProps, mainTabIndex }: ItemRowProps) {
   const title = displayTitle(item);
   const state = STATE_LABEL[item.state];
+  const isNew = item.state !== 'stashed' && item.opened === false;
+  const from = item.kind === 'watch' ? startAt(item.url) : null;
   const body = (
     <>
       <Favicon url={item.url} />
@@ -37,6 +40,8 @@ export function ItemRow({ item, group, onOpen, actions, selected, meta, leading,
         <span class="item-meta">
           <span class="item-domain">{item.domain || item.url}</span>
           {meta && <span class="item-extra">{meta}</span>}
+          {from !== null && <span class="item-extra">{`from ${clock(from)}`}</span>}
+          {isNew && <span class="state state-new" title="You haven’t opened this tab yet">New</span>}
           {state && <span class={`state state-${item.state}`}>{state}</span>}
           {group && <GroupChip name={group.name} color={group.color} small />}
         </span>

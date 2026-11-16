@@ -798,3 +798,12 @@ a.link {
     transition: none;
   }
 }
+.view-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.view-filter {
+  font-size: var(--text-sm);
+}

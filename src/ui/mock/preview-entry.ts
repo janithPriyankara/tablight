@@ -29,6 +29,15 @@ export async function startPreview(page: 'popup' | 'dashboard' | 'sidepanel'): P
   };
   await import('../../background/index');
   control.fireInstalled('install');
+  // A few tabs opened in the background after start-up, so the preview shows never-opened ("New") tabs.
+  setTimeout(() => {
+    const w = control.windowIds()[1] ?? control.windowIds()[0]!;
+    for (const [url, title] of [
+      ['https://www.youtube.com/watch?v=pv1&t=754s', 'Lecture 4: Attention and transformers - YouTube'],
+      ['https://www.youtube.com/watch?v=pv2', 'The Making of Dune: Part Two - YouTube'],
+      ['https://www.netflix.com/title/80057281', 'Watch Stranger Things | Netflix Official Site'],
+    ] as const) control.addTab({ url, title, windowId: w, active: false, status: 'complete' });
+  }, 1500);
   const { render, createElement } = await import('preact');
   const root = document.getElementById('app')!;
   if (page === 'popup') render(createElement((await import('../popup/Popup')).Popup, null), root);
