@@ -16,11 +16,21 @@ export const DEBOUNCE_MS = 500;
 /** A continuous event stream still flushes at least this often. */
 export const MAX_WAIT_MS = 2_000;
 export const KICK_ALARM = 'classify-kick';
+/** Alarm period while the queue keeps failing as a whole (the embedder itself is down). */
+export const BACKOFF_MINUTES = 15;
+/** After this many failed attempts a batch is retried one item at a time. */
+export const MAX_ATTEMPTS = 3;
+/** Hard cap: an item failing this often is written Unsorted and dropped, whatever the cause. */
+export const GIVE_UP_ATTEMPTS = 10;
+/** A title-only change re-embeds an item at most this often (live titles: timers, tickers, chats). */
+export const RETITLE_INTERVAL_MS = 5 * 60_000;
 export const SUGGEST_MIN_UNSORTED = 4;
 export const MAX_SUGGESTED = 5;
 /** A new cluster sharing at least this share of its items with a current suggestion is skipped. */
 export const SUGGEST_OVERLAP = 0.6;
 const SUGGEST_COLORS = ['#7c66dc', '#0d74ce', '#2b9a66', '#cc4e00', '#c2298a'];
+/** chrome.storage.session key: present while the browser session that the index's tab ids belong to lasts. */
+export const SESSION_KEY = 'tabIndexSession';
 
 /** Embedding cache key: one vector per normalized URL + cleaned title. */
 export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promise<string> {
@@ -34,23 +44,42 @@ function domainOf(url: string): string {
 
 // ───────────────────────────── reconcile ─────────────────────────────
 
+export interface ReconcileResult {
+  created: number;
+  deleted: number;
+  enqueued: number;
+  /** Tabs whose URL changed or that are new: their per-tab badge must be re-set. */
+  navigatedTabIds: number[];
+}
+
+/** itemId → when a title-only change last re-enqueued it (memory: lost with the worker, which is fine). */
+const retitledAt = new Map<string, number>();
+
 /**
  * Makes the open/sleeping items match `tabs` exactly, in one transaction.
- * Existing items are matched by tabId, then (restored sessions with new tab ids) by normUrl+windowId,
- * then (browser restart: window ids changed too) by normUrl alone, most recently active item first.
- * Gone, non-stashed items are deleted. A web item is enqueued when new or when its embedding key
- * (normUrl or cleaned title) changed: auto items are re-classified, user items keep their group.
+ * Matching: by tabId (only within the same browser session: tab ids restart from small numbers after a
+ * restart, so `newSession` skips it), then by normUrl+windowId, then by normUrl alone with the most
+ * recently active item first. Gone, non-stashed items are deleted.
+ * A web item is enqueued when new, when its URL changed, or when its title changed meaningfully
+ * (ignoring digit-only churn), at most once per RETITLE_INTERVAL_MS after its first real title.
+ * Auto items are then re-classified; user items keep their group.
  */
-export async function reconcile(db: Db, tabs: chrome.tabs.Tab[]): Promise<void> {
+export async function reconcile(
+  db: Db,
+  tabs: chrome.tabs.Tab[],
+  opts: { newSession?: boolean } = {},
+): Promise<ReconcileResult> {
   const now = Date.now();
   const seen = new Set<number>();
   const live = tabs.filter((t) => t.id !== undefined && t.id >= 0 && !seen.has(t.id) && seen.add(t.id));
+  const result: ReconcileResult = { created: 0, deleted: 0, enqueued: 0, navigatedTabIds: [] };
   await db.tx(['items', 'queue'], async (s) => {
     const all = await s.items.all();
     const unmatched = new Map(all.filter((i) => i.state !== 'stashed').map((i) => [i.id, i]));
     const byTab = new Map<number, Item>();
-    for (const i of unmatched.values()) if (i.tabId !== undefined && !byTab.has(i.tabId)) byTab.set(i.tabId, i);
-
+    if (!opts.newSession) {
+      for (const i of unmatched.values()) if (i.tabId !== undefined && !byTab.has(i.tabId)) byTab.set(i.tabId, i);
+    }
     const pairs: [chrome.tabs.Tab, Item | undefined][] = [];
     const pending: chrome.tabs.Tab[] = [];
     for (const t of live) {
@@ -61,8 +90,10 @@ export async function reconcile(db: Db, tabs: chrome.tabs.Tab[]): Promise<void> 
       } else pending.push(t);
     }
     // Restored sessions: tab ids changed, the window and URL did not.
-    const liveIds = new Set(live.map((t) => t.id!));
-    const orphans = [...unmatched.values()].filter((i) => i.tabId === undefined || !liveIds.has(i.tabId));
+    const matchedIds = new Set(pairs.map(([t]) => t.id!));
+    const orphans = [...unmatched.values()].filter(
+      (i) => opts.newSession || i.tabId === undefined || !matchedIds.has(i.tabId),
+    );
     const take = (k: number) => {
       const i = orphans.splice(k, 1)[0]!;
       unmatched.delete(i.id);
@@ -82,27 +113,52 @@ export async function reconcile(db: Db, tabs: chrome.tabs.Tab[]): Promise<void> 
       const k = orphans.findIndex((i) => i.normUrl === norm);
       pairs.push([t, k >= 0 ? take(k) : undefined]);
     }
+
     for (const [t, prev] of pairs) {
-      const { item, enqueue } = itemFor(t, prev, now);
+      const { item, enqueue, navigated } = itemFor(t, prev, now);
+      if (!prev) result.created++;
+      if (navigated) result.navigatedTabIds.push(item.tabId!);
       if (!prev || changed(prev, item)) await s.items.put(item);
-      if (enqueue) await s.queue.add(item.id);
+      if (enqueue) {
+        await s.queue.add(item.id);
+        result.enqueued++;
+      }
     }
     const gone = [...unmatched.keys()];
-    for (const id of gone) await s.items.delete(id);
+    for (const id of gone) {
+      await s.items.delete(id);
+      retitledAt.delete(id);
+    }
     if (gone.length) await s.queue.remove(gone);
+    result.deleted = gone.length;
   });
+  return result;
 }
 
 function tabUrl(t: chrome.tabs.Tab): string {
   return t.url || t.pendingUrl || '';
 }
 
-function itemFor(t: chrome.tabs.Tab, prev: Item | undefined, now: number): { item: Item; enqueue: boolean } {
+/** A title with no words of its own (empty or the URL): the page hasn't loaded its real title yet. */
+function isPlaceholderTitle(title: string, url: string): boolean {
+  const t = title.trim();
+  return !t || t === url.trim() || /^https?:\/\/\S+$/i.test(t);
+}
+
+/** Digit-only changes (clocks, counters, prices) don't change what a page is about. */
+const titleGist = (title: string, url: string) => cleanTitle(title, url).replace(/\p{N}+/gu, '#');
+
+function itemFor(
+  t: chrome.tabs.Tab,
+  prev: Item | undefined,
+  now: number,
+): { item: Item; enqueue: boolean; navigated: boolean } {
   const url = tabUrl(t);
   const normUrl = normalizeUrl(url);
   const title = t.title ?? '';
   const classifiable = isWebUrl(url);
-  const lastActiveAt = t.lastAccessed || prev?.lastActiveAt || now;
+  // tabs.Tab.lastAccessed is Chrome 121+; onActivated (touchTab) keeps lastActiveAt current too.
+  const lastActiveAt = Math.max(t.lastAccessed ?? 0, prev?.lastActiveAt ?? 0) || now;
   const base = {
     url, normUrl, title, domain: domainOf(url), kind: kindOf(url), classifiable, tabId: t.id!, windowId: t.windowId,
     state: t.discarded ? ('sleeping' as const) : ('open' as const), lastActiveAt,
@@ -111,14 +167,23 @@ function itemFor(t: chrome.tabs.Tab, prev: Item | undefined, now: number): { ite
     const item: Item = {
       id: crypto.randomUUID(), ...base, groupId: null, groupSource: 'auto', createdAt: now, updatedAt: now,
     };
-    return { item, enqueue: classifiable };
+    return { item, enqueue: classifiable, navigated: true };
   }
   const navigated = prev.normUrl !== normUrl;
-  const retitled = cleanTitle(prev.title, prev.url) !== cleanTitle(title, url);
   const item: Item = { ...prev, ...base, updatedAt: prev.updatedAt };
   // A user's choice is kept; an auto group no longer applies to a non-web page.
   if (!classifiable && item.groupSource === 'auto') item.groupId = null;
-  return { item, enqueue: classifiable && (navigated || retitled) };
+  let enqueue = classifiable && navigated;
+  if (navigated) retitledAt.delete(item.id);
+  else if (classifiable && titleGist(prev.title, prev.url) !== titleGist(title, url)) {
+    // The first real title (replacing a placeholder) always counts; later changes are rate-limited.
+    const last = retitledAt.get(item.id);
+    if (isPlaceholderTitle(prev.title, prev.url) || last === undefined || now - last >= RETITLE_INTERVAL_MS) {
+      enqueue = true;
+      if (!isPlaceholderTitle(prev.title, prev.url)) retitledAt.set(item.id, now);
+    }
+  }
+  return { item, enqueue, navigated };
 }
 
 const TRACKED: (keyof Item)[] = [
@@ -130,12 +195,32 @@ function changed(a: Item, b: Item): boolean {
   return true;
 }
 
+/** Records that a tab was just activated (light path: no reconcile). */
+export async function touchTab(db: Db, tabId: number, now = Date.now()): Promise<void> {
+  await db.tx(['items'], async (s) => {
+    const i = await s.items.byTabId(tabId);
+    if (i && i.state !== 'stashed' && i.lastActiveAt < now) await s.items.put({ ...i, lastActiveAt: now });
+  });
+}
+
+/** Deletes cached embeddings no item's current content uses any more. Returns how many went. */
+export async function sweepEmbeddings(db: Db): Promise<number> {
+  const items = await db.items.all();
+  const used = new Set(await Promise.all(items.filter((i) => i.classifiable).map(embeddingKey)));
+  const stale = (await db.embeddings.keys()).filter((k) => !used.has(k));
+  if (!stale.length) return 0;
+  await db.tx(['embeddings'], async (s) => {
+    for (const k of stale) await s.embeddings.delete(k);
+  });
+  return stale.length;
+}
+
 // ───────────────────────────── debounced tab events ─────────────────────────────
 
 export interface TabIndexConfig {
   db: () => Promise<Db>;
   /** Runs after each reconcile (classification, suggestions, badge). Errors are logged. */
-  after?: (db: Db) => Promise<void>;
+  after?: (db: Db, result: ReconcileResult) => Promise<void>;
 }
 let config: TabIndexConfig | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -158,6 +243,18 @@ export function onTabEvent(): void {
   }, wait);
 }
 
+/**
+ * True when the stored tab ids may belong to an earlier browser session. chrome.storage.session is
+ * cleared when the browser restarts (and on extension reload), so a missing marker means "new session".
+ */
+async function sessionIsNew(): Promise<boolean> {
+  try {
+    return !(await chrome.storage.session.get(SESSION_KEY))[SESSION_KEY];
+  } catch {
+    return false;
+  }
+}
+
 /** Reconciles now (cancels a pending debounce). Runs are serialized. Never rejects. */
 export function flushTabEvents(): Promise<void> {
   if (timer) {
@@ -168,8 +265,10 @@ export function flushTabEvents(): Promise<void> {
     if (!config) return;
     try {
       const db = await config.db();
-      await reconcile(db, await chrome.tabs.query({}));
-      await config.after?.(db);
+      const newSession = await sessionIsNew();
+      const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
+      if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+      await config.after?.(db, result);
     } catch (e) {
       console.error('tab index flush failed', e);
     }
@@ -198,6 +297,8 @@ let again = false;
  * Pipeline: groupSource 'user' keeps its group > ruleGroup > classify (trained head) > Unsorted.
  * An entry leaves the queue only in the same transaction that writes its item, so a killed worker
  * resumes where it stopped. While work remains the `classify-kick` alarm stays set to wake us.
+ * A batch that failed MAX_ATTEMPTS times is retried item by item: an item that fails while others
+ * succeed is written Unsorted and dropped; if all fail the embedder is down and the alarm backs off.
  * Concurrent calls share the running pass (which then drains once more).
  */
 export function processQueue(db: Db, embedFn: EmbedFn = embed): Promise<number> {
@@ -211,29 +312,73 @@ export function processQueue(db: Db, embedFn: EmbedFn = embed): Promise<number> 
   return running;
 }
 
+class EmbedderDown extends Error {}
+
 async function drain(db: Db, embedFn: EmbedFn): Promise<number> {
   let total = 0;
   try {
-    if ((await db.queue.size()) > 0) await setKick(true);
+    if ((await db.queue.size()) > 0) await setKick(1, true);
     do {
       again = false;
       for (;;) {
         const ids = await db.queue.take(BATCH);
         if (!ids.length) break;
-        total += await processBatch(db, ids, embedFn);
+        total += await processWithRetry(db, ids, embedFn);
       }
     } while (again);
-    await setKick(false);
+    await setKick(0);
     return total;
   } catch (e) {
-    await setKick(true);
-    throw e;
+    again = false;
+    await setKick(e instanceof EmbedderDown ? BACKOFF_MINUTES : 1);
+    throw e instanceof EmbedderDown && e.cause instanceof Error ? e.cause : e;
   }
 }
 
+async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+  try {
+    return await processBatch(db, ids, embedFn);
+  } catch (e) {
+    const attempts = Math.max(0, ...(await db.queue.fail(ids)));
+    if (attempts < MAX_ATTEMPTS) throw e;
+    // Isolate the poison item(s).
+    let written = 0;
+    const failed: string[] = [];
+    let lastError: unknown = e;
+    for (const id of ids) {
+      try {
+        written += await processBatch(db, [id], embedFn);
+      } catch (err) {
+        failed.push(id);
+        lastError = err;
+      }
+    }
+    if (!failed.length) return written;
+    const counts = await db.queue.fail(failed);
+    const giveUp = failed.filter((_, k) => written > 0 || counts[k]! >= GIVE_UP_ATTEMPTS);
+    if (giveUp.length) written += await writeUnsorted(db, giveUp);
+    if (giveUp.length < failed.length) throw new EmbedderDown('embedder unavailable', { cause: lastError });
+    return written;
+  }
+}
+
+/** Gives up on items: auto items become Unsorted, user items keep their group; they leave the queue. */
+async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
+  return db.tx(['items', 'queue'], async (s) => {
+    let n = 0;
+    for (const id of ids) {
+      const cur = await s.items.get(id);
+      if (cur && cur.groupSource === 'auto') {
+        await s.items.put({ ...cur, groupId: null, updatedAt: Date.now() });
+        n++;
+      }
+    }
+    await s.queue.remove(ids);
+    return n;
+  });
+}
+
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
-  const groups = (await db.groups.all()).filter((g) => !g.suggested);
-  const known = new Set(groups.map((g) => g.id));
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
   const drop = ids.filter((id, k) => !read[k]?.classifiable);
   const todo = read.filter((i): i is Item => !!i?.classifiable);
@@ -255,7 +400,10 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
     [...missing.keys()].forEach((key, k) => fresh.set(key, out[k]!));
   }
 
-  return db.tx(['items', 'queue', 'embeddings'], async (s) => {
+  return db.tx(['items', 'queue', 'embeddings', 'groups'], async (s) => {
+    // Read the groups here so a group deleted meanwhile is never assigned.
+    const groups = (await s.groups.all()).filter((g) => !g.suggested);
+    const known = new Set(groups.map((g) => g.id));
     for (const [key, v] of fresh) {
       await s.embeddings.put(key, v);
       vecs.set(key, v);
@@ -285,10 +433,19 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
   });
 }
 
-async function setKick(on: boolean): Promise<void> {
+/**
+ * periodInMinutes > 0 sets the classify-kick alarm (unless it already has that period, or any alarm
+ * exists and `keep` is set, so a backed-off alarm isn't reset); 0 clears it.
+ */
+async function setKick(periodInMinutes: number, keep = false): Promise<void> {
   try {
-    if (on) await chrome.alarms.create(KICK_ALARM, { periodInMinutes: 1 });
-    else await chrome.alarms.clear(KICK_ALARM);
+    if (periodInMinutes <= 0) {
+      await chrome.alarms.clear(KICK_ALARM);
+      return;
+    }
+    const cur = await chrome.alarms.get(KICK_ALARM);
+    if (keep && cur) return;
+    if (cur?.periodInMinutes !== periodInMinutes) await chrome.alarms.create(KICK_ALARM, { periodInMinutes });
   } catch (e) {
     console.error('classify-kick alarm', e);
   }

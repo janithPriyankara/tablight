@@ -3,8 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
   configureTabIndex,
+  BACKOFF_MINUTES,
   embeddingKey,
+  flushTabEvents,
   maybeSuggest,
+  RETITLE_INTERVAL_MS,
+  SESSION_KEY,
+  sweepEmbeddings,
+  touchTab,
   onTabEvent,
   processQueue,
   reconcile,
@@ -181,6 +187,42 @@ describe('reconcile', () => {
   });
 });
 
+describe('browser restart with colliding ids (review 1.1)', () => {
+  it('a new session never matches by tabId: each URL keeps its own user group', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1), web(2), web(3), web(4)] }] });
+    configureTabIndex({ db: async () => db });
+    await flushTabEvents();
+    // Ids shift during the session: close the first tab, open another.
+    mock.removeTab(mock.tabs()[0]!.id!);
+    mock.addTab({ ...web(5), windowId: 1 });
+    await flushTabEvents();
+    for (const i of await db.items.all()) await db.items.put({ ...i, groupId: `g-${i.url}`, groupSource: 'user' });
+    await db.queue.remove(await db.queue.take(10));
+    const before = mock.tabs().map((t) => t.id);
+    mock.restartBrowser(); // ids renumbered from 1: old tab 2 (web 2) is now tab 1, tab 2 is now web 3, …
+    const after = mock.tabs();
+    expect(after.map((t) => t.id)).not.toEqual(before);
+    expect(after.some((t) => before.includes(t.id))).toBe(true); // ids collide with different URLs
+    await flushTabEvents();
+    const items = await db.items.all();
+    expect(items).toHaveLength(4);
+    for (const t of after) {
+      const i = (await db.items.byTabId(t.id!))!;
+      expect(i.url).toBe(t.url);
+      expect(i.groupId).toBe(`g-${t.url}`);
+    }
+    expect(await db.queue.size()).toBe(0); // nothing looked navigated
+  });
+  it('within a session, tab ids are trusted (navigation keeps the item)', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1)] }] });
+    configureTabIndex({ db: async () => db });
+    await flushTabEvents();
+    const id0 = (await db.items.all())[0]!.id;
+    mock.updateTab(mock.tabs()[0]!.id!, web(9));
+    await flushTabEvents();
+    expect((await db.items.all()).map((i) => [i.id, i.url])).toEqual([[id0, web(9).url]]);
+  });
+});
 describe('event storm (Review Focus 2)', () => {
   it('300 creates + 200 removes within 100 ms end matching tabs.query with no dup tabIds', async () => {
     mock = installChromeMock({ windows: [{ tabs: [web(1), web(2), web(3)] }] });
@@ -189,6 +231,7 @@ describe('event storm (Review Focus 2)', () => {
     await db.items.put({ ...keep, groupId: 'mine', groupSource: 'user' });
 
     configureTabIndex({ db: async () => db, after: async (d) => void (await processQueue(d, fakeEmbed)) });
+    await chrome.storage.session.set({ [SESSION_KEY]: 1 }); // same browser session: tab ids are trusted
     const events = ['onCreated', 'onUpdated', 'onRemoved', 'onReplaced'] as const;
     for (const e of events) mock.chrome.tabs[e].addListener(() => onTabEvent());
     const query = vi.spyOn(mock.chrome.tabs, 'query');
@@ -291,6 +334,115 @@ describe('processQueue', () => {
   });
 });
 
+describe('embedding cache hygiene (review 1.3)', () => {
+  it('sweeps keys no item uses any more, keeps shared ones', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [web(1), web(1), web(2)] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, fakeEmbed);
+    expect(await db.embeddings.keys()).toHaveLength(2);
+    const [a, , c] = mock.tabs();
+    mock.updateTab(a!.id!, web(3)); // one copy of web(1) navigates: web(1) is still used by the other
+    mock.removeTab(c!.id!); // web(2) is gone
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, fakeEmbed);
+    expect(await sweepEmbeddings(db)).toBe(1);
+    const keys = new Set(await db.embeddings.keys());
+    for (const i of await db.items.all()) expect(keys.has(await embeddingKey(i))).toBe(true);
+    expect(keys.size).toBe(2);
+  });
+  it('rate-limits title-only re-embeds and ignores digit-only churn', async () => {
+    let now = 1_000_000;
+    const spy = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    try {
+      mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://chat.example.com/r', title: 'https://chat.example.com/r' }] }] });
+      const id = mock.tabs()[0]!.id!;
+      const step = async (title: string) => {
+        mock.updateTab(id, { title });
+        await reconcile(db, await chrome.tabs.query({}));
+        const n = await db.queue.size();
+        await processQueue(db, fakeEmbed);
+        return n;
+      };
+      await reconcile(db, await chrome.tabs.query({}));
+      await processQueue(db, fakeEmbed);
+      expect(await step('Team chat')).toBe(1); // first real title replaces the placeholder
+      expect(await step('Team chat — release planning')).toBe(1); // first real change
+      now += 1000;
+      expect(await step('Team chat — lunch')).toBe(0); // rate-limited
+      expect(await step('Team chat — lunch 12:01')).toBe(0);
+      now += RETITLE_INTERVAL_MS;
+      expect(await step('Team chat — lunch 12:07')).toBe(0); // digits only: not a real change
+      expect(await step('Team chat — incident review')).toBe(1);
+      expect((await db.items.byTabId(id))!.title).toBe('Team chat — incident review');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+describe('queue failures (review 1.4)', () => {
+  async function setup(count: number) {
+    await db.groups.put(group('programming'));
+    mock = installChromeMock({
+      windows: [{ tabs: Array.from({ length: count }, (_, i) => ({ url: `https://stackoverflow.com/questions/${i}/q`, title: `Q ${i}` })) }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+  }
+  it('a poison item is isolated after 3 failures, written Unsorted and dropped', async () => {
+    await setup(40);
+    fakeEmbed.mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.startsWith('Q 5 '))) throw new Error('bad input');
+      return texts.map(vecFor);
+    });
+    await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
+    await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
+    await expect(processQueue(db, fakeEmbed)).resolves.toBe(40); // 39 classified + the poison item
+    expect(await db.queue.size()).toBe(0);
+    const items = await db.items.all();
+    expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(39);
+    expect(items.find((i) => i.title === 'Q 5')!.groupId).toBeNull();
+    expect(mock.alarms()).toEqual([]);
+  });
+  it('wrong vector count counts as a failure too', async () => {
+    await setup(3);
+    fakeEmbed.mockImplementation(async () => []);
+    for (let k = 0; k < 3; k++) await expect(processQueue(db, fakeEmbed)).rejects.toThrow();
+    expect(await db.queue.size()).toBe(3); // every item failing: the embedder is down, nothing dropped
+  });
+  it('when the embedder is down nothing is dropped and the alarm backs off', async () => {
+    await setup(5);
+    fakeEmbed.mockImplementation(async () => {
+      throw new Error('offscreen gone');
+    });
+    for (let k = 0; k < 3; k++) await expect(processQueue(db, fakeEmbed)).rejects.toThrow('offscreen gone');
+    expect(await db.queue.size()).toBe(5);
+    expect(mock.alarms().map((a) => a.periodInMinutes)).toEqual([BACKOFF_MINUTES]);
+    expect((await db.items.all()).every((i) => i.groupId === null)).toBe(true);
+    fakeEmbed.mockImplementation(async (texts: string[]) => texts.map(vecFor));
+    await expect(processQueue(db, fakeEmbed)).resolves.toBe(5);
+    expect(mock.alarms()).toEqual([]);
+  });
+  it('never assigns a group deleted while the batch was embedding', async () => {
+    await setup(2);
+    fakeEmbed.mockImplementation(async (texts: string[]) => {
+      await db.groups.delete('programming');
+      return texts.map(vecFor);
+    });
+    await processQueue(db, fakeEmbed);
+    expect((await db.items.all()).map((i) => i.groupId)).toEqual([null, null]);
+  });
+});
+describe('lastActiveAt (review minor 5)', () => {
+  it('touchTab records activation; reconcile never moves it back', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [{ ...web(1), lastAccessed: 5 }] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const id = mock.tabs()[0]!.id!;
+    expect((await db.items.byTabId(id))!.lastActiveAt).toBe(5);
+    await touchTab(db, id, 1000);
+    expect((await db.items.byTabId(id))!.lastActiveAt).toBe(1000);
+    await reconcile(db, await chrome.tabs.query({}));
+    expect((await db.items.byTabId(id))!.lastActiveAt).toBe(1000);
+  });
+});
 describe('maybeSuggest', () => {
   async function unsorted(count: number, prefix: string, base: Float32Array) {
     const tabs = Array.from({ length: count }, (_, i) => ({ url: `https://${prefix}.example.com/${i}`, title: `${prefix} topic ${i}` }));

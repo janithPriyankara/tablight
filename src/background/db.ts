@@ -11,7 +11,7 @@ export type StoreName =
   | 'items' | 'groups' | 'embeddings' | 'queue' | 'snapshots' | 'tombstones' | 'stashBackups' | 'settings';
 const MAX_STASH_BACKUPS = 3;
 const SETTINGS_KEY = 'main';
-interface QueueEntry { itemId: string; addedAt: number }
+interface QueueEntry { itemId: string; addedAt: number; attempts?: number }
 interface Tombstone { id: string; deletedAt: number }
 interface StashBackup { takenAt: number; items: Item[] }
 export interface StoreApis {
@@ -33,12 +33,16 @@ export interface StoreApis {
   embeddings: {
     get(key: string): Promise<Float32Array | undefined>;
     put(key: string, v: Float32Array): Promise<void>;
+    delete(key: string): Promise<void>;
+    keys(): Promise<string[]>;
   };
   queue: {
     add(itemId: string): Promise<void>;
     take(n: number): Promise<string[]>;
     remove(ids: string[]): Promise<void>;
     size(): Promise<number>;
+    /** Counts a failed attempt for each queued id; returns the new counts (0 for ids not queued). */
+    fail(ids: string[]): Promise<number[]>;
   };
   snapshots: {
     put(s: Snapshot): Promise<void>;
@@ -91,6 +95,8 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
       },
       put: (key, v) =>
         one('embeddings', async (tx) => void (await tx.objectStore('embeddings').put(v, key))),
+      delete: (key) => one('embeddings', (tx) => tx.objectStore('embeddings').delete(key)),
+      keys: () => one('embeddings', async (tx) => (await tx.objectStore('embeddings').getAllKeys()).map(String)),
     },
     queue: {
       add: (itemId) =>
@@ -114,6 +120,22 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
           await Promise.all(ids.map((id) => store.delete(id)));
         }),
       size: () => one('queue', (tx) => tx.objectStore('queue').count()),
+      fail: (ids) =>
+        one('queue', async (tx) => {
+          const store = tx.objectStore('queue');
+          const out: number[] = [];
+          for (const id of ids) {
+            const e: QueueEntry | undefined = await store.get(id);
+            if (!e) {
+              out.push(0);
+              continue;
+            }
+            const attempts = (e.attempts ?? 0) + 1;
+            await store.put({ ...e, attempts });
+            out.push(attempts);
+          }
+          return out;
+        }),
     },
     snapshots: {
       put: (s) => one('snapshots', async (tx) => void (await tx.objectStore('snapshots').put(s))),

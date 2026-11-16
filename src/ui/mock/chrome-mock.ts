@@ -68,9 +68,35 @@ export interface ChromeMockControl {
   alarms(): Alarm[];
   fireInstalled(reason?: `${chrome.runtime.OnInstalledReason}`): void;
   fireStartup(): void;
+  /**
+   * Simulates a browser restart: every tab and window gets a new id, numbered from 1 again in the
+   * same order (so old and new ids collide), storage.session is cleared, badges reset. No tab events fire.
+   */
+  restartBrowser(): void;
   uninstall(): void;
 }
 
+export interface MockStorageArea {
+  get(keys?: string | string[] | null): Promise<Record<string, unknown>>;
+  set(items: Record<string, unknown>): Promise<void>;
+  remove(keys: string | string[]): Promise<void>;
+}
+function storageArea(data: Map<string, unknown>): MockStorageArea {
+  return {
+    async get(keys) {
+      const ks = keys == null ? [...data.keys()] : typeof keys === 'string' ? [keys] : keys;
+      const out: Record<string, unknown> = {};
+      for (const k of ks) if (data.has(k)) out[k] = structuredClone(data.get(k));
+      return out;
+    },
+    async set(items) {
+      for (const [k, v] of Object.entries(items)) data.set(k, structuredClone(v));
+    },
+    async remove(keys) {
+      for (const k of typeof keys === 'string' ? [keys] : keys) data.delete(k);
+    },
+  };
+}
 export interface MockChrome {
   runtime: {
     id: string;
@@ -105,11 +131,9 @@ export interface MockChrome {
     onAlarm: MockEvent<(alarm: Alarm) => void>;
   };
   storage: {
-    local: {
-      get(keys?: string | string[] | null): Promise<Record<string, unknown>>;
-      set(items: Record<string, unknown>): Promise<void>;
-      remove(keys: string | string[]): Promise<void>;
-    };
+    local: MockStorageArea;
+    /** Cleared by `restartBrowser()`, as Chrome clears it when the browser restarts. */
+    session: MockStorageArea;
   };
 }
 
@@ -126,6 +150,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   let badgeColor: string | undefined;
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
+  const session = new Map<string, unknown>();
 
   const inWindow = (w: number) => [...tabs.values()].filter((t) => t.windowId === w);
   const reindex = (w: number) => inWindow(w).forEach((t, i) => (t.index = i));
@@ -207,24 +232,8 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       },
       onAlarm: new MockEvent(),
     },
-    storage: {
-      local: {
-        async get(keys) {
-          const ks = keys == null ? [...local.keys()] : typeof keys === 'string' ? [keys] : keys;
-          const out: Record<string, unknown> = {};
-          for (const k of ks) if (local.has(k)) out[k] = clone(local.get(k));
-          return out;
-        },
-        async set(items) {
-          for (const [k, v] of Object.entries(items)) local.set(k, clone(v));
-        },
-        async remove(keys) {
-          for (const k of typeof keys === 'string' ? [keys] : keys) local.delete(k);
-        },
-      },
-    },
+    storage: { local: storageArea(local), session: storageArea(session) },
   };
-
   function addWindow(): number {
     const id = nextWindowId++;
     windows.push(id);
@@ -327,6 +336,21 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       mock.runtime.onInstalled.fire({ reason } as chrome.runtime.InstalledDetails);
     },
     fireStartup: () => mock.runtime.onStartup.fire(),
+    restartBrowser() {
+      const old = ordered();
+      const winMap = new Map(windows.map((w, k) => [w, k + 1]));
+      tabs.clear();
+      badges.clear();
+      session.clear();
+      windows.splice(0, windows.length, ...winMap.values());
+      nextWindowId = windows.length + 1;
+      nextTabId = 1;
+      for (const t of old) {
+        const id = nextTabId++;
+        tabs.set(id, { ...t, id, windowId: winMap.get(t.windowId)! });
+      }
+      focused = windows[0] ?? -1;
+    },
     uninstall() {
       delete (globalThis as { chrome?: unknown }).chrome;
     },

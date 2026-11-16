@@ -1,6 +1,10 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installChromeMock } from '../../src/ui/mock/chrome-mock';
+vi.mock('../../src/background/tab-index', async (orig) => {
+  const m = await orig<typeof import('../../src/background/tab-index')>();
+  return { ...m, maybeSuggest: vi.fn(m.maybeSuggest) };
+});
 vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
 }));
@@ -33,6 +37,31 @@ describe('background index', () => {
     expect(mock.badgeText(b!.id)).toBe('2×');
     expect(mock.badgeText(c!.id)).toBe('');
     expect(mock.alarms()).toEqual([]);
+    // Activation and window focus take the light path: no reconcile, lastActiveAt + that badge.
+    const tabIndex = await import('../../src/background/tab-index');
+    const suggest = vi.mocked(tabIndex.maybeSuggest);
+    const query = vi.spyOn(mock.chrome.tabs, 'query');
+    const db = await bg.getDb();
+    const before = (await db.items.byTabId(b!.id!))!.lastActiveAt;
+    await new Promise((r) => setTimeout(r, 5));
+    mock.activateTab(b!.id!);
+    await vi.waitFor(async () => expect((await db.items.byTabId(b!.id!))!.lastActiveAt).toBeGreaterThan(before));
+    mock.focusWindow(1);
+    await new Promise((r) => setTimeout(r, 700));
+    await whenTabIndexIdle();
+    expect(query.mock.calls.filter(([q]) => Object.keys(q).length === 0)).toHaveLength(0);
+    // A change that classifies nothing and deletes nothing doesn't re-cluster Unsorted.
+    suggest.mockClear();
+    mock.updateTab(c!.id!, { title: 'Settings 2' });
+    await new Promise((r) => setTimeout(r, 700));
+    await whenTabIndexIdle();
+    expect(query).toHaveBeenCalledWith({});
+    expect(suggest).not.toHaveBeenCalled();
+    // Closing a tab can change Unsorted: it does.
+    mock.removeTab(c!.id!);
+    await new Promise((r) => setTimeout(r, 700));
+    await whenTabIndexIdle();
+    expect(suggest).toHaveBeenCalledTimes(1);
     mock.uninstall();
   });
 });

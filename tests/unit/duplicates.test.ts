@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { findDuplicates, updateBadge } from '../../src/background/duplicates';
+import { findDuplicates, invalidateBadges, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
 import { reconcile } from '../../src/background/tab-index';
 import type { Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -11,6 +11,7 @@ let db: Db;
 let mock: ChromeMockControl | undefined;
 beforeEach(async () => {
   db = await openDb(`dups-${n++}`);
+  resetBadgeCache();
 });
 afterEach(() => {
   mock?.uninstall();
@@ -73,5 +74,25 @@ describe('updateBadge', () => {
     await reconcile(db, await chrome.tabs.query({}));
     await updateBadge(db, a1!.id);
     expect(mock.badgeText(a1!.id)).toBe('');
+  });
+
+  it('a full refresh only calls setBadgeText where the text changes', async () => {
+    mock = installChromeMock({
+      windows: [{ tabs: [{ url: 'https://a.com/x' }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }, { url: 'https://c.com/' }] }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const set = vi.spyOn(mock.chrome.action, 'setBadgeText');
+    await updateBadge(db);
+    expect(set).toHaveBeenCalledTimes(2); // the two duplicates; '' tabs are already ''
+    set.mockClear();
+    await updateBadge(db);
+    expect(set).not.toHaveBeenCalled();
+    const [a1, a2, b] = mock.tabs();
+    mock.updateTab(b!.id!, { url: 'https://a.com/x' }); // b becomes a third copy
+    await reconcile(db, await chrome.tabs.query({}));
+    invalidateBadges([b!.id!]);
+    await updateBadge(db);
+    expect(set).toHaveBeenCalledTimes(3);
+    expect([a1, a2, b].map((t) => mock!.badgeText(t!.id))).toEqual(['3×', '3×', '3×']);
   });
 });

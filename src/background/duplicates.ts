@@ -17,21 +17,51 @@ export function findDuplicates(items: Item[]): Map<string, Item[]> {
   return by;
 }
 
+/** tabId → badge text we last set. Lets a full refresh touch only tabs whose text changes. */
+const shown = new Map<number, string>();
+let colorSet = false;
+/** Forget what we set on these tabs (Chrome may reset a tab's badge, e.g. when it navigates). */
+export function invalidateBadges(tabIds: number[]): void {
+  for (const id of tabIds) shown.delete(id);
+}
+/** For tests and a fresh worker. */
+export function resetBadgeCache(): void {
+  shown.clear();
+  colorSet = false;
+}
 /**
- * Sets the per-tab badge: "2×" (the copy count) on a tab that has a duplicate, '' otherwise.
- * With `activeTabId` only that tab is updated; without it, every indexed tab is.
+ * Per-tab badge: "2×" (the copy count) on a tab that has a duplicate, '' otherwise.
+ * With `activeTabId` that tab is always (re)set. Without it, every indexed tab is checked but
+ * setBadgeText is called only where the text differs from what we last set (unknown counts as '').
  */
 export async function updateBadge(db: Db, activeTabId?: number): Promise<void> {
   const items = (await db.items.all()).filter((i) => i.state !== 'stashed' && i.tabId !== undefined);
   const count = new Map<number, number>();
   for (const list of findDuplicates(items).values()) for (const i of list) count.set(i.tabId!, list.length);
-  const tabIds = activeTabId !== undefined ? [activeTabId] : items.map((i) => i.tabId!);
-  await chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR }).catch(() => undefined);
+  const textOf = (tabId: number) => {
+    const n = count.get(tabId);
+    return n ? `${n}×` : '';
+  };
+  if (!colorSet) {
+    colorSet = true;
+    await chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR }).catch(() => (colorSet = false));
+  }
+  let targets: number[];
+  if (activeTabId !== undefined) targets = [activeTabId];
+  else {
+    const live = new Set(items.map((i) => i.tabId!));
+    for (const id of shown.keys()) if (!live.has(id)) shown.delete(id);
+    targets = [...live].filter((id) => (shown.get(id) ?? '') !== textOf(id));
+  }
   await Promise.all(
-    tabIds.map((tabId) => {
-      const n = count.get(tabId);
-      // The tab may have closed since the index was read: that is not an error.
-      return chrome.action.setBadgeText({ tabId, text: n ? `${n}×` : '' }).catch(() => undefined);
+    targets.map(async (tabId) => {
+      const text = textOf(tabId);
+      try {
+        await chrome.action.setBadgeText({ tabId, text });
+        shown.set(tabId, text);
+      } catch {
+        shown.delete(tabId); // the tab closed since the index was read: not an error
+      }
     }),
   );
 }
