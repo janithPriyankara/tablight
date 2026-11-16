@@ -22,7 +22,10 @@ export interface Head {
   /** labels.length × dim */
   W: number[][];
   b: number[];
-  /** Below this top-class probability the tab stays Unsorted. */
+  /**
+   * Below this top-class probability the tab stays Unsorted. Shipped as 0 (no confidence cutoff in
+   * practice): Unsorted comes from the head's top label being `other`, plus items given up on.
+   */
   threshold: number;
   /** Cosine to a user-learned exemplar at which that group overrides the head. */
   similarity: number;
@@ -37,9 +40,11 @@ function softmax(z: number[]): number[] {
 
 /**
  * Picks a group for an embedded tab. Run after the caller's user-group and ruleGroup checks.
- * 1. User learning: if the tab is at least `similarity` close to an exemplar a user taught a
- *    group (drag / learn()), the closest such group wins. User-created groups work this way alone.
- * 2. Otherwise the head's top label, unless it is `other`, below `threshold`, or not among `groups`.
+ * 1. User learning: the single closest user-taught exemplar (drag / learn()) overrides the head when its
+ *    cosine is at least `similarity` (a best-exemplar match, not a k-NN vote). User-created groups work
+ *    this way alone.
+ * 2. Otherwise the head's top label, unless it is `other`, below `threshold` (0 as shipped, so in
+ *    practice no cutoff), or not among `groups`. Such tabs stay Unsorted.
  * `other` is never assigned automatically.
  */
 export function classify(
