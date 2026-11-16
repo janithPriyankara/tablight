@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText, pathWords,
+  normalizeUrl, isWebUrl, isSafeToOpen, kindOf, readableSource, cleanTitle, embedText, pathWords, isClutterTab,
 } from '../../src/shared/url';
 describe('normalizeUrl', () => {
   it.each([
@@ -146,5 +146,21 @@ describe('pathWords', () => {
   });
   it('keeps at most 8 words', () => {
     expect(pathWords('https://e.com/' + 'abcdefghijkl'.split('').map((c) => c + c).join('/')).split(' ')).toHaveLength(8);
+  });
+});
+
+describe('isClutterTab', () => {
+  const own = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/';
+  it.each([
+    own + 'dashboard.html', own + 'popup.html#x', 'about:blank', '', 'chrome://newtab/', 'edge://newtab/',
+    'chrome://new-tab-page/', 'about:newtab',
+  ])('hides %s', (url) => {
+    expect(isClutterTab(url, own)).toBe(true);
+  });
+  it.each([
+    'https://example.com/', 'chrome://settings/', 'edge://settings/', 'file:///Users/me/a.pdf',
+    'chrome-extension://otherextensionidxxxxxxxxxxxxxxxx/page.html', 'https://example.com/?u=about:blank',
+  ])('keeps %s', (url) => {
+    expect(isClutterTab(url, own)).toBe(false);
   });
 });

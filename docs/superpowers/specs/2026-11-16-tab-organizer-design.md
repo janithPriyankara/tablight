@@ -222,3 +222,5 @@ Rulings recorded during the build that changed behaviour described above:
 - **Startup snapshot gating (7.6):** the hourly alarm takes snapshots only after the startup check has finished (capped at 3 attempts), so a missed alarm cannot overwrite the last session before it is offered.
 - **Search (7.7):** semantic search reads stored embedding keys in bulk instead of hashing every item per query.
 - **Release gate:** `npm run build` ends with `scripts/verify-release.mjs` (manifest, CSP, URL literals, model and ORT hashes, DOM-injection APIs, bundled-package licenses, size under 45 MB).
+- **Netflix is TV by default (7.3):** Netflix page titles read the same for a show and a film and never say "Season", and the model cannot tell them apart by name (measured: it calls 11 of 12 Netflix films "TV"). Netflix title and watch pages therefore go to TV Series; the user can drag a film to Movies. Prime Video still decides from its "Season N" titles.
+- **Hidden clutter tabs (7.9):** the extension's own pages and blank new tabs are left out of the dashboard's lists, counts and duplicates. Other browser pages (settings, files, other extensions) still show.

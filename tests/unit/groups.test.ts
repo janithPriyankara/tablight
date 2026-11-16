@@ -129,11 +129,11 @@ describe('rename / delete / merge', () => {
   });
 });
 describe('regroup', () => {
-  // A netflix title is decided by ruleGroup ('movies'); an exemplar-matching vector by learning.
+  // A netflix title is decided by ruleGroup ('tv'); an exemplar-matching vector by learning.
   const setup = async () => {
-    await db.groups.put(group('movies'));
+    await db.groups.put(group('tv'));
     await db.groups.put(group('taught', { exemplars: [Array.from(vecFor('taught-vec'))] }));
-    const auto = await addItem({ url: 'https://www.netflix.com/title/80100172', title: 'Some Movie' });
+    const auto = await addItem({ url: 'https://www.netflix.com/title/80100172', title: 'Some Show' });
     const learned = await addItem({ groupId: null }, 'taught-vec');
     const user = await addItem({ url: 'https://www.netflix.com/title/1', groupId: 'taught', groupSource: 'user' });
     const noVec = await addItem({ url: 'https://www.netflix.com/title/2' });
@@ -145,7 +145,7 @@ describe('regroup', () => {
     const before = JSON.stringify(await db.items.all());
     const rows = await regroupPreview(db);
     expect(JSON.stringify(await db.items.all())).toBe(before);
-    expect(rows).toContainEqual({ groupId: 'movies', before: 0, after: 1 });
+    expect(rows).toContainEqual({ groupId: 'tv', before: 0, after: 1 });
     expect(rows).toContainEqual({ groupId: 'taught', before: 1, after: 2 });
     expect(rows).toContainEqual({ groupId: null, before: 3, after: 1 }); // auto, learned and noVec start Unsorted
     void auto; void learned;
@@ -153,14 +153,14 @@ describe('regroup', () => {
   it('apply changes only auto items with a cached vector and never user items', async () => {
     const { auto, learned, user, noVec } = await setup();
     expect(await regroupApply(db)).toBe(2);
-    expect((await db.items.get(auto.id))!.groupId).toBe('movies');
+    expect((await db.items.get(auto.id))!.groupId).toBe('tv');
     expect((await db.items.get(learned.id))!.groupId).toBe('taught');
     expect((await db.items.get(user.id))).toMatchObject({ groupId: 'taught', groupSource: 'user' });
     expect((await db.items.get(noVec.id))!.groupId).toBeNull(); // no cached vector: unchanged
     expect(await regroupApply(db)).toBe(0);
   });
   it('leaves items in pending suggestions alone', async () => {
-    await db.groups.put(group('movies'));
+    await db.groups.put(group('tv'));
     await db.groups.put(group('s1', { suggested: true, builtIn: false }));
     const a = await addItem({ url: 'https://www.netflix.com/title/9', groupId: 's1' });
     expect(await regroupApply(db)).toBe(0);

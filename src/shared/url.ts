@@ -58,6 +58,15 @@ export function normalizeUrl(url: string): string {
 export function isWebUrl(url: string): boolean {
   return webUrl(url) !== null;
 }
+/** New-tab pages that hold no page of their own. */
+const BLANK_TABS = new Set(['', 'about:blank', 'about:newtab', 'chrome://newtab/', 'edge://newtab/', 'chrome://new-tab-page/']);
+/**
+ * Tabs not worth listing: this extension's own pages (`ownOrigin` is chrome.runtime.getURL('')) and blank
+ * new tabs. Other browser pages (settings, files, other extensions) are still the user's tabs and stay.
+ */
+export function isClutterTab(url: string, ownOrigin: string): boolean {
+  return BLANK_TABS.has(url) || (ownOrigin !== '' && url.startsWith(ownOrigin));
+}
 export function isSafeToOpen(url: string): boolean {
   const u = webUrl(url);
   return u !== null && u.username === '' && u.password === '';

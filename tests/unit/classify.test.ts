@@ -198,7 +198,11 @@ describe('nameCluster', () => {
 
 describe('ruleGroup', () => {
   it.each([
-    ['https://www.netflix.com/title/123', 'Stranger Things | Netflix', ['tv', 'movies']],
+    ['https://www.netflix.com/title/123', 'Stranger Things | Netflix', ['tv']],
+    // Netflix titles never say "Season": a show and a film look the same, so Netflix defaults to TV.
+    ['https://www.netflix.com/lk/title/80057281', 'Watch Stranger Things | Netflix Official Site', ['tv']],
+    ['https://www.netflix.com/watch/80057281', 'Netflix', ['tv']],
+    ['https://www.primevideo.com/detail/0XYZ/', 'Red One | Prime Video', ['movies']],
     ['https://www.imdb.com/title/tt0903747/', 'Breaking Bad (TV Series 2008–2013) - IMDb', ['tv']],
     ['https://www.imdb.com/title/tt7366338/', 'Chernobyl (TV Mini Series 2019) - IMDb', ['tv']],
     ['https://www.imdb.com/title/tt1375666/', 'Inception (2010) - IMDb', ['movies']],

@@ -12,6 +12,7 @@ import {
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { openDashboard } from '../shared/nav';
+import { isClutterTab } from '../shared/url';
 import { semanticSearch, wordSearch } from '../search/search';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
@@ -192,9 +193,12 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
  * for classification or the model already produced a vector in this worker's lifetime.
  */
 async function dashboardState(db: Db): Promise<DashboardState> {
-  const [items, groups, queued, settings] = await Promise.all([
+  const [all, groups, queued, settings] = await Promise.all([
     db.items.all(), db.groups.all(), db.queue.size(), db.settings.get(),
   ]);
+  // The dashboard itself and blank new tabs are not tabs the user is keeping: leave them out of every list.
+  const own = chrome.runtime.getURL('');
+  const items = all.filter((i) => !isClutterTab(i.url, own));
   const counts = new Map<string, { count: number; watchCount: number }>();
   const windows = new Set<number>();
   let sleeping = 0;

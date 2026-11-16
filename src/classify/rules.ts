@@ -27,7 +27,9 @@ const byHint = (title: string) => (TV_HINT.test(title) ? 'tv' : 'movies');
 function streaming(host: string, path: string, title: string): string | null {
   switch (host) {
     case 'netflix.com':
-      return /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:title|watch)\//i.test(path) ? byHint(title) : null;
+      // Netflix page titles never say "Season" and read the same for a show and a film ("Watch X | Netflix
+      // Official Site"), and the model can't tell them apart by name either. Most of Netflix is series: TV.
+      return /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:title|watch)\//i.test(path) ? 'tv' : null;
     case 'primevideo.com':
       return /^\/(?:region\/[a-z]+\/)?(?:detail|dp)\//i.test(path) ? byHint(title) : null;
     case 'disneyplus.com':
