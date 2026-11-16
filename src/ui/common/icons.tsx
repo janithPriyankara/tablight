@@ -38,11 +38,12 @@ export const CopyIcon = (p: IconProps) => (
 export const PageIcon = (p: IconProps) => (
   <Svg {...p}><path d="M4 1.75h5.25L12.5 5v8.25a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2.75a1 1 0 0 1 1-1z" /><path d="M9 1.75V5.25h3.5" /></Svg>
 );
-/** The product mark: three stacked tabs. */
+/** The product mark: three tabs filed one behind the other, the front one in pine. */
 export const LogoMark = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="logo-mark">
-    <rect x="2" y="3" width="16" height="14" rx="4" fill="var(--accent)" />
-    <path d="M6 8h8M6 11h5.5" stroke="var(--accent-contrast)" stroke-width="1.6" stroke-linecap="round" />
+    <path d="M7.5 2.75h7a2 2 0 0 1 2 2v6" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" opacity="0.45" />
+    <path d="M5 5.25h7.5a2 2 0 0 1 2 2v6.5" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+    <rect x="2.5" y="7.75" width="10" height="9.5" rx="2" fill="var(--accent)" />
   </svg>
 );
 export const ListIcon = (p: IconProps) => (
@@ -92,4 +93,13 @@ export const PanelIcon = (p: IconProps) => (
 );
 export const PauseIcon = (p: IconProps) => (
   <Svg {...p}><rect x="4" y="3" width="2.75" height="10" rx="0.75" /><rect x="9.25" y="3" width="2.75" height="10" rx="0.75" /></Svg>
+);
+/** Small solid play mark for "to watch" counts. */
+export const PlayIcon = ({ size = 10, class: cls }: IconProps) => (
+  <svg class={cls ? `icon ${cls}` : 'icon'} width={size} height={size} viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+    <path d="M2.5 1.6v6.8a.5.5 0 0 0 .76.43l5.4-3.4a.5.5 0 0 0 0-.86l-5.4-3.4a.5.5 0 0 0-.76.43z" fill="currentColor" />
+  </svg>
+);
+export const HelpIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="8" cy="8" r="6.25" /><path d="M6.25 6.25a1.85 1.85 0 0 1 3.6.6c0 1.25-1.85 1.6-1.85 2.65" /><path d="M8 11.6h.01" /></Svg>
 );

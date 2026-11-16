@@ -425,7 +425,7 @@ describe('dashboard', () => {
     const select = screen.getByRole('combobox', { name: 'View' });
     const labels = [...select.querySelectorAll('optgroup')].map((g) => [g.label, [...g.querySelectorAll('option')].map((o) => o.textContent)]);
     expect(labels).toEqual([
-      ['Groups', ['Programming (3)', 'Videos (1 · ▶ 1 to watch)']],
+      ['Groups', ['Programming (3)', 'Videos (1, 1 to watch)']],
       ['Suggested', ['Rust · async (4)']],
     ]);
     fireEvent.change(select, { target: { value: 'group:sug' } });

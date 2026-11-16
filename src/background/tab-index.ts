@@ -31,7 +31,7 @@ export const SUGGEST_MIN_UNSORTED = 4;
 export const MAX_SUGGESTED = 5;
 /** A new cluster sharing at least this share of its items with a current suggestion is skipped. */
 export const SUGGEST_OVERLAP = 0.6;
-const SUGGEST_COLORS = ['#7c66dc', '#0d74ce', '#2b9a66', '#cc4e00', '#c2298a'];
+const SUGGEST_COLORS = ['#8c6ebd', '#008cba', '#439458', '#b86838', '#a864a2'];
 /** chrome.storage.session key: present while the browser session that the index's tab ids belong to lasts. */
 export const SESSION_KEY = 'tabIndexSession';
 

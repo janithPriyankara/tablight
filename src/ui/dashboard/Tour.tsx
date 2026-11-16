@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { CloseIcon, HelpIcon, MoveIcon, PauseIcon, PlayIcon, SparkIcon, StashIcon } from '../common/icons';
 
 export interface TourStep {
   /** CSS selector of the real element this step points at; none (or not on screen) = a centred card. */
@@ -15,7 +16,7 @@ export const TOUR_STEPS: TourStep[] = [
     body: (
       <>
         <p>This short tour shows you around, using your own tabs.</p>
-        <p class="tour-keys">Use <kbd>→</kbd> and <kbd>←</kbd> to move, <kbd>Esc</kbd> to stop. You can restart it any time with the <strong>?</strong> button at the top.</p>
+        <p class="tour-keys">Use <kbd>→</kbd> and <kbd>←</kbd> to move, <kbd>Esc</kbd> to stop. You can restart it any time with the <HelpIcon size={13} class="tour-inline" /> button at the top.</p>
       </>
     ),
   },
@@ -25,7 +26,7 @@ export const TOUR_STEPS: TourStep[] = [
     body: (
       <>
         <p>Every tab from every window is sorted by topic here: AI, Movies, Shopping and so on.</p>
-        <p>The sorting is done by a small AI model that runs on your computer. Nothing is sent anywhere. The number is how many tabs are in the group; <strong>▶ 3</strong> means 3 videos or shows to watch.</p>
+        <p>The sorting is done by a small AI model that runs on your computer. Nothing is sent anywhere. The number is how many tabs are in the group; <PlayIcon class="tour-inline" /> 3 means 3 videos or shows to watch.</p>
       </>
     ),
   },
@@ -41,9 +42,9 @@ export const TOUR_STEPS: TourStep[] = [
       <>
         <p>Click a tab to switch to it. Hover it for its buttons:</p>
         <ul class="tour-list">
-          <li><strong>⏸ Pause</strong>: frees its memory. It stays in your tab strip and comes back when you click it.</li>
-          <li><strong>Save for later</strong>: closes it and keeps it in your Saved for later list.</li>
-          <li><strong>Move</strong>: puts it in another group. <strong>✕</strong> closes it.</li>
+          <li><PauseIcon size={13} class="tour-inline" /> <strong>Pause</strong>: frees its memory. It stays in your tab strip and comes back when you click it.</li>
+          <li><StashIcon size={13} class="tour-inline" /> <strong>Save for later</strong>: closes it and keeps it in your Saved for later list.</li>
+          <li><MoveIcon size={13} class="tour-inline" /> <strong>Move</strong> puts it in another group, and <CloseIcon size={13} class="tour-inline" /> closes it.</li>
         </ul>
       </>
     ),
@@ -64,7 +65,7 @@ export const TOUR_STEPS: TourStep[] = [
     body: (
       <>
         <p>Tabs that don’t fit any group wait in Unsorted.</p>
-        <p>When a few of them share a topic, a <strong>✨ suggested group</strong> appears under your groups. Accept it, or dismiss it. Settings can create these groups automatically.</p>
+        <p>When a few of them share a topic, a <strong>suggested group</strong> <SparkIcon size={13} class="tour-inline" /> appears under your groups. Accept it, or dismiss it. Settings can create these groups automatically.</p>
       </>
     ),
   },
@@ -106,7 +107,7 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     title: 'You’re all set',
-    body: <p>That’s everything. Open the tour again any time with the <strong>?</strong> button at the top of this page.</p>,
+    body: <p>That’s everything. Open the tour again any time with the <HelpIcon size={13} class="tour-inline" /> button at the top of this page.</p>,
   },
 ];
 

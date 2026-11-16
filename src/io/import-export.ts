@@ -22,7 +22,9 @@ const MAX_FILE_SNAPSHOTS = 100;
 const MAX_SNAPSHOT_WINDOWS = 100;
 const MAX_SNAPSHOT_TABS = 5_000;
 const ICONS: ReadonlySet<string> = new Set([...STARTER_GROUPS.map((g) => g.icon), '📁', '✨']);
-const COLORS: ReadonlySet<string> = new Set(USER_COLORS);
+/** Colors a backup may carry: today's palette and the palette before the redesign (older backups). */
+const LEGACY_COLORS = ['#0090ff', '#30a46c', '#f76b15', '#8e4ec6', '#e93d82', '#05a2c2', '#ffb224', '#3e63dd'];
+const COLORS: ReadonlySet<string> = new Set([...USER_COLORS, ...LEGACY_COLORS]);
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
 export interface ImportGroup { name: string; color: string | null; icon: string | null }

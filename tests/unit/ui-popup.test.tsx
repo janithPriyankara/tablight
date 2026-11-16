@@ -73,7 +73,7 @@ describe('popup', () => {
     const groups = screen.getAllByRole('listitem').filter((li) => li.closest('[aria-label="Top groups"]'));
     expect(groups).toHaveLength(6);
     expect(screen.queryByText('Seventh')).toBeNull();
-    expect(screen.getByText('▶ 3 to watch')).toBeTruthy();
+    expect(screen.getByText('3 to watch')).toBeTruthy();
   });
 
   it('renders attacker-controlled titles and group names as literal text', async () => {
@@ -358,9 +358,19 @@ describe('group colors', () => {
   it('never pass arbitrary CSS through: an injected color falls back to grey', () => {
     const evil = 'red; background:url(x)';
     const { container } = render(<><GroupChip name="G" color={evil} /><GroupDot color={evil} /></>);
-    for (const el of container.querySelectorAll<HTMLElement>('.chip, .group-dot')) {
-      expect(el.getAttribute('style') ?? '').not.toContain('url(');
-      expect(el.style.backgroundColor).toBe('rgb(141, 141, 141)');
-    }
+    const painted = container.querySelectorAll<HTMLElement>('.swatch, .group-dot');
+    expect(painted.length).toBe(2);
+    for (const el of container.querySelectorAll<HTMLElement>('*')) expect(el.getAttribute('style') ?? '').not.toContain('url(');
+    for (const el of painted) expect(el.getAttribute('style')).toContain('var(--tone-neutral)');
+  });
+});
+describe('groupTone', () => {
+  it('keeps only the hue, never passes stored text into CSS, and greys stay neutral', async () => {
+    const { groupTone, groupHue } = await import('../../src/ui/common/color');
+    expect(groupTone('#e5484d')).toMatch(/^oklch\(var\(--tone-l\) var\(--tone-c\) \d{1,3}\)$/);
+    expect(groupTone('#8d8d8d')).toBe('var(--tone-neutral)');
+    expect(groupTone('red; background:url(x)')).toBe('var(--tone-neutral)');
+    // Distinct starter colors keep distinct hues.
+    expect(groupHue('#e5484d')).not.toBe(groupHue('#30a46c'));
   });
 });

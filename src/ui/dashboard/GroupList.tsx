@@ -2,7 +2,7 @@ import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { GroupSummary } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
-import { ClockIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, StashIcon } from '../common/icons';
+import { ClockIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, StashIcon } from '../common/icons';
 import { Suggestions } from './Suggestions';
 import { type SpecialView, type View, sameView } from './views';
 
@@ -81,7 +81,7 @@ export function GroupList(props: GroupListProps) {
                 <GroupDot color={g.color} />
                 <span class="nav-name">{g.name}</span>
                 {g.watchCount > 0 && (
-                  <span class="nav-watch" title={`${g.watchCount} to watch`} aria-label={`${g.watchCount} to watch`}>▶ {g.watchCount}</span>
+                  <span class="nav-watch" title={`${g.watchCount} to watch`} aria-label={`${g.watchCount} to watch`}><PlayIcon />{g.watchCount}</span>
                 )}
                 <span class="nav-count">{g.count}</span>
               </button>
@@ -105,7 +105,7 @@ export function ViewSelect({ view, groups, onView }: { view: View; groups: Group
   const suggested = groups.filter((g) => g.suggested);
   const option = (g: GroupSummary) => (
     <option key={g.id} value={`group:${g.id}`}>
-      {`${g.name} (${g.count}${g.watchCount ? ` · ▶ ${g.watchCount} to watch` : ''})`}
+      {`${g.name} (${g.count}${g.watchCount ? `, ${g.watchCount} to watch` : ''})`}
     </option>
   );
   return (

@@ -7,6 +7,7 @@
 export interface StarterGroup {
   id: string;
   name: string;
+  /** Hues spaced evenly round the wheel (OKLCH L 0.60, C 0.12), so every group stays distinguishable. */
   color: string;
   icon: string;
   seeds: string[];
@@ -14,7 +15,7 @@ export interface StarterGroup {
 
 export const STARTER_GROUPS: StarterGroup[] = [
   {
-    id: 'movies', name: 'Movies', color: '#e5484d', icon: '🎬',
+    id: 'movies', name: 'Movies', color: '#bd605f', icon: '🎬',
     seeds: [
       'movies, films, cinema',
       'film reviews, critics, ratings',
@@ -28,7 +29,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'tv', name: 'TV Series', color: '#d6409f', icon: '📺',
+    id: 'tv', name: 'TV Series', color: '#ad629a', icon: '📺',
     seeds: [
       'TV series, television shows',
       'seasons and episodes',
@@ -41,7 +42,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'videos', name: 'YouTube / Videos', color: '#f76b15', icon: '▶️',
+    id: 'videos', name: 'YouTube / Videos', color: '#ba673f', icon: '▶️',
     seeds: [
       'online videos, video creators, channels',
       'vlogs and daily life videos',
@@ -54,7 +55,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'ai', name: 'AI & Agents', color: '#8e4ec6', icon: '🤖',
+    id: 'ai', name: 'AI & Agents', color: '#647bc8', icon: '🤖',
     seeds: [
       'artificial intelligence, AI',
       'AI agents, agentic workflows, autonomous agents',
@@ -71,7 +72,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'programming', name: 'Programming', color: '#0090ff', icon: '💻',
+    id: 'programming', name: 'Programming', color: '#008eb6', icon: '💻',
     seeds: [
       'programming, coding, software development',
       'source code repositories, commits, pull requests',
@@ -87,7 +88,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'design', name: 'Design', color: '#e93d82', icon: '🎨',
+    id: 'design', name: 'Design', color: '#9b69b1', icon: '🎨',
     seeds: [
       'design, visual design, graphic design',
       'user interface and user experience, UI/UX',
@@ -101,7 +102,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'shopping', name: 'Shopping', color: '#ffb224', icon: '🛒',
+    id: 'shopping', name: 'Shopping', color: '#af7020', icon: '🛒',
     seeds: [
       'shopping, buying products online',
       'product page, price, add to cart',
@@ -129,7 +130,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'social', name: 'Social', color: '#3e63dd', icon: '💬',
+    id: 'social', name: 'Social', color: '#3c85c4', icon: '💬',
     seeds: [
       'social media, social networks',
       'posts, comments, likes, shares, followers',
@@ -142,7 +143,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'music', name: 'Music', color: '#12a594', icon: '🎵',
+    id: 'music', name: 'Music', color: '#339563', icon: '🎵',
     seeds: [
       'music, songs, albums, artists',
       'playlists and music streaming',
@@ -156,7 +157,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'learning', name: 'Learning / Courses', color: '#30a46c', icon: '🎓',
+    id: 'learning', name: 'Learning / Courses', color: '#609043', icon: '🎓',
     seeds: [
       'learning, education, studying',
       'online courses, lessons, lectures',
@@ -170,7 +171,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'docs', name: 'Docs & Reference', color: '#00a2c7', icon: '📚',
+    id: 'docs', name: 'Docs & Reference', color: '#00949f', icon: '📚',
     seeds: [
       'documentation, docs',
       'API reference, functions, parameters, return values',
@@ -184,7 +185,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'work', name: 'Work Tools', color: '#978365', icon: '💼',
+    id: 'work', name: 'Work Tools', color: '#9c7c0b', icon: '💼',
     seeds: [
       'work, office, workplace tools',
       'email, inbox, mail',
@@ -199,7 +200,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'travel', name: 'Travel', color: '#05a2c2', icon: '✈️',
+    id: 'travel', name: 'Travel', color: '#009783', icon: '✈️',
     seeds: [
       'travel, trips, vacations',
       'flights, airlines, airports, boarding',
@@ -214,7 +215,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'finance', name: 'Finance', color: '#46a758', icon: '💰',
+    id: 'finance', name: 'Finance', color: '#828721', icon: '💰',
     seeds: [
       'finance, money, personal finance',
       'banking, bank accounts, transactions, statements',
@@ -229,7 +230,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'health', name: 'Health', color: '#e54666', icon: '🩺',
+    id: 'health', name: 'Health', color: '#b95f7d', icon: '🩺',
     seeds: [
       'health, medicine, wellness',
       'symptoms, diseases, conditions, treatment',
@@ -243,7 +244,7 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   {
-    id: 'games', name: 'Games', color: '#6e56cf', icon: '🎮',
+    id: 'games', name: 'Games', color: '#8271c2', icon: '🎮',
     seeds: [
       'games, gaming, video games',
       'game reviews and previews',

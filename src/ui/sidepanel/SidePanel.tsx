@@ -5,7 +5,7 @@ import type { GroupSummary, Item } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { plural } from '../common/format';
-import { CloseIcon, GridIcon, LogoMark, PauseIcon, SearchIcon, StashIcon } from '../common/icons';
+import { CloseIcon, GridIcon, LogoMark, PauseIcon, PlayIcon, SearchIcon, StashIcon } from '../common/icons';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
@@ -179,7 +179,7 @@ export function SidePanel() {
           {opts.group && <GroupDot color={opts.group.color} />}
           <span class="sp-name">{title}</span>
           {opts.group && opts.group.watchCount > 0 && (
-            <span class="watch" title={`${opts.group.watchCount} to watch`}>▶ {opts.group.watchCount}</span>
+            <span class="watch" title={`${opts.group.watchCount} to watch`}><PlayIcon />{opts.group.watchCount}</span>
           )}
           <span class="sp-count">{count}</span>
         </button>

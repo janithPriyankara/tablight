@@ -4,7 +4,7 @@ import { LAST_SESSION_KEY, type GroupSummary, type Item, type Settings as Settin
 import { GroupDot } from '../common/GroupChip';
 import { plural } from '../common/format';
 import {
-  CloseIcon, CopyIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
+  CloseIcon, CopyIcon, HelpIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
   SwitchIcon, TrashIcon,
 } from '../common/icons';
 import { applyTheme } from '../common/theme';
@@ -421,7 +421,7 @@ export function Dashboard() {
     }
     if (view.kind === 'duplicates') return `${plural(state.dupCount, 'extra copy', 'extra copies')}`;
     const watch = currentGroup?.watchCount ?? 0;
-    return [plural(list.length, 'item'), watch ? `▶ ${watch} to watch` : ''].filter(Boolean).join(' · ');
+    return [plural(list.length, 'item'), watch ? `${watch} to watch` : ''].filter(Boolean).join(' · ');
   })();
   const emptyText = (() => {
     if (searching) return search.pending ? 'Searching…' : 'No matches';
@@ -478,7 +478,7 @@ export function Dashboard() {
               <button type="button" class="btn btn-sm" disabled={busy || !state} onClick={() => void regroup()}>
                 <SparkIcon />Re-group everything
               </button>
-              <button type="button" class="icon-btn tour-open" aria-label="Guided tour" title="Guided tour" onClick={startTour}>?</button>
+              <button type="button" class="icon-btn tour-open" aria-label="Guided tour" title="Guided tour" onClick={startTour}><HelpIcon /></button>
             </div>
           </header>
 

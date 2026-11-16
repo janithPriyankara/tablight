@@ -4,7 +4,7 @@ import type { DashboardState, GroupSummary, Item, SyncStatus } from '../../share
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
-import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
+import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, PlayIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../../shared/nav';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
@@ -227,7 +227,7 @@ function TopGroups({ groups, onPick }: { groups: GroupSummary[]; onPick: (id: st
                 <span class="group-name">{g.name}</span>
                 <span class="group-count">{g.count}</span>
               </span>
-              {g.watchCount > 0 && <span class="watch">▶ {g.watchCount} to watch</span>}
+              {g.watchCount > 0 && <span class="watch"><PlayIcon />{g.watchCount} to watch</span>}
             </button>
           </li>
         ))}

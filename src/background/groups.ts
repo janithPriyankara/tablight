@@ -9,7 +9,7 @@ import { nextStamp } from '../shared/stamp';
 
 export const MAX_IDS = 5000;
 export const MAX_NAME = 60;
-export const USER_COLORS = ['#0090ff', '#30a46c', '#f76b15', '#8e4ec6', '#e93d82', '#05a2c2', '#ffb224', '#3e63dd'];
+export const USER_COLORS = ['#00959c', '#57914a', '#bb6546', '#7377c6', '#a067ac', '#009775', '#a57710', '#4284c5'];
 
 // ───────────────────────────── validation (shared with the rpc layer) ─────────────────────────────
 
