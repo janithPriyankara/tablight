@@ -101,3 +101,49 @@ describe('rpc handle', () => {
     expect(respond).not.toHaveBeenCalled();
   });
 });
+describe('embedder lifecycle', () => {
+  it('re-opens after an idle close', async () => {
+    const { embed } = await import('../../src/background/embedder.ts');
+    await embed(['1']);
+    await vi.advanceTimersByTimeAsync(61_000);
+    expect(closeDocument).toHaveBeenCalledTimes(1);
+    await embed(['2']);
+    expect(createDocument).toHaveBeenCalledTimes(2);
+  });
+  it('recreates a document that died and retries once', async () => {
+    const { embed } = await import('../../src/background/embedder.ts');
+    await embed(['1']);
+    docExists = false; // reclaimed by the browser
+    sendMessage.mockRejectedValueOnce(new Error('Could not establish connection'));
+    const out = await embed(['7']);
+    expect(createDocument).toHaveBeenCalledTimes(2);
+    expect(out[0]?.[0]).toBe(7);
+  });
+  it('does not close while a call is in flight and waits for close before reopening', async () => {
+    let release!: () => void;
+    closeDocument.mockImplementationOnce(
+      () => new Promise<void>((r) => (release = () => { docExists = false; r(); })),
+    );
+    const { embed } = await import('../../src/background/embedder.ts');
+    await embed(['1']);
+    await vi.advanceTimersByTimeAsync(60_500); // close started, pending
+    const p = embed(['2']);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(createDocument).toHaveBeenCalledTimes(1); // waiting on the close
+    release();
+    await p;
+    expect(createDocument).toHaveBeenCalledTimes(2);
+  });
+  it('no idle close while a slow call is running', async () => {
+    let finish!: () => void;
+    sendMessage.mockImplementationOnce(
+      () => new Promise((r) => (finish = () => r({ ok: true, data: [[1, 0]] }))),
+    );
+    const { embed } = await import('../../src/background/embedder.ts');
+    const p = embed(['1']);
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(closeDocument).not.toHaveBeenCalled();
+    finish();
+    await p;
+  });
+});

@@ -1,6 +1,6 @@
 import { basename, resolve } from 'node:path';
 import preact from '@preact/preset-vite';
-import { defineConfig, type Plugin } from 'vite';
+import { defaultClientConditions, defineConfig, type Plugin } from 'vite';
 import { manifest } from './manifest.config.ts';
 // Manifest paths are root-relative, so every HTML entry is emitted at the dist root.
 // Asset URLs use base '/', which resolves against the extension root, so moving is safe.
@@ -25,6 +25,10 @@ function extensionPlugin(): Plugin {
 export default defineConfig({
   base: '/',
   plugins: [preact(), extensionPlugin()],
+  resolve: {
+    // Use onnxruntime-web without its embedded 27 MB wasm; wasmPaths points at public/ort.
+    conditions: [...defaultClientConditions, 'onnxruntime-web-use-extern-wasm'],
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
