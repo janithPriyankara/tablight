@@ -24,11 +24,13 @@ await server.close();
 env.allowRemoteModels = false;
 env.allowLocalModels = true;
 env.localModelPath = resolve(root, 'public/models') + '/';
-const ex = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
+// The same model and pooling the shipped classifier was trained with (src/classify/head.json).
+const head = JSON.parse((await import('node:fs')).readFileSync(resolve(root, 'src/classify/head.json'), 'utf8'));
+const ex = await pipeline('feature-extraction', head.model, { dtype: 'q8' });
 const list = [...texts];
 const vectors = {};
 for (let i = 0; i < list.length; i += 64) {
-  const out = await ex(list.slice(i, i + 64), { pooling: 'mean', normalize: true });
+  const out = await ex(list.slice(i, i + 64), { pooling: head.pooling ?? 'mean', normalize: true });
   out.tolist().forEach((row, k) => {
     vectors[list[i + k]] = row.map((x) => Math.round(x * 1000) / 1000);
   });
