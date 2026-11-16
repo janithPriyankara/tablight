@@ -154,6 +154,35 @@ export async function stash(db: Db, ids: string[]): Promise<{ token: string; ski
   // deletes their record); the next reconcile re-adds an open item for them.
   return { token: remember({ closed: done }), skipped: uniqueIds.size - picked.length };
 }
+/** Hash of the dashboard tab that "Stash this window" leaves behind: the Stashed view plus its undo. */
+export function stashedUndoHash(token: string, n: number): string {
+  return `view=stashed&undo=${encodeURIComponent(token)}&n=${n}`;
+}
+/**
+ * Popup "Stash this window": stashes the window's open web tabs without ever closing the window (or the
+ * browser, when it is the last one). A dashboard tab is opened (or an existing one in that window reused)
+ * BEFORE any tab closes; afterwards its hash carries the undo token, so the Undo toast shows there.
+ */
+export async function stashWindow(db: Db, windowId: number): Promise<{ token: string | null; stashed: number; skipped: number }> {
+  const base = chrome.runtime.getURL('dashboard.html');
+  const isDash = (t: chrome.tabs.Tab) => t.url === base || t.url?.startsWith(`${base}#`) === true;
+  const tabs = await chrome.tabs.query({ windowId });
+  const ids = (await db.items.all())
+    .filter((i) => i.state === 'open' && i.classifiable && i.windowId === windowId && i.tabId !== undefined)
+    .filter((i) => tabs.some((t) => t.id === i.tabId && !isDash(t)))
+    .map((i) => i.id);
+  if (!ids.length) return { token: null, stashed: 0, skipped: 0 };
+  const existing = tabs.find(isDash);
+  const dash = existing?.id !== undefined
+    ? await chrome.tabs.update(existing.id, { active: true, url: `${base}#view=stashed` })
+    : await chrome.tabs.create({ windowId, active: true, url: `${base}#view=stashed` });
+  const r = await stash(db, ids);
+  const stashed = ids.length - r.skipped;
+  if (dash?.id !== undefined) {
+    await chrome.tabs.update(dash.id, { url: `${base}#${stashedUndoHash(r.token, stashed)}` }).catch(() => undefined);
+  }
+  return { token: r.token, stashed, skipped: r.skipped };
+}
 async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Closed[]> {
   const done: Closed[] = [];
   for (const [c, tabId] of entries) {

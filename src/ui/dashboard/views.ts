@@ -13,6 +13,18 @@ export function parseHash(hash: string): View {
   const view = params.get('view');
   return (SPECIAL_VIEWS as readonly string[]).includes(view ?? '') ? { kind: view as SpecialView } : { kind: 'all' };
 }
+const UNDO_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/**
+ * "#view=stashed&undo=<uuid>&n=<count>", left by the popup's "Stash this window": the undo token (a UUID,
+ * anything else is ignored) and how many tabs were stashed. The undo itself still goes through the RPC.
+ */
+export function parseUndoHash(hash: string): { token: string; n: number } | null {
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const token = params.get('undo');
+  const n = Number(params.get('n'));
+  if (token === null || !UNDO_TOKEN_RE.test(token) || !Number.isSafeInteger(n) || n < 0 || n > 100_000) return null;
+  return { token, n };
+}
 export function viewHash(v: View): string {
   return v.kind === 'group' ? `group=${encodeURIComponent(v.id)}` : `view=${v.kind}`;
 }

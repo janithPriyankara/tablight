@@ -436,4 +436,20 @@ describe('dashboard', () => {
     expect(importNotice({ added: 2, skipped: 1 })).toBe('Imported 2 tabs · skipped 1');
     expect(importNotice({ added: 1, skipped: 0, skippedSessions: 3 })).toBe('Imported 1 tab · 3 sessions not imported (saved sessions are full)');
   });
+  it('a "Stash this window" hash shows Stashed + Undo once (valid UUID only); Undo goes through the RPC', async () => {
+    const { parseUndoHash } = await import('../../src/ui/dashboard/views');
+    const tok = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    expect(parseUndoHash(`#view=stashed&undo=${tok}&n=3`)).toEqual({ token: tok, n: 3 });
+    expect(parseUndoHash('#view=stashed&undo=<script>&n=3')).toBeNull();
+    expect(parseUndoHash(`#view=stashed&undo=${tok}&n=-1`)).toBeNull();
+    expect(parseUndoHash('#view=stashed')).toBeNull();
+    serve(state({ items: [item('s1', { state: 'stashed', tabId: undefined })] }), (req) => (req.t === 'undo' ? true : undefined));
+    history.replaceState(null, '', `/dashboard.html#view=stashed&undo=${tok}&n=3`);
+    render(<Dashboard />);
+    await screen.findByText('Stashed 3 tabs');
+    expect(location.hash).toBe('#view=stashed'); // token dropped from the address
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Stashed');
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: tok }]));
+  });
 });

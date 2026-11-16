@@ -18,7 +18,7 @@ import { Onboarding } from './Onboarding';
 import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions } from './Sessions';
 import { Settings } from './Settings';
 import { UndoToast } from './UndoToast';
-import { type View, itemsForView, parseHash, viewHash, windowNumbers } from './views';
+import { type View, itemsForView, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
 
 /** Opening more than this many tabs at once asks first (same bound as the background's open-all). */
 export const OPEN_MANY_CONFIRM_ABOVE = 20;
@@ -60,9 +60,20 @@ export function Dashboard() {
   const theme = settings?.theme;
   useEffect(() => applyTheme(theme), [theme]);
 
-  // Routing: #group=<id> / #view=<name>, also changed by the popup's links.
+  // Routing: #group=<id> / #view=<name>, also changed by the popup's links. "Stash this window" adds an
+  // undo token: show its Undo once, then drop it from the address (a reload must not offer it again).
   useEffect(() => {
-    const onHash = () => setViewState(parseHash(location.hash));
+    const takeUndo = () => {
+      const u = parseUndoHash(location.hash);
+      if (!u) return;
+      history.replaceState(null, '', `#${viewHash(parseHash(location.hash))}`);
+      notify(`Stashed ${plural(u.n, 'tab')}`, u.token);
+    };
+    const onHash = () => {
+      setViewState(parseHash(location.hash));
+      takeUndo();
+    };
+    takeUndo();
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);

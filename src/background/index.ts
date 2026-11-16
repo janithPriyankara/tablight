@@ -19,7 +19,7 @@ import {
   LAST_SESSION_KEY, SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
   startupCheckInterrupted, takeSnapshot,
 } from './snapshots';
-import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, undo } from './memory';
+import { AUTO_SLEEP_ALARM, autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, stashWindow, undo } from './memory';
 import {
   SYNC_RETRY_ALARM, configureSync, handleSyncStorageChange, pullSync, pushSync, readSyncStatus, scheduleSync,
   setSyncEnabled, touchStashedInGroup,
@@ -241,7 +241,7 @@ async function mirrorAll(db: Db): Promise<void> {
 }
 /** RPCs that can change the stash or the group names its records carry: each schedules a sync push. */
 const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
-  'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'stashDelete', 'open',
+  'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'stashWindow', 'stashDelete', 'open',
   'undo', 'sessionAction', 'regroupApply',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
@@ -317,6 +317,11 @@ export async function handleRequest(req: Req): Promise<unknown> {
       return r;
     }
     case 'stash': out = await stash(db, parseIds(req.ids)); break;
+    case 'stashWindow': {
+      if (!Number.isSafeInteger(req.windowId) || req.windowId < 0) throw new Error('invalid window');
+      out = await stashWindow(db, req.windowId);
+      break;
+    }
     case 'stashDelete': out = await deleteStashed(db, parseIds(req.ids)); break;
     case 'open': await openItem(db, parseId(req.id)); break;
     case 'close': out = await closeTabs(db, parseIds(req.ids)); break;

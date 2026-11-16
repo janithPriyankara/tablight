@@ -8,6 +8,7 @@ export type Req =
   | { t: 'moveItems'; ids: string[]; groupId: string }
   | { t: 'sleep'; ids: string[] }
   | { t: 'stash'; ids: string[] }
+  | { t: 'stashWindow'; windowId: number } // popup: stash a window, leaving the dashboard (with Undo) in it
   | { t: 'stashDelete'; ids: string[] } // deletes stashed records (no tab opens); undoable
   | { t: 'open'; id: string }
   | { t: 'close'; ids: string[] }
@@ -31,7 +32,7 @@ export type Req =
 export type ReqType = Req['t'];
 export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
-  'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashDelete', 'open', 'close', 'closeExtras',
+  'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'settings', 'export', 'deleteAllData', 'import',
 ]);

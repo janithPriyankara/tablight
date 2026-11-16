@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, undo } from '../../src/background/memory';
+import { autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, stashWindow, undo } from '../../src/background/memory';
 import { reconcile } from '../../src/background/tab-index';
 import { SYNCED_IDS_KEY } from '../../src/background/sync';
 import { sha1hex } from '../../src/shared/hash';
@@ -298,5 +298,41 @@ describe('deleteStashed', () => {
     const r = await deleteStashed(db, ['nope']);
     expect(r.deleted).toBe(0);
     expect(await db.stashBackups.all()).toEqual([]);
+  });
+});
+describe('stashWindow', () => {
+  const DASH = 'chrome-extension://mock-extension-id/dashboard.html';
+  it('opens the dashboard in the window before closing anything, then puts the undo token in its hash', async () => {
+    await setup([{ url: 'https://a.com/', active: true }, { url: 'https://b.com/' }]);
+    const order: string[] = [];
+    const create = vi.spyOn(chrome.tabs, 'create').mockImplementation(async (p) => {
+      order.push('create');
+      return mock.addTab({ url: p.url!, windowId: p.windowId!, active: true });
+    });
+    const remove = vi.spyOn(chrome.tabs, 'remove');
+    remove.mockImplementation(async (ids) => {
+      order.push('remove');
+      for (const id of Array.isArray(ids) ? ids : [ids]) mock.removeTab(id);
+    });
+    const r = await stashWindow(db, 1);
+    expect(r.stashed).toBe(2);
+    expect(order[0]).toBe('create');
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ windowId: 1, url: `${DASH}#view=stashed` }));
+    const left = mock.tabs();
+    expect(left).toHaveLength(1); // the window survives with the dashboard in it
+    expect(left[0]!.url).toBe(`${DASH}#view=stashed&undo=${r.token}&n=2`);
+    expect(r.token).toMatch(/^[0-9a-f-]{36}$/);
+    expect(await undo(db, r.token!)).toBe(true);
+    expect(mock.tabs().map((t) => t.url).filter((u) => u?.startsWith('https:')).sort()).toEqual(['https://a.com/', 'https://b.com/']);
+  });
+  it('reuses a dashboard tab already in the window and never stashes it; nothing to stash opens nothing', async () => {
+    await setup([{ url: 'https://a.com/' }, { url: `${DASH}#view=all` }]);
+    const create = vi.spyOn(chrome.tabs, 'create');
+    const r = await stashWindow(db, 1);
+    expect(r.stashed).toBe(1);
+    expect(create).not.toHaveBeenCalled();
+    expect(mock.tabs().map((t) => t.url)).toEqual([`${DASH}#view=stashed&undo=${r.token}&n=1`]);
+    const none = await stashWindow(db, 1);
+    expect(none).toEqual({ token: null, stashed: 0, skipped: 0 });
   });
 });

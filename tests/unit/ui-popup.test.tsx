@@ -157,28 +157,39 @@ describe('popup', () => {
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'open', id: 'i7' }));
   });
 
-  it('stash this window sends the open web items of the current window and offers Undo', async () => {
-    serve(state(), (req) => (req.t === 'stash' ? { token: 'tok1', skipped: 0 } : req.t === 'undo' ? true : undefined));
+  it('stash this window hands the window to the background (which leaves the dashboard with Undo) and closes', async () => {
+    const close = vi.mocked(window.close);
+    close.mockClear();
+    serve(state(), (req) => (req.t === 'stashWindow' ? { token: 'tok1', stashed: 2 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
     fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
-    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'stash', ids: ['i1', 'i2'] }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
-    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok1' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'stashWindow', windowId: 1 }));
+    expect(sendMock.mock.calls.some(([r]) => (r as { t: string }).t === 'stash')).toBe(false);
+    await waitFor(() => expect(close).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull(); // no dead Undo in a closing popup
   });
-
-  it('the undo offer disappears after 10 s', async () => {
-    serve(state(), (req) => (req.t === 'stash' ? { token: 'tok1', skipped: 0 } : undefined));
+  it('stash this window with nothing to stash says so and stays open', async () => {
+    const close = vi.mocked(window.close);
+    close.mockClear();
+    serve(state(), (req) => (req.t === 'stashWindow' ? { token: null, stashed: 0 } : undefined));
+    render(<Popup />);
+    await screen.findByText(/5 tabs/);
+    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
+    await screen.findByText('No web tabs to stash in this window');
+    expect(close).not.toHaveBeenCalled();
+  });
+  it('a notice disappears after 10 s', async () => {
+    serve(state(), (req) => (req.t === 'sleep' ? { slept: 2, skipped: 1 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
     vi.useFakeTimers();
-    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sleep inactive' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
-    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    expect(screen.getByText('Slept 2 tabs')).toBeTruthy();
     await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
-    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(screen.queryByText('Slept 2 tabs')).toBeNull();
   });
-
   it('sleep inactive sends every open web item (the background skips active/pinned/audible)', async () => {
     serve(state(), (req) => (req.t === 'sleep' ? { slept: 2, skipped: 1 } : undefined));
     render(<Popup />);

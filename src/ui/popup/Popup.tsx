@@ -61,13 +61,17 @@ export function Popup() {
       await send({ t: 'open', id: item.id });
       window.close();
     });
+  /**
+   * The background opens the dashboard in this window first (so the window never closes), stashes the
+   * rest, and the dashboard shows the Undo. The popup closes once the dashboard tab takes focus.
+   */
   const stashWindow = () =>
     act(async () => {
       const win = await chrome.windows.getCurrent();
-      const ids = (state?.items ?? []).filter((i) => isWebOpen(i) && i.windowId === win.id).map((i) => i.id);
-      if (!ids.length) return notify('No web tabs to stash in this window');
-      const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids });
-      notify(`Stashed ${plural(ids.length - r.skipped, 'tab')}`, r.token);
+      if (win.id === undefined) return;
+      const r = await send<{ token: string | null; stashed: number }>({ t: 'stashWindow', windowId: win.id });
+      if (!r.stashed) return notify('No web tabs to stash in this window');
+      window.close();
     });
   const sleepInactive = () =>
     act(async () => {
