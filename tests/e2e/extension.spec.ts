@@ -17,6 +17,9 @@ import { captureNetwork, type NetworkCapture } from './fixtures/cdp-network';
 import { PAGES, startPageServer, type PageServer } from './fixtures/server';
 
 const DIST = resolve('dist');
+if (!existsSync(join(DIST, 'manifest.json'))) {
+  throw new Error('dist/manifest.json not found: run "npm run build" before the e2e tests.');
+}
 /** Generous: the first model load in a fresh profile, and 50+ tabs loading at once. */
 const SETTLE_MS = 120_000;
 
@@ -33,11 +36,15 @@ const requests: { source: 'page' | 'service-worker'; url: string }[] = [];
 const cdpCaptures: NetworkCapture[] = [];
 let server: PageServer;
 const tempDirs: string[] = [];
+/** Every context launched, so a failing test never leaves a Chromium behind. */
+const contexts: BrowserContext[] = [];
 
 test.beforeAll(async () => {
   server = await startPageServer();
 });
 test.afterAll(async () => {
+  for (const c of contexts) await c.close().catch(() => undefined);
+  for (const c of cdpCaptures) c.close();
   await server.close();
   for (const d of tempDirs) rmSync(d, { recursive: true, force: true });
 });
@@ -77,20 +84,26 @@ async function launch(): Promise<Ext> {
     viewport: { width: 1280, height: 900 },
     args: [`--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, '--remote-debugging-port=0'],
   });
-  context.on('request', (r) => requests.push({ source: r.serviceWorker() ? 'service-worker' : 'page', url: r.url() }));
-  const sw = context.serviceWorkers().find((w) => w.url().endsWith('/background.js'))
-    ?? await context.waitForEvent('serviceworker', { predicate: (w) => w.url().endsWith('/background.js'), timeout: 30_000 });
-  const id = new URL(sw.url()).host;
-  const cdp = await captureNetwork(dir);
-  cdpCaptures.push(cdp);
-  const dashboard = await context.newPage();
-  await dashboard.goto(`chrome-extension://${id}/dashboard.html`);
-  // Starter groups are built with the model on install; wait for them before going on.
-  await expect.poll(async () => (await state(dashboard)).groups.length, { timeout: SETTLE_MS }).toBeGreaterThan(0);
-  // An offscreen document created before the capture attached would be only partly recorded: close it,
-  // so every later one is recorded from its first request.
-  await sw.evaluate(() => chrome.offscreen.closeDocument().catch(() => undefined));
-  return { context, sw, id, dashboard, cdp };
+  contexts.push(context);
+  try {
+    context.on('request', (r) => requests.push({ source: r.serviceWorker() ? 'service-worker' : 'page', url: r.url() }));
+    const sw = context.serviceWorkers().find((w) => w.url().endsWith('/background.js'))
+      ?? await context.waitForEvent('serviceworker', { predicate: (w) => w.url().endsWith('/background.js'), timeout: 30_000 });
+    const id = new URL(sw.url()).host;
+    const cdp = await captureNetwork(dir);
+    cdpCaptures.push(cdp);
+    const dashboard = await context.newPage();
+    await dashboard.goto(`chrome-extension://${id}/dashboard.html`);
+    // Starter groups are built with the model on install; wait for them before going on.
+    await expect.poll(async () => (await state(dashboard)).groups.length, { timeout: SETTLE_MS }).toBeGreaterThan(0);
+    // An offscreen document created before the capture attached would be only partly recorded: close it,
+    // so every later one is recorded from its first request.
+    await sw.evaluate(() => chrome.offscreen.closeDocument().catch(() => undefined));
+    return { context, sw, id, dashboard, cdp };
+  } catch (e) {
+    await context.close().catch(() => undefined); // never leave a half-launched Chromium behind
+    throw e;
+  }
 }
 
 /** Opens one window per list of URLs (from the extension page, so the window count is exact). */
@@ -164,6 +177,12 @@ test('offscreen bundle points Transformers.js at bundled files before building t
     at(/useBrowserCache\s*=\s*(?:!1|false)/),
     at(new RegExp(`wasmPaths\\s*=\\s*\\{\\s*mjs:\\s*chrome\\.runtime\\.getURL\\(${q}ort/ort-wasm-simd-threaded\\.mjs${q}\\)\\s*,\\s*wasm:\\s*chrome\\.runtime\\.getURL\\(${q}ort/ort-wasm-simd-threaded\\.wasm${q}\\)`)),
   ];
+  // The remaining Global Constraints flags, anchored to the app's own assignment sequence (the library
+  // has same-named defaults elsewhere): local models on, wasm cache off, one thread, no proxy worker.
+  const sequence = (re: RegExp) => expect(js, String(re)).toMatch(re);
+  sequence(/allowLocalModels\s*=\s*(?:!0|true)\s*[,;]\s*\w+\.localModelPath\s*=/);
+  sequence(/useBrowserCache\s*=\s*(?:!1|false)\s*[,;]\s*\w+\.useWasmCache\s*=\s*(?:!1|false)\b/);
+  sequence(/wasmPaths\s*=\s*\{[^}]*\}\s*[,;]\s*\w+\.numThreads\s*=\s*1\s*[,;]\s*\w+\.proxy\s*=\s*(?:!1|false)\b/);
   const pipelineCall = at(new RegExp(`${q}feature-extraction${q}\\s*,\\s*${q}Xenova/all-MiniLM-L6-v2${q}`));
   for (const i of config) expect(i).toBeLessThan(pipelineCall);
   for (const f of ['ort/ort-wasm-simd-threaded.mjs', 'ort/ort-wasm-simd-threaded.wasm', 'models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx']) {

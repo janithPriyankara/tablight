@@ -13,11 +13,13 @@
     "lint": "eslint .",
     "preview:ui": "vite --config vite.preview.config.ts",
     "preview:vectors": "node scripts/make-preview-vectors.mjs",
-    "package": "node scripts/package.mjs"
+    "package": "node scripts/package.mjs",
+    "postbuild": "node scripts/verify-release.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",
     "idb": "8.0.4",
+    "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
     "preact": "11.2.0"
   },
   "devDependencies": {

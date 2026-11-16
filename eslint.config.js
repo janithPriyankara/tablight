@@ -23,11 +23,35 @@ export default tseslint.config(
           selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
           message: 'dangerouslySetInnerHTML is banned: render untrusted text as text only.',
         },
+        {
+          selector: "JSXSpreadAttribute > ObjectExpression > Property[key.name='dangerouslySetInnerHTML']",
+          message: 'dangerouslySetInnerHTML is banned, including in a JSX spread.',
+        },
+        {
+          selector: "JSXSpreadAttribute > ObjectExpression > Property[key.value='dangerouslySetInnerHTML']",
+          message: 'dangerouslySetInnerHTML is banned, including in a JSX spread.',
+        },
+        {
+          selector: "AssignmentExpression[left.type='MemberExpression'][left.property.name=/^(innerHTML|outerHTML)$/]",
+          message: 'Assigning innerHTML/outerHTML is banned: render untrusted text as text only.',
+        },
+        {
+          selector: "AssignmentExpression[left.type='MemberExpression'][left.computed=true][left.property.value=/^(innerHTML|outerHTML)$/]",
+          message: 'Assigning innerHTML/outerHTML is banned (string-literal form too).',
+        },
+        {
+          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+          message: 'insertAdjacentHTML is banned: render untrusted text as text only.',
+        },
+        {
+          selector: "CallExpression[callee.type='MemberExpression'][callee.computed=true][callee.property.value='insertAdjacentHTML']",
+          message: 'insertAdjacentHTML is banned (string-literal form too).',
+        },
       ],
     },
   },
   {
     files: ['**/*.mjs', 'scripts/**', '*.config.*'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', fetch: 'readonly' } },
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', fetch: 'readonly', AbortSignal: 'readonly' } },
   },
 );
