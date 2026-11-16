@@ -39,7 +39,10 @@ const hasTab = (i: Item): i is Item & { tabId: number } => i.state !== 'stashed'
 async function liveTabs(): Promise<Map<number, chrome.tabs.Tab>> {
   return new Map((await chrome.tabs.query({})).flatMap((t) => (t.id === undefined ? [] : [[t.id, t] as const])));
 }
-/** Discards the given items' tabs. Skips active, pinned, audible, already-discarded and non-web tabs. */
+/**
+ * Discards the given items' tabs. Skips active, pinned, audible, already-discarded and non-web tabs, and
+ * tabs marked not auto-discardable (the user or another extension asked the browser to keep them loaded).
+ */
 export async function sleepTabs(db: Db, ids: string[]): Promise<{ slept: number; skipped: number }> {
   const live = await liveTabs();
   let slept = 0;
@@ -47,7 +50,8 @@ export async function sleepTabs(db: Db, ids: string[]): Promise<{ slept: number;
   for (const id of ids) {
     const item = await db.items.get(id);
     const tab = item && hasTab(item) ? live.get(item.tabId) : undefined;
-    if (!item || !tab || tab.active || tab.pinned || tab.audible || tab.discarded || !isWebUrl(tab.url ?? '')) {
+    if (!item || !tab || tab.active || tab.pinned || tab.audible || tab.discarded || tab.autoDiscardable === false ||
+        !isWebUrl(tab.url ?? '')) {
       skipped++;
       continue;
     }

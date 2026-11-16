@@ -32,12 +32,13 @@ describe('sleepTabs / autoSleep', () => {
     { url: 'https://plain.com/' },
     { url: 'https://asleep.com/', discarded: true },
     { url: 'chrome://settings/' },
+    { url: 'https://keep.com/', autoDiscardable: false },
   ];
-  it('skips active, pinned, audible, discarded and non-web tabs', async () => {
+  it('skips active, pinned, audible, discarded, non-web and not-auto-discardable tabs', async () => {
     const items = await setup(tabs);
     const discard = vi.spyOn(chrome.tabs, 'discard');
     const r = await sleepTabs(db, items.map((i) => i.id).concat('missing'));
-    expect(r).toEqual({ slept: 1, skipped: 6 });
+    expect(r).toEqual({ slept: 1, skipped: 7 });
     expect(discard).toHaveBeenCalledTimes(1);
     expect(mock.tabs().find((t) => t.url === 'https://plain.com/')!.discarded).toBe(true);
   });
