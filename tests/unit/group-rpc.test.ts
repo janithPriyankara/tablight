@@ -4,6 +4,8 @@ import { installChromeMock } from '../../src/ui/mock/chrome-mock';
 vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
   isWarm: vi.fn(() => false),
+  closeIfIdle: vi.fn(async () => undefined),
+  OFFSCREEN_IDLE_ALARM: 'offscreen-idle',
 }));
 afterEach(() => vi.resetModules());
 describe('group rpc handlers', () => {

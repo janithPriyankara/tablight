@@ -1,10 +1,14 @@
 import { send } from '../shared/rpc.ts';
 const BATCH = 32;
-const IDLE_MS = 60_000;
+/**
+ * Idle close. A setTimeout in the service worker can't do it: MV3 kills an idle worker after ~30 s, long
+ * before a 60 s timer fires, so the model would stay loaded. A one-shot alarm survives the worker and wakes
+ * it; the offscreen document also runs its own idle timer and asks for the close (`offscreenIdle`).
+ */
+export const OFFSCREEN_IDLE_ALARM = 'offscreen-idle';
 let ensuring: Promise<void> | undefined; // shared only while a check/create is pending
 let closing: Promise<void> | undefined;
 let inflight = 0;
-let idleTimer: ReturnType<typeof setTimeout> | undefined;
 let warm = false;
 /** True once the model produced at least one vector in this worker's lifetime. */
 export function isWarm(): boolean {
@@ -30,17 +34,26 @@ function ensureOnce(): Promise<void> {
   return ensuring;
 }
 function scheduleIdleClose(): void {
-  if (idleTimer) clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => {
-    idleTimer = undefined;
-    if (inflight > 0) return;
-    closing = chrome.offscreen
-      .closeDocument()
-      .catch(() => undefined)
-      .finally(() => {
-        closing = undefined;
-      });
-  }, IDLE_MS);
+  // Re-creating a named alarm replaces it: each finished embed pushes the close back by a minute.
+  void Promise.resolve(chrome.alarms.create(OFFSCREEN_IDLE_ALARM, { delayInMinutes: 1 })).catch(() => undefined);
+}
+/**
+ * Closes the offscreen document when nothing is in flight (from the idle alarm or the document's own idle
+ * request). A call that starts later re-creates the document. Never rejects.
+ */
+export async function closeIfIdle(): Promise<void> {
+  if (inflight > 0 || closing || ensuring) return; // the running call re-arms the alarm when it ends
+  const open = await chrome.runtime
+    .getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType] })
+    .catch(() => [{}]);
+  if (open.length === 0 || inflight > 0 || closing || ensuring) return;
+  closing = chrome.offscreen
+    .closeDocument()
+    .catch(() => undefined)
+    .finally(() => {
+      closing = undefined;
+    });
+  await closing;
 }
 async function sendBatch(texts: string[]): Promise<number[][]> {
   try {
@@ -54,10 +67,6 @@ async function sendBatch(texts: string[]): Promise<number[][]> {
 export async function embed(texts: string[]): Promise<Float32Array[]> {
   if (texts.length === 0) return [];
   inflight++;
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-    idleTimer = undefined;
-  }
   try {
     await ensureOnce();
     const out: Float32Array[] = [];

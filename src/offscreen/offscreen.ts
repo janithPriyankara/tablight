@@ -1,5 +1,22 @@
 import { env, pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
-import { handle } from '../shared/rpc.ts';
+import { handle, send } from '../shared/rpc.ts';
+/**
+ * Second layer of the idle close (the first is the background's `offscreen-idle` alarm): after this long
+ * without a request the document asks the background to close it. An offscreen document has no
+ * chrome.offscreen API; chrome.offscreen.closeDocument() from the worker is the supported way to close it.
+ */
+export const SELF_IDLE_MS = 60_000;
+let busy = 0;
+let idleTimer: ReturnType<typeof setTimeout> | undefined;
+function armIdle(): void {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    idleTimer = undefined;
+    if (busy > 0) return;
+    // The background closes us only if it has nothing in flight. If it can't be reached, close ourselves.
+    send({ t: 'offscreenIdle' }).catch(() => window.close());
+  }, SELF_IDLE_MS);
+}
 // Must run before the first pipeline() call, otherwise Transformers.js fetches WASM from a CDN.
 env.allowRemoteModels = false;
 env.allowLocalModels = true;
@@ -27,7 +44,16 @@ function getExtractor(): Promise<FeatureExtractionPipeline> {
 }
 handle(async (req) => {
   if (req.t !== 'embed') throw new Error(`offscreen cannot handle "${req.t}"`);
-  const ex = await getExtractor();
-  const out = await ex(req.texts, { pooling: 'mean', normalize: true });
-  return out.tolist() as number[][];
+  busy++;
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = undefined;
+  try {
+    const ex = await getExtractor();
+    const out = await ex(req.texts, { pooling: 'mean', normalize: true });
+    return out.tolist() as number[][];
+  } finally {
+    busy--;
+    if (busy === 0) armIdle();
+  }
 }, 'offscreen');
+armIdle(); // a document created but never used closes too

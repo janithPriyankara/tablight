@@ -12,6 +12,8 @@ vi.mock('../../src/shared/hash', async (orig) => {
 vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
   isWarm: vi.fn(() => false),
+  closeIfIdle: vi.fn(async () => undefined),
+  OFFSCREEN_IDLE_ALARM: 'offscreen-idle',
 }));
 afterEach(() => vi.resetModules());
 describe('background index', () => {
@@ -273,6 +275,18 @@ describe('background index', () => {
     vi.mocked(isWarm).mockReturnValue(true);
     expect(((await bg.handleRequest({ t: 'state' })) as S).modelReady).toBe(true);
     await db.queue.remove([so.id]);
+    mock.uninstall();
+  });
+  it('the offscreen-idle alarm and the document\'s offscreenIdle request both run closeIfIdle', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const { closeIfIdle } = await import('../../src/background/embedder');
+    vi.mocked(closeIfIdle).mockClear();
+    await mock.chrome.alarms.create('offscreen-idle', { delayInMinutes: 1 });
+    mock.fireAlarm('offscreen-idle');
+    expect(closeIfIdle).toHaveBeenCalledTimes(1);
+    expect(await bg.handleRequest({ t: 'offscreenIdle' })).toBeNull();
+    expect(closeIfIdle).toHaveBeenCalledTimes(2);
     mock.uninstall();
   });
 });

@@ -53,3 +53,41 @@ describe('offscreen env', () => {
     await expect(import('../../src/offscreen/offscreen.ts')).rejects.toThrow(/CDN/);
   });
 });
+describe('offscreen self idle close', () => {
+  it('asks the background to close it 60 s after the last request, never while one runs', async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    let listener: ((m: unknown, s: unknown, r: (x: unknown) => void) => unknown) | undefined;
+    const sendMessage = vi.fn(async () => ({ ok: true, data: null }));
+    vi.stubGlobal('chrome', {
+      runtime: {
+        id: 'me',
+        getURL: (p: string) => `chrome-extension://me/${p}`,
+        sendMessage,
+        onMessage: { addListener: (l: typeof listener) => (listener = l) },
+      },
+    });
+    let finish!: () => void;
+    const extractor = vi.fn(() => new Promise((r) => (finish = () => r({ tolist: () => [[1]] }))));
+    vi.doMock('@huggingface/transformers', () => ({
+      env: { backends: { onnx: { wasm: {} } } },
+      pipeline: vi.fn(async () => extractor),
+    }));
+    try {
+      await import('../../src/offscreen/offscreen.ts');
+      const respond = vi.fn();
+      await vi.advanceTimersByTimeAsync(30_000);
+      listener?.({ t: 'embed', texts: ['a'], target: 'offscreen' }, { id: 'me' }, respond);
+      await vi.advanceTimersByTimeAsync(120_000); // a slow request: no idle request meanwhile
+      expect(sendMessage).not.toHaveBeenCalled();
+      finish();
+      await vi.advanceTimersByTimeAsync(59_000);
+      expect(respond).toHaveBeenCalled();
+      expect(sendMessage).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(sendMessage).toHaveBeenCalledWith({ t: 'offscreenIdle', target: 'background' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

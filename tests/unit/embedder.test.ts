@@ -9,6 +9,7 @@ const createDocument = vi.fn(async () => {
 const closeDocument = vi.fn(async () => {
   docExists = false;
 });
+const alarmsCreate = vi.fn(async (...args: [string, unknown]) => void args);
 const sendMessage = vi.fn(async (m: { texts: string[] }) => ({
   ok: true,
   data: m.texts.map((t) => [Number(t), 0]),
@@ -21,8 +22,10 @@ beforeEach(() => {
   createDocument.mockClear();
   closeDocument.mockClear();
   sendMessage.mockClear();
+  alarmsCreate.mockClear();
   vi.stubGlobal('chrome', {
     offscreen: { createDocument, closeDocument },
+    alarms: { create: alarmsCreate },
     runtime: {
       id: 'me',
       getURL: (p: string) => `chrome-extension://me/${p}`,
@@ -50,13 +53,21 @@ describe('embedder', () => {
     await Promise.all([embed(['1']), embed(['2'])]);
     expect(createDocument).toHaveBeenCalledTimes(1);
   });
-  it('closes the document after 60 s idle', async () => {
-    const { embed } = await import('../../src/background/embedder.ts');
+  it('arms a one-shot 1-minute alarm (not a worker timer) after each embed; the alarm closes the idle document', async () => {
+    const { embed, closeIfIdle, OFFSCREEN_IDLE_ALARM } = await import('../../src/background/embedder.ts');
     await embed(['1']);
-    await vi.advanceTimersByTimeAsync(59_000);
-    expect(closeDocument).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(1_500);
+    await embed(['2']);
+    expect(alarmsCreate).toHaveBeenCalledTimes(2);
+    expect(alarmsCreate).toHaveBeenLastCalledWith(OFFSCREEN_IDLE_ALARM, { delayInMinutes: 1 });
+    await vi.advanceTimersByTimeAsync(10 * 60_000);
+    expect(closeDocument).not.toHaveBeenCalled(); // no setTimeout: only the alarm closes it
+    await closeIfIdle();
     expect(closeDocument).toHaveBeenCalledTimes(1);
+  });
+  it('closeIfIdle is a no-op when no document is open (worker restarted after the doc died)', async () => {
+    const { closeIfIdle } = await import('../../src/background/embedder.ts');
+    await closeIfIdle();
+    expect(closeDocument).not.toHaveBeenCalled();
   });
   it('batches 70 texts as 32/32/6 and keeps order', async () => {
     const { embed } = await import('../../src/background/embedder.ts');
@@ -104,8 +115,9 @@ describe('rpc handle', () => {
 describe('embedder lifecycle', () => {
   it('re-opens after an idle close', async () => {
     const { embed } = await import('../../src/background/embedder.ts');
+    const { closeIfIdle } = await import('../../src/background/embedder.ts');
     await embed(['1']);
-    await vi.advanceTimersByTimeAsync(61_000);
+    await closeIfIdle();
     expect(closeDocument).toHaveBeenCalledTimes(1);
     await embed(['2']);
     expect(createDocument).toHaveBeenCalledTimes(2);
@@ -124,9 +136,10 @@ describe('embedder lifecycle', () => {
     closeDocument.mockImplementationOnce(
       () => new Promise<void>((r) => (release = () => { docExists = false; r(); })),
     );
-    const { embed } = await import('../../src/background/embedder.ts');
+    const { embed, closeIfIdle } = await import('../../src/background/embedder.ts');
     await embed(['1']);
-    await vi.advanceTimersByTimeAsync(60_500); // close started, pending
+    void closeIfIdle();
+    await vi.advanceTimersByTimeAsync(10); // close started, pending
     const p = embed(['2']);
     await vi.advanceTimersByTimeAsync(10);
     expect(createDocument).toHaveBeenCalledTimes(1); // waiting on the close
@@ -139,11 +152,13 @@ describe('embedder lifecycle', () => {
     sendMessage.mockImplementationOnce(
       () => new Promise((r) => (finish = () => r({ ok: true, data: [[1, 0]] }))),
     );
-    const { embed } = await import('../../src/background/embedder.ts');
+    const { embed, closeIfIdle } = await import('../../src/background/embedder.ts');
     const p = embed(['1']);
-    await vi.advanceTimersByTimeAsync(120_000);
+    await vi.advanceTimersByTimeAsync(10);
+    await closeIfIdle(); // the alarm (or the document's idle request) fires mid-call
     expect(closeDocument).not.toHaveBeenCalled();
     finish();
     await p;
+    expect(alarmsCreate).toHaveBeenCalledTimes(1); // re-armed when the call ended
   });
 });

@@ -4,7 +4,7 @@ import type { Req } from '../shared/rpc';
 import { buildStarterGroups } from '../classify/assign';
 import { openDb, type Db } from './db';
 import { findDuplicates, invalidateBadges, updateBadge } from './duplicates';
-import { embed, isWarm } from './embedder';
+import { OFFSCREEN_IDLE_ALARM, closeIfIdle, embed, isWarm } from './embedder';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
   parseId, parseIds, parseName, regroupApply, regroupPreview, renameGroup,
@@ -286,6 +286,10 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
 }
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
+  if (req.t === 'offscreenIdle') {
+    await closeIfIdle();
+    return null;
+  }
   const db = await getDb();
   let out: unknown;
   switch (req.t) {
@@ -390,6 +394,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     .catch((e: unknown) => console.error('sync failed', e));
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === OFFSCREEN_IDLE_ALARM) void closeIfIdle();
   if (alarm.name === KICK_ALARM) void flushTabEvents();
   if (alarm.name === SYNC_RETRY_ALARM) {
     void getDb()

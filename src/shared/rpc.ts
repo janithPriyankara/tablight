@@ -2,6 +2,7 @@ import type { Settings } from './types.ts';
 // One discriminated union for every UI<->background and background<->offscreen message.
 export type Req =
   | { t: 'embed'; texts: string[] } // background -> offscreen
+  | { t: 'offscreenIdle' } // offscreen -> background: the document has been idle; close it if nothing is in flight
   | { t: 'state' } // ui -> bg: returns DashboardState
   | { t: 'search'; q: string; semantic: boolean }
   | { t: 'moveItems'; ids: string[]; groupId: string }
@@ -28,7 +29,7 @@ export type Req =
 export type ReqType = Req['t'];
 export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
-  'embed', 'state', 'search', 'moveItems', 'sleep', 'stash', 'open', 'close', 'closeExtras',
+  'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'settings', 'export', 'import',
 ]);
