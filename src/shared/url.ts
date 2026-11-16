@@ -29,7 +29,8 @@ export function normalizeUrl(url: string): string {
   const isYoutube = host === 'youtube.com' || host === 'm.youtube.com';
   let path = u.pathname;
   const params: [string, string][] = [];
-  let outHost = host;
+  // The mobile site is the same page: one form, so desktop and mobile copies dedupe and share a sync id.
+  let outHost = host === 'm.youtube.com' ? 'youtube.com' : host;
   if (host === 'youtu.be') {
     const id = path.split('/').filter(Boolean)[0];
     if (id) {

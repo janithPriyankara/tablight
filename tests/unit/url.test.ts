@@ -19,6 +19,20 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('not a url')).toBe('not a url');
     expect(normalizeUrl('')).toBe('');
   });
+  it('desktop, mobile and short YouTube links of one video normalize alike (dedupe + one sync id)', async () => {
+    const { sha1hex } = await import('../../src/shared/hash');
+    const links = [
+      'https://www.youtube.com/watch?v=abc&list=L1',
+      'https://m.youtube.com/watch?list=L1&v=abc&t=10',
+      'https://youtube.com/watch?list=L1&v=abc&si=x',
+      'https://youtu.be/abc?list=L1&t=3',
+    ];
+    const norm = links.map(normalizeUrl);
+    expect(new Set(norm)).toEqual(new Set(['https://youtube.com/watch?v=abc&list=L1']));
+    expect(new Set(await Promise.all(norm.map((u) => sha1hex(u)))).size).toBe(1);
+    expect(normalizeUrl('https://m.youtube.com/')).toBe('https://youtube.com/');
+    expect(normalizeUrl('https://m.example.com/a')).toBe('https://m.example.com/a'); // only YouTube's mobile host
+  });
   it('is idempotent', () => {
     const u = normalizeUrl('https://www.youtube.com/watch?v=abc&t=42s&list=L1');
     expect(normalizeUrl(u)).toBe(u);
