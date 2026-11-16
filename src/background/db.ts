@@ -198,20 +198,48 @@ async function readSettings(tx: AnyTx): Promise<Settings> {
   const stored: Partial<Settings> | undefined = await tx.objectStore('settings').get(SETTINGS_KEY);
   return { ...DEFAULT_SETTINGS, ...stored };
 }
-export async function openDb(name = 'tab-organizer'): Promise<Db> {
-  const idb: IDBPDatabase = await openDB(name, 1, {
-    upgrade(d) {
-      const items = d.createObjectStore('items', { keyPath: 'id' });
-      items.createIndex('tabId', 'tabId');
-      items.createIndex('normUrl', 'normUrl');
-      items.createIndex('state', 'state');
-      d.createObjectStore('groups', { keyPath: 'id' });
-      d.createObjectStore('embeddings');
-      d.createObjectStore('queue', { keyPath: 'itemId' }).createIndex('addedAt', 'addedAt');
-      d.createObjectStore('snapshots', { keyPath: 'id' });
-      d.createObjectStore('tombstones', { keyPath: 'id' }).createIndex('deletedAt', 'deletedAt');
-      d.createObjectStore('stashBackups', { autoIncrement: true });
-      d.createObjectStore('settings');
+/**
+ * Creates the stores of every schema version above `oldVersion` (0 for a new database). Each later
+ * version adds its own `if (oldVersion < N)` block; existing stores and data are never recreated.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function upgradeSchema(d: IDBPDatabase<any>, oldVersion: number): void {
+  if (oldVersion < 1) {
+    const items = d.createObjectStore('items', { keyPath: 'id' });
+    items.createIndex('tabId', 'tabId');
+    items.createIndex('normUrl', 'normUrl');
+    items.createIndex('state', 'state');
+    d.createObjectStore('groups', { keyPath: 'id' });
+    d.createObjectStore('embeddings');
+    d.createObjectStore('queue', { keyPath: 'itemId' }).createIndex('addedAt', 'addedAt');
+    d.createObjectStore('snapshots', { keyPath: 'id' });
+    d.createObjectStore('tombstones', { keyPath: 'id' }).createIndex('deletedAt', 'deletedAt');
+    d.createObjectStore('stashBackups', { autoIncrement: true });
+    d.createObjectStore('settings');
+  }
+}
+export const DB_VERSION = 1;
+export interface OpenDbHooks {
+  /**
+   * The connection is gone: closed so a newer version (another extension context after an update) can
+   * upgrade, or terminated by the browser. The caller drops its cached Db and reopens on next use.
+   */
+  lost?: () => void;
+}
+export async function openDb(name = 'tab-organizer', hooks: OpenDbHooks = {}): Promise<Db> {
+  const idb: IDBPDatabase = await openDB(name, DB_VERSION, {
+    upgrade(d, oldVersion) {
+      upgradeSchema(d, oldVersion);
+    },
+    blocked() {
+      console.warn('database upgrade waits for an older connection to close');
+    },
+    blocking() {
+      idb.close(); // let the newer version upgrade; this context reopens it
+      hooks.lost?.();
+    },
+    terminated() {
+      hooks.lost?.();
     },
   });
   let lastAddedAt = 0;

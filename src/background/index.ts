@@ -41,7 +41,11 @@ let lastSweep = 0;
 
 let dbp: Promise<Db> | undefined;
 export function getDb(): Promise<Db> {
-  dbp ??= openDb().catch((e: unknown) => {
+  dbp ??= openDb(undefined, {
+    lost: () => {
+      dbp = undefined; // closed for an upgrade or terminated: the next call reopens
+    },
+  }).catch((e: unknown) => {
     dbp = undefined;
     throw e;
   });

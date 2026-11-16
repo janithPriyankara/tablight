@@ -118,3 +118,24 @@ describe('db.tx', () => {
     expect(await db.queue.size()).toBe(0);
   });
 });
+describe('db upgrades', () => {
+  it('a later version upgrade keeps v1 stores and data; the v1 connection steps aside and reports it', async () => {
+    const { openDB } = await import('idb');
+    const { upgradeSchema } = await import('../../src/background/db');
+    const lost: string[] = [];
+    const v1 = await openDb('upgrade-test', { lost: () => lost.push('lost') });
+    await v1.items.put(item());
+    await v1.groups.put(group);
+    const v2 = await openDB('upgrade-test', 2, {
+      upgrade(d, oldVersion) {
+        upgradeSchema(d, oldVersion); // must skip the v1 stores that exist already
+        if (oldVersion < 2) d.createObjectStore('extra');
+      },
+    });
+    expect(lost).toEqual(['lost']);
+    expect([...v2.objectStoreNames]).toContain('extra');
+    expect(await v2.get('items', 'i1')).toEqual(item());
+    expect(await v2.get('groups', 'g1')).toEqual(group);
+    v2.close();
+  });
+});
