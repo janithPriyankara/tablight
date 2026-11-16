@@ -238,13 +238,13 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   const stashUrls = new Set(stashItems.map((i) => i.url));
   await navButton(page, names.get(stashGroupId)!).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(names.get(stashGroupId)!);
-  await page.getByRole('button', { name: 'Stash group' }).click();
+  await page.getByRole('button', { name: 'Save group for later' }).click();
   await expect.poll(async () => (await serverTabs(page)).length).toBe(47 - stashItems.length);
   expect((await serverTabs(page)).some((t) => stashUrls.has(t.url!))).toBe(false);
   await expect.poll(async () =>
     (await state(page)).items.filter((i) => i.state === 'stashed' && stashUrls.has(i.url)).length).toBe(stashItems.length);
-  await navButton(page, 'Stashed').click();
-  const stashedList = page.getByRole('list', { name: 'Stashed' });
+  await navButton(page, 'Saved for later').click();
+  const stashedList = page.getByRole('list', { name: 'Saved for later' });
   for (const i of stashItems) await expect(stashedList.getByRole('listitem').filter({ hasText: i.title })).toHaveCount(1);
 
   // ── open one stashed item: a tab appears and the item leaves the stash ──
@@ -261,7 +261,7 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   const target = candidates[0]!;
   await page.getByRole('searchbox', { name: 'Search tabs' }).fill(target.title!);
   const results = page.getByRole('list', { name: `Results for “${target.title!}”` });
-  await results.getByRole('listitem').filter({ hasText: target.title! }).first().getByRole('button', { name: 'Sleep', exact: true }).click();
+  await results.getByRole('listitem').filter({ hasText: target.title! }).first().getByRole('button', { name: 'Pause', exact: true }).click();
   // Discarding may replace the tab (and its id), so it is found again by URL.
   await expect.poll(async () => (await serverTabs(page)).filter((t) => t.url === target.url).map((t) => t.discarded)).toEqual([true]);
   await expect.poll(async () => (await state(page)).items.filter((i) => i.url === target.url).map((i) => i.state)).toEqual(['sleeping']);
@@ -308,8 +308,8 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   await expect(p2.getByRole('status').filter({ hasText: /^Imported/ })).toBeVisible();
   await expect.poll(async () =>
     (await state(p2)).items.filter((i) => i.state === 'stashed').map((i) => i.url).sort()).toEqual(stillStashed);
-  await navButton(p2, 'Stashed').click();
-  const restored = p2.getByRole('list', { name: 'Stashed' });
+  await navButton(p2, 'Saved for later').click();
+  const restored = p2.getByRole('list', { name: 'Saved for later' });
   for (const i of stashItems.slice(1)) await expect(restored.getByRole('listitem').filter({ hasText: i.title })).toHaveCount(1);
   fresh.cdp.close();
   await fresh.context.close();

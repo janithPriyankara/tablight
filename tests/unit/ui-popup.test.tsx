@@ -68,7 +68,7 @@ describe('popup', () => {
   it('renders totals from the state RPC and the top 6 non-empty groups', async () => {
     serve(state());
     render(<Popup />);
-    await screen.findByText('5 tabs · 2 windows · 1 sleeping · 1 duplicate');
+    await screen.findByText('5 tabs · 2 windows · 1 paused · 1 duplicate');
     expect(sendMock).toHaveBeenCalledWith({ t: 'state' });
     const groups = screen.getAllByRole('listitem').filter((li) => li.closest('[aria-label="Top groups"]'));
     expect(groups).toHaveLength(6);
@@ -83,7 +83,7 @@ describe('popup', () => {
       groups: [{ ...group('g', XSS, 3) }],
     }));
     const { container } = render(<Popup />);
-    await screen.findByText('5 tabs · 2 windows · 1 sleeping · 1 duplicate');
+    await screen.findByText('5 tabs · 2 windows · 1 paused · 1 duplicate');
     expect(screen.getAllByText(XSS).length).toBeGreaterThan(0);
     expect(container.querySelector('img[src=x]')).toBeNull();
   });
@@ -167,7 +167,7 @@ describe('popup', () => {
     serve(state(), (req) => (req.t === 'stashWindow' ? { token: 'tok1', stashed: 2 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
-    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save window for later' }));
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'stashWindow', windowId: 1 }));
     expect(sendMock.mock.calls.some(([r]) => (r as { t: string }).t === 'stash')).toBe(false);
     await waitFor(() => expect(close).toHaveBeenCalled());
@@ -179,8 +179,8 @@ describe('popup', () => {
     serve(state(), (req) => (req.t === 'stashWindow' ? { token: null, stashed: 0 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
-    fireEvent.click(screen.getByRole('button', { name: 'Stash this window' }));
-    await screen.findByText('No web tabs to stash in this window');
+    fireEvent.click(screen.getByRole('button', { name: 'Save window for later' }));
+    await screen.findByText('No web tabs to save in this window');
     expect(close).not.toHaveBeenCalled();
   });
   it('a notice disappears after 10 s', async () => {
@@ -188,19 +188,19 @@ describe('popup', () => {
     render(<Popup />);
     await screen.findByText(/5 tabs/);
     vi.useFakeTimers();
-    fireEvent.click(screen.getByRole('button', { name: 'Sleep inactive' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause other tabs' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
-    expect(screen.getByText('Slept 2 tabs')).toBeTruthy();
+    expect(screen.getByText('Paused 2 tabs')).toBeTruthy();
     await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
-    expect(screen.queryByText('Slept 2 tabs')).toBeNull();
+    expect(screen.queryByText('Paused 2 tabs')).toBeNull();
   });
   it('sleep inactive sends every open web item (the background skips active/pinned/audible)', async () => {
     serve(state(), (req) => (req.t === 'sleep' ? { slept: 2, skipped: 1 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
-    fireEvent.click(screen.getByRole('button', { name: 'Sleep inactive' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause other tabs' }));
     await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'sleep', ids: ['i1', 'i2', 'i3'] }));
-    await screen.findByText('Slept 2 tabs');
+    await screen.findByText('Paused 2 tabs');
   });
 
   it('open dashboard focuses an existing dashboard tab, else creates one', async () => {
@@ -304,10 +304,10 @@ describe('popup', () => {
     serve(state(), (req) => (req.t === 'sleep' ? { slept: 1, skipped: 0 } : undefined));
     render(<Popup />);
     await screen.findByText(/5 tabs/);
-    const btn = screen.getByRole('button', { name: 'Sleep inactive' });
+    const btn = screen.getByRole('button', { name: 'Pause other tabs' });
     fireEvent.click(btn);
     fireEvent.click(btn);
-    await screen.findByText('Slept 1 tab');
+    await screen.findByText('Paused 1 tab');
     expect(sendMock.mock.calls.filter(([r]) => r.t === 'sleep')).toHaveLength(1);
   });
   it('applies the theme setting and surfaces a failed refresh while showing stale state', async () => {

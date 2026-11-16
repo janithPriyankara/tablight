@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { LogoMark, MoonIcon } from '../common/icons';
+import { LogoMark, PauseIcon } from '../common/icons';
 /** True once the browser says the toolbar icon is not pinned (unknown where the API is missing: no hint). */
 function useUnpinned(): boolean {
   const [unpinned, setUnpinned] = useState(false);
@@ -18,9 +18,9 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
       <div class="card-text">
         <h2 id="onboarding-h" class="card-title">Welcome to Tab Organizer</h2>
         <ul class="onboarding-points">
-          <li>Nothing leaves your device except stashed tabs: no servers, no analytics.</li>
+          <li>Nothing leaves your device except tabs you save for later: no servers, no analytics.</li>
           <li>Grouping runs on your computer, using only each tab’s title and address.</li>
-          <li>Stashed tabs sync only through your browser account, and you can turn that off in Settings.</li>
+          <li>Saved tabs sync only through your browser account, and you can turn that off in Settings.</li>
           {unpinned && (
             <li>
               <strong>Pin Tab Organizer</strong> so it’s one click away: click the puzzle-piece icon in the toolbar, then
@@ -30,7 +30,7 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
         </ul>
         <div class="card-actions">
           <button type="button" class="btn btn-sm btn-primary" disabled={props.busy} onClick={props.onAutoSleep}>
-            <MoonIcon />Turn on auto-sleep after 60 min
+            <PauseIcon />Auto-pause tabs unused for 1 hour
           </button>
           <button type="button" class="btn btn-sm" disabled={props.busy} onClick={props.onDone}>Got it</button>
         </div>

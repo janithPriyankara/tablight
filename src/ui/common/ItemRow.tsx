@@ -3,7 +3,7 @@ import type { Item } from '../../shared/types';
 import { Favicon } from './Favicon';
 import { GroupChip } from './GroupChip';
 import { displayTitle } from './format';
-const STATE_LABEL: Record<Item['state'], string | null> = { open: null, sleeping: 'Sleeping', stashed: 'Stashed' };
+const STATE_LABEL: Record<Item['state'], string | null> = { open: null, sleeping: 'Paused', stashed: 'Saved' };
 export interface ItemRowProps {
   item: Item;
   /** Shown as a chip after the domain. */

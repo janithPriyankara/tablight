@@ -4,7 +4,7 @@ import type { DashboardState, GroupSummary, Item, SyncStatus } from '../../share
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
-import { CloseIcon, CopyIcon, GridIcon, LogoMark, MoonIcon, PanelIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
+import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../../shared/nav';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
@@ -13,18 +13,18 @@ import { useUndo } from '../common/useUndo';
 
 const TOP_GROUPS = 6;
 
-/** "214 tabs · 6 windows · 31 sleeping · 12 duplicates": tabs are open + sleeping items. */
+/** "214 tabs · 6 windows · 31 paused · 12 duplicates": tabs are open + sleeping items. */
 export function totalsLine(s: DashboardState): string {
   const tabs = s.items.filter((i) => i.state !== 'stashed').length;
   return [
-    plural(tabs, 'tab'), plural(s.windows, 'window'), `${s.sleeping} sleeping`, plural(s.dupCount, 'duplicate'),
+    plural(tabs, 'tab'), plural(s.windows, 'window'), `${s.sleeping} paused`, plural(s.dupCount, 'duplicate'),
   ].join(' · ');
 }
 function syncLine(s: SyncStatus): string {
-  if (s.ok) return s.lastSyncAt === null ? 'Stash not synced yet' : `Stash synced ${ago(s.lastSyncAt)}`;
+  if (s.ok) return s.lastSyncAt === null ? 'Saved tabs not synced yet' : `Saved tabs synced ${ago(s.lastSyncAt)}`;
   switch (s.reason) {
     case 'disabled': return 'Sync is off';
-    case 'quota': return 'Sync full · stash kept on this device';
+    case 'quota': return 'Sync full · saved tabs kept on this device';
     case 'rate': return 'Sync paused for a moment';
     default: return 'Sync failed · will retry';
   }
@@ -82,14 +82,14 @@ export function Popup() {
       const win = await chrome.windows.getCurrent();
       if (win.id === undefined) return;
       const r = await send<{ token: string | null; stashed: number }>({ t: 'stashWindow', windowId: win.id });
-      if (!r.stashed) return notify('No web tabs to stash in this window');
+      if (!r.stashed) return notify('No web tabs to save in this window');
       window.close();
     });
   const sleepInactive = () =>
     act(async () => {
       const ids = (state?.items ?? []).filter(isWebOpen).map((i) => i.id);
       const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-      notify(r.slept ? `Slept ${plural(r.slept, 'tab')}` : 'Nothing to sleep right now');
+      notify(r.slept ? `Paused ${plural(r.slept, 'tab')}` : 'Nothing to pause right now');
     });
   /** Closing the active tab closes the popup with it, so no Undo is offered (it could never be clicked). */
   const closeThis = (item: Item) =>
@@ -153,7 +153,7 @@ export function Popup() {
       <label class="search">
         <SearchIcon class="search-icon" />
         <input
-          type="search" aria-label="Search tabs" placeholder="Search tabs, stash and groups" autoFocus
+          type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups" autoFocus
           maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
           onInput={(e) => search.setQuery(e.currentTarget.value)}
           onKeyDown={(e) => {
@@ -193,10 +193,10 @@ export function Popup() {
             </button>
           )}
           <button type="button" class="btn" disabled={busy || !state} onClick={() => void stashWindow()}>
-            <StashIcon />Stash this window
+            <StashIcon />Save window for later
           </button>
           <button type="button" class="btn" disabled={busy || !state} onClick={() => void sleepInactive()}>
-            <MoonIcon />Sleep inactive
+            <PauseIcon />Pause other tabs
           </button>
         </div>
         {state && <p class="sync-line">{syncLine(state.syncStatus)}</p>}

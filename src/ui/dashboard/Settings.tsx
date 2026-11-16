@@ -118,8 +118,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <h2 class="settings-h" id="set-memory-h">Memory</h2>
           <label class="setting">
             <span class="setting-text">
-              <span class="setting-name">Auto-sleep tabs I haven’t used for</span>
-              <span class="setting-help">Sleeping tabs stay in the tab strip but free their memory. Active, pinned and playing tabs are never slept.</span>
+              <span class="setting-name">Auto-pause tabs I haven’t used for</span>
+              <span class="setting-help">Paused tabs stay in your tab strip and use no memory; click one to resume it. The tab you’re on, pinned tabs and tabs playing sound are never paused.</span>
             </span>
             <select
               class="field field-inline" value={autoValue} disabled={busy}
@@ -133,8 +133,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           </label>
           <label class="setting">
             <span class="setting-text">
-              <span class="setting-name">Remove a stashed tab from the stash when I open it</span>
-              <span class="setting-help">Turn off to keep stashed tabs as a reading list.</span>
+              <span class="setting-name">Remove a saved tab from Saved for later when I open it</span>
+              <span class="setting-help">Turn off to keep saved tabs as a reading list.</span>
             </span>
             <input
               type="checkbox" class="switch" checked={settings.removeOnOpen} disabled={busy}
@@ -150,8 +150,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <h2 class="settings-h" id="set-sync-h">Sync and backup</h2>
           <label class="setting">
             <span class="setting-text">
-              <span class="setting-name">Sync stashed tabs through my browser account</span>
-              <span class="setting-help">Only stashed tabs sync (address, short title, group). Open tabs and sessions stay on this device.</span>
+              <span class="setting-name">Sync saved tabs through my browser account</span>
+              <span class="setting-help">Only saved tabs sync (address, short title, group). Open tabs and sessions stay on this device.</span>
             </span>
             <input
               type="checkbox" class="switch" checked={settings.syncEnabled} disabled={busy}
@@ -166,11 +166,11 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
             {syncStatus.lastSyncAt !== null && <span class="muted">{` · last synced ${ago(syncStatus.lastSyncAt)}`}</span>}
           </p>
           <p class="setting-help">
-            Edge and Chrome don’t sync with each other: use Export and Import to move your stash between them.
+            Edge and Chrome don’t sync with each other: use Export and Import to move your saved tabs between them.
           </p>
-          <p class="setting-help">A device that stays offline for more than 30 days may bring back stashed tabs you removed elsewhere.</p>
+          <p class="setting-help">A device that stays offline for more than 30 days may bring back saved tabs you removed elsewhere.</p>
           <p class="setting-help">
-            A backup file contains your stashed tabs, your groups and your saved sessions (the addresses and titles of
+            A backup file contains your saved tabs, your groups and your saved sessions (the addresses and titles of
             their tabs). It stays on your computer; keep it somewhere private.
           </p>
           <div class="button-row">
@@ -242,7 +242,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <p class="privacy-line">
             <ShieldIcon />
             <span>
-              Nothing leaves your device except stashed tabs, which sync through your browser account while
+              Nothing leaves your device except saved tabs, which sync through your browser account while
               sync is on. Grouping runs on your computer, and there are no analytics.{' '}
               <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
             </span>
@@ -251,7 +251,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
             <span class="setting-text">
               <span class="setting-name">Delete all data</span>
               <span class="setting-help">
-                Deletes everything Tab Organizer stored on this device and the synced copy of your stash in your
+                Deletes everything Tab Organizer stored on this device and the synced copy of your saved tabs in your
                 browser account, and turns sync off here. Open tabs stay open. Uninstalling also removes the data on
                 this device.
               </span>

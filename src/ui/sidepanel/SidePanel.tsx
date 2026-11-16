@@ -5,7 +5,7 @@ import type { GroupSummary, Item } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { plural } from '../common/format';
-import { CloseIcon, GridIcon, LogoMark, MoonIcon, SearchIcon, StashIcon } from '../common/icons';
+import { CloseIcon, GridIcon, LogoMark, PauseIcon, SearchIcon, StashIcon } from '../common/icons';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
@@ -110,13 +110,13 @@ export function SidePanel() {
   const sleep = (ids: string[]) =>
     act(async () => {
       const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-      notify(r.slept ? `Slept ${plural(r.slept, 'tab')}` : 'Nothing to sleep right now');
+      notify(r.slept ? `Paused ${plural(r.slept, 'tab')}` : 'Nothing to pause right now');
     });
   const stash = (item: Item) =>
     act(async () => {
       const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids: [item.id] });
-      if (r.skipped) notify('That tab couldn’t be stashed');
-      else notify('Stashed 1 tab', r.token);
+      if (r.skipped) notify('That tab can’t be saved for later');
+      else notify('Saved 1 tab for later', r.token);
     });
   const close = (item: Item) =>
     act(async () => {
@@ -145,12 +145,12 @@ export function SidePanel() {
         actions={
           <>
             {i.state === 'open' && i.classifiable && !active && (
-              <button type="button" class="icon-btn" aria-label="Sleep" title="Sleep" disabled={busy} onClick={() => void sleep([i.id])}>
-                <MoonIcon />
+              <button type="button" class="icon-btn" aria-label="Pause" title="Pause: frees its memory, stays in your tab strip" disabled={busy} onClick={() => void sleep([i.id])}>
+                <PauseIcon />
               </button>
             )}
             {hasTab(i) && i.classifiable && (
-              <button type="button" class="icon-btn" aria-label="Stash" title="Stash (save and close)" disabled={busy} onClick={() => void stash(i)}>
+              <button type="button" class="icon-btn" aria-label="Save for later" title="Save for later: closes the tab and keeps it in Saved for later" disabled={busy} onClick={() => void stash(i)}>
                 <StashIcon />
               </button>
             )}
@@ -211,7 +211,7 @@ export function SidePanel() {
       <label class="search">
         <SearchIcon class="search-icon" />
         <input
-          type="search" aria-label="Search tabs" placeholder="Search tabs, stash and groups"
+          type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups"
           maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
           onInput={(e) => search.setQuery(e.currentTarget.value)}
           onKeyDown={(e) => {
@@ -265,7 +265,7 @@ export function SidePanel() {
             type="button" class="btn" disabled={busy || !state}
             onClick={() => void sleep(items.filter((i) => i.state === 'open' && i.classifiable && i.tabId !== activeTab).map((i) => i.id))}
           >
-            <MoonIcon />Sleep inactive
+            <PauseIcon />Pause other tabs
           </button>
         </div>
       </footer>

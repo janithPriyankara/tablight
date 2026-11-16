@@ -63,7 +63,7 @@ export function Sessions(props: {
                     <SwitchIcon />Open all
                   </button>
                   <button type="button" class="btn btn-sm" disabled={props.busy} onClick={() => void props.onAction(s, 'stashAll')}>
-                    <StashIcon />Stash all
+                    <StashIcon />Save all for later
                   </button>
                   <button
                     type="button" class="icon-btn" disabled={props.busy} aria-label={`Delete session from ${when(s.takenAt)}`}
@@ -98,14 +98,14 @@ export function LastSessionCard(props: {
       <ClockIcon class="card-icon" />
       <div class="card-text">
         <h2 id="last-session-h" class="card-title">{`Your last session (${plural(summary.tabs, 'tab')}) wasn’t restored`}</h2>
-        <p class="muted">{`Saved ${ago(session.takenAt)}. Stash it to keep the tabs without loading them.`}</p>
+        <p class="muted">{`From ${ago(session.takenAt)}. “Save all for later” keeps the tabs without loading them.`}</p>
       </div>
       <div class="card-actions">
         <button type="button" class="btn btn-sm" disabled={props.busy} onClick={() => void props.onAction(summary, 'openAll')}>
           <SwitchIcon />Open all
         </button>
         <button type="button" class="btn btn-sm btn-primary" disabled={props.busy} onClick={() => void props.onAction(summary, 'stashAll')}>
-          <StashIcon />Stash all
+          <StashIcon />Save all for later
         </button>
         <button type="button" class="icon-btn" aria-label="Dismiss" title="Dismiss" onClick={props.onDismiss}>
           <CloseIcon />

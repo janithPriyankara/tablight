@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { GroupSummary, Item } from '../../shared/types';
 import { ItemRow } from '../common/ItemRow';
 import { displayTitle } from '../common/format';
-import { CloseIcon, MoonIcon, MoveIcon, StashIcon, SwitchIcon, TrashIcon } from '../common/icons';
+import { CloseIcon, MoveIcon, PauseIcon, StashIcon, SwitchIcon, TrashIcon } from '../common/icons';
 
 /** Fixed row height (px): keeps windowing a matter of arithmetic. Matches .grid-row in dashboard.css. */
 export const ROW_HEIGHT = 52;
@@ -209,12 +209,12 @@ export function ItemGrid(props: ItemGridProps) {
               </button>
             )}
             {item.state === 'open' && web && (
-              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Sleep" title="Sleep" onClick={() => props.onAction('sleep', item)}>
-                <MoonIcon />
+              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Pause" title="Pause: frees its memory, stays in your tab strip" onClick={() => props.onAction('sleep', item)}>
+                <PauseIcon />
               </button>
             )}
             {hasTab(item) && web && (
-              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Stash" title="Stash (save and close)" onClick={() => props.onAction('stash', item)}>
+              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Save for later" title="Save for later: closes the tab and keeps it in Saved for later" onClick={() => props.onAction('stash', item)}>
                 <StashIcon />
               </button>
             )}
@@ -227,7 +227,7 @@ export function ItemGrid(props: ItemGridProps) {
               </button>
             )}
             {item.state === 'stashed' && (
-              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Remove from stash" title="Remove from stash" onClick={() => props.onAction('remove', item)}>
+              <button type="button" class="icon-btn" tabIndex={tab} aria-label="Remove from Saved for later" title="Remove from Saved for later" onClick={() => props.onAction('remove', item)}>
                 <TrashIcon />
               </button>
             )}

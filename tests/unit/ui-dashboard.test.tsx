@@ -332,10 +332,10 @@ describe('dashboard', () => {
     render(<Dashboard />);
     await screen.findByText('Grouping your tabs…');
     expect(screen.getByText(/Nothing leaves your device/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Turn on auto-sleep after 60 min' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-pause tabs unused for 1 hour' }));
     await waitFor(() => expect(sent('settings')).toEqual([{ t: 'settings', patch: { autoSleepMinutes: 60, onboarded: true } }]));
     expect(screen.getByRole('heading', { name: 'Your last session (2 tabs) wasn’t restored' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Stash all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save all for later' }));
     await waitFor(() => expect(sent('sessionAction')).toEqual([{ t: 'sessionAction', id: 'snap1', action: 'stashAll' }]));
     fireEvent.click(within(screen.getByRole('region', { name: /last session/ })).getByRole('button', { name: 'Dismiss' }));
     expect(sessionSet).toHaveBeenCalledWith({ lastSession: { snapshotId: null } });
@@ -397,13 +397,13 @@ describe('dashboard', () => {
     serve(state({ settings: DEFAULT_SETTINGS }));
     render(<Dashboard />);
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tab Organizer' });
-    expect(onboarding.textContent).toMatch(/Nothing leaves your device except stashed tabs/);
+    expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later/);
     act(() => {
       location.hash = '#view=settings';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     const privacy = await screen.findByRole('region', { name: 'Privacy' });
-    expect(privacy.textContent).toMatch(/except stashed tabs, which sync through your browser account/);
+    expect(privacy.textContent).toMatch(/except saved tabs, which sync through your browser account/);
   });
   it('Undo works while another action is still running', async () => {
     let release!: () => void;
@@ -417,7 +417,7 @@ describe('dashboard', () => {
     await screen.findByText('Title i1');
     fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!);
     const undoBtn = await screen.findByRole('button', { name: 'Undo' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Sleep' })[0]!); // busy now
+    fireEvent.click(screen.getAllByRole('button', { name: 'Pause' })[0]!); // busy now
     await waitFor(() => expect(release).toBeTypeOf('function'));
     fireEvent.click(undoBtn);
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'tok' }]));
@@ -434,7 +434,7 @@ describe('dashboard', () => {
       return settings;
     });
     render(<Dashboard />);
-    const sync = await screen.findByRole('checkbox', { name: /Sync stashed tabs/ });
+    const sync = await screen.findByRole('checkbox', { name: /Sync saved tabs/ });
     fireEvent.click(sync);
     await waitFor(() => expect(releaseSync).toBeTypeOf('function'));
     expect((sync as HTMLInputElement).checked).toBe(false); // optimistic
@@ -453,18 +453,18 @@ describe('dashboard', () => {
     const { container } = render(<Dashboard />);
     await screen.findByText('Title s1');
     const row = [...container.querySelectorAll<HTMLElement>('.grid-row')].find((r) => r.textContent?.includes('Title s1'))!;
-    fireEvent.click(within(row).getByRole('button', { name: 'Remove from stash' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Remove from Saved for later' }));
     await waitFor(() => expect(sent('stashDelete')).toEqual([{ t: 'stashDelete', ids: ['s1'] }]));
-    await screen.findByText('Removed 1 stashed tab');
+    await screen.findByText('Removed 1 saved tab');
     fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'rt' }]));
     fireEvent.click(screen.getByRole('button', { name: 'Remove all' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Remove 2 stashed tabs?' });
+    const dialog = await screen.findByRole('dialog', { name: 'Remove 2 saved tabs?' });
     expect(sent('stashDelete')).toHaveLength(1);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove all' }));
     await waitFor(() => expect(sent('stashDelete')).toHaveLength(2));
     expect((sent('stashDelete')[1]!.ids as string[]).sort()).toEqual(['s1', 's2']);
-    await screen.findByText('Removed 2 stashed tabs');
+    await screen.findByText('Removed 2 saved tabs');
   });
   it('Settings → Delete all data asks first (Cancel focused), then sends deleteAllData', async () => {
     serve(state(), () => undefined);
@@ -497,9 +497,9 @@ describe('dashboard', () => {
     serve(state({ items: [item('s1', { state: 'stashed', tabId: undefined })] }), (req) => (req.t === 'undo' ? true : undefined));
     history.replaceState(null, '', `/dashboard.html#view=stashed&undo=${tok}&n=3`);
     render(<Dashboard />);
-    await screen.findByText('Stashed 3 tabs');
+    await screen.findByText('Saved 3 tabs for later');
     expect(location.hash).toBe('#view=stashed'); // token dropped from the address
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Stashed');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Saved for later');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: tok }]));
   });
@@ -508,6 +508,6 @@ describe('dashboard', () => {
     history.replaceState(null, '', '/dashboard.html#view=settings');
     render(<Dashboard />);
     await screen.findByRole('button', { name: 'Export backup' });
-    expect(screen.getByText(/backup file contains your stashed tabs, your groups and your saved sessions/)).toBeTruthy();
+    expect(screen.getByText(/backup file contains your saved tabs, your groups and your saved sessions/)).toBeTruthy();
   });
 });

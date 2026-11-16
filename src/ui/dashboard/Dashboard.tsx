@@ -4,7 +4,7 @@ import { LAST_SESSION_KEY, type GroupSummary, type Item, type Settings as Settin
 import { GroupDot } from '../common/GroupChip';
 import { plural } from '../common/format';
 import {
-  CloseIcon, CopyIcon, LogoMark, MergeIcon, MoonIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
+  CloseIcon, CopyIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
   SwitchIcon, TrashIcon,
 } from '../common/icons';
 import { applyTheme } from '../common/theme';
@@ -25,7 +25,7 @@ export const OPEN_MANY_CONFIRM_ABOVE = 20;
 /** The permanent catch-all group (the background refuses to delete it). */
 const OTHER_GROUP_ID = 'other';
 const VIEW_TITLE: Record<Exclude<View['kind'], 'group'>, string> = {
-  all: 'All tabs', unsorted: 'Unsorted', duplicates: 'Duplicates', stashed: 'Stashed', sessions: 'Sessions', settings: 'Settings',
+  all: 'All tabs', unsorted: 'Unsorted', duplicates: 'Duplicates', stashed: 'Saved for later', sessions: 'Sessions', settings: 'Settings',
 };
 type RegroupRow = { groupId: string | null; before: number; after: number };
 type Dialog =
@@ -67,7 +67,7 @@ export function Dashboard() {
       const u = parseUndoHash(location.hash);
       if (!u) return;
       history.replaceState(null, '', `#${viewHash(parseHash(location.hash))}`);
-      notify(`Stashed ${plural(u.n, 'tab')}`, u.token);
+      notify(`Saved ${plural(u.n, 'tab')} for later`, u.token);
     };
     const onHash = () => {
       setViewState(parseHash(location.hash));
@@ -195,13 +195,13 @@ export function Dashboard() {
   const openItem = (item: Item) => act(() => send({ t: 'open', id: item.id }));
   const sleepIds = async (ids: string[]) => {
     const r = await send<{ slept: number; skipped: number }>({ t: 'sleep', ids });
-    notify(r.slept ? `Slept ${plural(r.slept, 'tab')}${r.skipped ? ` · ${r.skipped} skipped` : ''}` : 'Nothing to sleep: active, pinned and playing tabs stay awake');
+    notify(r.slept ? `Paused ${plural(r.slept, 'tab')}${r.skipped ? ` · ${r.skipped} skipped` : ''}` : 'Nothing to pause: the tab you’re on, pinned tabs and tabs playing sound keep running');
   };
   const stashIds = async (ids: string[]) => {
     const r = await send<{ token: string; skipped: number }>({ t: 'stash', ids });
     const stashed = ids.length - r.skipped;
-    if (stashed > 0) notify(`Stashed ${plural(stashed, 'tab')}`, r.token);
-    else notify('Nothing stashed: those tabs can’t be stashed');
+    if (stashed > 0) notify(`Saved ${plural(stashed, 'tab')} for later`, r.token);
+    else notify('Nothing saved: those tabs can’t be saved for later');
   };
   const closeIds = async (ids: string[]) => {
     const r = await send<{ token: string; closed?: number }>({ t: 'close', ids });
@@ -209,7 +209,7 @@ export function Dashboard() {
   };
   const removeIds = async (ids: string[]) => {
     const r = await send<{ token: string; deleted: number }>({ t: 'stashDelete', ids });
-    notify(`Removed ${plural(r.deleted, 'stashed tab')}`, r.deleted ? r.token : undefined);
+    notify(`Removed ${plural(r.deleted, 'saved tab')}`, r.deleted ? r.token : undefined);
     setSelected(new Set());
   };
   const moveIds = async (ids: string[], groupId: string) => {
@@ -293,7 +293,7 @@ export function Dashboard() {
     act(async () => {
       if (!(await confirm({
         title: 'Delete all data?',
-        body: 'This deletes your groups, stash, saved sessions and settings on this device, removes the synced copy of your stash from your browser account, and turns sync off here so it can’t come back. Your other devices keep their own stash. Open tabs stay open. This can’t be undone; export a backup first if you may need it.',
+        body: 'This deletes your groups, saved tabs, saved sessions and settings on this device, removes the synced copy of your saved tabs from your browser account, and turns sync off here so they can’t come back. Your other devices keep their own saved tabs. Open tabs stay open. This can’t be undone; export a backup first if you may need it.',
         confirmLabel: 'Delete all data', danger: true,
       }))) return;
       await send({ t: 'deleteAllData' });
@@ -306,8 +306,8 @@ export function Dashboard() {
       const ids = list.filter(isStashed).map((i) => i.id);
       if (!ids.length) return;
       if (!(await confirm({
-        title: `Remove ${plural(ids.length, 'stashed tab')}?`,
-        body: 'They are deleted from the stash here and, when sync is on, on your other devices. You can undo for 10 seconds.',
+        title: `Remove ${plural(ids.length, 'saved tab')}?`,
+        body: 'They’re removed from Saved for later here and, when sync is on, on your other devices. You can undo for 10 seconds.',
         confirmLabel: 'Remove all', danger: true,
       }))) return;
       await removeIds(ids);
@@ -364,12 +364,12 @@ export function Dashboard() {
       if (r.needsConfirm !== undefined) {
         const n = r.needsConfirm;
         if (!(await confirm({
-          title: `Open ${n} tabs?`, body: 'They open in a new window and all start loading. Stash all keeps them without loading.',
+          title: `Open ${n} tabs?`, body: 'They open in a new window and all start loading. “Save all for later” keeps them without loading.',
           confirmLabel: `Open ${n} tabs`,
         }))) return;
         await send({ t: 'sessionAction', id: s.id, action, confirm: true });
       }
-      if (action === 'stashAll') notify(`Stashed the session’s ${plural(s.tabs, 'tab')}`);
+      if (action === 'stashAll') notify(`Saved the session’s ${plural(s.tabs, 'tab')} for later`);
     });
   const snapshotNow = () =>
     act(async () => {
@@ -397,7 +397,7 @@ export function Dashboard() {
     if (searching) return search.pending ? 'Searching…' : plural(list.length, 'match', 'matches');
     if (view.kind === 'all') {
       const tabs = items.filter((i) => i.state !== 'stashed').length;
-      return [plural(tabs, 'tab'), plural(state.windows, 'window'), `${state.sleeping} sleeping`, `${counts.stashed} stashed`].join(' · ');
+      return [plural(tabs, 'tab'), plural(state.windows, 'window'), `${state.sleeping} paused`, `${counts.stashed} saved`].join(' · ');
     }
     if (view.kind === 'duplicates') return `${plural(state.dupCount, 'extra copy', 'extra copies')}`;
     const watch = currentGroup?.watchCount ?? 0;
@@ -408,7 +408,7 @@ export function Dashboard() {
     switch (view.kind) {
       case 'unsorted': return 'Nothing unsorted: every tab has a group.';
       case 'duplicates': return 'No page is open more than once.';
-      case 'stashed': return 'Nothing stashed yet. Stashing saves a tab here and closes it to free memory.';
+      case 'stashed': return 'Nothing saved yet. “Save for later” closes a tab and keeps it here, so it uses no memory until you open it again.';
       case 'group': return currentGroup ? 'No tabs in this group yet. Drag tabs here to teach it.' : 'This group no longer exists.';
       default: return 'No tabs yet.';
     }
@@ -436,7 +436,7 @@ export function Dashboard() {
             <label class="search">
               <SearchIcon class="search-icon" />
               <input
-                ref={searchBox} type="search" aria-label="Search tabs" placeholder="Search tabs, stash and groups  ( / )"
+                ref={searchBox} type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups  ( / )"
                 maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
                 onInput={(e) => search.setQuery(e.currentTarget.value)}
                 onKeyDown={(e) => {
@@ -484,7 +484,7 @@ export function Dashboard() {
               busy={busy}
               onAutoSleep={() => void act(async () => {
                 await save({ autoSleepMinutes: 60, onboarded: true });
-                notify('Auto-sleep is on: tabs unused for an hour will sleep');
+                notify('Auto-pause is on: tabs unused for an hour will pause');
               })}
               onDone={() => void act(() => save({ onboarded: true }))}
             />
@@ -506,10 +506,10 @@ export function Dashboard() {
               {canGroupAct && (
                 <>
                   <button type="button" class="btn btn-sm" disabled={busy || !groupTargets.length} onClick={() => void stashView()}>
-                    <StashIcon />Stash group
+                    <StashIcon />Save group for later
                   </button>
                   <button type="button" class="btn btn-sm" disabled={busy || !groupTargets.length} onClick={() => void sleepView()}>
-                    <MoonIcon />Sleep group
+                    <PauseIcon />Pause group
                   </button>
                 </>
               )}
@@ -542,17 +542,17 @@ export function Dashboard() {
               <span class="selection-count">{`${selection.length} selected`}</span>
               <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void openSelection()}><SwitchIcon />Open</button>
               <button type="button" class="btn btn-sm" disabled={busy || !selection.some(isWebOpen)} onClick={() => void act(() => sleepIds(selection.filter(isWebOpen).map((i) => i.id)))}>
-                <MoonIcon />Sleep
+                <PauseIcon />Pause
               </button>
               <button type="button" class="btn btn-sm" disabled={busy || !selection.some((i) => hasTab(i) && i.classifiable)} onClick={() => void act(() => stashIds(selection.filter((i) => hasTab(i) && i.classifiable).map((i) => i.id)))}>
-                <StashIcon />Stash
+                <StashIcon />Save for later
               </button>
               <button type="button" class="btn btn-sm" disabled={busy || !selection.some(hasTab)} onClick={() => void act(() => closeIds(selection.filter(hasTab).map((i) => i.id)))}>
                 <CloseIcon />Close
               </button>
               {selection.some(isStashed) && (
                 <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(() => removeIds(selection.filter(isStashed).map((i) => i.id)))}>
-                  <TrashIcon />Remove from stash
+                  <TrashIcon />Remove from Saved for later
                 </button>
               )}
               <select

@@ -11,7 +11,7 @@ const SPECIAL: { kind: SpecialView; label: string; icon: (p: { class?: string })
   { kind: 'all', label: 'All tabs', icon: ListIcon },
   { kind: 'unsorted', label: 'Unsorted', icon: InboxIcon },
   { kind: 'duplicates', label: 'Duplicates', icon: CopyIcon },
-  { kind: 'stashed', label: 'Stashed', icon: StashIcon },
+  { kind: 'stashed', label: 'Saved for later', icon: StashIcon },
   { kind: 'sessions', label: 'Sessions', icon: ClockIcon },
   { kind: 'settings', label: 'Settings', icon: GearIcon },
 ];

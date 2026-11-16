@@ -90,3 +90,6 @@ export const ShieldIcon = (p: IconProps) => (
 export const PanelIcon = (p: IconProps) => (
   <Svg {...p}><rect x="2" y="2.75" width="12" height="10.5" rx="1.5" /><path d="M10 2.75v10.5" /></Svg>
 );
+export const PauseIcon = (p: IconProps) => (
+  <Svg {...p}><rect x="4" y="3" width="2.75" height="10" rx="0.75" /><rect x="9.25" y="3" width="2.75" height="10" rx="0.75" /></Svg>
+);
