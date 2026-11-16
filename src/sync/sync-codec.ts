@@ -233,8 +233,9 @@ export async function verifyIds(recs: SyncRecord[]): Promise<SyncRecord[]> {
 
 /**
  * Last-writer-wins per record by updatedAt; a tombstone wins when deletedAt ≥ the record's updatedAt.
- * upserts: remote records to apply locally. deletes: local ids to remove. tombs: the union of tombstones
- * minus those a newer record supersedes (a re-stash).
+ * upserts: remote records to apply locally. deletes: local ids to remove. tombs: the union of tombstones.
+ * A tombstone a newer record supersedes (a re-stash) stays in the union until its 30-day TTL: LWW lets
+ * the record win anyway, and dropping it early would make devices disagree when that record is local only.
  * A local record absent remotely without a tombstone is kept (it is pushed later).
  */
 export function merge(
@@ -255,10 +256,7 @@ export function merge(
     const newest = Math.max(l[5], R.get(id)?.[5] ?? -Infinity);
     if (dead(id, newest)) deletes.push(id);
   }
-  const newest = new Map<string, number>();
-  for (const [id, r] of [...L, ...R]) newest.set(id, Math.max(newest.get(id) ?? -Infinity, r[5]));
-  const tombs = [...tombAt].filter(([id, at]) => (newest.get(id) ?? -Infinity) <= at);
-  return { upserts, deletes, tombs };
+  return { upserts, deletes, tombs: [...tombAt] };
 }
 
 /**

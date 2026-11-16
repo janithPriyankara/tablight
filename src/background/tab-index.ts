@@ -8,6 +8,7 @@ import { cleanTitle, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
+import { nextStamp } from '../shared/stamp';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -191,7 +192,7 @@ const TRACKED: (keyof Item)[] = [
 ];
 function changed(a: Item, b: Item): boolean {
   if (!TRACKED.some((k) => a[k] !== b[k])) return false;
-  b.updatedAt = Date.now();
+  b.updatedAt = nextStamp(a.updatedAt);
   return true;
 }
 
@@ -369,7 +370,7 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
     for (const id of ids) {
       const cur = await s.items.get(id);
       if (cur && cur.groupSource === 'auto') {
-        await s.items.put({ ...cur, groupId: null, updatedAt: Date.now() });
+        await s.items.put({ ...cur, groupId: null, updatedAt: nextStamp(cur.updatedAt) });
         n++;
       }
     }
@@ -431,7 +432,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       if (cur.groupSource !== 'user') {
         groupId = autoGroup(cur, vec, groups);
       }
-      await s.items.put({ ...cur, groupId, updatedAt: Date.now() });
+      await s.items.put({ ...cur, groupId, updatedAt: nextStamp(cur.updatedAt) });
       done.push(snap.id);
       written++;
     }
@@ -549,7 +550,7 @@ export async function maybeSuggest(db: Db): Promise<void> {
         const cur = await s.items.get(id);
         // Only still-Unsorted auto items move; anything the user or the queue touched meanwhile stays.
         if (cur && cur.groupId === null && cur.groupSource === 'auto') {
-          await s.items.put({ ...cur, groupId: group.id, updatedAt: now });
+          await s.items.put({ ...cur, groupId: group.id, updatedAt: nextStamp(cur.updatedAt, now) });
         }
       }
     }

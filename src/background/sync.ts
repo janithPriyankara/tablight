@@ -12,6 +12,7 @@ import type { Db } from './db';
 import { embed } from './embedder';
 import { USER_COLORS, parseName } from './groups';
 import { domainOf } from './tab-index';
+import { nextStamp } from '../shared/stamp';
 
 export type { SyncStatus };
 export const SYNC_RETRY_ALARM = 'sync-retry';
@@ -19,11 +20,14 @@ export const SYNC_RETRY_ALARM = 'sync-retry';
 export const SYNC_STATUS_KEY = 'syncStatus';
 /** chrome.storage.local key: ids that were ever in storage.sync (only those need tombstones). */
 export const SYNCED_IDS_KEY = 'syncedIds';
-/** chrome.storage.local key: times of our recent storage.sync writes (convergence guard). */
+/** chrome.storage.local key: times of our recent pull-triggered storage.sync writes (convergence guard). */
 export const SYNC_WRITES_KEY = 'syncWrites';
 export const SYNC_DEBOUNCE_MS = 5_000;
 export const PULL_DEBOUNCE_MS = 1_000;
-/** More than MAX_WRITES writes within WRITE_WINDOW_MS means the devices disagree: pause. */
+/**
+ * More than MAX_WRITES writes within WRITE_WINDOW_MS from passes a remote change triggered (pullSync)
+ * means the devices keep answering each other: pause. Pushes of the user's own changes never count.
+ */
 export const MAX_WRITES = 6;
 export const WRITE_WINDOW_MS = 10 * 60_000;
 const RATE_RETRY_MINUTES = 2;
@@ -46,9 +50,14 @@ const lastWritten = new Map<string, string>();
 const lastRemoved = new Set<string>();
 let lastWrittenAt = 0;
 let chain: Promise<unknown> = Promise.resolve();
+/** Passes queued or running (wasSynced answers true meanwhile). */
+let inFlight = 0;
 /** Sync passes never overlap. */
 function serial<T>(fn: () => Promise<T>): Promise<T> {
-  const p = chain.then(fn, fn);
+  inFlight++;
+  const p = chain.then(fn, fn).finally(() => {
+    inFlight--;
+  });
   chain = p.catch(() => undefined);
   return p;
 }
@@ -116,9 +125,11 @@ async function syncedIds(): Promise<Set<string>> {
 
 /**
  * Whether `id` was ever in storage.sync (pushed by us or seen remotely). Only then can another device
- * hold it, so only then does deleting it need a tombstone. When unsure (storage failing): true.
+ * hold it, so only then does deleting it need a tombstone. When unsure (a pass is queued or running, so
+ * it may be pushing the id right now, or storage is failing): true.
  */
 export async function wasSynced(id: string): Promise<boolean> {
+  if (inFlight > 0) return true;
   try {
     return (await syncedIds()).has(id);
   } catch {
@@ -176,7 +187,7 @@ const validName = (n: string): string | null => {
 };
 
 /** Applies a merge locally: backup, then deletes (stashed records only), upserts, tombstones. */
-async function apply(db: Db, m: ReturnType<typeof merge>, localTombs: Map<string, number>): Promise<void> {
+async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
   const tombAt = new Map(m.tombs);
   if (m.deletes.length) {
     const stash = await db.items.byState('stashed');
@@ -230,8 +241,6 @@ async function apply(db: Db, m: ReturnType<typeof merge>, localTombs: Map<string
     for (const [id, deletedAt] of m.tombs) {
       if (deletedAt > (have.get(id) ?? -Infinity)) await s.tombstones.put({ id, deletedAt });
     }
-    // Tombstones a newer record superseded (exactly as read for this merge; not ones written since).
-    for (const [id, at] of localTombs) if (!tombAt.has(id) && have.get(id) === at) await s.tombstones.delete(id);
   });
 }
 
@@ -241,17 +250,20 @@ async function apply(db: Db, m: ReturnType<typeof merge>, localTombs: Map<string
  * Writes only what changed: stale chunk keys are removed first, then one `set` of the changed chunks
  * plus meta. More than MAX_WRITES writes in WRITE_WINDOW_MS → 'paused' (devices keep disagreeing).
  */
-async function write(store: Record<string, unknown>, chunks: Record<string, string>, now: number):
+async function write(store: Record<string, unknown>, chunks: Record<string, string>, now: number, counted: boolean):
   Promise<'none' | 'wrote' | 'paused'> {
   const n = Object.keys(chunks).length;
   const changed = Object.fromEntries(Object.entries(chunks).filter(([k, v]) => store[k] !== v));
   const stale = Object.keys(store).filter((k) => (chunkIndex(k) ?? -1) >= n);
   const meta = store[META_KEY] as { chunks?: unknown } | undefined;
   if (!Object.keys(changed).length && !stale.length && meta?.chunks === n) return 'none';
-  const log = await localGet(SYNC_WRITES_KEY);
-  const recent = (Array.isArray(log) ? log : []).filter((t): t is number => typeof t === 'number' && t > now - WRITE_WINDOW_MS && t <= now);
-  if (recent.length >= MAX_WRITES) return 'paused';
-  await chrome.storage.local.set({ [SYNC_WRITES_KEY]: [...recent, now] });
+  if (counted) {
+    const log = await localGet(SYNC_WRITES_KEY);
+    const recent = (Array.isArray(log) ? log : [])
+      .filter((t): t is number => typeof t === 'number' && t > now - WRITE_WINDOW_MS && t <= now);
+    if (recent.length >= MAX_WRITES) return 'paused';
+    await chrome.storage.local.set({ [SYNC_WRITES_KEY]: [...recent, now] });
+  }
   if (stale.length) {
     for (const k of stale) {
       lastRemoved.add(k);
@@ -269,8 +281,8 @@ async function write(store: Record<string, unknown>, chunks: Record<string, stri
   return 'wrote';
 }
 
-/** One full pass: read remote, merge into local, write back what changed. */
-async function run(db: Db): Promise<SyncStatus> {
+/** One full pass: read remote, merge into local, write back what changed. `counted`: pull-triggered. */
+async function run(db: Db, counted: boolean): Promise<SyncStatus> {
   try {
     if (!(await db.settings.get()).syncEnabled) return await fail('disabled', 'Sync is turned off');
     await hooks.ready?.(db);
@@ -281,11 +293,11 @@ async function run(db: Db): Promise<SyncStatus> {
     const remote = await verifyIds(decoded.recs);
     const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
     const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
-    await apply(db, m, localTombs);
+    await apply(db, m);
     const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
     // Before the write: an item opened right after it is pushed must already count as synced.
     await rememberSynced(db, remote, enc.included, m.tombs);
-    if ((await write(store, enc.chunks, now)) === 'paused') {
+    if ((await write(store, enc.chunks, now, counted)) === 'paused') {
       console.warn(`sync paused: more than ${MAX_WRITES} writes in 10 minutes; retrying in ${PAUSE_RETRY_MINUTES} min`);
       await retryIn(PAUSE_RETRY_MINUTES);
       return await fail('rate', 'sync paused: devices disagree');
@@ -305,19 +317,19 @@ async function run(db: Db): Promise<SyncStatus> {
 
 /** Pushes local stash changes now (merging remote first, so nothing remote is overwritten). Never rejects. */
 export function pushSync(db: Db): Promise<SyncStatus> {
-  return serial(() => run(db));
+  return serial(() => run(db, false));
 }
 
 /** Pulls remote changes (onChanged / startup) and pushes back anything only this device has. Never rejects. */
 export function pullSync(db: Db): Promise<SyncStatus> {
-  return serial(() => run(db));
+  return serial(() => run(db, true));
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | undefined;
 let pullTimer: ReturnType<typeof setTimeout> | undefined;
 /**
- * Debounced push (5 s) after a stash change. A 'sync-retry' alarm is set as a backstop, so a worker
- * killed before the timer fires still pushes; a successful pass clears it.
+ * Debounced push (5 s) after a stash change. A 'sync-retry' alarm is set as a backstop (if none is set),
+ * so a worker killed before the timer fires still pushes; a successful pass clears it.
  */
 export function scheduleSync(db: Db): void {
   if (pushTimer !== undefined) clearTimeout(pushTimer);
@@ -325,7 +337,16 @@ export function scheduleSync(db: Db): void {
     pushTimer = undefined;
     void pushSync(db);
   }, SYNC_DEBOUNCE_MS);
-  void retryIn(BACKSTOP_MINUTES);
+  void backstop();
+}
+
+/** Sets the backstop alarm unless a sync-retry alarm exists (a rate/pause retry is never moved earlier). */
+async function backstop(): Promise<void> {
+  try {
+    if (!(await chrome.alarms.get(SYNC_RETRY_ALARM))) await chrome.alarms.create(SYNC_RETRY_ALARM, { delayInMinutes: BACKSTOP_MINUTES });
+  } catch {
+    /* the timer still pushes */
+  }
 }
 
 /**
@@ -367,7 +388,7 @@ export async function touchStashedInGroup(db: Db, groupId: string): Promise<void
   await db.tx(['items'], async (s) => {
     const now = Date.now();
     for (const i of await s.items.byState('stashed')) {
-      if (i.groupId === groupId) await s.items.put({ ...i, updatedAt: Math.max(now, i.updatedAt + 1) });
+      if (i.groupId === groupId) await s.items.put({ ...i, updatedAt: nextStamp(i.updatedAt, now) });
     }
   });
 }

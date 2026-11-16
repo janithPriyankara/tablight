@@ -8,6 +8,8 @@ vi.mock('../../src/background/embedder', () => ({
 import { openDb, type Db } from '../../src/background/db';
 import { restashTime } from '../../src/background/memory';
 import { sha1hex } from '../../src/shared/hash';
+import { nextStamp } from '../../src/shared/stamp';
+import { decodeChunks } from '../../src/sync/sync-codec';
 import type { Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl, type MockStorageArea } from '../../src/ui/mock/chrome-mock';
 
@@ -89,9 +91,16 @@ async function put(d: Device, url: string, p: Partial<Item> = {}): Promise<Item>
   await d.db.items.put(it);
   return it;
 }
+/** Deletes a stashed record as memory.ts does: the tombstone is stamped after the record. */
 async function remove(d: Device, id: string): Promise<void> {
+  const cur = await d.db.items.get(id);
   await d.db.items.delete(id);
-  await d.db.tombstones.put({ id, deletedAt: now(d) });
+  await d.db.tombstones.put({ id, deletedAt: nextStamp(cur?.updatedAt, now(d)) });
+}
+/** Edits a record as groups.ts / memory.ts do: stamped after its current updatedAt. */
+async function edit(d: Device, url: string, p: Partial<Item>): Promise<void> {
+  const cur = (await d.db.items.get(await sha1hex(url)))!;
+  await d.db.items.put({ ...cur, ...p, updatedAt: nextStamp(cur.updatedAt, now(d)) });
 }
 const urls = async (d: Device) => (await d.db.items.byState('stashed')).map((i) => i.normUrl).sort();
 const titleOf = async (d: Device, url: string) => (await d.db.items.get(await sha1hex(url)))?.title;
@@ -124,7 +133,7 @@ describe('two devices sharing storage.sync', () => {
     expect(Math.max(w.A, w.B)).toBeLessThanOrEqual(4);
     expect(await urls(a)).toEqual(['https://r.com/', 'https://s.com/']);
     expect(await titleOf(a, r.url)).toBe('B edit');
-    expect(await a.db.tombstones.all()).toEqual([]); // superseded by the newer record
+    expect((await a.db.tombstones.all()).map((t) => t.id)).toEqual([r.id]); // kept until its TTL; the record wins LWW
     await put(b, s.url, { title: 'B edit', updatedAt: now(b) });
     clock += 1000;
     await remove(a, s.id);
@@ -218,4 +227,82 @@ describe('two devices sharing storage.sync', () => {
     expect(await urls(a)).toEqual(['https://r.com/', 'https://s.com/']); // resurrected, allowed
     expect(Math.max(w.A, w.B)).toBeLessThanOrEqual(4);
   });
+
+  it('a superseded tombstone of a local-only record stays: no write ping-pong', async () => {
+    const [a, b] = await makeDevices();
+    const x = await put(a, 'https://x.com/', { stashedAt: now(a) - 10 * DAY });
+    await put(b, x.url, { ...x });
+    for (let k = 0; k < 800; k++) {
+      const url = `https://site${k}.example.com/page/${'p'.repeat(40)}`;
+      const p = { stashedAt: now(a) - k * 1000, updatedAt: now(a) - k * 1000, title: `Title ${'t'.repeat(60)} ${k}` };
+      await put(a, url, p);
+      await put(b, url, p);
+    }
+    await converge(a, b);
+    const remoteIds = async () => decodeChunks(await on(a, () => a.mock.chrome.storage.sync.get(null))).recs.map((r) => r[0]);
+    expect(await remoteIds()).not.toContain(x.id); // X is local only (past the budget) on both
+    expect((await remoteIds()).length).toBeGreaterThan(100);
+    await remove(b, x.id); // B deletes X ...
+    await pass(b);
+    clock += 1000;
+    await edit(a, x.url, { title: 'renamed group' }); // ... A edits it later (e.g. a rename); X stays local only
+    const w = await converge(a, b);
+    expect(Math.max(w.A, w.B)).toBeLessThanOrEqual(4);
+    expect(await titleOf(a, x.url)).toBe('renamed group'); // the newer edit survives on A
+    expect(await titleOf(b, x.url)).toBeUndefined();
+    expect(await remoteIds()).not.toContain(x.id);
+  });
+  it('fast device (+3 days) edits X, normal device then deletes X: the delete wins on both', async () => {
+    const [a, b] = await makeDevices(3 * DAY);
+    const x = await put(a, 'https://x.com/');
+    await converge(a, b);
+    clock += 1000;
+    await edit(b, x.url, { title: 'fast edit' });
+    await converge(a, b, b);
+    expect(await titleOf(a, x.url)).toBe('fast edit');
+    clock += 1000;
+    await remove(a, x.id);
+    const w = await converge(a, b);
+    expect(await urls(a)).toEqual([]);
+    expect(await urls(b)).toEqual([]);
+    expect(Math.max(w.A, w.B)).toBeLessThanOrEqual(4);
+  });
+  it('wired through storage.onChanged: echoes are skipped, the other device pulls (debounced) and both converge', async () => {
+    const [a, b] = await makeDevices();
+    const scheduled: string[] = [];
+    a.mock.chrome.storage.onChanged.addListener((changes, area) => {
+      for (const d of [a, b]) if (d.sync.handleSyncStorageChange(d.db, changes, area)) scheduled.push(d.name);
+    });
+    const statusAt = async (d: Device) =>
+      ((await d.mock.chrome.storage.local.get('syncStatus')).syncStatus as { lastSyncAt?: number } | undefined)?.lastSyncAt;
+    /** Lets the one device whose pull is scheduled run it (its chrome/clock active), until nothing is scheduled. */
+    async function deliver(): Promise<number> {
+      let hops = 0;
+      while (scheduled.length) {
+        expect(new Set(scheduled).size).toBe(1); // only the other device reacts; the writer skips its echo
+        const d = scheduled[0] === 'A' ? a : b;
+        scheduled.length = 0;
+        clock += PASS_GAP;
+        const before = await statusAt(d);
+        current = d;
+        (globalThis as { chrome?: unknown }).chrome = d.mock.chrome;
+        await vi.waitFor(async () => expect(await statusAt(d)).not.toBe(before), { timeout: 3000 });
+        await new Promise((r) => setTimeout(r, 20)); // let the pass finish its write
+        current = undefined;
+        if (++hops > 4) throw new Error('no convergence through onChanged');
+      }
+      return hops;
+    }
+    await put(a, 'https://r.com/');
+    await on(a, () => a.sync.pushSync(a.db));
+    expect(scheduled).toEqual(['B']);
+    expect(await deliver()).toBe(1); // B pulls r; nothing new to write back
+    await put(b, 'https://s.com/');
+    await on(b, () => b.sync.pushSync(b.db));
+    expect(scheduled).toEqual(['A']);
+    expect(await deliver()).toBe(1);
+    expect(await urls(a)).toEqual(['https://r.com/', 'https://s.com/']);
+    expect(await urls(b)).toEqual(['https://r.com/', 'https://s.com/']);
+  });
 });
+

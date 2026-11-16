@@ -5,6 +5,7 @@ import { isSafeToOpen, isWebUrl } from '../shared/url';
 import type { Db, StoreApis } from './db';
 import { findDuplicates } from './duplicates';
 import { wasSynced } from './sync';
+import { nextStamp } from '../shared/stamp';
 export const AUTO_SLEEP_ALARM = 'auto-sleep';
 export const UNDO_MS = 10_000;
 interface Closed {
@@ -74,7 +75,7 @@ async function adopt(db: Db, item: Item, tab: chrome.tabs.Tab): Promise<void> {
       return;
     }
     await s.items.put({
-      ...item, state: 'open', tabId: tab.id!, windowId: tab.windowId, lastActiveAt: Date.now(), updatedAt: Date.now(),
+      ...item, state: 'open', tabId: tab.id!, windowId: tab.windowId, lastActiveAt: Date.now(), updatedAt: nextStamp(item.updatedAt),
     });
   });
 }
@@ -99,7 +100,7 @@ export function stashRecord(item: Item, prev: Item | undefined, stashId: string,
     groupSource: keepGroup ? 'user' : item.groupSource,
     kind: item.kind, title: item.title || prev?.title || '', url: item.url, normUrl: item.normUrl,
     domain: item.domain, state: 'stashed', createdAt: prev?.createdAt ?? item.createdAt,
-    lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: now,
+    lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: nextStamp(prev?.updatedAt, now),
     classifiable: item.classifiable,
   };
 }
@@ -111,7 +112,7 @@ export async function restashTime(s: Pick<StoreApis, 'tombstones'>, stashId: str
   const tomb = await s.tombstones.get(stashId);
   if (!tomb) return now;
   await s.tombstones.delete(stashId);
-  return Math.max(now, tomb.deletedAt + 1);
+  return nextStamp(tomb.deletedAt, now);
 }
 /**
  * Stashes web tabs: the stash record is persisted (replacing the open item) BEFORE the tab closes, so
@@ -209,7 +210,7 @@ export async function openItem(db: Db, id: string): Promise<void> {
     const synced = await wasSynced(item.id); // a never-synced record needs no tombstone
     await db.tx(['items', 'tombstones'], async (s) => {
       await s.items.delete(item.id);
-      if (synced) await s.tombstones.put({ id: item.id, deletedAt: Date.now() });
+      if (synced) await s.tombstones.put({ id: item.id, deletedAt: nextStamp(item.updatedAt) });
     });
   }
   await adopt(db, { ...item, id: crypto.randomUUID(), stashedAt: undefined }, tab);
@@ -237,9 +238,10 @@ export async function undo(db: Db, token: string): Promise<boolean> {
     for (const id of restored) if (await wasSynced(id)) synced.add(id);
     await db.tx(['items', 'tombstones'], async (s) => {
       for (const id of restored) {
-        if ((await s.items.get(id))?.state !== 'stashed') continue;
+        const rec = await s.items.get(id);
+        if (rec?.state !== 'stashed') continue;
         await s.items.delete(id);
-        if (synced.has(id)) await s.tombstones.put({ id, deletedAt: Date.now() });
+        if (synced.has(id)) await s.tombstones.put({ id, deletedAt: nextStamp(rec.updatedAt) });
       }
     });
   }

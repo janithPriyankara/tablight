@@ -289,3 +289,17 @@ describe('validation', () => {
     expect(parseName('x'.repeat(60))).toHaveLength(60);
   });
 });
+describe('updatedAt stamping (sync LWW)', () => {
+  it('a change never stamps earlier than the record (fast-clock device stamped it ahead)', async () => {
+    const future = Date.now() + 3 * 86_400_000;
+    await db.groups.put(group('games'));
+    await db.groups.put(group('news'));
+    const a = await addItem({ state: 'stashed', updatedAt: future });
+    await moveItems(db, [a.id], 'games');
+    expect((await db.items.get(a.id))!.updatedAt).toBe(future + 1);
+    await mergeGroups(db, 'games', 'news');
+    expect((await db.items.get(a.id))!.updatedAt).toBe(future + 2);
+    await deleteGroup(db, 'news');
+    expect((await db.items.get(a.id))!.updatedAt).toBe(future + 3);
+  });
+});

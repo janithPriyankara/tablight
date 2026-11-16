@@ -189,9 +189,9 @@ describe('merge', () => {
     expect(v).toEqual([rec(1, 10, 'remote'), rec(2, 10)]);
   });
 
-  it('a tombstone superseded by a newer record (re-stash) is dropped from the union', () => {
-    expect(merge([rec(1, 20)], [], [], [[hex(1), 15]]).tombs).toEqual([]);
-    expect(merge([], [], [rec(1, 20)], [[hex(1), 15]]).tombs).toEqual([]);
+  it('a tombstone superseded by a newer record (re-stash) stays in the union until its TTL', () => {
+    expect(merge([rec(1, 20)], [], [], [[hex(1), 15]])).toEqual({ upserts: [], deletes: [], tombs: [[hex(1), 15]] });
+    expect(merge([], [], [rec(1, 20)], [[hex(1), 15]]).tombs).toEqual([[hex(1), 15]]);
     expect(merge([rec(1, 10)], [[hex(1), 15]], [], []).tombs).toEqual([[hex(1), 15]]);
   });
 });

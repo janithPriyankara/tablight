@@ -3,6 +3,7 @@ import type { Group, Item } from '../shared/types';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
+import { nextStamp } from '../shared/stamp';
 
 export const MAX_IDS = 5000;
 export const MAX_NAME = 60;
@@ -71,7 +72,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string): Promise
       const cur = await s.items.get(snap.id);
       if (!cur) continue;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
-      await s.items.put({ ...cur, groupId, groupSource: 'user', updatedAt: Date.now() });
+      await s.items.put({ ...cur, groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
       const v = vecs.get(cur.id);
       if (v && !already) taught.push(v);
     }
@@ -96,7 +97,7 @@ export async function createGroup(db: Db, name: string, ids: string[]): Promise<
     await s.groups.put(group);
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
-      if (cur) await s.items.put({ ...cur, groupId: group.id, groupSource: 'user', updatedAt: Date.now() });
+      if (cur) await s.items.put({ ...cur, groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
     }
     return group;
   });
@@ -123,7 +124,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
     const centroid = exemplars.length ? normalize(mean(exemplars)) : (dst.centroid ?? src.centroid);
     await s.groups.put({ ...dst, exemplars, centroid, suggested: dst.suggested && src.suggested });
     for (const i of await s.items.all()) {
-      if (i.groupId === from) await s.items.put({ ...i, groupId: into, updatedAt: Date.now() });
+      if (i.groupId === from) await s.items.put({ ...i, groupId: into, updatedAt: nextStamp(i.updatedAt) });
     }
     await s.groups.delete(from);
   });
@@ -135,7 +136,7 @@ export async function deleteGroup(db: Db, id: string): Promise<void> {
   await db.tx(['items', 'groups'], async (s) => {
     if (!(await s.groups.get(id))) throw new Error('unknown group');
     for (const i of await s.items.all()) {
-      if (i.groupId === id) await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: Date.now() });
+      if (i.groupId === id) await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: nextStamp(i.updatedAt) });
     }
     await s.groups.delete(id);
   });
@@ -159,7 +160,7 @@ export async function acceptSuggestion(db: Db, id: string): Promise<void> {
     for (const m of members) {
       const i = await s.items.get(m.id);
       if (!i || i.groupId !== id) continue;
-      await s.items.put({ ...i, groupSource: 'user', updatedAt: Date.now() });
+      await s.items.put({ ...i, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
       const v = vecs.get(i.id);
       if (v) taught.push(v);
     }
@@ -180,7 +181,7 @@ export async function dismissSuggestion(db: Db, id: string): Promise<void> {
     if (!cur?.suggested) throw new Error('not a suggestion');
     for (const m of members) {
       const i = await s.items.get(m.id);
-      if (i?.groupId === id) await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: Date.now() });
+      if (i?.groupId === id) await s.items.put({ ...i, groupId: null, groupSource: 'auto', updatedAt: nextStamp(i.updatedAt) });
     }
     await s.groups.delete(id);
   });
@@ -236,7 +237,7 @@ export async function regroupApply(db: Db): Promise<number> {
       // Skip anything the user or another pass touched since the plan was made.
       if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
       if (m.to !== null && !known.has(m.to)) continue;
-      await s.items.put({ ...cur, groupId: m.to, updatedAt: Date.now() });
+      await s.items.put({ ...cur, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });
       n++;
     }
     return n;

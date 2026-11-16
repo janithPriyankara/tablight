@@ -263,20 +263,49 @@ describe('review fixes', () => {
     await pushSync(db);
     expect(order).toEqual(['remove', 'set']);
   });
-  it('pauses after more than 6 writes in 10 minutes: status rate, retry alarm in 15 min, warning logged', async () => {
+  it('pauses after more than 6 pull-triggered writes in 10 minutes: status rate, retry in 15 min, warning logged', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     for (let k = 0; k < 6; k++) {
       await stashed(`https://a${k}.com/`);
-      expect(await pushSync(db)).toMatchObject({ ok: true });
+      expect(await pullSync(db)).toMatchObject({ ok: true });
     }
     await stashed('https://a6.com/');
     const set = vi.spyOn(chrome.storage.sync, 'set');
-    expect(await pushSync(db)).toMatchObject({ ok: false, reason: 'rate', message: 'sync paused: devices disagree' });
+    expect(await pullSync(db)).toMatchObject({ ok: false, reason: 'rate', message: 'sync paused: devices disagree' });
     expect(set).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);
     const alarm = mock.alarms().find((a) => a.name === SYNC_RETRY_ALARM)!;
     expect(alarm.scheduledTime - Date.now()).toBeGreaterThan(14 * 60_000);
     expect(await db.items.byState('stashed')).toHaveLength(7); // local data untouched
+    set.mockRestore();
+    // The user's own changes are never paused: a push is not counted.
+    expect(await pushSync(db)).toMatchObject({ ok: true, synced: 7 });
+    for (let k = 0; k < 8; k++) {
+      await stashed(`https://b${k}.com/`);
+      expect(await pushSync(db)).toMatchObject({ ok: true });
+    }
+  });
+
+  it('the backstop never moves an existing (rate/pause) sync-retry alarm earlier', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    await chrome.alarms.create(SYNC_RETRY_ALARM, { delayInMinutes: 15 });
+    const before = mock.alarms().find((a) => a.name === SYNC_RETRY_ALARM)!.scheduledTime;
+    scheduleSync(db);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(mock.alarms().find((a) => a.name === SYNC_RETRY_ALARM)!.scheduledTime).toBe(before);
+  });
+
+  it('wasSynced is true while a pass is queued or running (it may be pushing that id)', async () => {
+    const a = await stashed('https://a.com/');
+    let release!: () => void;
+    vi.spyOn(chrome.storage.sync, 'get').mockImplementationOnce(() => new Promise((r) => (release = () => r({}))));
+    const p = pushSync(db);
+    expect(await wasSynced(a.id)).toBe(true);
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    release();
+    await p;
+    await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [] });
+    expect(await wasSynced(a.id)).toBe(false);
   });
   it('scheduleSync sets a sync-retry backstop alarm; a successful pass clears it', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });

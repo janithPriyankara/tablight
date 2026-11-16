@@ -253,4 +253,16 @@ describe('re-stash and tombstones', () => {
     expect(await db.tombstones.all()).toEqual([]);
     expect((await db.items.get(id))!.updatedAt).toBe(future + 1);
   });
+  it('open/undo tombstones are stamped after the record, even one stamped ahead by a fast clock', async () => {
+    const items = await setup([{ url: 'https://a.com/' }, { url: 'https://b.com/' }]);
+    const { token } = await stash(db, items.map((i) => i.id));
+    const [a, b] = [await sha1hex('https://a.com/'), await sha1hex('https://b.com/')];
+    const future = Date.now() + 3 * 86_400_000;
+    for (const id of [a, b]) await db.items.put({ ...(await db.items.get(id))!, updatedAt: future });
+    await chrome.storage.local.set({ [SYNCED_IDS_KEY]: [a, b] });
+    await openItem(db, a);
+    expect((await db.tombstones.get(a))!.deletedAt).toBe(future + 1);
+    await undo(db, token);
+    expect((await db.tombstones.get(b))!.deletedAt).toBe(future + 1);
+  });
 });
