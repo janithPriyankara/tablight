@@ -18,7 +18,8 @@ export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDo
       <div class="card-text">
         <h2 id="onboarding-h" class="card-title">Welcome to Tablight</h2>
         <ul class="onboarding-points">
-          <li>Grouping runs on your computer, using only each tab’s title and address. No servers, no analytics.</li>
+          <li>Tablight sees only each tab’s title and address. It cannot see your passwords, cookies, what you type or what is on a page.</li>
+          <li>Grouping runs on your computer. No servers, no analytics.</li>
           <li>Nothing leaves your device except tabs you save for later and the examples you teach your groups, which sync through your own browser account. You can turn that off in Settings.</li>
           {unpinned && (
             <li>

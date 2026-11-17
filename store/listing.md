@@ -9,7 +9,7 @@ Tablight helps when you have too many tabs open.
 - Keep it open in the browser's side panel next to your pages: this window's tabs and every group, one click to switch.
 - Search by words (typos are fine) or by meaning.
 - Export and import a backup file. Saved tabs can sync between your own devices through your browser account.
-Private by design: the grouping model is bundled in the extension and runs on your computer. The extension makes no network requests, has no accounts or analytics, never reads page contents and ignores private (incognito) windows.
+Private by design: the grouping model is bundled in the extension and runs on your computer. The extension makes no network requests, has no accounts or analytics, never reads page contents and ignores private (incognito) windows. It cannot see passwords, cookies, sign-ins, payment details or anything you type: all it receives is each open tab's title and address.
 Organize the user's open browser tabs: list, group by topic, find duplicates, pause them or save them for later, and search them.
 | Permission | Why it is needed |
 |---|---|

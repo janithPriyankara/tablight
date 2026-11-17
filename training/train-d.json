@@ -1,0 +1,352 @@
+[
+ {
+  "title": "Malwarebytes Browser Guard | Block ads, trackers and scams",
+  "url": "https://www.malwarebytes.com/browserguard",
+  "group": "other"
+ },
+ {
+  "title": "My Account | Malwarebytes",
+  "url": "https://my.malwarebytes.com/account/subscriptions",
+  "group": "other"
+ },
+ {
+  "title": "Download Malwarebytes for Mac",
+  "url": "https://www.malwarebytes.com/mac-download",
+  "group": "other"
+ },
+ {
+  "title": "Norton AntiVirus Plus | Virus protection",
+  "url": "https://us.norton.com/products/norton-antivirus-plus",
+  "group": "other"
+ },
+ {
+  "title": "My Norton - Device Security",
+  "url": "https://my.norton.com/extspa/dashboard",
+  "group": "other"
+ },
+ {
+  "title": "Avast Free Antivirus Download",
+  "url": "https://www.avast.com/en-us/free-antivirus-download",
+  "group": "other"
+ },
+ {
+  "title": "AVG AntiVirus FREE",
+  "url": "https://www.avg.com/en-ww/free-antivirus-download",
+  "group": "other"
+ },
+ {
+  "title": "Bitdefender Central",
+  "url": "https://central.bitdefender.com/dashboard",
+  "group": "other"
+ },
+ {
+  "title": "ESET HOME | Manage your security",
+  "url": "https://home.eset.com/",
+  "group": "other"
+ },
+ {
+  "title": "McAfee Total Protection",
+  "url": "https://www.mcafee.com/en-us/antivirus/mcafee-total-protection.html",
+  "group": "other"
+ },
+ {
+  "title": "Surfshark VPN | Secure VPN service",
+  "url": "https://surfshark.com/",
+  "group": "other"
+ },
+ {
+  "title": "ExpressVPN: Download the VPN app",
+  "url": "https://www.expressvpn.com/vpn-download",
+  "group": "other"
+ },
+ {
+  "title": "Proton VPN: Secure and free VPN",
+  "url": "https://protonvpn.com/",
+  "group": "other"
+ },
+ {
+  "title": "Mullvad VPN - Privacy is a universal right",
+  "url": "https://mullvad.net/en",
+  "group": "other"
+ },
+ {
+  "title": "LastPass - Password Manager & Vault App",
+  "url": "https://www.lastpass.com/",
+  "group": "other"
+ },
+ {
+  "title": "Dashlane Password Manager",
+  "url": "https://www.dashlane.com/",
+  "group": "other"
+ },
+ {
+  "title": "Proton Pass: Free password manager",
+  "url": "https://proton.me/pass",
+  "group": "other"
+ },
+ {
+  "title": "Bitwarden Web Vault",
+  "url": "https://vault.bitwarden.com/#/vault",
+  "group": "other"
+ },
+ {
+  "title": "Have I Been Pwned: Pwned Passwords",
+  "url": "https://haveibeenpwned.com/Passwords",
+  "group": "other"
+ },
+ {
+  "title": "Check a URL for malware - Google Transparency Report",
+  "url": "https://transparencyreport.google.com/safe-browsing/search",
+  "group": "other"
+ },
+ {
+  "title": "Firewall settings - ZoneAlarm",
+  "url": "https://www.zonealarm.com/software/free-firewall",
+  "group": "other"
+ },
+ {
+  "title": "Ad blocker and privacy protection - Ghostery",
+  "url": "https://www.ghostery.com/",
+  "group": "other"
+ },
+ {
+  "title": "Privacy Badger | Electronic Frontier Foundation",
+  "url": "https://privacybadger.org/",
+  "group": "other"
+ },
+ {
+  "title": "DuckDuckGo Privacy Essentials",
+  "url": "https://duckduckgo.com/app",
+  "group": "other"
+ },
+ {
+  "title": "AdBlock is now installed!",
+  "url": "https://getadblock.com/en/installed/",
+  "group": "other"
+ },
+ {
+  "title": "Thank you for installing uBlock Origin",
+  "url": "https://ublockorigin.com/",
+  "group": "other"
+ },
+ {
+  "title": "Grammarly - Chrome Web Store",
+  "url": "https://chromewebstore.google.com/detail/grammarly/kbfnbcaeplbcioakkpcpgfkobkghlhen",
+  "group": "other"
+ },
+ {
+  "title": "Dark Reader - Chrome Web Store",
+  "url": "https://chromewebstore.google.com/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh",
+  "group": "other"
+ },
+ {
+  "title": "uBlock Origin – Microsoft Edge Addons",
+  "url": "https://microsoftedge.microsoft.com/addons/detail/ublock-origin/odfafepnkmbhccpbejgmiehpchacaeak",
+  "group": "other"
+ },
+ {
+  "title": "Microsoft Edge Add-ons - Productivity",
+  "url": "https://microsoftedge.microsoft.com/addons/category/Edge-Productivity",
+  "group": "other"
+ },
+ {
+  "title": "Chrome Web Store - Extensions",
+  "url": "https://chromewebstore.google.com/category/extensions",
+  "group": "other"
+ },
+ {
+  "title": "Firefox Browser Add-ons",
+  "url": "https://addons.mozilla.org/en-US/firefox/",
+  "group": "other"
+ },
+ {
+  "title": "Audio Equalizer :: MyBrowserAddon",
+  "url": "https://mybrowseraddon.com/audio-equalizer.html",
+  "group": "other"
+ },
+ {
+  "title": "Personalize | Read Aloud",
+  "url": "https://readaloud.net/en/extension/install",
+  "group": "other"
+ },
+ {
+  "title": "Welcome to Honey - Setup",
+  "url": "https://www.joinhoney.com/welcome",
+  "group": "other"
+ },
+ {
+  "title": "Video Speed Controller - getting started",
+  "url": "https://github.com/igrigorik/videospeed/wiki/Getting-started",
+  "group": "other"
+ },
+ {
+  "title": "LastPass extension installed - next steps",
+  "url": "https://www.lastpass.com/installed",
+  "group": "other"
+ },
+ {
+  "title": "Opera add-ons",
+  "url": "https://addons.opera.com/en/extensions/",
+  "group": "other"
+ },
+ {
+  "title": "Extension installed - Read Aloud welcome",
+  "url": "https://readaloud.app/welcome",
+  "group": "other"
+ },
+ {
+  "title": "Bitwarden browser extension: getting started",
+  "url": "https://bitwarden.com/help/getting-started-browserext/",
+  "group": "other"
+ },
+ {
+  "title": "Google Account",
+  "url": "https://myaccount.google.com/",
+  "group": "other"
+ },
+ {
+  "title": "Security - Google Account",
+  "url": "https://myaccount.google.com/security",
+  "group": "other"
+ },
+ {
+  "title": "2-Step Verification - Google Account",
+  "url": "https://myaccount.google.com/signinoptions/two-step-verification",
+  "group": "other"
+ },
+ {
+  "title": "Microsoft account | Security",
+  "url": "https://account.microsoft.com/security",
+  "group": "other"
+ },
+ {
+  "title": "Your Microsoft account | Devices",
+  "url": "https://account.microsoft.com/devices",
+  "group": "other"
+ },
+ {
+  "title": "Apple Account - Sign-In and Security",
+  "url": "https://account.apple.com/account/manage",
+  "group": "other"
+ },
+ {
+  "title": "Sign in - Google Accounts",
+  "url": "https://accounts.google.com/v3/signin/identifier",
+  "group": "other"
+ },
+ {
+  "title": "Sign in to your Microsoft account",
+  "url": "https://login.live.com/login.srf",
+  "group": "other"
+ },
+ {
+  "title": "Account settings | Dropbox",
+  "url": "https://www.dropbox.com/account/security",
+  "group": "other"
+ },
+ {
+  "title": "Manage subscription - My Account",
+  "url": "https://account.proton.me/u/0/dashboard",
+  "group": "other"
+ },
+ {
+  "title": "Reset your password",
+  "url": "https://accounts.example-store.com/password/reset",
+  "group": "other"
+ },
+ {
+  "title": "Verify your email address",
+  "url": "https://accounts.example-app.com/verify-email",
+  "group": "other"
+ },
+ {
+  "title": "Privacy settings - Microsoft Edge",
+  "url": "https://support.microsoft.com/en-us/microsoft-edge/microsoft-edge-browsing-data-and-privacy",
+  "group": "other"
+ },
+ {
+  "title": "Manage cookies and site data - Chrome Help",
+  "url": "https://support.google.com/chrome/answer/95647",
+  "group": "other"
+ },
+ {
+  "title": "Create your account",
+  "url": "https://signup.example.com/",
+  "group": "other"
+ },
+ {
+  "title": "Billing and payments | My Account",
+  "url": "https://account.example-service.com/billing",
+  "group": "other"
+ },
+ {
+  "title": "OWASP Top Ten | OWASP Foundation",
+  "url": "https://owasp.org/www-project-top-ten/",
+  "group": "docs"
+ },
+ {
+  "title": "Cross Site Scripting Prevention - OWASP Cheat Sheet Series",
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+  "group": "docs"
+ },
+ {
+  "title": "Content Security Policy (CSP) - HTTP | MDN",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
+  "group": "docs"
+ },
+ {
+  "title": "How to prevent SQL injection in Node.js with parameterized queries",
+  "url": "https://blog.logrocket.com/preventing-sql-injection-node-js/",
+  "group": "programming"
+ },
+ {
+  "title": "Fix: npm audit reports critical vulnerability in lodash",
+  "url": "https://github.com/lodash/lodash/issues/5809",
+  "group": "programming"
+ },
+ {
+  "title": "Snyk CLI - test for vulnerable dependencies",
+  "url": "https://docs.snyk.io/snyk-cli",
+  "group": "docs"
+ },
+ {
+  "title": "Ransomware attack hits hospital network, patient data exposed",
+  "url": "https://www.bbc.com/news/technology-ransomware-hospital",
+  "group": "news"
+ },
+ {
+  "title": "Major data breach exposes millions of customer records",
+  "url": "https://www.theverge.com/news/data-breach-millions-records",
+  "group": "news"
+ },
+ {
+  "title": "The Hacker News - Cybersecurity news",
+  "url": "https://thehackernews.com/",
+  "group": "news"
+ },
+ {
+  "title": "Krebs on Security",
+  "url": "https://krebsonsecurity.com/",
+  "group": "news"
+ },
+ {
+  "title": "Introduction to Cyber Security - free course",
+  "url": "https://www.open.edu/openlearn/digital-computing/introduction-cyber-security",
+  "group": "learning"
+ },
+ {
+  "title": "CompTIA Security+ practice exam questions",
+  "url": "https://www.examcompass.com/comptia-security-plus-practice-test-1",
+  "group": "learning"
+ },
+ {
+  "title": "Best VPN deals this week - 70% off",
+  "url": "https://www.amazon.com/s?k=vpn+subscription",
+  "group": "shopping"
+ },
+ {
+  "title": "Norton 360 Deluxe 1-year subscription - Amazon.com",
+  "url": "https://www.amazon.com/Norton-Deluxe-Antivirus-Software-Devices/dp/B07H1X6R6W",
+  "group": "shopping"
+ }
+]

@@ -262,6 +262,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
           <p class="privacy-line">
             <ShieldIcon />
             <span>
+              Tablight sees only each tab’s title and address, never your passwords, cookies, what you type or what
+              is on a page.{' '}
               Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
               through your browser account while sync is on. Grouping runs on your computer, and there are no analytics.{' '}
               <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>

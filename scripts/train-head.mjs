@@ -6,7 +6,7 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT.
 //
-// Pool = training/train-a.json + train-b.json + train-c.json + tests/quality/fixture.json.
+// Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + tests/quality/fixture.json.
 // tests/quality/holdout.json and holdout2.json are never read here: they are the blind test sets.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -34,6 +34,11 @@ const L2_GRID = [1e-4, 3e-4, 1e-3, 3e-3];
 const KNN = { k: 10, alpha: 0.3, sharp: 10 };
 /** Max share of `other` items the threshold may let through to a real group (val split). */
 const MAX_OTHER_ASSIGNED = 0.3;
+/**
+ * A tab filed in the wrong group costs the user more than one left in Unsorted (they must notice it, then move
+ * it). The Unsorted threshold maximises right - WRONG_COST * wrong on the val split, so weak guesses stay Unsorted.
+ */
+const WRONG_COST = Number(process.env.WRONG_COST ?? 2);
 /** Required precision of the learned-exemplar override (val split). */
 const OVERRIDE_PRECISION = 0.95;
 
@@ -45,7 +50,9 @@ const LABELS = STARTER_GROUPS.map((g) => g.id);
 const OTHER = LABELS.indexOf('other');
 
 // ---------- data ----------
-const files = ['training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'tests/quality/fixture.json'];
+const files = [
+  'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json', 'tests/quality/fixture.json',
+];
 const seen = new Set();
 const pool = [];
 for (const f of files) {
@@ -196,6 +203,7 @@ function evaluate(head, idx, threshold) {
   let n = 0;
   let others = 0;
   let otherAssigned = 0;
+  let wrong = 0;
   for (const i of idx) {
     const g = predict(head, i, threshold);
     if (Y[i] === OTHER) {
@@ -204,16 +212,19 @@ function evaluate(head, idx, threshold) {
     } else {
       n++;
       if (g === LABELS[Y[i]]) ok++;
+      else if (g !== null) wrong++;
     }
   }
-  return { acc: ok / n, otherRate: others ? otherAssigned / others : 0 };
+  const acc = ok / n;
+  const wrongRate = (wrong + otherAssigned) / (n + others);
+  return { acc, wrongRate, utility: (ok - WRONG_COST * (wrong + otherAssigned)) / (n + others), otherRate: others ? otherAssigned / others : 0 };
 }
 function bestThreshold(head, idx) {
   let best = null;
   for (let t = 0; t <= 0.9 + 1e-9; t += 0.01) {
     const r = evaluate(head, idx, t);
     if (r.otherRate > MAX_OTHER_ASSIGNED) continue;
-    if (!best || r.acc > best.acc) best = { threshold: Math.round(t * 100) / 100, ...r };
+    if (!best || r.utility > best.utility) best = { threshold: Math.round(t * 100) / 100, ...r };
   }
   return best ?? { threshold: 0.9, ...evaluate(head, idx, 0.9) };
 }
@@ -223,10 +234,33 @@ let chosen = null;
 for (const l2 of L2_GRID) {
   const head = { ...train(trainIdx, l2), ref: trainIdx };
   const r = bestThreshold(head, valIdx);
-  console.log(`l2=${l2}: val acc ${(r.acc * 100).toFixed(1)}% @ t=${r.threshold}, other assigned ${(r.otherRate * 100).toFixed(0)}%`);
+  console.log(
+    `l2=${l2}: val acc ${(r.acc * 100).toFixed(1)}% @ t=${r.threshold}, wrong ${(r.wrongRate * 100).toFixed(1)}%, ` +
+      `other assigned ${(r.otherRate * 100).toFixed(0)}%`,
+  );
   // Ties go to the larger L2 (simpler model).
-  if (!chosen || r.acc >= chosen.acc) chosen = { l2, head, ...r };
+  if (!chosen || r.utility >= chosen.utility) chosen = { l2, head, ...r };
 }
+
+// Unsorted threshold for the chosen L2, from 5-fold out-of-fold scores over the whole pool. A single 15% val
+// split is too small for it: the threshold it picks swings by 0.1+ when a few items change.
+const FOLDS = 5;
+const foldOf = new Array(pool.length);
+for (let c = 0; c < LABELS.length; c++) {
+  shuffle(Y.map((y, i) => (y === c ? i : -1)).filter((i) => i >= 0)).forEach((i, k) => (foldOf[i] = k % FOLDS));
+}
+const oof = { cache: new Map() };
+for (let f = 0; f < FOLDS; f++) {
+  const rest = pool.map((_, i) => i).filter((i) => foldOf[i] !== f);
+  const h = { ...train(rest, chosen.l2), ref: rest };
+  for (let i = 0; i < pool.length; i++) if (foldOf[i] === f) predict(h, i, 0);
+  for (const [i, p] of h.cache ?? []) oof.cache.set(i, p);
+}
+const cv = bestThreshold(oof, pool.map((_, i) => i));
+console.log(
+  `${FOLDS}-fold: acc ${(cv.acc * 100).toFixed(1)}% @ t=${cv.threshold}, wrong ${(cv.wrongRate * 100).toFixed(1)}%, ` +
+    `other assigned ${(cv.otherRate * 100).toFixed(0)}% (at t=0: wrong ${(evaluate(oof, pool.map((_, i) => i), 0).wrongRate * 100).toFixed(1)}%)`,
+);
 
 // Learned-exemplar override: treat train-split items as a user's learned exemplars and pick the
 // lowest cosine at which "nearest exemplar's group" is right ≥ OVERRIDE_PRECISION of the time on val.
@@ -260,7 +294,7 @@ const out = {
   labels: LABELS,
   W: final.W.map((r) => r.map(round)),
   b: final.b.map(round),
-  threshold: chosen.threshold,
+  threshold: cv.threshold,
   similarity,
   // Neighbours: every pool item's vector, int8-quantized (x·127, unit vectors), base64; labels index into `labels`.
   knn: {
@@ -270,6 +304,7 @@ const out = {
   },
   l2: chosen.l2,
   val: { acc: round(chosen.acc), otherAssigned: round(chosen.otherRate), n: valIdx.length },
+  cv: { folds: FOLDS, wrongCost: WRONG_COST, acc: round(cv.acc), wrong: round(cv.wrongRate), otherAssigned: round(cv.otherRate) },
   trainedAt: new Date().toISOString(),
   poolSize: pool.length,
   poolHash,
@@ -280,6 +315,6 @@ const json = JSON.stringify(out, null, 0)
 await writeFile(OUT, `${json}\n`);
 console.log(
   `model ${MODEL_ID} (${POOLING}, dim ${DIM}); pool ${pool.length}, val ${valIdx.length}; ` +
-    `l2 ${chosen.l2}; val acc ${(chosen.acc * 100).toFixed(1)}% @ threshold ${chosen.threshold} ` +
-    `(other assigned ${(chosen.otherRate * 100).toFixed(0)}%); override similarity ${similarity} → ${OUT}`,
+    `l2 ${chosen.l2}; val acc ${(chosen.acc * 100).toFixed(1)}%; threshold ${cv.threshold} ` +
+    `(${FOLDS}-fold acc ${(cv.acc * 100).toFixed(1)}%, wrong ${(cv.wrongRate * 100).toFixed(1)}%); override similarity ${similarity} → ${OUT}`,
 );

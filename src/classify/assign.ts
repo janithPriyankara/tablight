@@ -23,8 +23,8 @@ export interface Head {
   W: number[][];
   b: number[];
   /**
-   * Below this top-class probability the tab stays Unsorted. Shipped as 0 (no confidence cutoff in
-   * practice): Unsorted comes from the head's top label being `other`, plus items given up on.
+   * Below this top-class probability the tab stays Unsorted rather than being guessed into a group. Chosen at
+   * train time by 5-fold cross-validation, counting a wrong group as twice as costly as Unsorted (0.41 as shipped).
    */
   threshold: number;
   /** Cosine to a user-learned exemplar at which that group overrides the head. */
