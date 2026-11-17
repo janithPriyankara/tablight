@@ -55,7 +55,7 @@ Behaviour clues (how the tab arrived):
 - **B3 Never viewed**: `opened === false`.
 
 Content clues (what the tab is):
-- **C1 Ad-click or tracking address**: ad-network click/redirect shapes (e.g. paths like `/click`, `/redirect`, `/go/` with click-id style query keys such as `key=`, `visitor_id=`, `clickid=`, `zoneid=`, `campaign_id=`), a raw IP host, a punycode (`xn--`) host, or a host on a short bundled list of disposable TLD patterns used by spam (e.g. `.space`, `.top`, `.xyz`, `.click`) only when combined with a click-style path.
+- **C1 Ad-click or tracking address**: ad-network click/redirect shapes (e.g. paths like `/click`, `/redirect`, `/go/` with click-id style query keys such as `key=`, `visitor_id=`, `clickid=`, `zoneid=`, `campaign_id=`), a raw public IP host (loopback, private, link-local, `0.0.0.0/8`, CGNAT/Tailscale `100.64.0.0/10` and IPv4-mapped `::ffff:` hosts do not count), or a punycode (`xn--`) host or a host on a short bundled list of disposable TLD patterns used by spam (e.g. `.space`, `.top`, `.xyz`, `.click`) only when combined with a click-style path or click-id query key. A punycode host on its own is not a clue (see Decision 9).
 - **C2 Scam title**: bundled phrase patterns, case-insensitive, whole phrases not single words: prize/winner ("you won", "you have been selected", "claim your prize"), gambling bonus ("deposit bonus", "free spins", "reveal your bonus"), fake alerts ("your pc is infected", "virus detected", "your computer is locked", "call microsoft support"), fake updates ("update your flash player", "your browser is out of date").
 
 ### Rule
@@ -121,6 +121,7 @@ Privacy policy (what is stored locally: opener site and pop-up flag, never sent 
 6. **Closing uses the existing close path**, which already issues an undo token for the undo toast. Confirmation and undo both apply.
 7. **Setting:** `suspiciousTabs: boolean` (default true) is added to `Settings` with a default for older data. It follows the same sync behaviour as other settings. Turning it off stops checking and clears the "!" badge state, while opener and kept records stay until the browser restarts (they are harmless and local).
 8. **False-alarm test covers content clues only**, run over `tests/quality/fixture.json`, `holdout.json`, `holdout2.json` and `training/*.json`. It asserts that no normal tab has both C1 and C2, and reports how many fire either one. Behaviour clues are covered by unit tests.
+9. **A punycode (`xn--`) host is a clue only with a click shape.** Every internationalised domain (münchen.de, `.рф`, `.中国`) is `xn--` in the URL, so a Ctrl-clicked IDN site would otherwise get B1 + B3 + C1 and be flagged, against the success criterion that normal browsing never raises a false alarm. Punycode therefore counts only together with a click-style path or a click-id query key, like the spam TLDs. Accepted cost: a look-alike (homograph) host with a clean path and no scam title is not flagged.
 
 ## Left to the builder
 

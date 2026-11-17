@@ -14,7 +14,9 @@ describe('addressClue', () => {
   it.each([
     CLICK,
     'http://185.23.4.10/landing',
-    'https://xn--pypal-4ve.com/login',
+    'https://xn--pypal-4ve.com/go/landing',
+    'https://xn--mnchen-3ya.de/stadtplan?clickid=1',
+    'http://100.128.0.1/',
     'https://track.example.top/redirect?clickid=x1&zoneid=55',
     'http://127.0.0.1:8080/click?key=1&visitor_id=2',
     'https://spam.xyz/page?subid=9',
@@ -33,6 +35,14 @@ describe('addressClue', () => {
     'http://[::1]:8080/',
     'http://[fd12::1]/',
     'https://example.xyz/about',
+    'http://0.0.0.0:8000/',
+    'http://100.100.1.1:8080/',
+    'http://100.64.0.1/',
+    'http://100.127.255.254/',
+    'http://[::ffff:7f00:1]/',
+    'http://[::ffff:808:808]/',
+    'https://xn--pypal-4ve.com/login',
+    'https://xn--mnchen-3ya.de/stadtplan',
   ])('does not flag %s', (u) => expect(addressClue(u)).toBe(false));
   it('flags a public 172.x address outside the private range', () => {
     expect(addressClue('http://172.32.0.1/')).toBe(true);
@@ -41,6 +51,7 @@ describe('addressClue', () => {
 describe('titleClue', () => {
   it.each([
     'Congratulations! You won an iPhone 17',
+    'Congratulations, you are a winner',
     'Open an envelope and reveal your 100% deposit bonus',
     'WARNING: Your PC is infected with 5 viruses',
     'Call Microsoft Support now',
@@ -52,6 +63,8 @@ describe('titleClue', () => {
     'Virus taxonomy - Wikipedia',
     "You won't believe how this works",
     'Why you won’t regret it',
+    "Congratulations! You won't believe what happened next",
+    'Congratulations! You won’t regret this',
   ])('does not flag %s', (t) => expect(titleClue(t)).toBe(false));
 });
 describe('cluesFor', () => {
@@ -108,6 +121,23 @@ describe('findSuspicious', () => {
     const i = bad();
     expect(findSuspicious([i], ctx, new Map([[1, 'example.com']]))).toEqual([]);
     expect(findSuspicious([i], ctx, new Map([[1, 'other.com']]))).toHaveLength(1);
+  });
+  it('does not flag a Ctrl-clicked internationalised (punycode) site with a normal address', () => {
+    const idn = item({ url: 'https://xn--mnchen-3ya.de/stadtplan', domain: 'xn--mnchen-3ya.de', opened: false });
+    const fromSearch = new Map<number, TabContext>([[1, { openerDomain: 'google.com', popup: false }]]);
+    expect(cluesFor(idn, fromSearch.get(1))).toEqual(['opener', 'unseen']);
+    expect(findSuspicious([idn], fromSearch, new Map())).toEqual([]);
+  });
+  it('flags a punycode host with a click-style path and key opened in the background', () => {
+    const idn = item({ url: 'https://xn--pypal-4ve.com/go/?clickid=1', domain: 'xn--pypal-4ve.com', opened: false });
+    const fromSearch = new Map<number, TabContext>([[1, { openerDomain: 'google.com', popup: false }]]);
+    expect(findSuspicious([idn], fromSearch, new Map()).map((s) => s.clues)).toEqual([['opener', 'unseen', 'address']]);
+  });
+  it('does not flag a Ctrl-clicked dev server on 0.0.0.0 or a Tailscale address', () => {
+    const fromLocal = new Map<number, TabContext>([[1, { openerDomain: 'localhost', popup: false }]]);
+    for (const url of ['http://0.0.0.0:8000/', 'http://100.101.102.103:8080/']) {
+      expect(findSuspicious([item({ url, domain: new URL(url).hostname, opened: false })], fromLocal, new Map())).toEqual([]);
+    }
   });
   it('drops a tab once its url and title become normal', () => {
     expect(findSuspicious([bad()], ctx, new Map())).toHaveLength(1);
