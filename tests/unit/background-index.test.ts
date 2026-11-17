@@ -353,7 +353,10 @@ describe('background index', () => {
     const settings = await db.settings.get();
     expect(settings).toMatchObject({ onboarded: false, theme: 'system', syncEnabled: false }); // the sync choice is kept
     expect(Object.keys(await chrome.storage.sync.get(null))).toEqual(['other-ext-key']);
-    expect(Object.keys(await chrome.storage.local.get(null))).toEqual(['foreign']);
+    // Only a fresh "sync is off" status is written back (the old one, and every other key of ours, is gone).
+    const local = await chrome.storage.local.get(null);
+    expect(Object.keys(local).sort()).toEqual(['foreign', 'syncStatus']);
+    expect(local['syncStatus']).toEqual({ ok: false, reason: 'disabled', message: 'Sync is turned off', lastSyncAt: null });
     expect((await db.groups.all()).length).toBeGreaterThan(10); // starter groups re-seeded
     await vi.waitFor(async () => {
       await whenTabIndexIdle();

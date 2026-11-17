@@ -4,7 +4,7 @@ vi.mock('../../src/background/embedder', () => ({
   embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(3).fill(0.05))),
 }));
 import { openDb, type Db } from '../../src/background/db';
-import { pullSync, pushSync, setSyncEnabled } from '../../src/background/sync';
+import { pullSync, pushSync, readSyncStatus, setSyncEnabled } from '../../src/background/sync';
 import { deleteStashed } from '../../src/background/memory';
 import { processQueue } from '../../src/background/tab-index';
 import { moveItems } from '../../src/background/groups';
@@ -95,6 +95,14 @@ describe('sync across devices (bug hunt)', () => {
     expect(await A.items.get(x.id)).toBeUndefined();
   });
 
+  it('after Delete all data the sync status says sync is off, not "not synced yet" (UI test S-10)', async () => {
+    await stash(A, 'https://x.com/', clock);
+    await pushSync(A);
+    expect((await readSyncStatus()).ok).toBe(true);
+    await deleteAllData(A);
+    expect((await A.settings.get()).syncEnabled).toBe(false);
+    expect(await readSyncStatus()).toMatchObject({ ok: false, reason: 'disabled' });
+  });
   it('a delete made while sync was off resurrects when sync is turned back on after 30 days', async () => {
     const x = await stash(A, 'https://x.com/', clock);
     await pushSync(A);
