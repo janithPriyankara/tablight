@@ -111,7 +111,7 @@ describe('cleanTitle', () => {
   it('preserves emoji and RTL text', () => {
     expect(cleanTitle('🔥 مرحبا بالعالم', 'https://a.com')).toBe('🔥 مرحبا بالعالم');
   });
-  it('never returns empty for junk input', () => {
+  it('returns empty when the title is blank and the URL cannot be parsed', () => {
     expect(cleanTitle('', 'junk')).toBe('');
   });
 });
