@@ -12,7 +12,7 @@ import { PAGES, TOPIC_PAGES, TOPIC_PAGES_2 } from './fixtures/server';
 import { FAULTS_SCRIPT, Harness, backup } from './fixtures/ui';
 
 let h: Harness;
-test.describe.configure({ mode: 'serial' });
+// Every test resets its own state (beforeEach), so a failure does not skip the tests after it.
 test.use({ actionTimeout: 20_000 });
 test.beforeAll(async () => {
   h = await Harness.start();

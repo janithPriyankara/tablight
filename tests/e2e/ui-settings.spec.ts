@@ -12,7 +12,7 @@ import { Harness, backup } from './fixtures/ui';
 import { VERSION } from '../../manifest.config';
 
 let h: Harness;
-test.describe.configure({ mode: 'serial' });
+// Every test resets its own state (beforeEach), so a failure does not skip the tests after it.
 test.use({ actionTimeout: 20_000 });
 test.beforeAll(async () => {
   h = await Harness.start();

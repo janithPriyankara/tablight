@@ -37,7 +37,7 @@ const SPAM_PATH = '/click?key=1&visitor_id=2';
 let SPAM: string;
 let SPAM2: string;
 
-test.describe.configure({ mode: 'serial' });
+// Every test resets its own state (beforeEach), so a failure does not skip the tests after it.
 
 test.beforeAll(async () => {
   server = await startPageServer();

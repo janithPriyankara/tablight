@@ -112,10 +112,16 @@ export class Harness {
   tabs(): Promise<TabInfo[]> {
     return this.dash.evaluate(async () => {
       const all = await chrome.tabs.query({});
-      return Promise.all(all.map(async (t) => ({
-        id: t.id!, url: t.url || t.pendingUrl || '', title: t.title ?? '', active: t.active, windowId: t.windowId,
-        discarded: t.discarded, groupId: t.groupId ?? -1, badge: await chrome.action.getBadgeText({ tabId: t.id! }),
-      })));
+      // A tab can close between the query and its badge read (e.g. while a window is being saved);
+      // leave it out instead of failing the whole read.
+      const rows = await Promise.all(all.map(async (t) => {
+        const badge = await chrome.action.getBadgeText({ tabId: t.id! }).catch(() => null);
+        return badge === null ? null : {
+          id: t.id!, url: t.url || t.pendingUrl || '', title: t.title ?? '', active: t.active, windowId: t.windowId,
+          discarded: t.discarded, groupId: t.groupId ?? -1, badge,
+        };
+      }));
+      return rows.filter((r) => r !== null);
     });
   }
   async tabsAt(url: string): Promise<TabInfo[]> {

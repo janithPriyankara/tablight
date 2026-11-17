@@ -24,6 +24,7 @@ pipeline {
         CI = 'true'
         npm_config_cache = '/tmp/tablight-npm-cache'
         PLAYWRIGHT_BROWSERS_PATH = '/tmp/tablight-browsers'
+        MODEL_CACHE = '/tmp/tablight-model-cache'
         PLAYWRIGHT_JUNIT_OUTPUT_FILE = 'reports/e2e.xml'
     }
     stages {
@@ -39,19 +40,26 @@ pipeline {
         stage('Install dependencies') {
             steps { sh 'npm ci --no-audit --no-fund' }
         }
-        stage('Static checks') {
-            steps {
-                sh 'npm run lint'
-                sh 'npx --no-install tsc --noEmit'
-            }
-        }
-        stage('Unit tests') {
-            steps {
-                sh 'npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+        stage('Checks and unit tests') {
+            // Independent of each other, so they run side by side.
+            parallel {
+                stage('Lint') { steps { sh 'npm run lint' } }
+                stage('Type check') { steps { sh 'npx --no-install tsc --noEmit' } }
+                stage('Unit tests') {
+                    steps {
+                        sh 'npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+                    }
+                }
             }
         }
         stage('Prepare model assets') {
-            steps { sh 'npm run prepare:assets' }
+            steps {
+                // The model (~33 MB) is kept between builds; fetch-model re-downloads only files whose
+                // SHA-256 does not match the pinned manifest.
+                sh 'mkdir -p "$MODEL_CACHE" public/models && cp -R "$MODEL_CACHE"/. public/models/'
+                sh 'npm run prepare:assets'
+                sh 'cp -R public/models/. "$MODEL_CACHE"/'
+            }
         }
         stage('Quality tests') {
             when { expression { params.RUN_QUALITY_TESTS } }
@@ -70,10 +78,15 @@ pipeline {
             steps {
                 sh 'npx --no-install playwright install chromium'
                 // No root on this shared host: Chromium's system libraries go into a private folder.
-                sh "scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=${params.E2E_WORKERS} --grep-invert @perf"
+                // catchError: a failure marks the build failed but the perf pass still runs.
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    sh "scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=${params.E2E_WORKERS} --grep-invert @perf"
+                }
                 // 500 real tabs need the host's memory to themselves.
-                withEnv(['PLAYWRIGHT_JUNIT_OUTPUT_FILE=reports/e2e-perf.xml']) {
-                    sh 'scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=1 --grep @perf'
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    withEnv(['PLAYWRIGHT_JUNIT_OUTPUT_FILE=reports/e2e-perf.xml']) {
+                        sh 'scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=1 --grep @perf'
+                    }
                 }
             }
         }
