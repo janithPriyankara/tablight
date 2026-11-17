@@ -216,7 +216,10 @@ test('Go to tab switches to it, and “Never viewed” goes from its reasons', a
 test('Keep hides the row (also after a reload); leaving the site and coming back flags it again', async () => {
   await openSpam();
   await showSuspicious();
-  await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Keep ${SUS_TITLES.spam}` }).click();
+  const keep = susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
+  await expect(keep).toHaveText('Keep'); // a visible word on the dashboard (the side panel has icon buttons)
+  await expect(keep.locator('.sus-btn-word')).toBeVisible();
+  await keep.click();
   await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
   await expectNoAlertBadges();
   await dash.reload();

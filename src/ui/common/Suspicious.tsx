@@ -1,3 +1,4 @@
+import type { JSX } from 'preact';
 import { useEffect, useId, useRef } from 'preact/hooks';
 import { CLUE_TEXT, type Clue, type SuspiciousTab } from '../../shared/clues';
 import type { Item } from '../../shared/types';
@@ -17,13 +18,17 @@ export const CLOSE_ALL_BODY = 'You can undo for 10 seconds.';
  * The suspicious tabs with their reasons and three plain actions. The meta line is the one other lists use
  * (domain · Window N · group), so a pop-under in a hidden window can be found; the reasons get a line of
  * their own. No "New" chip: "Never viewed" already says it. The title is not a button: going to a tab that
- * looks like a scam is an explicit "Go to tab". The actions are the icon buttons used on every other row,
- * always visible here; each name includes the tab's title, as the same buttons repeat on each row.
+ * looks like a scam is an explicit "Go to tab". The actions are always visible; each name includes the tab's
+ * title, as the same buttons repeat on each row. In the side panel they are the icon buttons used on every other
+ * row. With `worded` (the dashboard) they are text buttons ("Go to tab", "Keep", "Close"), so Keep, the way out of
+ * a false alarm, reads as a word; the words hide when the list is too narrow for them (see dashboard.css).
  */
 export function SuspiciousRows(props: {
   list: SuspiciousTab[];
   label: string;
   busy: boolean;
+  /** Text buttons with their icons (dashboard) instead of icon-only buttons (side panel). */
+  worded?: boolean;
   /** Window numbers by window id (as in the other lists): adds "Window N" to the meta line. */
   windowNo?: ReadonlyMap<number, number>;
   /** The group of an item, for the chip after the domain. */
@@ -32,7 +37,15 @@ export function SuspiciousRows(props: {
   onKeep: (s: SuspiciousTab) => void;
   onClose: (s: SuspiciousTab) => void;
 }) {
-  const { busy } = props;
+  const { busy, worded } = props;
+  const action = (word: string, name: string, tip: string, icon: JSX.Element, onClick: () => void) => (
+    <button
+      type="button" class={worded ? 'btn btn-sm btn-ghost sus-btn' : 'icon-btn'} aria-label={name} title={tip}
+      disabled={busy} onClick={onClick}
+    >
+      {icon}{worded && <span class="sus-btn-word">{word}</span>}
+    </button>
+  );
   return (
     <ul class="item-list sus-list" aria-label={props.label}>
       {props.list.map((s) => {
@@ -45,15 +58,9 @@ export function SuspiciousRows(props: {
             {...(win !== undefined ? { meta: `Window ${win}` } : {})} {...(group ? { group } : {})}
             actions={
               <>
-                <button type="button" class="icon-btn" aria-label={`Go to tab ${title}`} title="Go to tab" disabled={busy} onClick={() => props.onGo(s)}>
-                  <SwitchIcon />
-                </button>
-                <button type="button" class="icon-btn" aria-label={`Keep ${title}`} title="Keep: stop pointing this tab out" disabled={busy} onClick={() => props.onKeep(s)}>
-                  <CheckIcon />
-                </button>
-                <button type="button" class="icon-btn" aria-label={`Close ${title}`} title="Close tab" disabled={busy} onClick={() => props.onClose(s)}>
-                  <CloseIcon />
-                </button>
+                {action('Go to tab', `Go to tab ${title}`, 'Go to tab', <SwitchIcon />, () => props.onGo(s))}
+                {action('Keep', `Keep ${title}`, 'Keep: stop pointing this tab out', <CheckIcon />, () => props.onKeep(s))}
+                {action('Close', `Close ${title}`, 'Close tab', <CloseIcon />, () => props.onClose(s))}
               </>
             }
           />
@@ -69,9 +76,10 @@ export function ConfirmTitles({ titles }: { titles: string[] }) {
 
 /**
  * "Close all" confirmation inside a page without modals (the side panel): Cancel has the focus, Esc
- * cancels, and nothing closes until "Close tabs".
+ * cancels, and nothing closes until "Close tabs". While another action runs (`busy`), "Close tabs" is disabled
+ * and the confirmation stays open, instead of closing with nothing done.
  */
-export function InlineCloseConfirm(props: { titles: string[]; onCancel: () => void; onConfirm: () => void }) {
+export function InlineCloseConfirm(props: { titles: string[]; busy?: boolean; onCancel: () => void; onConfirm: () => void }) {
   const cancel = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   useEffect(() => cancel.current?.focus(), []);
@@ -89,7 +97,7 @@ export function InlineCloseConfirm(props: { titles: string[]; onCancel: () => vo
       <p class="sus-confirm-body">{CLOSE_ALL_BODY}</p>
       <div class="sus-confirm-actions">
         <button ref={cancel} type="button" class="btn btn-sm" onClick={props.onCancel}>Cancel</button>
-        <button type="button" class="btn btn-sm btn-danger" onClick={props.onConfirm}>Close tabs</button>
+        <button type="button" class="btn btn-sm btn-danger" disabled={props.busy} onClick={props.onConfirm}>Close tabs</button>
       </div>
     </div>
   );

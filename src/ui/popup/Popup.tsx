@@ -138,7 +138,7 @@ export function Popup() {
           <ShieldIcon class="dup-icon" />
           <div class="dup-text">
             <strong>{plural(state.suspicious.length, 'suspicious tab')}</strong>
-            <span class="dup-title">They opened in the background and look like ads or scams</span>
+            <span class="dup-title">They opened in the background and look like ads or scams.</span>
           </div>
           <div class="dup-actions">
             <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void dashboard('view=suspicious')}>Review</button>

@@ -197,7 +197,7 @@ export function SidePanel() {
           </div>
           {confirmClose && (
             <InlineCloseConfirm
-              titles={suspicious.map((s) => displayTitle(s.item))}
+              titles={suspicious.map((s) => displayTitle(s.item))} busy={busy}
               onCancel={cancelCloseAll}
               onConfirm={() => {
                 setConfirmClose(false);

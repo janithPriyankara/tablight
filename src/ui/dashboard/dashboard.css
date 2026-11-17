@@ -316,6 +316,25 @@ body.dashboard-page > #app {
   border-radius: 0;
   box-shadow: inset 0 -1px 0 var(--border); /* ruled, like the other lists */
 }
+/* Worded actions ("Go to tab", "Keep", "Close"); below ~700px of list the words hide and the icons remain
+   (the accessible names never change), so a row does not wrap. */
+.sus-view {
+  container-type: inline-size;
+}
+.sus-btn {
+  padding: 0 8px;
+  color: var(--text);
+}
+@container (max-width: 699px) {
+  .sus-btn {
+    width: 28px;
+    padding: 0;
+    justify-content: center;
+  }
+  .sus-btn-word {
+    display: none;
+  }
+}
 /* ---------- Windowed list ---------- */
 .grid-scroll {
   flex: 1;

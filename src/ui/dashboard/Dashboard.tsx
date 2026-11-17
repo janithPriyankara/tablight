@@ -667,7 +667,7 @@ export function Dashboard() {
             <div class="page-scroll sus-view">
               <p class="sus-intro">{SUSPICIOUS_INTRO}</p>
               <SuspiciousRows
-                list={suspicious} label="Suspicious tabs" busy={busy} windowNo={windowNo}
+                list={suspicious} label="Suspicious tabs" busy={busy} windowNo={windowNo} worded
                 groupOf={(i) => (i.groupId !== null ? groupMap.get(i.groupId) : undefined)}
                 onGo={(s) => void openItem(s.item)} onKeep={(s) => void keepTab(s)}
                 onClose={(s) => void act(() => closeIds([s.item.id]))}

@@ -645,7 +645,7 @@ describe('dashboard', () => {
       await waitFor(() => expect(sent('close')).toEqual([{ t: 'close', ids: ['s9'] }]));
       await screen.findByText('Closed 1 tab');
     });
-    it('rows: no "New" chip (the reasons say it), the window and group meta line, icon buttons like other rows', async () => {
+    it('rows: no "New" chip (the reasons say it), the window and group meta line, worded Go to tab / Keep / Close buttons', async () => {
       location.hash = '#view=suspicious';
       const popped = { ...scam, windowId: 2 };
       serve(state({ items: [...state().items, popped], suspicious: [{ item: popped, clues: ['opener', 'unseen', 'address'] }] }));
@@ -656,7 +656,11 @@ describe('dashboard', () => {
       expect(row.querySelector('.item-meta')!.textContent).toBe('official-app.spaceWindow 2Programming');
       expect(row.querySelector('.item-note')!.textContent).toBe('Opened by another site · Never viewed · Ad-click address');
       const buttons = within(row).getAllByRole('button');
-      expect(buttons.map((b) => b.className)).toEqual(['icon-btn', 'icon-btn', 'icon-btn']);
+      // Keep, the way out of a false alarm, is a visible word here (the side panel keeps icon buttons).
+      expect(buttons.map((b) => b.className)).toEqual(Array(3).fill('btn btn-sm btn-ghost sus-btn'));
+      expect(buttons.map((b) => b.textContent)).toEqual(['Go to tab', 'Keep', 'Close']);
+      expect(buttons.map((b) => b.querySelector('svg.icon'))).not.toContain(null);
+      expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([`Go to tab ${scam.title}`, `Keep ${scam.title}`, `Close ${scam.title}`]);
       expect(buttons.map((b) => b.title)).toEqual(['Go to tab', 'Keep: stop pointing this tab out', 'Close tab']);
       // Elsewhere the same unseen tab keeps its "New" chip.
       cleanup();

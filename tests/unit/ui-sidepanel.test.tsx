@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } f
 vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
 const { send } = await import('../../src/shared/rpc');
 const { SidePanel } = await import('../../src/ui/sidepanel/SidePanel');
+const { InlineCloseConfirm } = await import('../../src/ui/common/Suspicious');
 const sendMock = vi.mocked(send);
 
 const XSS = '<img src=x onerror=alert(1)>';
@@ -237,6 +238,16 @@ describe('SidePanel', () => {
       fireEvent.click(within(await screen.findByRole('group', { name: 'Close 1 suspicious tab?' })).getByRole('button', { name: 'Close tabs' }));
       await waitFor(() => expect(sendMock.mock.calls.map(([r]) => r)).toContainEqual({ t: 'close', ids: ['i9'] }));
       await screen.findByText('Closed 1 tab');
+    });
+    it('"Close tabs" is disabled while another action runs, and the confirmation stays open', async () => {
+      const onConfirm = vi.fn();
+      const { rerender } = render(<InlineCloseConfirm titles={['Reveal your bonus']} busy onCancel={() => undefined} onConfirm={onConfirm} />);
+      const ask = screen.getByRole('group', { name: 'Close 1 suspicious tab?' });
+      const go = within(ask).getByRole('button', { name: 'Close tabs' }) as HTMLButtonElement;
+      expect(go.disabled).toBe(true); // a browser sends no click to a disabled button
+      rerender(<InlineCloseConfirm titles={['Reveal your bonus']} busy={false} onCancel={() => undefined} onConfirm={onConfirm} />);
+      fireEvent.click(within(screen.getByRole('group', { name: 'Close 1 suspicious tab?' })).getByRole('button', { name: 'Close tabs' }));
+      expect(onConfirm).toHaveBeenCalledTimes(1);
     });
   });
 });

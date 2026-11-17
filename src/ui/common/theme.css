@@ -431,7 +431,7 @@ button.item-main {
   text-overflow: ellipsis;
 }
 /* ---------- Suspicious tabs (dashboard view + side panel) ---------- */
-/* Few rows, each with worded buttons: the actions stay visible. */
+/* Few rows: the actions stay visible (text buttons on the dashboard, icon buttons in the side panel). */
 .sus-row {
   padding: 2px 0;
 }

@@ -338,6 +338,7 @@ describe('popup', () => {
     const card = screen.getByRole('region', { name: 'Suspicious tabs' });
     expect(card.className).toContain('dup-alert');
     expect(within(card).getByText('1 suspicious tab').tagName).toBe('STRONG');
+    expect(within(card).getByText('They opened in the background and look like ads or scams.')).toBeTruthy();
     expect(within(card).getByRole('button', { name: 'Review' }).className).toBe('btn btn-sm');
     fireEvent.click(screen.getByRole('button', { name: 'Review' }));
     await waitFor(() => expect(tabsCreate).toHaveBeenCalledWith({ url: 'chrome-extension://ext/dashboard.html#view=suspicious' }));
