@@ -77,6 +77,17 @@ export const PAGES: TestPage[] = [
   { slug: 'design-typography-pairing', title: 'Typography pairing guide: fonts for web design' },
 ];
 
+/**
+ * Pages on a topic none of the starter groups covers (beekeeping): opened together they stay Unsorted and
+ * become a suggested group (tests/e2e/ui-dashboard.spec.ts). Served under /p/<slug> like PAGES.
+ */
+export const TOPIC_PAGES: TestPage[] = [
+  { slug: 'bees-first-hive', title: 'Beekeeping for beginners: setting up your first beehive' },
+  { slug: 'bees-honey-harvest', title: 'How to harvest honey from a beehive without upsetting the bees' },
+  { slug: 'bees-queen-bee', title: 'Beekeeping: how to spot the queen bee in a hive' },
+  { slug: 'bees-swarm', title: 'Why honey bees swarm and how beekeepers catch a swarm' },
+  { slug: 'bees-varroa', title: 'Varroa mites in beehives: beekeeping treatments that work' },
+];
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -143,7 +154,7 @@ export interface PageServer {
  * /favicon.ico is an empty 204; the rest is 404.
  */
 export async function startPageServer(): Promise<PageServer> {
-  const bySlug = new Map(PAGES.map((p) => [p.slug, p]));
+  const bySlug = new Map([...PAGES, ...TOPIC_PAGES].map((p) => [p.slug, p]));
   let lastServedAt = 0;
   const server: Server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
