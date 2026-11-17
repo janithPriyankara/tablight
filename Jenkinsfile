@@ -17,8 +17,8 @@ pipeline {
             description: 'Run model/classification quality tests (requires extra CPU and memory).')
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
             description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
-        string(name: 'E2E_WORKERS', defaultValue: '3',
-            description: 'How many browser test files run at once (each starts its own Chromium).')
+        string(name: 'E2E_WORKERS', defaultValue: '2',
+            description: 'How many browser test files run at once (each starts its own Chromium). The 500-tab @perf test always runs alone afterwards.')
     }
     environment {
         CI = 'true'
@@ -70,7 +70,11 @@ pipeline {
             steps {
                 sh 'npx --no-install playwright install chromium'
                 // No root on this shared host: Chromium's system libraries go into a private folder.
-                sh "scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=${params.E2E_WORKERS}"
+                sh "scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=${params.E2E_WORKERS} --grep-invert @perf"
+                // 500 real tabs need the host's memory to themselves.
+                withEnv(['PLAYWRIGHT_JUNIT_OUTPUT_FILE=reports/e2e-perf.xml']) {
+                    sh 'scripts/ci/e2e-no-root.sh --reporter=list,junit --workers=1 --grep @perf'
+                }
             }
         }
         stage('Archive release') {

@@ -365,7 +365,8 @@ test('side panel: lists its window’s tabs, switches on click; the toolbar sett
   await rpc(page, { t: 'settings', patch: { toolbarOpens: 'popup' } });
   expect(await page.evaluate(() => chrome.action.getPopup({}))).toMatch(/popup\.html$/);
 });
-test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the last load', async () => {
+// @perf: opens 500 real tabs; CI runs it on its own so no other browser competes for memory.
+test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the last load', { tag: '@perf' }, async () => {
   test.slow();
   const ext = await launch();
   extId = ext.id;
