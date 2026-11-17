@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { ConfirmTitles } from '../common/Suspicious';
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -62,6 +63,8 @@ export function Modal(props: {
 export interface ConfirmOptions {
   title: string;
   body?: string;
+  /** Listed under the body (e.g. the titles of the tabs about to close). */
+  items?: string[];
   confirmLabel: string;
   /** Destructive: the confirm button is red and Cancel gets the initial focus. */
   danger?: boolean;
@@ -82,6 +85,7 @@ export function ConfirmDialog({ opts, onDone }: { opts: ConfirmOptions; onDone: 
         </>
       }
     >
+      {opts.items && opts.items.length > 0 && <ConfirmTitles titles={opts.items} />}
       {opts.body && <p>{opts.body}</p>}
     </Modal>
   );

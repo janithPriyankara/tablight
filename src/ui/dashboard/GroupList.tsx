@@ -2,15 +2,16 @@ import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { GroupSummary } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
-import { ClockIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, StashIcon } from '../common/icons';
+import { ClockIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, ShieldIcon, StashIcon } from '../common/icons';
 import { Suggestions } from './Suggestions';
 import { type SpecialView, type View, sameView } from './views';
 
-export interface ViewCounts { all: number; unsorted: number; duplicates: number; stashed: number }
+export interface ViewCounts { all: number; unsorted: number; duplicates: number; suspicious: number; stashed: number }
 const SPECIAL: { kind: SpecialView; label: string; icon: (p: { class?: string }) => JSX.Element }[] = [
   { kind: 'all', label: 'All tabs', icon: ListIcon },
   { kind: 'unsorted', label: 'Unsorted', icon: InboxIcon },
   { kind: 'duplicates', label: 'Duplicates', icon: CopyIcon },
+  { kind: 'suspicious', label: 'Suspicious', icon: ShieldIcon },
   { kind: 'stashed', label: 'Saved for later', icon: StashIcon },
   { kind: 'sessions', label: 'Sessions', icon: ClockIcon },
   { kind: 'settings', label: 'Settings', icon: GearIcon },
@@ -37,10 +38,11 @@ export function GroupList(props: GroupListProps) {
   const suggested = groups.filter((g) => g.suggested);
   const countOf = (k: SpecialView) => (k in counts ? counts[k as keyof ViewCounts] : undefined);
   const current = (v: View) => (sameView(view, v) ? 'page' : undefined);
+  const shown = SPECIAL.filter((s) => isShown(s.kind, view, counts.suspicious));
   return (
     <nav class="sidebar" aria-label="Views and groups">
       <ul class="nav-list">
-        {SPECIAL.map(({ kind, label, icon: Icon }) => {
+        {shown.map(({ kind, label, icon: Icon }) => {
           const n = countOf(kind);
           return (
             <li key={kind}>
@@ -98,8 +100,18 @@ export function GroupList(props: GroupListProps) {
   );
 }
 
+/** Suspicious is listed only while there are suspicious tabs, or while it is the current view. */
+function isShown(kind: SpecialView, view: View, suspicious: number): boolean {
+  return kind !== 'suspicious' || suspicious > 0 || view.kind === 'suspicious';
+}
 /** Below 900 px the column collapses into this select at the top of the page (groups and suggestions). */
-export function ViewSelect({ view, groups, onView }: { view: View; groups: GroupSummary[]; onView: (v: View) => void }) {
+export function ViewSelect({ view, groups, onView, suspicious }: {
+  view: View;
+  groups: GroupSummary[];
+  onView: (v: View) => void;
+  /** How many suspicious tabs there are (the view is offered only when there are some). */
+  suspicious: number;
+}) {
   const value = view.kind === 'group' ? `group:${view.id}` : view.kind;
   const regular = groups.filter((g) => !g.suggested).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const suggested = groups.filter((g) => g.suggested);
@@ -118,7 +130,7 @@ export function ViewSelect({ view, groups, onView }: { view: View; groups: Group
           onView(v.startsWith('group:') ? { kind: 'group', id: v.slice(6) } : { kind: v as SpecialView });
         }}
       >
-        {SPECIAL.map((s) => <option key={s.kind} value={s.kind}>{s.label}</option>)}
+        {SPECIAL.filter((s) => isShown(s.kind, view, suspicious)).map((s) => <option key={s.kind} value={s.kind}>{s.label}</option>)}
         <optgroup label="Groups">{regular.map(option)}</optgroup>
         {suggested.length > 0 && <optgroup label="Suggested">{suggested.map(option)}</optgroup>}
       </select>

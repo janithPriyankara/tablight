@@ -590,4 +590,75 @@ describe('dashboard', () => {
     await screen.findByRole('button', { name: 'Export backup' });
     expect(screen.getByText(/backup file contains your saved tabs, your groups and your saved sessions/)).toBeTruthy();
   });
+
+  describe('suspicious tabs', () => {
+    const scam = item('s9', { title: 'Open an envelope and reveal your bonus', url: 'https://official-app.space/click?key=abc', domain: 'official-app.space', opened: false });
+    const sus = () => state({ items: [...state().items, scam], suspicious: [{ item: scam, clues: ['opener', 'unseen', 'address'] }] });
+    const sidebar = () => within(document.querySelector('.sidebar')! as HTMLElement);
+    it('the sidebar entry shows the count after Duplicates, only while there are suspicious tabs', async () => {
+      serve(sus());
+      render(<Dashboard />);
+      await ready();
+      const entry = sidebar().getByRole('button', { name: /Suspicious/ });
+      expect(entry.textContent).toContain('1');
+      const names = sidebar().getAllByRole('button').map((b) => b.textContent ?? '');
+      expect(names.findIndex((n) => n.startsWith('Suspicious'))).toBe(names.findIndex((n) => n.startsWith('Duplicates')) + 1);
+      cleanup();
+      serve(state());
+      render(<Dashboard />);
+      await ready();
+      expect(sidebar().queryByRole('button', { name: /Suspicious/ })).toBeNull();
+    });
+    it('the view explains itself, lists the reasons, and Keep / Go to tab / Close act on the row', async () => {
+      location.hash = '#view=suspicious';
+      serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));
+      render(<Dashboard />);
+      expect((await ready()).textContent).toBe('Suspicious');
+      expect(screen.getByText('These tabs opened in the background and look like ads or scams. Tablight never closes tabs on its own.')).toBeTruthy();
+      expect(screen.getByText('Opened by another site · Never viewed · Ad-click address')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: `Keep ${scam.title}` }));
+      await waitFor(() => expect(sent('keepTab')).toEqual([{ t: 'keepTab', id: 's9' }]));
+      fireEvent.click(screen.getByRole('button', { name: `Go to tab ${scam.title}` }));
+      await waitFor(() => expect(sent('open')).toEqual([{ t: 'open', id: 's9' }]));
+      fireEvent.click(screen.getByRole('button', { name: `Close ${scam.title}` }));
+      await waitFor(() => expect(sent('close')).toEqual([{ t: 'close', ids: ['s9'] }]));
+      await screen.findByText('Closed 1 tab');
+    });
+    it('"Close all (1)" asks first, listing the titles, then closes with Undo', async () => {
+      location.hash = '#view=suspicious';
+      serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));
+      render(<Dashboard />);
+      await ready();
+      fireEvent.click(screen.getByRole('button', { name: 'Close all (1)' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Close 1 suspicious tab?' });
+      expect(within(dialog).getByText(scam.title)).toBeTruthy();
+      expect(sent('close')).toHaveLength(0);
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close tabs' }));
+      await waitFor(() => expect(sent('close')).toEqual([{ t: 'close', ids: ['s9'] }]));
+      await screen.findByText('Closed 1 tab');
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    });
+    it('routed there with none: "No suspicious tabs." and the entry stays while selected', async () => {
+      location.hash = '#view=suspicious';
+      serve(state());
+      render(<Dashboard />);
+      await screen.findByText('No suspicious tabs.');
+      expect(sidebar().getByRole('button', { name: /Suspicious/ }).getAttribute('aria-current')).toBe('page');
+      expect(screen.queryByRole('button', { name: /Close all/ })).toBeNull();
+    });
+    it('Settings: the "Point out suspicious tabs" switch saves the setting', async () => {
+      location.hash = '#view=settings';
+      let settings = { ...DEFAULT_SETTINGS, onboarded: true };
+      serve(() => state({ settings }), (req) => {
+        if (req.t === 'settings') settings = { ...settings, ...(req.patch as object) };
+        return settings;
+      });
+      render(<Dashboard />);
+      const sw = await screen.findByRole('checkbox', { name: /Point out suspicious tabs/ });
+      expect((sw as HTMLInputElement).checked).toBe(true);
+      expect(screen.getByText('Flags background tabs that look like ads or scams. Nothing is closed without your click.')).toBeTruthy();
+      fireEvent.click(sw);
+      await waitFor(() => expect(sent('settings')).toEqual([{ t: 'settings', patch: { suspiciousTabs: false } }]));
+    });
+  });
 });

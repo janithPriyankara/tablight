@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import type { SuspiciousTab } from '../../shared/clues';
 import { send } from '../../shared/rpc';
 import { LAST_SESSION_KEY, type GroupSummary, type Item, type Settings as SettingsT } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
-import { plural } from '../common/format';
+import { displayTitle, plural } from '../common/format';
 import {
   CloseIcon, CopyIcon, HelpIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
   SwitchIcon, TrashIcon,
@@ -12,6 +13,7 @@ import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
 import { hintOnce } from '../common/hints';
+import { CLOSE_ALL_BODY, SUSPICIOUS_INTRO, SuspiciousRows, closeAllTitle } from '../common/Suspicious';
 import { GroupList, ViewSelect } from './GroupList';
 import { ItemGrid, type RowAction, type SelectMode } from './ItemGrid';
 import { ConfirmDialog, type ConfirmOptions, Modal, NameDialog } from './Modal';
@@ -27,7 +29,7 @@ export const OPEN_MANY_CONFIRM_ABOVE = 20;
 /** The permanent catch-all group (the background refuses to delete it). */
 const OTHER_GROUP_ID = 'other';
 const VIEW_TITLE: Record<Exclude<View['kind'], 'group'>, string> = {
-  all: 'All tabs', unsorted: 'Unsorted', duplicates: 'Duplicates', stashed: 'Saved for later', sessions: 'Sessions', settings: 'Settings',
+  all: 'All tabs', unsorted: 'Unsorted', duplicates: 'Duplicates', suspicious: 'Suspicious', stashed: 'Saved for later', sessions: 'Sessions', settings: 'Settings',
 };
 type RegroupRow = { groupId: string | null; before: number; after: number };
 type Dialog =
@@ -350,6 +352,19 @@ export function Dashboard() {
       const r = await send<{ closed: number; token: string }>({ t: 'closeExtras' });
       notify(`Closed ${plural(r.closed, 'duplicate tab')}`, r.token);
     });
+  // ── suspicious tabs ──
+  const suspicious = state?.suspicious ?? [];
+  const keepTab = (s: SuspiciousTab) => act(() => send({ t: 'keepTab', id: s.item.id }));
+  const closeAllSuspicious = () =>
+    act(async () => {
+      const list = suspicious;
+      if (!list.length) return;
+      if (!(await confirm({
+        title: closeAllTitle(list.length), items: list.map((s) => displayTitle(s.item)), body: CLOSE_ALL_BODY,
+        confirmLabel: 'Close tabs', danger: true,
+      }))) return;
+      await closeIds(list.map((s) => s.item.id));
+    });
   const regroup = () =>
     act(async () => {
       const rows = await send<RegroupRow[]>({ t: 'regroupPreview' });
@@ -413,13 +428,14 @@ export function Dashboard() {
   const title = searching
     ? `Results for “${search.query.trim()}”`
     : view.kind === 'group' ? currentGroup?.name ?? 'Group not found' : VIEW_TITLE[view.kind];
-  const isList = searching || (view.kind !== 'sessions' && view.kind !== 'settings');
+  const isList = searching || (view.kind !== 'sessions' && view.kind !== 'settings' && view.kind !== 'suspicious');
   const counts = useMemo(() => ({
     all: items.length,
     unsorted: itemsForView({ kind: 'unsorted' }, items, groups).length,
     duplicates: state?.dupCount ?? 0,
+    suspicious: suspicious.length,
     stashed: items.filter((i) => i.state === 'stashed').length,
-  }), [items, groups, state?.dupCount]);
+  }), [items, groups, state?.dupCount, suspicious.length]);
   const subtitle = (() => {
     if (!state || !isList) return '';
     if (searching) return search.pending ? 'Searching…' : plural(list.length, 'match', 'matches');
@@ -462,7 +478,7 @@ export function Dashboard() {
 
         <main class="dash-main">
           <header class="dash-top">
-            <ViewSelect view={view} groups={groups} onView={go} />
+            <ViewSelect view={view} groups={groups} onView={go} suspicious={suspicious.length} />
             <label class="search" data-tour="search">
               <SearchIcon class="search-icon" />
               <input
@@ -539,6 +555,11 @@ export function Dashboard() {
               </p>
             )}
             <div class="view-actions">
+              {view.kind === 'suspicious' && !searching && suspicious.length > 0 && (
+                <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void closeAllSuspicious()}>
+                  <CloseIcon />{`Close all (${suspicious.length})`}
+                </button>
+              )}
               {view.kind === 'stashed' && !searching && list.length > 0 && (
                 <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void removeAllStashed()}>
                   <TrashIcon />Remove all
@@ -640,6 +661,18 @@ export function Dashboard() {
                 )}
               </div>
             )
+          ))}
+          {state && !searching && view.kind === 'suspicious' && (suspicious.length ? (
+            <div class="page-scroll sus-view">
+              <p class="sus-intro">{SUSPICIOUS_INTRO}</p>
+              <SuspiciousRows
+                list={suspicious} label="Suspicious tabs" busy={busy}
+                onGo={(s) => void openItem(s.item)} onKeep={(s) => void keepTab(s)}
+                onClose={(s) => void act(() => closeIds([s.item.id]))}
+              />
+            </div>
+          ) : (
+            <div class="empty"><p>No suspicious tabs.</p></div>
           ))}
           {state && !searching && view.kind === 'sessions' && (
             <Sessions version={state} busy={busy} onAction={sessionAction} onSnapshot={snapshotNow} />

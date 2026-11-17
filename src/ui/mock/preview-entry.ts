@@ -4,7 +4,7 @@
  * (vite.preview.config.ts swaps the embedder). Every load starts from a fresh database.
  */
 import { installChromeMock } from './chrome-mock';
-import { previewSeed } from './fixtures';
+import { addSuspiciousPreviewTabs, previewSeed } from './fixtures';
 const REAL_DB = 'tab-organizer';
 export async function startPreview(page: 'popup' | 'dashboard' | 'sidepanel'): Promise<void> {
   // A preview-specific database name, wiped on every load, so it never touches anything else.
@@ -37,6 +37,7 @@ export async function startPreview(page: 'popup' | 'dashboard' | 'sidepanel'): P
       ['https://www.youtube.com/watch?v=pv2', 'The Making of Dune: Part Two - YouTube'],
       ['https://www.netflix.com/title/80057281', 'Watch Stranger Things | Netflix Official Site'],
     ] as const) control.addTab({ url, title, windowId: w, active: false, status: 'complete' });
+    addSuspiciousPreviewTabs(control);
   }, 1500);
   const { render, createElement } = await import('preact');
   const root = document.getElementById('app')!;

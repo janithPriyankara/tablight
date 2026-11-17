@@ -4,13 +4,14 @@ import { openDashboard } from '../../shared/nav';
 import type { GroupSummary, Item } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
-import { plural } from '../common/format';
+import { displayTitle, plural } from '../common/format';
 import { CloseIcon, GridIcon, LogoMark, PauseIcon, PlayIcon, SearchIcon, StashIcon } from '../common/icons';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
 import { hintOnce } from '../common/hints';
+import { InlineCloseConfirm, SUSPICIOUS_INTRO, SuspiciousRows } from '../common/Suspicious';
 import { SearchResultsView, totalsLine } from '../popup/Popup';
 
 /** Section ids that are expanded, kept per browser profile (a convenience: losing it is harmless). */
@@ -56,6 +57,8 @@ export function SidePanel() {
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const [order, setOrder] = useState<Map<number, number>>(new Map());
   const [open, setOpen] = useState<Set<string>>(loadOpen);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const closeAllBtn = useRef<HTMLButtonElement>(null);
   const theme = state?.settings?.theme;
   useEffect(() => applyTheme(theme), [theme]);
 
@@ -120,11 +123,13 @@ export function SidePanel() {
       if (r.skipped) notify('That tab can’t be saved for later');
       else notify('Saved 1 tab for later', r.token, hintOnce('save'));
     });
-  const close = (item: Item) =>
+  const closeIds = (ids: string[]) =>
     act(async () => {
-      const r = await send<{ token: string; closed: number }>({ t: 'close', ids: [item.id] });
+      const r = await send<{ token: string; closed: number }>({ t: 'close', ids });
       notify(`Closed ${plural(r.closed, 'tab')}`, r.closed ? r.token : undefined);
     });
+  const close = (item: Item) => closeIds([item.id]);
+  const keep = (item: Item) => act(async () => void (await send({ t: 'keepTab', id: item.id })));
 
   const items = state?.items ?? [];
   const groups = useMemo(() => new Map((state?.groups ?? []).map((g) => [g.id, g])), [state]);
@@ -136,6 +141,43 @@ export function SidePanel() {
   );
   const shownGroups = (state?.groups ?? []).filter((g) => g.count > 0).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const unsorted = items.filter((i) => i.groupId === null && hasTab(i)).sort(byUse);
+  const suspicious = state?.suspicious ?? [];
+  // Nothing left to close (closed elsewhere, or kept): drop a pending confirmation with the section.
+  useEffect(() => {
+    if (!suspicious.length) setConfirmClose(false);
+  }, [suspicious.length]);
+  const cancelCloseAll = () => {
+    setConfirmClose(false);
+    setTimeout(() => closeAllBtn.current?.focus(), 0);
+  };
+  const suspiciousSection = suspicious.length > 0 && (
+    <section key="suspicious" class="sp-section sp-suspicious" aria-labelledby="sp-h-suspicious" role="region">
+      <div class="sp-head sp-head-static">
+        <h2 class="sp-name" id="sp-h-suspicious">{`Suspicious (${suspicious.length})`}</h2>
+        <button
+          ref={closeAllBtn} type="button" class="btn btn-sm" disabled={busy || confirmClose}
+          onClick={() => setConfirmClose(true)}
+        >
+          {`Close all (${suspicious.length})`}
+        </button>
+      </div>
+      {confirmClose && (
+        <InlineCloseConfirm
+          titles={suspicious.map((s) => displayTitle(s.item))}
+          onCancel={cancelCloseAll}
+          onConfirm={() => {
+            setConfirmClose(false);
+            void closeIds(suspicious.map((s) => s.item.id));
+          }}
+        />
+      )}
+      <p class="sp-intro">{SUSPICIOUS_INTRO}</p>
+      <SuspiciousRows
+        list={suspicious} label="Suspicious tabs" busy={busy}
+        onGo={(s) => void openItem(s.item)} onKeep={(s) => void keep(s.item)} onClose={(s) => void close(s.item)}
+      />
+    </section>
+  );
 
   const row = (i: Item, showGroup: boolean) => {
     const g = showGroup && i.groupId !== null ? groups.get(i.groupId) : undefined;
@@ -242,6 +284,7 @@ export function SidePanel() {
           />
         ) : state ? (
           <>
+            {suspiciousSection}
             {section(WINDOW_SECTION, 'This window', thisWindow, { showGroup: true })}
             {shownGroups.map((g) =>
               section(`group:${g.id}`, g.name, items.filter((i) => i.groupId === g.id).sort(byUse), { group: g, count: g.count }))}

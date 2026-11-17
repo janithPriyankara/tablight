@@ -4,7 +4,7 @@
  * Only used by the UI preview, never by the shipped extension.
  */
 import fixture from '../../../tests/quality/fixture.json';
-import type { MockSeed } from './chrome-mock';
+import type { ChromeMockControl, MockSeed } from './chrome-mock';
 export interface PreviewTab {
   url: string;
   title: string;
@@ -104,4 +104,27 @@ export function previewSeed(now = Date.now()): MockSeed {
     };
   });
   return { windows };
+}
+/**
+ * Two tabs that look like ads or scams, opened the way they really arrive, so the preview shows the
+ * Suspicious view, the side-panel section and the popup line. The real background records the opener
+ * (recordCreated on tabs.onCreated) and reads the pop-up window type; nothing is special-cased.
+ */
+export function addSuspiciousPreviewTabs(control: ChromeMockControl): void {
+  const web = control.tabs().filter((t) => t.url?.startsWith('https://'));
+  // An ad network opening a background tab from a news page.
+  const news = web.find((t) => /bbc\.com|cnn\.com|nytimes\.com/.test(t.url ?? '')) ?? web[0];
+  if (news) {
+    control.addTab({
+      url: 'https://official-app.space/click?key=abc&visitor_id=1', title: 'Open an envelope and reveal your 100% deposit bonus',
+      windowId: news.windowId, openerTabId: news.id, active: false, status: 'complete',
+    });
+  }
+  // A pop-under: a small pop-up window holding a prize page.
+  const popup = control.addWindow();
+  control.setWindowType(popup, 'popup');
+  control.addTab({
+    url: 'https://prize-claim.top/lp/win?subid=93&clickid=x7', title: 'Congratulations! You have been selected to win an iPhone 16',
+    windowId: popup, active: false, status: 'complete',
+  });
 }

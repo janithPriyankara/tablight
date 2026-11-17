@@ -20,7 +20,7 @@ function item(id: string, p: Partial<Item> = {}): Item {
 function group(id: string, name: string, count: number, watchCount = 0): GroupSummary {
   return { id, name, color: '#0090ff', icon: '', builtIn: true, exemplars: [], centroid: null, createdAt: 1, count, watchCount };
 }
-function state(): DashboardState {
+function state(p: Partial<DashboardState> = {}): DashboardState {
   return {
     items: [
       item('i1', { title: 'Rust async guide' }),
@@ -33,6 +33,7 @@ function state(): DashboardState {
     dupCount: 0, windows: 2, sleeping: 0, suspicious: [],
     syncStatus: { ok: true, synced: 0, localOnly: 0, lastSyncAt: null },
     modelReady: true, queued: 0, settings: DEFAULT_SETTINGS,
+    ...p,
   };
 }
 type Handler = (req: { t: string; [k: string]: unknown }) => unknown;
@@ -165,5 +166,45 @@ describe('SidePanel', () => {
     fireEvent.input(screen.getByRole('searchbox', { name: 'Search tabs' }), { target: { value: 'rust' } });
     await screen.findByRole('list', { name: 'Matches' });
     expect(screen.queryByRole('region', { name: /This window/ })).toBeNull();
+  });
+
+  describe('suspicious tabs', () => {
+    const scam = item('i9', { title: 'Reveal your bonus', windowId: 2, opened: false });
+    const sus = () => state({ suspicious: [{ item: scam, clues: ['popup', 'title'] }] });
+    const section = () => screen.getByRole('region', { name: 'Suspicious (1)' });
+    it('has no section when there are none', async () => {
+      serve(state());
+      render(<SidePanel />);
+      await loaded();
+      expect(screen.queryByRole('region', { name: /Suspicious/ })).toBeNull();
+    });
+    it('shows a section at the top with reasons; Keep and Close act on the row', async () => {
+      serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));
+      render(<SidePanel />);
+      await loaded();
+      const sec = section();
+      expect(sec.compareDocumentPosition(windowSection()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(within(sec).getByText('Opened in a pop-up window · Scam-style title')).toBeTruthy();
+      fireEvent.click(within(sec).getByRole('button', { name: 'Keep Reveal your bonus' }));
+      await waitFor(() => expect(sendMock.mock.calls.map(([r]) => r)).toContainEqual({ t: 'keepTab', id: 'i9' }));
+      fireEvent.click(within(sec).getByRole('button', { name: 'Close Reveal your bonus' }));
+      await waitFor(() => expect(sendMock.mock.calls.map(([r]) => r)).toContainEqual({ t: 'close', ids: ['i9'] }));
+      await screen.findByRole('button', { name: 'Undo' });
+    });
+    it('"Close all (1)" asks first, listing the titles, then closes', async () => {
+      serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));
+      render(<SidePanel />);
+      await loaded();
+      fireEvent.click(within(section()).getByRole('button', { name: 'Close all (1)' }));
+      const ask = await screen.findByRole('group', { name: 'Close 1 suspicious tab?' });
+      expect(within(ask).getByText('Reveal your bonus')).toBeTruthy();
+      expect(sendMock.mock.calls.some(([r]) => (r as { t: string }).t === 'close')).toBe(false);
+      fireEvent.click(within(ask).getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByRole('group', { name: /suspicious tab\?/ })).toBeNull();
+      fireEvent.click(within(section()).getByRole('button', { name: 'Close all (1)' }));
+      fireEvent.click(within(await screen.findByRole('group', { name: 'Close 1 suspicious tab?' })).getByRole('button', { name: 'Close tabs' }));
+      await waitFor(() => expect(sendMock.mock.calls.map(([r]) => r)).toContainEqual({ t: 'close', ids: ['i9'] }));
+      await screen.findByText('Closed 1 tab');
+    });
   });
 });

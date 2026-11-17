@@ -421,6 +421,56 @@ button.item-main {
 .item-row:focus-within .item-actions {
   opacity: 1;
 }
+/* A line of its own under the meta line (why a tab is listed as suspicious). */
+.item-note {
+  overflow: hidden;
+  margin-top: 1px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* ---------- Suspicious tabs (dashboard view + side panel) ---------- */
+/* Few rows, each with worded buttons: the actions stay visible. */
+.sus-row {
+  padding: 2px 0;
+}
+.sus-row .item-actions {
+  gap: var(--space-1);
+  opacity: 1;
+}
+.confirm-list {
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 0 0 var(--space-3);
+  padding-left: 1.2em;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.confirm-list li + li {
+  margin-top: 2px;
+}
+.sus-confirm {
+  margin: 0 var(--space-2) var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.sus-confirm-title {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+.sus-confirm-body {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.sus-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
 
 /* ---------- Search field (popup + dashboard) ---------- */
 .search {

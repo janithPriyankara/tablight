@@ -1,7 +1,7 @@
 // Dashboard routing (location.hash) and the pure filters behind each view.
 import type { GroupSummary, Item, SyncStatus } from '../../shared/types';
 
-export const SPECIAL_VIEWS = ['all', 'unsorted', 'duplicates', 'stashed', 'sessions', 'settings'] as const;
+export const SPECIAL_VIEWS = ['all', 'unsorted', 'duplicates', 'suspicious', 'stashed', 'sessions', 'settings'] as const;
 export type SpecialView = (typeof SPECIAL_VIEWS)[number];
 export type View = { kind: SpecialView } | { kind: 'group'; id: string };
 
@@ -54,7 +54,7 @@ export function byDefaultOrder(a: Item, b: Item): number {
   return b.lastActiveAt - a.lastActiveAt;
 }
 
-/** The items a list view shows (sessions/settings show none). */
+/** The items a list view shows (sessions/settings show none; suspicious has its own list). */
 export function itemsForView(v: View, items: Item[], groups: GroupSummary[]): Item[] {
   const known = new Set(groups.map((g) => g.id));
   let out: Item[];

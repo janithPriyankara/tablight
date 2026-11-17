@@ -255,6 +255,19 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
               onChange={(e) => onMirror(e.currentTarget.checked)}
             />
           </label>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name">Point out suspicious tabs</span>
+              <span class="setting-help">Flags background tabs that look like ads or scams. Nothing is closed without your click.</span>
+            </span>
+            <input
+              type="checkbox" class="switch" checked={settings.suspiciousTabs} disabled={busy}
+              onChange={(e) => {
+                const on = e.currentTarget.checked;
+                void act(() => save({ suspiciousTabs: on }));
+              }}
+            />
+          </label>
         </section>
 
         <section class="settings-group" aria-labelledby="set-privacy-h">

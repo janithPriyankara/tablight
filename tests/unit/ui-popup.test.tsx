@@ -329,6 +329,20 @@ describe('popup', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await screen.findByText(/5 tabs/);
   });
+  it('points out suspicious tabs with a Review link to the dashboard view, only when there are some', async () => {
+    const scam = item('i9', { title: 'Reveal your bonus' });
+    serve(state({ suspicious: [{ item: scam, clues: ['popup', 'title'] }] }));
+    render(<Popup />);
+    await screen.findByText('1 suspicious tab');
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }));
+    await waitFor(() => expect(tabsCreate).toHaveBeenCalledWith({ url: 'chrome-extension://ext/dashboard.html#view=suspicious' }));
+    cleanup();
+    serve(state());
+    render(<Popup />);
+    await screen.findByText(/tabs ·/);
+    expect(screen.queryByText(/suspicious/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Review' })).toBeNull();
+  });
 });
 
 describe('Favicon', () => {
@@ -373,4 +387,5 @@ describe('groupTone', () => {
     // Distinct starter colors keep distinct hues.
     expect(groupHue('#e5484d')).not.toBe(groupHue('#30a46c'));
   });
+
 });

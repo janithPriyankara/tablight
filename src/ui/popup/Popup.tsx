@@ -133,6 +133,12 @@ export function Popup() {
       )}
       {!state && !error && <p class="totals totals-loading" aria-busy="true">Counting tabs…</p>}
       {state && <p class="totals">{totalsLine(state)}</p>}
+      {state && state.suspicious.length > 0 && (
+        <p class="suspicious-line">
+          <span>{plural(state.suspicious.length, 'suspicious tab')}</span>
+          <button type="button" class="btn btn-ghost btn-sm" disabled={busy} onClick={() => void dashboard('view=suspicious')}>Review</button>
+        </p>
+      )}
 
       {state?.activeDup && (
         <section class="dup-alert" role="region" aria-label="Duplicate tab">

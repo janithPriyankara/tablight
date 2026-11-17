@@ -134,3 +134,43 @@ body.sidepanel-page > #app {
 .sp .item-row.is-active .item-actions {
   background: var(--accent-soft);
 }
+
+/* Suspicious tabs: a fixed (not collapsible) section at the top. */
+.sp-suspicious {
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+.sp-head-static {
+  cursor: default;
+}
+.sp-head-static:hover {
+  background: transparent;
+}
+.sp-head-static .sp-name {
+  margin: 0;
+  font-size: inherit;
+}
+.sp-intro {
+  margin: 0 var(--space-2) var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+.sp-suspicious .sus-row {
+  flex-wrap: wrap;
+}
+.sp-suspicious .sus-row .item-main {
+  flex-basis: 100%;
+  padding-bottom: 2px;
+}
+.sp-suspicious .sus-row .item-actions {
+  position: static;
+  margin-left: auto;
+  padding: 0 var(--space-1) var(--space-1);
+  background: transparent;
+  transform: none;
+  pointer-events: auto;
+}
+.sp-suspicious .item-note {
+  white-space: normal; /* the panel is narrow: the reasons wrap rather than cut off */
+}

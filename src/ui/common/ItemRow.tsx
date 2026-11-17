@@ -22,12 +22,14 @@ export interface ItemRowProps {
   selected?: boolean;
   /** Extra meta text after the domain, e.g. "Window 2". */
   meta?: string;
+  /** A line of its own under the meta line (e.g. why a tab is listed as suspicious). */
+  note?: string;
 }
 /**
  * One tab/stash entry: favicon, title (single line, full title + URL in the tooltip), and a meta line.
  * Title, URL and domain are untrusted: they are only ever rendered as text nodes and attributes.
  */
-export function ItemRow({ item, group, onOpen, actions, selected, meta, leading, rowProps, mainTabIndex }: ItemRowProps) {
+export function ItemRow({ item, group, onOpen, actions, selected, meta, note, leading, rowProps, mainTabIndex }: ItemRowProps) {
   const title = displayTitle(item);
   const state = STATE_LABEL[item.state];
   const isNew = item.state !== 'stashed' && item.opened === false;
@@ -45,6 +47,7 @@ export function ItemRow({ item, group, onOpen, actions, selected, meta, leading,
           {state && <span class={`state state-${item.state}`}>{state}</span>}
           {group && <GroupChip name={group.name} color={group.color} small />}
         </span>
+        {note && <span class="item-note">{note}</span>}
       </span>
     </>
   );
