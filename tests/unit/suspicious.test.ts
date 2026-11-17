@@ -50,6 +50,8 @@ describe('titleClue', () => {
     'Bonus episode: Rust async',
     'Microsoft Support – Windows help',
     'Virus taxonomy - Wikipedia',
+    "You won't believe how this works",
+    'Why you won’t regret it',
   ])('does not flag %s', (t) => expect(titleClue(t)).toBe(false));
 });
 describe('cluesFor', () => {

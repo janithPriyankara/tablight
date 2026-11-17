@@ -5,7 +5,7 @@ import { EMBED_MODEL } from '../classify/model';
 import { ruleGroup } from '../classify/rules';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
-import { cleanTitle, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
+import { cleanTitle, domainOf, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
@@ -45,10 +45,7 @@ export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promis
   return sha1hex(`${EMBED_MODEL}\n${i.normUrl}\n${cleanTitle(i.title, i.url)}`);
 }
 
-export function domainOf(url: string): string {
-  if (!isWebUrl(url)) return '';
-  return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-}
+export { domainOf };
 
 // ───────────────────────────── reconcile ─────────────────────────────
 

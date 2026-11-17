@@ -79,6 +79,10 @@ export function startAt(url: string): number | null {
 export function isWebUrl(url: string): boolean {
   return webUrl(url) !== null;
 }
+export function domainOf(url: string): string {
+  if (!isWebUrl(url)) return '';
+  return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+}
 /** New-tab pages that hold no page of their own. */
 const BLANK_TABS = new Set(['', 'about:blank', 'about:newtab', 'chrome://newtab/', 'edge://newtab/', 'chrome://new-tab-page/']);
 /**

@@ -1,7 +1,6 @@
 import type { Clue, SuspiciousTab, TabContext } from '../shared/clues';
 import type { Item } from '../shared/types';
-import { isWebUrl } from '../shared/url';
-import { domainOf } from './tab-index';
+import { domainOf, isWebUrl } from '../shared/url';
 const CLICK_SEGMENTS = new Set(['click', 'redirect', 'go', 'r', 'out']);
 const CLICK_KEYS = new Set(['key', 'visitor_id', 'clickid', 'click_id', 'zoneid', 'campaign_id', 'subid', 'cid', 'pubid', 'bid']);
 const SPAM_TLDS = new Set(['space', 'top', 'xyz', 'click', 'buzz', 'rest', 'cfd', 'sbs', 'icu']);
@@ -33,7 +32,7 @@ export function addressClue(url: string): boolean {
 }
 const TITLE_PATTERNS: RegExp[] = [
   // prize
-  /you (have )?won\b/i, /you have been selected/i, /claim your (prize|reward|gift)/i, /congratulations.{0,20}(winner|won|selected)/i,
+  /you (have )?won(?!['’\w])/i, /you have been selected/i, /claim your (prize|reward|gift)/i, /congratulations.{0,20}(winner|won|selected)/i,
   // gambling
   /deposit bonus/i, /free spins/i, /reveal your .{0,20}bonus/i,
   // fake alert
