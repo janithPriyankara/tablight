@@ -6,7 +6,8 @@ export default defineConfig({
   testMatch: '**/*.spec.ts',
   // Each spec file starts its own Chromium profile (temp dir) and page server (random port), and runs
   // its tests in order, so files can run side by side. E2E_WORKERS sets how many at once.
-  workers: process.env.E2E_WORKERS ?? '50%',
+  // Jenkins also exposes its E2E_WORKERS parameter as this variable, as a string like "2".
+  workers: /^\d+$/.test(process.env.E2E_WORKERS ?? '') ? Number(process.env.E2E_WORKERS) : (process.env.E2E_WORKERS || '50%'),
   fullyParallel: false,
   retries: 0,
   timeout: 180_000,
