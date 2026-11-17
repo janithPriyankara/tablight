@@ -415,6 +415,35 @@ describe('background index', () => {
       expect(mock.actionTitle()).toBe('Tablight');
       mock.uninstall();
     });
+    it('activating a flagged tab refreshes the badge through the activation path', async () => {
+      const mock = installChromeMock({
+        windows: [{ tabs: [{ url: 'https://a.com/', active: true }, { url: 'https://ads.example.com/click/x?key=1', title: 'Hello' }] }],
+      });
+      const bg = await import('../../src/background/index');
+      const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+      const db = await bg.getDb();
+      await db.settings.set({ suspiciousTabs: true });
+      mock.fireInstalled('update');
+      await vi.waitFor(async () => {
+        await whenTabIndexIdle();
+        expect((await db.items.all()).length).toBe(2);
+      });
+      const [a, tab] = mock.tabs();
+      // Address clue + the tab never opened ("unseen") = suspicious.
+      const item = (await db.items.all()).find((i) => i.tabId === tab!.id)!;
+      await db.items.put({ ...item, opened: false });
+      await mock.sendMessage({ t: 'settings', patch: { suspiciousTabs: true } }); // refresh the badge now
+      await vi.waitFor(async () => expect(mock.badgeText(tab!.id)).toBe('!'));
+      expect(mock.badgeText(a!.id)).toBe('!');
+      mock.activateTab(tab!.id!);
+      // Its "unseen" clue is gone once viewed; only the address clue remains, so the alert clears.
+      await vi.waitFor(async () => {
+        expect((await bg.handleRequest({ t: 'state' }) as S).suspicious).toEqual([]);
+        expect(mock.badgeText(a!.id)).toBe('');
+      });
+      expect(mock.badgeText(tab!.id)).toBe('');
+      mock.uninstall();
+    });
     it('keepTab removes the tab from the next state and clears the badge', async () => {
       const { mock, bg } = await boot();
       const [a] = mock.tabs();

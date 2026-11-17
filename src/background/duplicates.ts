@@ -23,6 +23,22 @@ export function findDuplicates(items: Item[]): Map<string, Item[]> {
 const shown = new Map<number, string>();
 let mode: 'alert' | 'normal' | undefined;
 let shownTitle: string | undefined;
+const MODE_KEY = 'badgeMode';
+async function loadMode(): Promise<'alert' | 'normal' | undefined> {
+  try {
+    const v = (await chrome.storage.session.get(MODE_KEY))[MODE_KEY] as unknown;
+    return v === 'alert' || v === 'normal' ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+async function saveMode(m: 'alert' | 'normal'): Promise<void> {
+  try {
+    await chrome.storage.session.set({ [MODE_KEY]: m });
+  } catch {
+    // best effort
+  }
+}
 /** Forget what we set on these tabs (Chrome may reset a tab's badge, e.g. when it navigates). */
 export function invalidateBadges(tabIds: number[]): void {
   for (const id of tabIds) shown.delete(id);
@@ -50,11 +66,14 @@ export async function updateBadge(db: Db, activeTabId?: number, suspiciousCount 
     return n ? `${n}×` : '';
   };
   const want = alert ? 'alert' : 'normal';
-  // A fresh worker is in 'normal' mode as far as tab text goes (unknown text counts as ''), but still sets the colour.
+  // Chrome keeps badge text across worker restarts, so the last mode is remembered in session storage.
+  if (mode === undefined) mode = await loadMode();
+  // No remembered mode (fresh browser): badges are empty, i.e. 'normal' as far as tab text goes, but the colour is still set.
   const flipped = (mode ?? 'normal') !== want;
   if (mode !== want) {
     const prev = mode;
     mode = want;
+    void saveMode(want);
     shown.clear(); // every tab needs the new mode's text
     await chrome.action
       .setBadgeBackgroundColor({ color: alert ? BADGE_ALERT_COLOR : BADGE_COLOR })

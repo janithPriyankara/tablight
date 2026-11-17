@@ -97,6 +97,21 @@ describe('updateBadge', () => {
     expect(mock.badgeColor()).toBe(BADGE_COLOR);
     expect(mock.actionTitle()).toBe('Tablight');
   });
+  it('recovers from alert mode after a worker restart (module state lost, Chrome keeps the badges)', async () => {
+    mock = installChromeMock({
+      windows: [{ tabs: [{ url: 'https://a.com/x', active: true }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }] }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const tabs = mock.tabs();
+    await updateBadge(db, undefined, 1);
+    expect(mock.badgeText(tabs[2]!.id)).toBe('!');
+    resetBadgeCache();
+    await updateBadge(db, undefined, 0);
+    expect(mock.badgeText(tabs[2]!.id)).toBe('');
+    expect(mock.badgeText(tabs[0]!.id)).toBe('2×');
+    expect(mock.badgeColor()).toBe(BADGE_COLOR);
+    expect(mock.actionTitle()).toBe('Tablight');
+  });
   it('a full refresh only calls setBadgeText where the text changes', async () => {
     mock = installChromeMock({
       windows: [{ tabs: [{ url: 'https://a.com/x' }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }, { url: 'https://c.com/' }] }],
