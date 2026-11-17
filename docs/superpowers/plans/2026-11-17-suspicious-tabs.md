@@ -243,6 +243,9 @@
   - from a normal tab, open a local test page that calls `window.open` to a page titled "Reveal your deposit bonus" at a `/click?key=1&visitor_id=2` path (the local static server is fine; the IP-host clue will also fire);
   - confirm the badge shows "!", the Suspicious view lists it with reasons, Keep hides it, and Close all asks, closes it and Undo restores it.
 - [ ] **Step 4: Commit** with `git commit -m "docs: suspicious tabs in privacy policy and listing"`.
+
+### Task 7: Automated browser tests for Suspicious tabs (every combination)
+
 Added at the user's request: every Suspicious-tabs behaviour is exercised by operating the real built extension in Chrome for Testing, automatically.
 **Files:**
 - Create: `tests/e2e/suspicious.spec.ts`; extend `tests/e2e/fixtures/server.ts` with the spam and normal test pages it needs.
@@ -278,6 +281,9 @@ Added at the user's request: every Suspicious-tabs behaviour is exercised by ope
 - [ ] **Step 1:** Write the spec and the pages.
 - [ ] **Step 2:** Run `npm run build && npx playwright test tests/e2e/suspicious.spec.ts`. Expect every test to pass; fix product bugs found (with a unit test for each), not the assertions.
 - [ ] **Step 3:** Commit with `git commit -m "test: end-to-end Suspicious tabs scenarios"`.
+
+### Task 8: UI test cases for the whole extension, automated where possible
+
 Added at the user's request: a written list of UI test cases the user can follow by hand, covering every user-facing feature, each marked with the automated test that covers it.
 **Files:**
 - Create: `docs/testing/ui-test-cases.md`
