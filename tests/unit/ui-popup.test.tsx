@@ -34,7 +34,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
       group('programming', 'Programming', 9), group('videos', 'YouTube / Videos', 7, 3), group('a', 'A', 6),
       group('b', 'B', 5), group('c', 'C', 4), group('d', 'D', 3), group('e', 'Seventh', 2), group('z', 'Empty', 0),
     ],
-    dupCount: 1, windows: 2, sleeping: 1,
+    dupCount: 1, windows: 2, sleeping: 1, suspicious: [],
     syncStatus: { ok: true, synced: 1, localOnly: 0, lastSyncAt: null },
     modelReady: true, queued: 0,
     settings: DEFAULT_SETTINGS,

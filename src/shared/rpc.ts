@@ -25,6 +25,7 @@ export type Req =
   | { t: 'snapshotNow' }
   | { t: 'sessions' } // ui -> bg: { id, takenAt, windows, tabs }[] newest first
   | { t: 'sessionAction'; id: string; action: 'openAll' | 'stashAll' | 'delete'; confirm?: boolean }
+  | { t: 'keepTab'; id: string } // Suspicious tabs: stop flagging this tab while it stays on its domain
   | { t: 'settings'; patch: Partial<Settings> }
   | { t: 'export' }
   | { t: 'deleteAllData' } // Settings: wipe everything this extension stored, then re-seed
@@ -34,7 +35,7 @@ export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
-  'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'settings', 'export', 'deleteAllData', 'import',
+  'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'keepTab', 'settings', 'export', 'deleteAllData', 'import',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

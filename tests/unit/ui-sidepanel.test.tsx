@@ -30,7 +30,7 @@ function state(): DashboardState {
       item('i5', { title: 'Stashed film', state: 'stashed', tabId: undefined, windowId: undefined, groupId: 'movies' }),
     ],
     groups: [group('programming', 'Programming', 1), group('movies', 'Movies', 3, 2), group('empty', 'Empty', 0)],
-    dupCount: 0, windows: 2, sleeping: 0,
+    dupCount: 0, windows: 2, sleeping: 0, suspicious: [],
     syncStatus: { ok: true, synced: 0, localOnly: 0, lastSyncAt: null },
     modelReady: true, queued: 0, settings: DEFAULT_SETTINGS,
   };

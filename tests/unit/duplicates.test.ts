@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { findDuplicates, invalidateBadges, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
+import { BADGE_ALERT_COLOR, BADGE_COLOR, findDuplicates, invalidateBadges, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
 import { reconcile } from '../../src/background/tab-index';
 import type { Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -76,6 +76,27 @@ describe('updateBadge', () => {
     expect(mock.badgeText(a1!.id)).toBe('');
   });
 
+  it("shows '!' on every tab and the alert colour while something is suspicious, then '2×' returns", async () => {
+    mock = installChromeMock({
+      windows: [{ tabs: [{ url: 'https://a.com/x', active: true }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }] }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const tabs = mock.tabs();
+    await updateBadge(db, undefined, 2);
+    for (const t of tabs) expect(mock.badgeText(t.id)).toBe('!');
+    expect(mock.badgeColor()).toBe(BADGE_ALERT_COLOR);
+    expect(mock.actionTitle()).toBe('Tablight: 2 suspicious tabs');
+    const setColor = vi.spyOn(mock.chrome.action, 'setBadgeBackgroundColor');
+    await updateBadge(db, undefined, 1);
+    expect(setColor).not.toHaveBeenCalled(); // same mode: colour untouched
+    expect(mock.actionTitle()).toBe('Tablight: 1 suspicious tab');
+    await updateBadge(db, tabs[2]!.id, 0); // a flip with an active tab still rewrites every tab
+    expect(mock.badgeText(tabs[0]!.id)).toBe('2×');
+    expect(mock.badgeText(tabs[1]!.id)).toBe('2×');
+    expect(mock.badgeText(tabs[2]!.id)).toBe('');
+    expect(mock.badgeColor()).toBe(BADGE_COLOR);
+    expect(mock.actionTitle()).toBe('Tablight');
+  });
   it('a full refresh only calls setBadgeText where the text changes', async () => {
     mock = installChromeMock({
       windows: [{ tabs: [{ url: 'https://a.com/x' }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }, { url: 'https://c.com/' }] }],

@@ -1,3 +1,4 @@
+import type { SuspiciousTab } from './clues';
 export type ItemState = 'open' | 'sleeping' | 'stashed';
 export type Kind = 'watch' | 'read' | 'other';
 export interface Item {
@@ -59,6 +60,8 @@ export interface Settings {
   autoCreateGroups: boolean;
   /** What a click on the toolbar icon opens. */
   toolbarOpens: 'popup' | 'sidepanel';
+  /** Flag open tabs that look like ad or scam pop-ups (the toolbar badge shows '!'). */
+  suspiciousTabs: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -69,6 +72,7 @@ export const DEFAULT_SETTINGS: Settings = {
   onboarded: false,
   autoCreateGroups: false,
   toolbarOpens: 'popup',
+  suspiciousTabs: true,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.
@@ -96,6 +100,8 @@ export interface DashboardState {
   sleeping: number;
   /** The last-focused window's active tab, when it has duplicates. */
   activeDup?: { item: Item; others: Item[] };
+  /** Open or sleeping tabs that look like ad or scam pop-ups; empty when the setting is off. */
+  suspicious: SuspiciousTab[];
   syncStatus: SyncStatus;
   /** The previous browser session, when the startup check found it was not restored. */
   lastSession?: Snapshot;

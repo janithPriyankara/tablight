@@ -25,7 +25,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
   return {
     items: [item('i1'), item('i2'), item('i3', { windowId: 2 }), item('i4', { groupId: 'videos', kind: 'watch' })],
     groups: [group('programming', 'Programming', 3), group('videos', 'Videos', 1, { watchCount: 1 })],
-    dupCount: 0, windows: 2, sleeping: 0,
+    dupCount: 0, windows: 2, sleeping: 0, suspicious: [],
     syncStatus: { ok: true, synced: 412, localOnly: 37, lastSyncAt: Date.now() },
     modelReady: true, queued: 0,
     settings: { ...DEFAULT_SETTINGS, onboarded: true },

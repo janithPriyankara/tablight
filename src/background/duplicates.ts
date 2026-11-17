@@ -3,6 +3,8 @@ import type { Db } from './db';
 
 /** Neutral grey: the badge is information, not an alarm. */
 export const BADGE_COLOR = '#6f6e77';
+/** Burnt orange: shown only while suspicious tabs are open. */
+export const BADGE_ALERT_COLOR = '#c2410c';
 
 /** normUrl → the ≥ 2 open/sleeping web items sharing it. Stashed and non-web items never count. */
 export function findDuplicates(items: Item[]): Map<string, Item[]> {
@@ -19,7 +21,8 @@ export function findDuplicates(items: Item[]): Map<string, Item[]> {
 
 /** tabId → badge text we last set. Lets a full refresh touch only tabs whose text changes. */
 const shown = new Map<number, string>();
-let colorSet = false;
+let mode: 'alert' | 'normal' | undefined;
+let shownTitle: string | undefined;
 /** Forget what we set on these tabs (Chrome may reset a tab's badge, e.g. when it navigates). */
 export function invalidateBadges(tabIds: number[]): void {
   for (const id of tabIds) shown.delete(id);
@@ -27,31 +30,48 @@ export function invalidateBadges(tabIds: number[]): void {
 /** For tests and a fresh worker. */
 export function resetBadgeCache(): void {
   shown.clear();
-  colorSet = false;
+  mode = undefined;
+  shownTitle = undefined;
 }
 /**
- * Per-tab badge: "2×" (the copy count) on a tab that has a duplicate, '' otherwise.
- * With `activeTabId` that tab is always (re)set. Without it, every indexed tab is checked but
- * setBadgeText is called only where the text differs from what we last set (unknown counts as '').
+ * Per-tab badge: "!" on every tab while `suspiciousCount` > 0, otherwise "2×" (the copy count) on a tab that has
+ * a duplicate and '' elsewhere. With `activeTabId` that tab is always (re)set. Without it, every indexed tab is
+ * checked but setBadgeText is called only where the text differs from what we last set (unknown counts as '').
+ * The colour is set only when the mode (alert/normal) flips; a flip rewrites every tab, even with `activeTabId`.
  */
-export async function updateBadge(db: Db, activeTabId?: number): Promise<void> {
+export async function updateBadge(db: Db, activeTabId?: number, suspiciousCount = 0): Promise<void> {
   const items = (await db.items.all()).filter((i) => i.state !== 'stashed' && i.tabId !== undefined);
   const count = new Map<number, number>();
   for (const list of findDuplicates(items).values()) for (const i of list) count.set(i.tabId!, list.length);
+  const alert = suspiciousCount > 0;
   const textOf = (tabId: number) => {
+    if (alert) return '!';
     const n = count.get(tabId);
     return n ? `${n}×` : '';
   };
-  if (!colorSet) {
-    colorSet = true;
-    await chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR }).catch(() => (colorSet = false));
+  const want = alert ? 'alert' : 'normal';
+  // A fresh worker is in 'normal' mode as far as tab text goes (unknown text counts as ''), but still sets the colour.
+  const flipped = (mode ?? 'normal') !== want;
+  if (mode !== want) {
+    const prev = mode;
+    mode = want;
+    shown.clear(); // every tab needs the new mode's text
+    await chrome.action
+      .setBadgeBackgroundColor({ color: alert ? BADGE_ALERT_COLOR : BADGE_COLOR })
+      .catch(() => (mode = prev));
+  }
+  const title = alert ? `Tablight: ${suspiciousCount} suspicious ${suspiciousCount === 1 ? 'tab' : 'tabs'}` : 'Tablight';
+  if (shownTitle !== title) {
+    shownTitle = title;
+    await chrome.action.setTitle({ title }).catch(() => (shownTitle = undefined));
   }
   let targets: number[];
-  if (activeTabId !== undefined) targets = [activeTabId];
+  if (activeTabId !== undefined && !flipped) targets = [activeTabId];
   else {
     const live = new Set(items.map((i) => i.tabId!));
     for (const id of shown.keys()) if (!live.has(id)) shown.delete(id);
-    targets = [...live].filter((id) => (shown.get(id) ?? '') !== textOf(id));
+    // A mode flip rewrites every tab: the old per-tab text (cleared above) is not known to be ''.
+    targets = [...live].filter((id) => flipped || (shown.get(id) ?? '') !== textOf(id));
   }
   await Promise.all(
     targets.map(async (tabId) => {

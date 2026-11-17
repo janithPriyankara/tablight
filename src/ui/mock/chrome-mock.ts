@@ -68,6 +68,7 @@ export interface ChromeMockControl {
   /** Per-tab badge text, falling back to the global text, as Chrome shows it. */
   badgeText(tabId?: number): string;
   badgeColor(): string | undefined;
+  actionTitle(): string | undefined;
   /** Fires alarms.onAlarm for a created alarm, as if its time came. */
   fireAlarm(name: string): void;
   alarms(): Alarm[];
@@ -182,6 +183,7 @@ export interface MockChrome {
     setBadgeText(d: chrome.action.BadgeTextDetails): Promise<void>;
     getBadgeText(d: { tabId?: number }): Promise<string>;
     setBadgeBackgroundColor(d: chrome.action.BadgeColorDetails): Promise<void>;
+    setTitle(d: chrome.action.TitleDetails): Promise<void>;
   };
   sidePanel: {
     setPanelBehavior(b: { openPanelOnActionClick?: boolean }): Promise<void>;
@@ -218,6 +220,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const badges = new Map<number, string>();
   let globalBadge = '';
   let badgeColor: string | undefined;
+  let actionTitle: string | undefined;
   let popup = 'popup.html';
   let panelOnClick = false;
   const panelOpens: number[] = [];
@@ -393,6 +396,9 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
       async setBadgeBackgroundColor({ color }) {
         badgeColor = typeof color === 'string' ? color : `rgba(${color.join(',')})`;
       },
+      async setTitle({ title }) {
+        actionTitle = title;
+      },
     },
     sidePanel: {
       async setPanelBehavior(b) {
@@ -533,6 +539,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
     },
     badgeText: (tabId) => (tabId !== undefined ? badges.get(tabId) : undefined) ?? globalBadge,
     badgeColor: () => badgeColor,
+    actionTitle: () => actionTitle,
     fireAlarm(name) {
       const a = alarms.get(name);
       if (!a) throw new Error(`no alarm "${name}"`);

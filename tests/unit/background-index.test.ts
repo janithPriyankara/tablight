@@ -382,4 +382,49 @@ describe('background index', () => {
     });
     mock.uninstall();
   });
+
+  describe('suspicious tabs', () => {
+    type S = import('../../src/shared/types').DashboardState;
+    const SCAM = { url: 'https://ads.example.com/click/x?key=1', title: 'You have won a prize' };
+    async function boot() {
+      const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.com/', active: true }, SCAM] }] });
+      const bg = await import('../../src/background/index');
+      const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+      await (await bg.getDb()).settings.set({ suspiciousTabs: true }); // the fake IndexedDB outlives each test
+      mock.fireInstalled('update');
+      await vi.waitFor(async () => {
+        await whenTabIndexIdle();
+        expect((await (await bg.getDb()).items.all()).length).toBe(2);
+      });
+      return { mock, bg };
+    }
+    it('state lists a flagged tab, and the setting turns the list (and the badge) off', async () => {
+      const { mock, bg } = await boot();
+      const [a, scam] = mock.tabs();
+      await vi.waitFor(async () => expect(((await bg.handleRequest({ t: 'state' })) as S).suspicious).toHaveLength(1));
+      const s = (await bg.handleRequest({ t: 'state' })) as S;
+      expect(s.suspicious[0]!.item.tabId).toBe(scam!.id);
+      await vi.waitFor(() => expect(mock.badgeText(a!.id)).toBe('!'));
+      expect(mock.badgeText(scam!.id)).toBe('!');
+      expect(mock.badgeColor()).toBe('#c2410c');
+      expect(mock.actionTitle()).toBe('Tablight: 1 suspicious tab');
+      expect(await mock.sendMessage({ t: 'settings', patch: { suspiciousTabs: false } })).toMatchObject({ ok: true });
+      expect(((await bg.handleRequest({ t: 'state' })) as S).suspicious).toEqual([]);
+      expect(mock.badgeText(a!.id)).toBe('');
+      expect(mock.badgeText(scam!.id)).toBe('');
+      expect(mock.actionTitle()).toBe('Tablight');
+      mock.uninstall();
+    });
+    it('keepTab removes the tab from the next state and clears the badge', async () => {
+      const { mock, bg } = await boot();
+      const [a] = mock.tabs();
+      await vi.waitFor(async () => expect(((await bg.handleRequest({ t: 'state' })) as S).suspicious).toHaveLength(1));
+      const id = ((await bg.handleRequest({ t: 'state' })) as S).suspicious[0]!.item.id;
+      expect(await mock.sendMessage({ t: 'keepTab', id })).toMatchObject({ ok: true });
+      expect(((await bg.handleRequest({ t: 'state' })) as S).suspicious).toEqual([]);
+      expect(mock.badgeText(a!.id)).toBe('');
+      expect(await mock.sendMessage({ t: 'keepTab', id: 'nope' })).toMatchObject({ ok: false });
+      mock.uninstall();
+    });
+  });
 });

@@ -11,11 +11,13 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
-import { forgetTab, recordCreated } from './tab-context';
+import { findSuspicious } from './suspicious';
+import { forgetTab, keepTab, loadContexts, loadKept, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
 import { isBlankTab, isClutterTab } from '../shared/url';
 import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
 import { HEAD } from '../classify/head';
+import type { SuspiciousTab } from '../shared/clues';
 import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
@@ -119,7 +121,7 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
     console.error('classification pipeline failed', e);
   } finally {
     invalidateBadges(r.navigatedTabIds);
-    await updateBadge(db).catch((e: unknown) => console.error('badge update failed', e));
+    await refreshBadge(db).catch((e: unknown) => console.error('badge update failed', e));
     notifyChanged();
   }
 }
@@ -194,6 +196,23 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
   return { item, others: copies.filter((i) => i.id !== item.id) };
 }
 /**
+ * The suspicious tabs among `items` (already clutter-filtered), or none when the setting is off. The one place
+ * this is computed, so the dashboard list and the toolbar badge can never disagree.
+ */
+async function currentSuspicious(items: Item[], settings: Settings): Promise<SuspiciousTab[]> {
+  if (!settings.suspiciousTabs) return [];
+  const live = items.filter((i) => i.tabId !== undefined).map((i) => ({ tabId: i.tabId!, windowId: i.windowId }));
+  const [ctx, kept] = await Promise.all([loadContexts(live), loadKept()]);
+  return findSuspicious(items, ctx, kept);
+}
+/** Refreshes the toolbar badge with the current suspicious count (see updateBadge for `tabId`). */
+async function refreshBadge(db: Db, tabId?: number): Promise<void> {
+  const own = chrome.runtime.getURL('');
+  const [all, settings] = await Promise.all([db.items.all(), db.settings.get()]);
+  const suspicious = await currentSuspicious(all.filter((i) => !isClutterTab(i.url, own)), settings);
+  await updateBadge(db, tabId, suspicious.length);
+}
+/**
  * `state` RPC: one read of items and groups, counted in memory. Group vectors are stripped (they are
  * large and the UI never needs them). modelReady: the starter groups exist and either nothing waits
  * for classification or the model already produced a vector in this worker's lifetime.
@@ -228,8 +247,9 @@ async function dashboardState(db: Db): Promise<DashboardState> {
   const [activeDup, syncStatus, lastSession] = await Promise.all([
     activeDuplicate(items, dups), readSyncStatus(), readLastSession(db),
   ]);
+  const suspicious = await currentSuspicious(items, settings);
   return {
-    items, groups: summaries, dupCount, windows: windows.size, sleeping, syncStatus, settings,
+    items, groups: summaries, dupCount, windows: windows.size, sleeping, suspicious, syncStatus, settings,
     // An empty queue is ready even with no groups (e.g. the user deleted them all): nothing is pending.
     modelReady: queued === 0 || (groups.length > 0 && isWarm()),
     queued,
@@ -241,7 +261,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
 async function activated(tabId: number): Promise<void> {
   const db = await getDb();
   await touchTab(db, tabId);
-  await updateBadge(db, tabId);
+  await refreshBadge(db, tabId); // opening a tab drops its "never viewed" clue, so the count can change
 }
 
 /** Re-applies native tab groups in every window after a group change (no-op unless enabled). */
@@ -255,7 +275,7 @@ const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'undo', 'sessionAction', 'regroupApply',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
-  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens',
+  'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens', 'suspiciousTabs',
 ]);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 /**
@@ -285,7 +305,7 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
         if (val !== 'popup' && val !== 'sidepanel') throw new Error('toolbarOpens must be popup or sidepanel');
         out.toolbarOpens = val;
         break;
-      case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups':
+      case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups': case 'suspiciousTabs':
         if (!isBool(val)) throw new Error(`${key} must be true or false`);
         out[key as 'syncEnabled'] = val;
         break;
@@ -313,6 +333,7 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
   }
   if (Object.keys(rest).length) await db.settings.set(rest);
   if (rest.toolbarOpens !== undefined) await applyToolbar(rest.toolbarOpens);
+  if (rest.suspiciousTabs !== undefined) await refreshBadge(db).catch((e: unknown) => console.error('badge update failed', e));
   if (syncEnabled !== undefined) await setSyncEnabled(db, syncEnabled);
   // Turning auto-create on also accepts the suggestions already waiting, so the setting means one thing.
   if (rest.autoCreateGroups === true) {
@@ -381,6 +402,13 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'search': return search(db, req);
     case 'state': return dashboardState(db);
     case 'regroupApply': out = await regroupApply(db); break;
+    case 'keepTab': {
+      const item = await db.items.get(parseId(req.id));
+      if (!item || item.tabId === undefined) throw new Error('tab not found');
+      await keepTab(item.tabId, item.domain);
+      await refreshBadge(db).catch((e: unknown) => console.error('badge update failed', e));
+      break;
+    }
     case 'settings': out = await updateSettings(db, req.patch); break;
     case 'export': return exportJson(db);
     case 'deleteAllData': {
