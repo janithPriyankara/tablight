@@ -61,9 +61,16 @@ export function getDb(): Promise<Db> {
 }
 
 /** Seeds the built-in groups once; classification waits for them (else everything lands Unsorted). */
+/** The starter seeds never change: their vectors are kept for this worker's life, so "Delete all data" re-seeds
+ * the groups without running the model again (it was ~4 s per wipe). */
+let seedVecs: Promise<Float32Array[]> | undefined;
+const embedSeeds = (texts: string[]): Promise<Float32Array[]> => {
+  seedVecs ??= embed(texts).catch((e: unknown) => { seedVecs = undefined; throw e; });
+  return seedVecs;
+};
 async function ensureStarterGroups(db: Db): Promise<void> {
   if ((await db.groups.all()).length > 0) return;
-  const groups = await buildStarterGroups(embed);
+  const groups = await buildStarterGroups(embedSeeds);
   await db.tx(['groups'], async (s) => {
     if ((await s.groups.all()).length > 0) return; // another run won the race
     for (const g of groups) await s.groups.put(g);

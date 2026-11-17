@@ -354,6 +354,8 @@ test('side panel: Keep is an icon button there and hides the row in the panel an
   await expectAlertBadges(); // the other one is still flagged
 });
 test('#view=suspicious with nothing flagged says “No suspicious tabs.”', async () => {
+  // A fresh load of the address (not a same-page hash change, which depends on what the last test left open).
+  await dash.goto('about:blank');
   await dash.goto(dashboardUrl('#view=suspicious'));
   await expect(dash.getByRole('heading', { level: 1 })).toHaveText('Suspicious');
   await expect(dash.getByText('No suspicious tabs.')).toBeVisible();
