@@ -170,7 +170,11 @@ pipeline {
                         zip="release/tablight-$version.zip"
                         api=https://api.github.com/repos/janithPriyankara/tablight
                         auth="Authorization: Bearer $GH_TOKEN"
-                        code=$(curl -s -o release.json -w '%{http_code}' -X POST -H "$auth"                             -H "Accept: application/vnd.github+json" "$api/releases"                             -d "{\"tag_name\":\"$TAG_NAME\",\"name\":\"Tablight $version\",\"generate_release_notes\":true}")
+                        # The request body is written by node, so no shell quoting can break the JSON.
+                        node -e 'const v = require("./package.json").version; process.stdout.write(JSON.stringify({
+                            tag_name: process.env.TAG_NAME, name: "Tablight " + v, generate_release_notes: true }))' > release-request.json
+                        code=$(curl -s -o release.json -w '%{http_code}' -X POST -H "$auth" \\
+                            -H "Accept: application/vnd.github+json" "$api/releases" --data @release-request.json || echo curl-failed)
                         if [ "$code" != 201 ]; then
                             echo "Creating the GitHub release failed: HTTP $code" >&2
                             sed -n 1,20p release.json >&2
@@ -178,7 +182,10 @@ pipeline {
                         fi
                         id=$(node -p "require('./release.json').id")
                         page=$(node -p "require('./release.json').html_url")
-                        code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth"                             -H "Content-Type: application/zip" --data-binary "@$zip"                             "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=tablight-$version.zip")
+                        code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth" \\
+                            -H "Content-Type: application/zip" --data-binary "@$zip" \\
+                            "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=tablight-$version.zip" \\
+                            || echo curl-failed)
                         if [ "$code" != 201 ]; then
                             echo "Uploading $zip failed: HTTP $code" >&2
                             sed -n 1,20p asset.json >&2
