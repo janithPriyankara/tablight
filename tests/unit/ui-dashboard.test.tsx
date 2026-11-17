@@ -231,6 +231,27 @@ describe('dashboard', () => {
     expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Search tabs' }));
   });
 
+  it('two arrow presses before the list repaints move two rows, not one (UI test K-02)', async () => {
+    serve(state());
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title i1');
+    const mains = () => [...container.querySelectorAll<HTMLElement>('.grid-row .item-main')];
+    mains()[0]!.focus();
+    // A fast typist (or key repeat): the second key arrives before the first one's focus move has happened.
+    const press = (key: string, shiftKey = false) =>
+      document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true }));
+    press('ArrowDown');
+    press('ArrowDown');
+    await waitFor(() => expect(document.activeElement).toBe(mains()[2]));
+    // The same for Shift+↓ extending a selection.
+    fireEvent.keyDown(mains()[0]!, { key: 'Home' });
+    await waitFor(() => expect(document.activeElement).toBe(mains()[0]));
+    fireEvent.keyDown(mains()[0]!, { key: ' ' });
+    await screen.findByText('1 selected');
+    press('ArrowDown', true);
+    press('ArrowDown', true);
+    await screen.findByText('3 selected');
+  });
   it('Delete acts on the focused row even after a live update moved it', async () => {
     let items = ['i1', 'i2', 'i3', 'i4', 'i5'].map((id) => item(id, { windowId: 1 }));
     serve(() => state({ items }), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : undefined));

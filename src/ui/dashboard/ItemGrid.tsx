@@ -74,6 +74,7 @@ export function ItemGrid(props: ItemGridProps) {
     if (scroller.current) scroller.current.scrollTop = 0;
     setScrollTop(0);
     setFocus(0);
+    wantFocus.current = null;
   }, [props.resetKey]);
 
   const count = items.length;
@@ -122,7 +123,11 @@ export function ItemGrid(props: ItemGridProps) {
     const target = e.target as HTMLElement;
     const onMain = target.classList.contains('item-main');
     const rowIdx = Number(target.closest<HTMLElement>('[data-index]')?.dataset.index);
-    const cur = Number.isInteger(rowIdx) && rowIdx >= 0 && rowIdx < count ? rowIdx : focusIdx;
+    // A key that arrives before the previous one's focus move happened (fast typing, key repeat) continues from
+    // where focus is going, not from the row that still has it; otherwise two quick ↓ would move one row.
+    const pending = wantFocus.current;
+    const cur = pending !== null && pending < count ? pending
+      : Number.isInteger(rowIdx) && rowIdx >= 0 && rowIdx < count ? rowIdx : focusIdx;
     const step = (to: number) => {
       e.preventDefault();
       const idx = moveFocus(to);
