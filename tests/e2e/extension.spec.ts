@@ -365,8 +365,13 @@ test('side panel: lists its window’s tabs, switches on click; the toolbar sett
   await rpc(page, { t: 'settings', patch: { toolbarOpens: 'popup' } });
   expect(await page.evaluate(() => chrome.action.getPopup({}))).toMatch(/popup\.html$/);
 });
-// @perf: opens 500 real tabs; CI runs it on its own so no other browser competes for memory.
-test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the last load', { tag: '@perf' }, async () => {
+// @perf: opens real tabs (PERF_TABS, default 500 = the spec's target); CI runs it on its own so no other
+// browser competes for memory. Every CI run uses 100 tabs; the nightly build uses 500.
+// The budget stays the spec's 15 s at any size: the shared CI host is 2-3x slower than a laptop, so a
+// scaled-down budget would fail on host load rather than on a real slowdown.
+const PERF_TABS = Math.max(25, Math.round(Number(process.env.PERF_TABS || 500) / 25) * 25);
+const PERF_BUDGET_MS = 15_000;
+test(`performance: ${PERF_TABS} tabs (${PERF_TABS / 25} windows × 25) are classified within ${PERF_BUDGET_MS / 1000} s of the last load`, { tag: '@perf' }, async () => {
   test.slow();
   const ext = await launch();
   extId = ext.id;
@@ -374,7 +379,7 @@ test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the
   // The model is already warm (it built the starter groups); its document was closed by launch(),
   // so the measured run also includes creating the offscreen document and loading the model again.
   const windows: string[][] = [];
-  for (let w = 0; w < 20; w++) {
+  for (let w = 0; w < PERF_TABS / 25; w++) {
     windows.push(Array.from({ length: 25 }, (_, k) => {
       const n = w * 25 + k;
       return server.url(PAGES[n % PAGES.length]!.slug, `n=${n}`); // distinct pages, realistic titles
@@ -384,23 +389,23 @@ test('performance: 500 tabs (20 windows × 25) are classified within 15 s of the
   await openWindows(page, windows);
   await expect.poll(async () => {
     const t = await serverTabs(page);
-    return t.length === 500 && t.every((x) => x.status === 'complete' && x.title && !x.title.startsWith('http'));
+    return t.length === PERF_TABS && t.every((x) => x.status === 'complete' && x.title && !x.title.startsWith('http'));
   }, { timeout: SETTLE_MS * 2, intervals: [250] }).toBe(true);
   const lastLoad = server.lastServedAt();
   let s: DashboardState | undefined;
   await expect.poll(async () => {
     s = await state(page);
     const mine = s.items.filter(onServer);
-    return s.queued === 0 && mine.length === 500 && mine.every((i) => i.embKey !== undefined);
+    return s.queued === 0 && mine.length === PERF_TABS && mine.every((i) => i.embKey !== undefined);
   }, { timeout: SETTLE_MS * 2, intervals: [250] }).toBe(true);
   const done = Date.now();
   const mine = s!.items.filter(onServer);
   const ms = done - lastLoad;
-  console.log(`500 tabs: opened+loaded in ${lastLoad - t0} ms; last load → queue empty: ${ms} ms; ` +
-    `grouped ${mine.filter((i) => i.groupId !== null).length}/500`);
+  console.log(`${PERF_TABS} tabs: opened+loaded in ${lastLoad - t0} ms; last load → queue empty: ${ms} ms; ` +
+    `grouped ${mine.filter((i) => i.groupId !== null).length}/${PERF_TABS}`);
   expect(ext.cdp.requests.some((r) => r.url.includes('/models/') && r.url.endsWith('.onnx'))).toBe(true);
   ext.cdp.close();
   await ext.context.close();
   assertNoForeignRequests(extId);
-  expect(ms).toBeLessThan(15_000);
+  expect(ms).toBeLessThan(PERF_BUDGET_MS);
 });

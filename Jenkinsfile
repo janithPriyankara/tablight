@@ -1,5 +1,9 @@
 // Commands run directly inside the existing Jenkins node/container.
 def workspaceStarted = false
+// True when the cron trigger started this build.
+def isNightly() {
+    return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
+}
 
 pipeline {
     agent any
@@ -12,11 +16,17 @@ pipeline {
         timeout(time: 60, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '5'))
     }
+    triggers {
+        // Nightly: full browser suite and the spec's 500-tab performance check (see Browser tests).
+        cron('H 2 * * *')
+    }
     parameters {
         booleanParam(name: 'RUN_QUALITY_TESTS', defaultValue: false,
             description: 'Run model/classification quality tests (requires extra CPU and memory).')
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
             description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
+        string(name: 'PERF_TABS', defaultValue: '100',
+            description: 'Tabs opened by the @perf test. The nightly build always uses 500.')
         string(name: 'E2E_WORKERS', defaultValue: '2',
             description: 'How many browser test files run at once (each starts its own Chromium). The 500-tab @perf test always runs alone afterwards.')
     }
@@ -74,7 +84,10 @@ pipeline {
             }
         }
         stage('Browser tests') {
-            when { expression { params.RUN_E2E_TESTS } }
+            when { expression { params.RUN_E2E_TESTS || isNightly() } }
+            environment {
+                PERF_TABS = "${isNightly() ? '500' : params.PERF_TABS}"
+            }
             steps {
                 sh 'npx --no-install playwright install chromium'
                 // No root on this shared host: Chromium's system libraries go into a private folder.
