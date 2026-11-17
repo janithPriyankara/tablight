@@ -329,7 +329,7 @@ test('B-01 toolbar badge: empty on a normal tab, “3×” on each of three copi
   expect(Object.values(await badges()).every((b) => b === '')).toBe(true);
 });
 
-test('B-02 the side panel is off on an empty new tab and on for a page; the icon opens the popup by default', async () => {
+test('SP-15 & S-30 default: the side panel is off on an empty new tab and on for a page; the icon opens the popup by default', async () => {
   await h.open([urlOf(0)]);
   const blank = await h.dash.evaluate(() => chrome.tabs.create({ url: 'about:blank', active: false }).then((t) => t.id!));
   await expect.poll(() => h.dash.evaluate((id) => chrome.sidePanel.getOptions({ tabId: id }).then((o) => o.enabled), blank)).toBe(false);

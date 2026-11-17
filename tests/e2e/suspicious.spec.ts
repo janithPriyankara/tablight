@@ -334,6 +334,31 @@ test('side panel: “Suspicious (N)” lists the same rows and Close all works t
   await expectNoAlertBadges();
 });
 
+test('side panel: Keep is an icon button there and hides the row in the panel and on the dashboard', async () => {
+  await openSpam([SPAM, SPAM2]);
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extId}/sidepanel.html`);
+  const section = panel.getByRole('region', { name: 'Suspicious (2)' });
+  const keep = section.getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
+  await expect(keep).toHaveClass('icon-btn'); // icon only in the narrow panel (worded on the dashboard)
+  await expect(keep).toHaveText('');
+  await keep.click();
+  await expect(panel.getByRole('region', { name: 'Suspicious (1)' })).toBeVisible();
+  const rows = panel.getByRole('list', { name: 'Suspicious tabs' }).getByRole('listitem');
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText(SUS_TITLES.spam2);
+  await showSuspicious();
+  await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
+  await expect(susRow(dash, SUS_TITLES.spam2)).toHaveCount(1);
+  expect(await tabFor(SPAM)).toBeDefined(); // kept, not closed
+  await expectAlertBadges(); // the other one is still flagged
+});
+test('#view=suspicious with nothing flagged says “No suspicious tabs.”', async () => {
+  await dash.goto(dashboardUrl('#view=suspicious'));
+  await expect(dash.getByRole('heading', { level: 1 })).toHaveText('Suspicious');
+  await expect(dash.getByText('No suspicious tabs.')).toBeVisible();
+  await expect(susList(dash)).toHaveCount(0);
+});
 test('popup: “1 suspicious tab” and Review opens the dashboard at #view=suspicious', async () => {
   await openSpam();
   const popup = await context.newPage();

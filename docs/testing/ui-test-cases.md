@@ -13,6 +13,26 @@ says what to do, what you should see, and which automated test already does the 
 - After a close, a save or a removal, a message appears at the bottom with **Undo**. It disappears after 10
   seconds.
 
+Tablight points out a tab when it has an ad-click address or a scam-style title, plus at least one more clue.
+This recipe gives a test tab all four the rows below rely on: opened by another site, never viewed, an
+ad-click address and a scam-style title. It needs Python 3 and nothing on the internet. A page opened
+straight from a file does not work: only http(s) pages are checked.
+1. Make an empty folder with two files:
+   - `opener.html`:
+     `<a href="http://127.0.0.1:8000/click/?key=1&visitor_id=2">Open the test page</a>`
+   - `click/index.html` (in a sub-folder named `click`):
+     `<title>Congratulations! You won a prize</title><p>A test page for Tablight.</p>`
+2. In a terminal in that folder run `python3 -m http.server 8000 --bind 127.0.0.1`. It serves the folder to
+   your own computer only. Stop it with Ctrl+C when you are done.
+3. In the browser go to `http://localhost:8000/opener.html` and **Ctrl-click** (Cmd-click on a Mac) the link,
+   so it opens in a background tab. Do not switch to it.
+4. Within a few seconds every tab's Tablight icon shows "!" and the dashboard lists **Suspicious 1**, with the
+   reasons "Opened by another site · Never viewed · Ad-click address · Scam-style title".
+Why it works: `localhost` and `127.0.0.1` count as two different sites, `/click/` with `key=` and `visitor_id=`
+is an ad-click address (even on your own computer), and "You won" is a scam-style title. Ctrl-click the link
+again for a second suspicious tab (Close all needs two). A plain local address such as
+`http://127.0.0.1:8000/` is never an ad-click address by itself.
+
 ## How to read the "Automated by" column
 
 - `ui-dashboard.spec.ts › D-13` means the test whose name starts with `D-13` in `tests/e2e/ui-dashboard.spec.ts`
@@ -114,20 +134,26 @@ says what to do, what you should see, and which automated test already does the 
 | ID | Steps | Expected result | Automated by |
 |----|-------|-----------------|--------------|
 | D-75 | A normal page opened in the background by another site; a "You won't believe…" page. | Not flagged; no Suspicious entry, no "!" badge. | suspicious.spec.ts › a normal background tab… / a “You won’t believe…”… |
-| D-76 | A spam page (ad-click address, prize title) opens in the background from another site. | Sidebar "Suspicious 1", the "!" badge, the explanation, the reasons line. | suspicious.spec.ts › a spam tab opened by another site… |
+| D-76 | A spam page (ad-click address, prize title) opens in the background from another site (see "How to make a suspicious tab by hand"). | Sidebar "Suspicious 1", the "!" badge, the explanation, the reasons line. | suspicious.spec.ts › a spam tab opened by another site… |
 | D-77 | Same in a pop-up window. | Reasons include "Opened in a pop-up window". | suspicious.spec.ts › a spam page in a pop-up window… |
-| D-78 | **Go to tab**, **Keep**, **Close** + Undo, **Close all** (Cancel / confirm / Undo). | As described in the test names. | suspicious.spec.ts › Go to tab… / Keep hides the row… / Close closes the tab… / Close all with two spam tabs… |
+| D-78a | Make a suspicious tab (see "How to make a suspicious tab by hand"). In the Suspicious view click **Go to tab** on its row, then come back to the dashboard. | The browser switches to that tab. The row is still listed (its other clues remain), but "Never viewed" is gone from its reasons. | suspicious.spec.ts › Go to tab switches to it… |
+| D-78b | On a suspicious row click **Keep** (a text button with a tick on the dashboard; narrow the window below about 700 px and only the tick shows). Reload the dashboard. | The row goes and the tab stays open. If it was the only one, the "!" badge goes back to normal (a copy count or nothing). After the reload it is still not listed and the view says "No suspicious tabs.". | suspicious.spec.ts › Keep hides the row… (Keep as a visible word included); the icon-only narrow layout is manual |
+| D-78c | On a suspicious row click **Close**, then **Undo** in the message at the bottom. | The tab closes at once (no question) with "Closed 1 tab" and Undo; Undo reopens it. | suspicious.spec.ts › Close closes the tab… |
+| D-78d | Make two suspicious tabs. Click **Close all (2)** in the top bar: first **Cancel**, then again and **Close tabs**, then **Undo**. | A window "Close 2 suspicious tabs?" lists both titles. Cancel closes nothing. Close tabs closes both; Undo reopens both. | suspicious.spec.ts › Close all with two spam tabs… |
+| D-78e | Keep a suspicious tab (D-78b). In that tab go to a page on another site, then back to the suspicious address. | Once it left the site the keep ends: back on the suspicious address it is listed again and the "!" badge returns. | suspicious.spec.ts › Keep hides the row… |
+| D-78f | In a suspicious tab, go to a normal page on the same site (for example `http://127.0.0.1:8000/`). | It is no longer listed; the "!" badge and the sidebar entry go away. | suspicious.spec.ts › a spam tab that navigates to a normal page… |
+| D-78g | With no suspicious tab, change the dashboard's address to end in `#view=suspicious`. | Heading "Suspicious" and the text "No suspicious tabs.". | suspicious.spec.ts › #view=suspicious with nothing flagged… |
 | D-79 | Combination: a suspicious tab plus a duplicate pair; close the suspicious one. | "!" wins while it is open; afterwards the copies show "2×" again. | suspicious.spec.ts › a duplicate pair plus a spam tab… |
 
 ## 9. Dashboard: Sessions
 
 | ID | Steps | Expected result | Automated by |
 |----|-------|-----------------|--------------|
-| D-80 | Open Sessions with none saved, click **Save session now** with no web tab open. | "No sessions saved yet."; "No web tabs to save". | ui-dashboard.spec.ts › D-80..D-85 |
-| D-81 | Open two pages, **Save session now**. | "Session saved"; a row "just now · 1 window · 2 tabs". | ui-dashboard.spec.ts › D-80..D-85 |
-| D-82 | Close those tabs, click **Open all**. | They open in a new window. | ui-dashboard.spec.ts › D-80..D-85 |
-| D-83 | **Save all for later**. | "Saved the session’s 2 tabs for later"; Saved for later shows 2. | ui-dashboard.spec.ts › D-80..D-85 |
-| D-84 | Click the bin (**Delete session**): Cancel, then confirm. | "Delete this session?"; Cancel keeps it; confirming empties the list. | ui-dashboard.spec.ts › D-80..D-85 |
+| D-80 | Open Sessions with none saved, click **Save session now** with no web tab open. | "No sessions saved yet."; "No web tabs to save". | ui-dashboard.spec.ts › D-80..D-84 |
+| D-81 | Open two pages, **Save session now**. | "Session saved"; a row "just now · 1 window · 2 tabs". | ui-dashboard.spec.ts › D-80..D-84 |
+| D-82 | Close those tabs, click **Open all**. | They open in a new window. | ui-dashboard.spec.ts › D-80..D-84 |
+| D-83 | **Save all for later**. | "Saved the session’s 2 tabs for later"; Saved for later shows 2. | ui-dashboard.spec.ts › D-80..D-84 |
+| D-84 | Click the bin (**Delete session**): Cancel, then confirm. | "Delete this session?"; Cancel keeps it; confirming empties the list. | ui-dashboard.spec.ts › D-80..D-84 |
 | D-86 | **Open all** on a session of more than 20 tabs; Cancel; then confirm. | "Open 21 tabs?" asks first; Cancel opens nothing; confirming opens all 21. | ui-dashboard.spec.ts › D-86 |
 | D-87 | After a browser restart that did not bring your tabs back, open the dashboard. | A card "Your last session (N tabs) wasn’t restored" with **Open all**, **Save all for later**, and a close button. **Dismiss** hides it, also after a reload. | ui-dashboard.spec.ts › D-87..D-88 (the startup check's record is written by the test) |
 | D-88 | On that card click **Save all for later**. | The session's tabs are in Saved for later. | ui-dashboard.spec.ts › D-87..D-88 |
@@ -202,8 +228,9 @@ says what to do, what you should see, and which automated test already does the 
 | SP-11 | A group with more than 300 tabs. | 300 are listed and "Show all 301 in the dashboard" opens the dashboard. | ui-popup-sidepanel.spec.ts › SP-11 |
 | SP-12 | Four suspicious tabs. | "Suspicious (4)" shows 3 rows and "Show all (4)" / "Show fewer"; the heading folds it. | ui-popup-sidepanel.spec.ts › SP-12 |
 | SP-13 | Suspicious: Close all in the panel. | Asks inside the panel, lists the tabs, closes both. | suspicious.spec.ts › side panel: “Suspicious (N)”… |
+| SP-16 | Two suspicious tabs: in the panel's Suspicious section click **Keep** (the tick icon; the panel has icon buttons, each named "Keep" plus the title for screen readers) on one. | That row goes from the panel ("Suspicious (1)") and from the dashboard's Suspicious view; the tab stays open, and "!" stays while the other is flagged. | suspicious.spec.ts › side panel: Keep is an icon button… |
 | SP-14 | Errors and "Organizing", as P-14. | Same as the popup. | ui-popup-sidepanel.spec.ts › P-14 sidepanel.html |
-| SP-15 | Open an empty new tab while the panel is open. | The panel hides on the empty tab and comes back on a normal page. | ui-popup-sidepanel.spec.ts › B-02 (the panel is switched off for that tab); seeing it hide is manual — the test browser shows no real side panel |
+| SP-15 | Open an empty new tab while the panel is open. | The panel hides on the empty tab and comes back on a normal page. | ui-popup-sidepanel.spec.ts › SP-15 & S-30 default (the panel is switched off for that tab); seeing it hide is manual — the test browser shows no real side panel |
 
 ## 14. Toolbar icon and badge
 

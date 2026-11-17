@@ -502,7 +502,7 @@ test('D-74 Re-group everything: preview, Cancel changes nothing, Apply reports t
 
 // ── sessions ────────────────────────────────────────────────────────────────────────────────────────────
 
-test('D-80..D-85 Sessions: empty, Save session now, Open all, Save all for later, Delete (Cancel, confirm)', async () => {
+test('D-80..D-84 Sessions: empty, Save session now, Open all, Save all for later, Delete (Cancel, confirm)', async () => {
   await navButton(page(), 'Sessions').click();
   await expect(page().getByText('No sessions saved yet.')).toBeVisible();
   await page().getByRole('button', { name: 'Save session now' }).click();
