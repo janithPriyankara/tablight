@@ -23,6 +23,8 @@ export function findDuplicates(items: Item[]): Map<string, Item[]> {
 const shown = new Map<number, string>();
 let mode: 'alert' | 'normal' | undefined;
 let shownTitle: string | undefined;
+/** Set by Delete all data: the next update rewrites every tab, its colour and title, and records the mode afresh. */
+let rewriteAll = false;
 const MODE_KEY = 'badgeMode';
 async function loadMode(): Promise<'alert' | 'normal' | undefined> {
   try {
@@ -43,8 +45,20 @@ async function saveMode(m: 'alert' | 'normal'): Promise<void> {
 export function invalidateBadges(tabIds: number[]): void {
   for (const id of tabIds) shown.delete(id);
 }
+/**
+ * Delete all data: forgets the remembered badge mode (session storage) and what was shown, so the next update
+ * repaints every tab from the new state instead of trusting text set before the wipe.
+ */
+export async function clearBadgeState(): Promise<void> {
+  shown.clear();
+  mode = undefined;
+  shownTitle = undefined;
+  rewriteAll = true;
+  await chrome.storage.session.remove(MODE_KEY).catch(() => undefined);
+}
 /** For tests and a fresh worker. */
 export function resetBadgeCache(): void {
+  rewriteAll = false;
   shown.clear();
   mode = undefined;
   shownTitle = undefined;
@@ -67,9 +81,10 @@ export async function updateBadge(db: Db, activeTabId?: number, suspiciousCount 
   };
   const want = alert ? 'alert' : 'normal';
   // Chrome keeps badge text across worker restarts, so the last mode is remembered in session storage.
-  if (mode === undefined) mode = await loadMode();
+  if (mode === undefined && !rewriteAll) mode = await loadMode();
   // No remembered mode (fresh browser): badges are empty, i.e. 'normal' as far as tab text goes, but the colour is still set.
-  const flipped = (mode ?? 'normal') !== want;
+  const flipped = rewriteAll || (mode ?? 'normal') !== want;
+  rewriteAll = false;
   if (mode !== want) {
     const prev = mode;
     mode = want;

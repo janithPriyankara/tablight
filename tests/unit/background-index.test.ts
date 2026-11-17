@@ -343,9 +343,21 @@ describe('background index', () => {
     await db.tombstones.put({ id: 'gone', deletedAt: 1 });
     await chrome.storage.sync.set({ 'v1:meta': { x: 1 }, 'v1:0': 'chunk', 'other-ext-key': 1 });
     await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], foreign: 1 });
+    // Session records: suspicious-tab clues, the user's Keep choices, badge mode, mirrored groups, startup verdict.
+    const tabB = mock.tabs()[0]!.id!; // the tab still open (a.example was stashed)
+    await chrome.storage.session.set({
+      suspOpeners: { [tabB]: 'a.example' }, suspPopupWindows: { 999: true }, suspKept: { [tabB]: 'b.example' },
+      badgeMode: 'alert', mirroredGroups: { 5: 'news' }, lastSession: { snapshotId: 'gone' },
+    });
     const openTabs = mock.tabs().length;
     await bg.handleRequest({ t: 'deleteAllData' });
     expect(mock.tabs()).toHaveLength(openTabs); // nothing closed
+    const session = await chrome.storage.session.get(null);
+    for (const k of ['suspOpeners', 'suspKept', 'mirroredGroups', 'lastSession']) expect(session[k], k).toBeUndefined();
+    // The re-index looks the open windows up again and repaints the badge: only fresh values come back.
+    expect(session['suspPopupWindows'] ?? {}).not.toHaveProperty('999');
+    expect(session['badgeMode']).not.toBe('alert');
+    expect(mock.badgeText(tabB)).toBe('');
     expect(await db.snapshots.all()).toEqual([]);
     expect(await db.tombstones.all()).toEqual([]);
     expect(await db.stashBackups.all()).toEqual([]);
@@ -362,6 +374,8 @@ describe('background index', () => {
       await whenTabIndexIdle();
       expect((await db.items.all()).map((i) => i.url).sort()).toEqual(['https://b.example/']); // the open tab is re-indexed
     });
+    // Re-indexed as at browser start: the wipe does not make an open tab count as "never viewed".
+    expect((await db.items.all())[0]!.opened).not.toBe(false);
     expect(await bg.handleRequest({ t: 'undo', token: st.token })).toBe(false); // no undo across a wipe
     mock.uninstall();
   });

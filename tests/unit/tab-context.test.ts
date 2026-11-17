@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetTab, keepTab, loadContexts, loadKept, pruneKept, recordCreated } from '../../src/background/tab-context';
+import { clearTabContext, forgetTab, keepTab, loadContexts, loadKept, pruneKept, recordCreated } from '../../src/background/tab-context';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 let mock: ChromeMockControl;
 beforeEach(() => {
@@ -37,6 +37,20 @@ describe('tab context store', () => {
     expect((await loadContexts([{ tabId: 1, windowId: 777 }])).get(1)?.popup).toBe(false);
     await loadContexts([{ tabId: 1, windowId: 777 }]);
     expect(spy).toHaveBeenCalledTimes(2);
+  });
+  it('clearTabContext forgets every opener, pop-up window and kept tab', async () => {
+    const opener = mock.addTab({ url: 'https://www.news.example/story' });
+    const child = mock.addTab({ url: 'https://ads.example/x', openerTabId: opener.id });
+    await recordCreated(child);
+    const w = mock.addWindow();
+    mock.setWindowType(w, 'popup');
+    await loadContexts([{ tabId: child.id!, windowId: w }]);
+    await keepTab(child.id!, 'ads.example');
+    await chrome.storage.session.set({ unrelated: 1 });
+    await clearTabContext();
+    expect(await chrome.storage.session.get(null)).toEqual({ unrelated: 1 });
+    expect(await loadKept()).toEqual(new Map());
+    expect((await loadContexts([{ tabId: child.id!, windowId: undefined }])).get(child.id!)?.openerDomain).toBeUndefined();
   });
   it('round-trips kept tabs', async () => {
     await keepTab(5, 'a.example');

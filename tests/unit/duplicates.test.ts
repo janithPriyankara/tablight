@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { BADGE_ALERT_COLOR, BADGE_COLOR, findDuplicates, invalidateBadges, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
+import { BADGE_ALERT_COLOR, BADGE_COLOR, clearBadgeState, findDuplicates, invalidateBadges, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
 import { reconcile } from '../../src/background/tab-index';
 import type { Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -111,6 +111,23 @@ describe('updateBadge', () => {
     expect(mock.badgeText(tabs[0]!.id)).toBe('2×');
     expect(mock.badgeColor()).toBe(BADGE_COLOR);
     expect(mock.actionTitle()).toBe('Tablight');
+  });
+  it('clearBadgeState (Delete all data) forgets the stored mode and repaints every tab on the next update', async () => {
+    mock = installChromeMock({
+      windows: [{ tabs: [{ url: 'https://a.com/x', active: true }, { url: 'https://a.com/x' }, { url: 'https://b.com/' }] }],
+    });
+    await reconcile(db, await chrome.tabs.query({}));
+    const tabs = mock.tabs();
+    await updateBadge(db, undefined, 1);
+    await vi.waitFor(async () => expect((await chrome.storage.session.get('badgeMode'))['badgeMode']).toBe('alert'));
+    await clearBadgeState();
+    expect(await chrome.storage.session.get('badgeMode')).toEqual({});
+    // Same "normal" verdict as an empty store would give: the stale "!" must still be rewritten.
+    await updateBadge(db, undefined, 0);
+    expect(tabs.map((t) => mock!.badgeText(t.id))).toEqual(['2×', '2×', '']);
+    expect(mock.badgeColor()).toBe(BADGE_COLOR);
+    expect(mock.actionTitle()).toBe('Tablight');
+    await vi.waitFor(async () => expect((await chrome.storage.session.get('badgeMode'))['badgeMode']).toBe('normal'));
   });
   it('a full refresh only calls setBadgeText where the text changes', async () => {
     mock = installChromeMock({

@@ -118,3 +118,13 @@ export async function forgetTab(tabId: number): Promise<void> {
     delete r[String(tabId)];
   });
 }
+/** Delete all data: forgets every opener, pop-up window and kept tab (runs after any pending write). */
+export async function clearTabContext(): Promise<void> {
+  await serial(async () => {
+    try {
+      await chrome.storage.session.remove([OPENERS, POPUP_WINDOWS, KEPT]);
+    } catch {
+      // best effort
+    }
+  });
+}
