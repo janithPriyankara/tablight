@@ -80,7 +80,7 @@ describe('classifier accuracy', () => {
     );
     expect(m.acc).toBeGreaterThanOrEqual(0.85);
     expect(m.otherRate).toBeLessThanOrEqual(0.35);
-  });
+  }, 120_000); // Full-dataset inference can exceed Vitest's 5s default on shared CI workers.
   // holdout2: 300 tabs from eight imagined people, written after the model choice and never seen while tuning.
   // "clean" leaves out rows whose URL or title also occurs in the training pool (common pages like an inbox).
   it('blind holdout 2: ≥ 82% top-1, ≤ 35% of `other` pages auto-assigned', async () => {
@@ -94,5 +94,5 @@ describe('classifier accuracy', () => {
     console.log(`${line('HOLDOUT2', m)}\n${line(`HOLDOUT2 clean (${clean.length} rows)`, c)}`);
     expect(m.acc).toBeGreaterThanOrEqual(0.82);
     expect(m.otherRate).toBeLessThanOrEqual(0.35);
-  });
+  }, 120_000); // Runs inference over both the full and decontaminated holdout.
 });
