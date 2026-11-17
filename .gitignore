@@ -7,3 +7,4 @@ public/ort/
 test-results/
 playwright-report/
 .build/
+reports/

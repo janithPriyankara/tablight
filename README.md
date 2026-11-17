@@ -9,6 +9,8 @@ Private AI tab organizer. A browser extension for Microsoft Edge and Google Chro
 - Backs up and restores your saved tabs with an export/import file. Saved tabs can sync between your own devices through your browser account.
 Nothing leaves your device. The extension makes no network requests, has no servers, accounts or analytics, and never reads page contents (only each tab's title and address). The one exception you control is the optional sync, through your browser's own extension sync, of saved tabs and of the examples you taught your groups (the title and site of tabs you moved into a group), so your other devices group the same way. See [public/privacy.html](public/privacy.html) for the full statement.
 Requires Node 20 or newer.
+
+For automated builds on a Linux VM with Docker-hosted Jenkins, see [Jenkins setup](docs/jenkins.md). The root `Jenkinsfile` runs checks and produces a downloadable extension ZIP.
 ```
 npm ci
 npm run prepare:assets   # downloads the pinned model (checksum-verified) and copies the ONNX Runtime files
