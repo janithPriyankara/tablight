@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } from '../../src/shared/types';
 
@@ -334,6 +334,11 @@ describe('popup', () => {
     serve(state({ suspicious: [{ item: scam, clues: ['popup', 'title'] }] }));
     render(<Popup />);
     await screen.findByText('1 suspicious tab');
+    // The same card as the duplicate-tab notice, not a plain line of text.
+    const card = screen.getByRole('region', { name: 'Suspicious tabs' });
+    expect(card.className).toContain('dup-alert');
+    expect(within(card).getByText('1 suspicious tab').tagName).toBe('STRONG');
+    expect(within(card).getByRole('button', { name: 'Review' }).className).toBe('btn btn-sm');
     fireEvent.click(screen.getByRole('button', { name: 'Review' }));
     await waitFor(() => expect(tabsCreate).toHaveBeenCalledWith({ url: 'chrome-extension://ext/dashboard.html#view=suspicious' }));
     cleanup();

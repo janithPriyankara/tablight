@@ -13,6 +13,7 @@ import { useUndo } from '../common/useUndo';
 import { hintOnce } from '../common/hints';
 import { InlineCloseConfirm, SUSPICIOUS_INTRO, SuspiciousRows } from '../common/Suspicious';
 import { SearchResultsView, totalsLine } from '../popup/Popup';
+import { windowNumbers } from '../dashboard/views';
 
 /** Section ids that are expanded, kept per browser profile (a convenience: losing it is harmless). */
 const OPEN_KEY = 'sidepanel.open';
@@ -20,6 +21,8 @@ const WINDOW_SECTION = 'window';
 const UNSORTED_SECTION = 'unsorted';
 /** A section never renders more rows than this; the dashboard has the full list. */
 const MAX_ROWS = 300;
+/** Suspicious rows shown before "Show all (N)", so the window list stays in view. */
+const SUS_ROWS = 3;
 
 function loadOpen(): Set<string> {
   try {
@@ -58,6 +61,9 @@ export function SidePanel() {
   const [order, setOrder] = useState<Map<number, number>>(new Map());
   const [open, setOpen] = useState<Set<string>>(loadOpen);
   const [confirmClose, setConfirmClose] = useState(false);
+  // The Suspicious section is open by default (not remembered: new suspicious tabs should be seen).
+  const [susOpen, setSusOpen] = useState(true);
+  const [susAll, setSusAll] = useState(false);
   const closeAllBtn = useRef<HTMLButtonElement>(null);
   const theme = state?.settings?.theme;
   useEffect(() => applyTheme(theme), [theme]);
@@ -76,8 +82,11 @@ export function SidePanel() {
     const onActivated = (info: { tabId: number; windowId: number }) => {
       if (info.windowId === windowId) setActiveTab(info.tabId);
     };
-    chrome.tabs.onActivated.addListener(onActivated);
-    return () => chrome.tabs.onActivated.removeListener(onActivated);
+    // Remove from the same event object it was added to: the cleanup can run after the page (or a test)
+    // has let go of the global `chrome`.
+    const activated = chrome.tabs.onActivated;
+    activated.addListener(onActivated);
+    return () => activated.removeListener(onActivated);
   }, [windowId, state]);
 
   const act = async (fn: () => Promise<void>) => {
@@ -150,35 +159,56 @@ export function SidePanel() {
     setConfirmClose(false);
     setTimeout(() => closeAllBtn.current?.focus(), 0);
   };
+  const windowNo = useMemo(() => windowNumbers(items), [items]);
+  const susShown = susAll ? suspicious : suspicious.slice(0, SUS_ROWS);
+  // Same heading as the other sections (chevron, name, count on the right); the name read out keeps the count.
   const suspiciousSection = suspicious.length > 0 && (
     <section key="suspicious" class="sp-section sp-suspicious" aria-labelledby="sp-h-suspicious" role="region">
-      <div class="sp-head sp-head-static">
-        <h2 class="sp-name" id="sp-h-suspicious">{`Suspicious (${suspicious.length})`}</h2>
-        <button
-          ref={closeAllBtn} type="button" class="btn btn-sm" disabled={busy || confirmClose}
-          onClick={() => setConfirmClose(true)}
-        >
-          {`Close all (${suspicious.length})`}
-        </button>
-      </div>
-      {confirmClose && (
-        <InlineCloseConfirm
-          titles={suspicious.map((s) => displayTitle(s.item))}
-          onCancel={cancelCloseAll}
-          onConfirm={() => {
-            setConfirmClose(false);
-            void closeIds(suspicious.map((s) => s.item.id));
-          }}
-        />
+      <button
+        type="button" id="sp-h-suspicious" class="sp-head" aria-expanded={susOpen} aria-label={`Suspicious (${suspicious.length})`}
+        onClick={() => setSusOpen(!susOpen)}
+      >
+        <svg class="sp-chevron" viewBox="0 0 16 16" aria-hidden="true" style={{ transform: susOpen ? 'rotate(90deg)' : 'none' }}>
+          <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="sp-name">Suspicious</span>
+        <span class="sp-count">{suspicious.length}</span>
+      </button>
+      {susOpen && (
+        <>
+          <p class="sp-intro">{SUSPICIOUS_INTRO}</p>
+          <SuspiciousRows
+            list={susShown} label="Suspicious tabs" busy={busy} windowNo={windowNo}
+            groupOf={(i) => (i.groupId !== null ? groups.get(i.groupId) : undefined)}
+            onGo={(s) => void openItem(s.item)} onKeep={(s) => void keep(s.item)} onClose={(s) => void close(s.item)}
+          />
+          <div class="sp-sus-actions">
+            {suspicious.length > SUS_ROWS && (
+              <button type="button" class="btn btn-ghost btn-sm" aria-expanded={susAll} onClick={() => setSusAll(!susAll)}>
+                {susAll ? 'Show fewer' : `Show all (${suspicious.length})`}
+              </button>
+            )}
+            <button
+              ref={closeAllBtn} type="button" class="btn btn-sm" disabled={busy || confirmClose}
+              onClick={() => setConfirmClose(true)}
+            >
+              <CloseIcon />{`Close all (${suspicious.length})`}
+            </button>
+          </div>
+          {confirmClose && (
+            <InlineCloseConfirm
+              titles={suspicious.map((s) => displayTitle(s.item))}
+              onCancel={cancelCloseAll}
+              onConfirm={() => {
+                setConfirmClose(false);
+                void closeIds(suspicious.map((s) => s.item.id));
+              }}
+            />
+          )}
+        </>
       )}
-      <p class="sp-intro">{SUSPICIOUS_INTRO}</p>
-      <SuspiciousRows
-        list={suspicious} label="Suspicious tabs" busy={busy}
-        onGo={(s) => void openItem(s.item)} onKeep={(s) => void keep(s.item)} onClose={(s) => void close(s.item)}
-      />
     </section>
   );
-
   const row = (i: Item, showGroup: boolean) => {
     const g = showGroup && i.groupId !== null ? groups.get(i.groupId) : undefined;
     const active = i.tabId !== undefined && i.tabId === activeTab;

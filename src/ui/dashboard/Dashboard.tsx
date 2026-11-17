@@ -437,6 +437,7 @@ export function Dashboard() {
     stashed: items.filter((i) => i.state === 'stashed').length,
   }), [items, groups, state?.dupCount, suspicious.length]);
   const subtitle = (() => {
+    if (state && !searching && view.kind === 'suspicious') return suspicious.length ? plural(suspicious.length, 'suspicious tab') : '';
     if (!state || !isList) return '';
     if (searching) return search.pending ? 'Searching…' : plural(list.length, 'match', 'matches');
     if (view.kind === 'all') {
@@ -498,6 +499,11 @@ export function Dashboard() {
               />
             </label>
             <div class="toolbar">
+              {view.kind === 'suspicious' && !searching && suspicious.length > 0 && (
+                <button type="button" class="btn btn-sm" title="Close all suspicious tabs" disabled={busy} onClick={() => void closeAllSuspicious()}>
+                  <CloseIcon />{`Close all (${suspicious.length})`}
+                </button>
+              )}
               <button type="button" class="btn btn-sm" data-tour="close-duplicates" disabled={busy || !state?.dupCount} onClick={() => void closeDuplicates()}>
                 <CopyIcon />Close duplicates
               </button>
@@ -555,11 +561,6 @@ export function Dashboard() {
               </p>
             )}
             <div class="view-actions">
-              {view.kind === 'suspicious' && !searching && suspicious.length > 0 && (
-                <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void closeAllSuspicious()}>
-                  <CloseIcon />{`Close all (${suspicious.length})`}
-                </button>
-              )}
               {view.kind === 'stashed' && !searching && list.length > 0 && (
                 <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void removeAllStashed()}>
                   <TrashIcon />Remove all
@@ -666,7 +667,8 @@ export function Dashboard() {
             <div class="page-scroll sus-view">
               <p class="sus-intro">{SUSPICIOUS_INTRO}</p>
               <SuspiciousRows
-                list={suspicious} label="Suspicious tabs" busy={busy}
+                list={suspicious} label="Suspicious tabs" busy={busy} windowNo={windowNo}
+                groupOf={(i) => (i.groupId !== null ? groupMap.get(i.groupId) : undefined)}
                 onGo={(s) => void openItem(s.item)} onKeep={(s) => void keepTab(s)}
                 onClose={(s) => void act(() => closeIds([s.item.id]))}
               />

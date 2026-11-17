@@ -143,6 +143,7 @@ body.dashboard-page > #app {
 }
 .dash-top {
   display: flex;
+  flex-wrap: wrap; /* the toolbar drops to its own line before the search gets too narrow to use */
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-6);
@@ -150,6 +151,7 @@ body.dashboard-page > #app {
 }
 .dash-top .search {
   flex: 1;
+  min-width: 220px;
   max-width: 640px;
 }
 .toolbar {

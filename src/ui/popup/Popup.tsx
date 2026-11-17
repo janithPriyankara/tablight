@@ -4,7 +4,7 @@ import type { DashboardState, GroupSummary, Item, SyncStatus } from '../../share
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
-import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, PlayIcon, SearchIcon, StashIcon, SwitchIcon } from '../common/icons';
+import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, PlayIcon, SearchIcon, ShieldIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../../shared/nav';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
@@ -134,10 +134,16 @@ export function Popup() {
       {!state && !error && <p class="totals totals-loading" aria-busy="true">Counting tabs…</p>}
       {state && <p class="totals">{totalsLine(state)}</p>}
       {state && state.suspicious.length > 0 && (
-        <p class="suspicious-line">
-          <span>{plural(state.suspicious.length, 'suspicious tab')}</span>
-          <button type="button" class="btn btn-ghost btn-sm" disabled={busy} onClick={() => void dashboard('view=suspicious')}>Review</button>
-        </p>
+        <section class="dup-alert sus-alert" role="region" aria-label="Suspicious tabs">
+          <ShieldIcon class="dup-icon" />
+          <div class="dup-text">
+            <strong>{plural(state.suspicious.length, 'suspicious tab')}</strong>
+            <span class="dup-title">They opened in the background and look like ads or scams</span>
+          </div>
+          <div class="dup-actions">
+            <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void dashboard('view=suspicious')}>Review</button>
+          </div>
+        </section>
       )}
 
       {state?.activeDup && (

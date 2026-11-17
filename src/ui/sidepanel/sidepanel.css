@@ -135,42 +135,40 @@ body.sidepanel-page > #app {
   background: var(--accent-soft);
 }
 
-/* Suspicious tabs: a fixed (not collapsible) section at the top. */
+/* Suspicious tabs: a section at the top, headed like the others, ruled off from the window list. */
 .sp-suspicious {
   margin-bottom: var(--space-2);
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid var(--border);
 }
-.sp-head-static {
-  cursor: default;
-}
-.sp-head-static:hover {
-  background: transparent;
-}
-.sp-head-static .sp-name {
-  margin: 0;
-  font-size: inherit;
-}
 .sp-intro {
-  margin: 0 var(--space-2) var(--space-2);
+  margin: 0 var(--space-2) var(--space-1) var(--space-6);
   color: var(--text-muted);
   font-size: var(--text-xs);
 }
-.sp-suspicious .sus-row {
-  flex-wrap: wrap;
-}
-.sp-suspicious .sus-row .item-main {
-  flex-basis: 100%;
-  padding-bottom: 2px;
-}
+/* Compact rows: the three icon buttons stay visible at the end of the title's line (the title makes room
+   for them), so the meta and reasons lines get the full width. */
 .sp-suspicious .sus-row .item-actions {
-  position: static;
-  margin-left: auto;
-  padding: 0 var(--space-1) var(--space-1);
+  top: 3px;
+  gap: 0;
+  padding: 0;
   background: transparent;
   transform: none;
   pointer-events: auto;
 }
+.sp-suspicious .sus-row .item-title {
+  padding-right: 80px;
+}
 .sp-suspicious .item-note {
   white-space: normal; /* the panel is narrow: the reasons wrap rather than cut off */
+}
+.sp-sus-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin: 0 var(--space-2) var(--space-1) var(--space-4);
+}
+.sp-sus-actions .btn-ghost {
+  margin-right: auto;
 }

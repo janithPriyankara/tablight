@@ -624,6 +624,39 @@ describe('dashboard', () => {
       await waitFor(() => expect(sent('close')).toEqual([{ t: 'close', ids: ['s9'] }]));
       await screen.findByText('Closed 1 tab');
     });
+    it('rows: no "New" chip (the reasons say it), the window and group meta line, icon buttons like other rows', async () => {
+      location.hash = '#view=suspicious';
+      const popped = { ...scam, windowId: 2 };
+      serve(state({ items: [...state().items, popped], suspicious: [{ item: popped, clues: ['opener', 'unseen', 'address'] }] }));
+      render(<Dashboard />);
+      await ready();
+      const row = within(screen.getByRole('list', { name: 'Suspicious tabs' })).getByRole('listitem');
+      expect(row.querySelector('.state-new')).toBeNull();
+      expect(row.querySelector('.item-meta')!.textContent).toBe('official-app.spaceWindow 2Programming');
+      expect(row.querySelector('.item-note')!.textContent).toBe('Opened by another site · Never viewed · Ad-click address');
+      const buttons = within(row).getAllByRole('button');
+      expect(buttons.map((b) => b.className)).toEqual(['icon-btn', 'icon-btn', 'icon-btn']);
+      expect(buttons.map((b) => b.title)).toEqual(['Go to tab', 'Keep: stop pointing this tab out', 'Close tab']);
+      // Elsewhere the same unseen tab keeps its "New" chip.
+      cleanup();
+      location.hash = '#view=all';
+      serve(sus());
+      render(<Dashboard />);
+      await ready();
+      const listed = [...document.querySelectorAll('.item-row')].find((r) => r.textContent?.includes(scam.title));
+      expect(listed?.querySelector('.state-new')).toBeTruthy();
+    });
+    it('header like Duplicates: the count as the subtitle, "Close all (N)" in the top bar beside Close duplicates', async () => {
+      location.hash = '#view=suspicious';
+      serve(sus());
+      render(<Dashboard />);
+      await ready();
+      expect(document.querySelector('.view-sub')!.textContent).toBe('1 suspicious tab');
+      const toolbar = document.querySelector('.toolbar') as HTMLElement;
+      expect(within(toolbar).getByRole('button', { name: 'Close all (1)' })).toBeTruthy();
+      expect(within(toolbar).getByRole('button', { name: /Close duplicates/ })).toBeTruthy();
+      expect(document.querySelector('.view-actions')!.textContent).toBe('');
+    });
     it('"Close all (1)" asks first, listing the titles, then closes with Undo', async () => {
       location.hash = '#view=suspicious';
       serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));

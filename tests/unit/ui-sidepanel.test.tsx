@@ -191,6 +191,38 @@ describe('SidePanel', () => {
       await waitFor(() => expect(sendMock.mock.calls.map(([r]) => r)).toContainEqual({ t: 'close', ids: ['i9'] }));
       await screen.findByRole('button', { name: 'Undo' });
     });
+    it('headed like the other sections (count on the right, collapsible, open), compact rows with the window meta', async () => {
+      serve(sus());
+      render(<SidePanel />);
+      await loaded();
+      const head = within(section()).getByRole('button', { name: 'Suspicious (1)' });
+      expect(head.getAttribute('aria-expanded')).toBe('true');
+      expect(head.querySelector('.sp-chevron')).toBeTruthy();
+      expect(head.querySelector('.sp-count')!.textContent).toBe('1');
+      const row = within(section()).getByRole('listitem');
+      expect(row.querySelector('.state-new')).toBeNull();
+      expect(row.querySelector('.item-meta')!.textContent).toBe('example.comWindow 2Programming');
+      expect(within(row).getAllByRole('button').map((b) => b.className)).toEqual(['icon-btn', 'icon-btn', 'icon-btn']);
+      fireEvent.click(head);
+      expect(head.getAttribute('aria-expanded')).toBe('false');
+      expect(within(section()).queryByRole('list', { name: 'Suspicious tabs' })).toBeNull();
+      fireEvent.click(head);
+      expect(within(section()).getByRole('list', { name: 'Suspicious tabs' })).toBeTruthy();
+    });
+    it('shows at most 3 rows, then "Show all (N)"', async () => {
+      const many = [1, 2, 3, 4, 5].map((n) => ({ item: item(`s${n}`, { title: `Scam ${n}` }), clues: ['popup' as const] }));
+      serve(state({ suspicious: many }));
+      render(<SidePanel />);
+      await loaded();
+      const sec = screen.getByRole('region', { name: 'Suspicious (5)' });
+      const rows = () => within(within(sec).getByRole('list', { name: 'Suspicious tabs' })).getAllByRole('listitem');
+      expect(rows()).toHaveLength(3);
+      fireEvent.click(within(sec).getByRole('button', { name: 'Show all (5)' }));
+      expect(rows()).toHaveLength(5);
+      fireEvent.click(within(sec).getByRole('button', { name: 'Show fewer' }));
+      expect(rows()).toHaveLength(3);
+      expect(within(sec).getByRole('button', { name: 'Close all (5)' })).toBeTruthy();
+    });
     it('"Close all (1)" asks first, listing the titles, then closes', async () => {
       serve(sus(), (req) => (req.t === 'close' ? { token: 't', closed: 1 } : undefined));
       render(<SidePanel />);

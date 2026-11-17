@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import { CLUE_TEXT, type Clue, type SuspiciousTab } from '../../shared/clues';
+import type { Item } from '../../shared/types';
+import { CheckIcon, CloseIcon, SwitchIcon } from './icons';
 import { ItemRow } from './ItemRow';
 import { displayTitle, plural } from './format';
 
@@ -12,14 +14,20 @@ export const closeAllTitle = (n: number): string => `Close ${plural(n, 'suspicio
 export const CLOSE_ALL_BODY = 'You can undo for 10 seconds.';
 
 /**
- * The suspicious tabs with their reasons and three plain actions. The title is not a button: going to a
- * tab that looks like a scam is an explicit "Go to tab". Every button's name includes the tab's title, as
- * the same labels repeat on each row.
+ * The suspicious tabs with their reasons and three plain actions. The meta line is the one other lists use
+ * (domain · Window N · group), so a pop-under in a hidden window can be found; the reasons get a line of
+ * their own. No "New" chip: "Never viewed" already says it. The title is not a button: going to a tab that
+ * looks like a scam is an explicit "Go to tab". The actions are the icon buttons used on every other row,
+ * always visible here; each name includes the tab's title, as the same buttons repeat on each row.
  */
 export function SuspiciousRows(props: {
   list: SuspiciousTab[];
   label: string;
   busy: boolean;
+  /** Window numbers by window id (as in the other lists): adds "Window N" to the meta line. */
+  windowNo?: ReadonlyMap<number, number>;
+  /** The group of an item, for the chip after the domain. */
+  groupOf?: (item: Item) => { name: string; color: string } | undefined;
   onGo: (s: SuspiciousTab) => void;
   onKeep: (s: SuspiciousTab) => void;
   onClose: (s: SuspiciousTab) => void;
@@ -29,19 +37,22 @@ export function SuspiciousRows(props: {
     <ul class="item-list sus-list" aria-label={props.label}>
       {props.list.map((s) => {
         const title = displayTitle(s.item);
+        const win = s.item.windowId !== undefined ? props.windowNo?.get(s.item.windowId) : undefined;
+        const group = props.groupOf?.(s.item);
         return (
           <ItemRow
-            key={s.item.id} item={s.item} note={reasonsText(s.clues)} rowProps={{ class: 'sus-row' }}
+            key={s.item.id} item={s.item} note={reasonsText(s.clues)} rowProps={{ class: 'sus-row' }} hideNew
+            {...(win !== undefined ? { meta: `Window ${win}` } : {})} {...(group ? { group } : {})}
             actions={
               <>
-                <button type="button" class="btn btn-sm btn-ghost" aria-label={`Go to tab ${title}`} disabled={busy} onClick={() => props.onGo(s)}>
-                  Go to tab
+                <button type="button" class="icon-btn" aria-label={`Go to tab ${title}`} title="Go to tab" disabled={busy} onClick={() => props.onGo(s)}>
+                  <SwitchIcon />
                 </button>
-                <button type="button" class="btn btn-sm" aria-label={`Keep ${title}`} title="Keep: stop pointing this tab out" disabled={busy} onClick={() => props.onKeep(s)}>
-                  Keep
+                <button type="button" class="icon-btn" aria-label={`Keep ${title}`} title="Keep: stop pointing this tab out" disabled={busy} onClick={() => props.onKeep(s)}>
+                  <CheckIcon />
                 </button>
-                <button type="button" class="btn btn-sm" aria-label={`Close ${title}`} disabled={busy} onClick={() => props.onClose(s)}>
-                  Close
+                <button type="button" class="icon-btn" aria-label={`Close ${title}`} title="Close tab" disabled={busy} onClick={() => props.onClose(s)}>
+                  <CloseIcon />
                 </button>
               </>
             }
@@ -51,7 +62,6 @@ export function SuspiciousRows(props: {
     </ul>
   );
 }
-
 /** Titles listed in a "Close all" confirmation. Untrusted text: rendered as text nodes only. */
 export function ConfirmTitles({ titles }: { titles: string[] }) {
   return <ul class="confirm-list">{titles.map((t, n) => <li key={n}>{t}</li>)}</ul>;
