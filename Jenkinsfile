@@ -4,6 +4,23 @@ def workspaceStarted = false
 def isNightly() {
     return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
 }
+// Shows this build on the commit in GitHub (✓ / ✗ / pending), using the job's GitHub credential.
+// Best effort: a GitHub outage or a token without status rights never fails the build.
+def githubStatus(String state, String description) {
+    if (!env.GIT_COMMIT) return
+    withCredentials([usernamePassword(credentialsId: 'c47450d1-0c75-4759-8460-772e677e3a74',
+            usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        withEnv(["GH_STATE=${state}", "GH_DESC=${description}"]) {
+            sh '''
+                code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+                    -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/janithPriyankara/tablight/statuses/$GIT_COMMIT" \
+                    -d "{\\"state\\":\\"$GH_STATE\\",\\"context\\":\\"jenkins/tablight\\",\\"description\\":\\"$GH_DESC\\",\\"target_url\\":\\"$BUILD_URL\\"}" || true)
+                echo "GitHub commit status $GH_STATE: HTTP $code"
+            '''
+        }
+    }
+}
 
 pipeline {
     agent any
@@ -17,6 +34,8 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '5'))
     }
     triggers {
+        // Every push to GitHub (webhook → /github-webhook/) starts a build of the pushed commit.
+        githubPush()
         // Nightly: full browser suite and the spec's 500-tab performance check (see Browser tests).
         cron('H 2 * * *')
     }
@@ -40,8 +59,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script { workspaceStarted = true }
-                checkout scm
+                script {
+                    workspaceStarted = true
+                    env.GIT_COMMIT = checkout(scm).GIT_COMMIT
+                    githubStatus('pending', "Build #${env.BUILD_NUMBER} running")
+                }
                 // Prevent old ZIPs, reports or downloaded assets from masking a failure: remove everything
                 // git does not track, except node_modules (Install dependencies decides whether it is current).
                 sh 'git clean -ffdx -e node_modules'
@@ -139,6 +161,10 @@ pipeline {
                 }
             }
         }
+        success { script { githubStatus('success', "Build #${env.BUILD_NUMBER} passed") } }
+        unstable { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} has failing tests") } }
+        failure { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} failed") } }
+        aborted { script { githubStatus('error', "Build #${env.BUILD_NUMBER} was stopped") } }
         cleanup {
             script {
                 if (workspaceStarted) {
