@@ -8,7 +8,7 @@ def isNightly() {
 // Best effort: a GitHub outage or a token without status rights never fails the build.
 def githubStatus(String state, String description) {
     if (!env.GIT_COMMIT) return
-    withCredentials([usernamePassword(credentialsId: 'c47450d1-0c75-4759-8460-772e677e3a74',
+    withCredentials([usernamePassword(credentialsId: 'dcc58858-b705-437a-adac-d64dd39c12a3',
             usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         withEnv(["GH_STATE=${state}", "GH_DESC=${description}"]) {
             sh '''
