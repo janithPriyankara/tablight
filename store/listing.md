@@ -4,6 +4,7 @@ Group, search and save hundreds of tabs by topic, with an AI model that runs on 
 Tablight helps when you have too many tabs open.
 - See all your tabs from every window in one dashboard, automatically grouped by topic such as Movies, Programming, Shopping or News. Drag a tab into another group and it learns your choice. New topics are spotted on their own and offered as new groups, or created automatically if you turn that on.
 - Find duplicates and close the extras, with a 10 second undo.
+- Points out tabs that opened in the background and look like ads or scams, so you can close them in one click.
 - Pause tabs to free memory (they stay in your tab strip and pick up when clicked), or save a tab, a group or a whole window for later: the tab closes and is kept in Saved for later until you open it again.
 - Hourly snapshots of your windows let you continue where you left off after a restart.
 - Keep it open in the browser's side panel next to your pages: this window's tabs and every group, one click to switch.
