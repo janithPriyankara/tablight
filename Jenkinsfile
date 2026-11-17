@@ -3,6 +3,9 @@ def workspaceStarted = false
 
 pipeline {
     agent any
+    tools {
+        nodejs 'node22'
+    }
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
@@ -13,7 +16,7 @@ pipeline {
         booleanParam(name: 'RUN_QUALITY_TESTS', defaultValue: false,
             description: 'Run model/classification quality tests (requires extra CPU and memory).')
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
-            description: 'Download Chromium and test the extension; Linux libraries are preinstalled in Jenkins.')
+            description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
     }
     environment {
         CI = 'true'

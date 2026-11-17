@@ -2,35 +2,17 @@
 
 The root `Jenkinsfile` runs npm commands directly on the Jenkins node (`agent any`). In your single-node setup, that is the existing Jenkins container. It needs no Docker Pipeline plugin, Docker CLI or Docker socket inside Jenkins.
 
-## Prepare the Jenkins image
+## Configure Node.js without changing the shared Jenkins image
 
-`ci/jenkins/Dockerfile` adds Node.js 22, npm and Chromium's Linux libraries to a Debian-based Jenkins image. Image construction uses root; Jenkins and pipeline commands run as the normal `jenkins` user. The pipeline downloads Chromium as that user only when browser tests are enabled.
+Install the **NodeJS** Jenkins plugin. Under **Manage Jenkins → Tools → NodeJS installations**, add an installation named exactly `node22`, enable automatic installation, and choose a Node.js 22.x release. Save it. The Jenkinsfile selects `tools { nodejs 'node22' }`, which installs the tool on demand and adds it to this pipeline's PATH. Other jobs keep their existing tool configuration. No container rebuild or Docker socket is required. Allow access to nodejs.org for automatic downloads.
 
-On your Linux VM, from a checkout of this repository:
+Keep at least one executor online on the intended node. Existing labels can remain; this job does not require the `docker` label. If Jenkins has multiple nodes, restrict this job's agent to a suitable Linux node instead of `any`.
 
-```sh
-git pull origin main
-# Replace the base image below with your CURRENT Debian-based Jenkins image/tag.
-docker build --build-arg JENKINS_IMAGE=jenkins/jenkins:lts-jdk21 \
-  -f ci/jenkins/Dockerfile -t tablight-jenkins:local .
-```
-
-In your existing Jenkins Compose service, change `image:` to `tablight-jenkins:local`. If the service has a `build:` section, update it to use this Dockerfile instead. Keep the existing Jenkins home volume, ports, environment, networks and other settings. Recreate only that service:
-
-```sh
-# Replace jenkins with your actual Compose service name.
-docker compose up -d --no-deps jenkins
-docker compose exec --user jenkins jenkins node --version
-docker compose exec --user jenkins jenkins npm --version
-```
-
-Do not delete your Jenkins home volume: it holds jobs, plugins and settings. No Docker socket mount, privileged mode or Docker group membership is needed for this pipeline. Remove any socket mount added solely for this job. Keep at least one executor online on the built-in node. Existing labels may remain; the pipeline no longer requires the `docker` label. With multiple nodes, constrain the pipeline agent to a label on nodes using the prepared image instead of `any`.
-
-Recreating the container from the new image is necessary to acquire Node.js; pushing a Jenkinsfile alone cannot add Node to the running Jenkins container. If you launched Jenkins with `docker run`, recreate it using the new image and your original volume/port/settings arguments instead of Compose.
+Leave `RUN_E2E_TESTS` off unless Chromium's Linux libraries are already installed on the node. NodeJS tool installation does not install OS libraries. The repository's `ci/jenkins/Dockerfile` remains an optional image for a dedicated Jenkins installation; it is not required for your shared Jenkins and should not replace its existing image.
 
 ## Configure the job
 
-Required Jenkins plugins: **Pipeline** (including Declarative), **Git**, and **JUnit**. Select **Pipeline script from SCM → Git**:
+Required Jenkins plugins: **Pipeline** (including Declarative), **Git**, **NodeJS**, and **JUnit**. Select **Pipeline script from SCM → Git**:
 
 - Repository: `https://github.com/janithPriyankara/tablight.git`
 - Branch: `*/main`
@@ -47,11 +29,11 @@ Allow outbound access to image registries, npm and Debian mirrors during image c
 
 ## Troubleshooting
 
-- **node/npm not found:** recreate Jenkins using the prepared image and verify versions as the Jenkins user.
+- **node/npm not found:** check that the NodeJS plugin is enabled, the tool is named exactly `node22`, and its automatic download succeeds.
 - **Still seeing docker inspect/pull:** confirm Jenkins fetches the latest main, rather than replaying an old pipeline.
 - **Waiting for an executor:** make sure the node is online, has an executor, and allows this job to run there.
 - **Workspace permission denied:** earlier root-based builds may have left files owned by root. Repair ownership only in this job's workspace to match the Jenkins user.
-- **Browser libraries missing:** rebuild the image with its Playwright dependency-install step; pipeline steps intentionally do not require root.
+- **Browser libraries missing:** leave browser tests off or have an administrator prepare the browser libraries on a suitable agent.
 - **Tests fail:** inspect reports and logs; these remain required build failures.
 
 Local npm checks do not establish a Jenkins runtime result. Validate the Declarative syntax with your Jenkins [Pipeline linter](https://www.jenkins.io/doc/book/pipeline/development/#linter), then run the job on the VM.
