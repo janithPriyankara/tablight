@@ -6,4 +6,4 @@ The Jenkins Dockerfile extends the existing Debian-based Jenkins image, installs
 
 Approaches: a sibling Docker build container required extra daemon/CLI setup. The user selected direct builds in the Jenkins container instead, simplifying this single-node VM setup. Java and Node therefore coexist in the Jenkins image.
 
-Shared Jenkins correction: preserve its existing Go/Java/Android toolchains and image. Select the Jenkins NodeJS plugin installation `node22` through the Declarative tools directive. Browser OS libraries remain a separate optional prerequisite.
+Shared Jenkins correction: preserve its existing Go/Java/Android toolchains and image. Select the Jenkins NodeJS plugin installation `nodejs22.23.5` through the Declarative tools directive. Browser OS libraries remain a separate optional prerequisite.

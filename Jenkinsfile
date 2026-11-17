@@ -4,7 +4,7 @@ def workspaceStarted = false
 pipeline {
     agent any
     tools {
-        nodejs 'node22'
+        nodejs 'nodejs22.23.5'
     }
     options {
         skipDefaultCheckout(true)

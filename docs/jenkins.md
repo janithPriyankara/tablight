@@ -4,7 +4,7 @@ The root `Jenkinsfile` runs npm commands directly on the Jenkins node (`agent an
 
 ## Configure Node.js without changing the shared Jenkins image
 
-Install the **NodeJS** Jenkins plugin. Under **Manage Jenkins → Tools → NodeJS installations**, add an installation named exactly `node22`, enable automatic installation, and choose a Node.js 22.x release. Save it. The Jenkinsfile selects `tools { nodejs 'node22' }`, which installs the tool on demand and adds it to this pipeline's PATH. Other jobs keep their existing tool configuration. No container rebuild or Docker socket is required. Allow access to nodejs.org for automatic downloads.
+Install the **NodeJS** Jenkins plugin. Under **Manage Jenkins → Tools → NodeJS installations**, add an installation named exactly `nodejs22.23.5`, enable automatic installation, and choose a Node.js 22.x release. Save it. The Jenkinsfile selects `tools { nodejs 'nodejs22.23.5' }`, which installs the tool on demand and adds it to this pipeline's PATH. Other jobs keep their existing tool configuration. No container rebuild or Docker socket is required. Allow access to nodejs.org for automatic downloads.
 
 Keep at least one executor online on the intended node. Existing labels can remain; this job does not require the `docker` label. If Jenkins has multiple nodes, restrict this job's agent to a suitable Linux node instead of `any`.
 
@@ -29,7 +29,7 @@ Allow outbound access to image registries, npm and Debian mirrors during image c
 
 ## Troubleshooting
 
-- **node/npm not found:** check that the NodeJS plugin is enabled, the tool is named exactly `node22`, and its automatic download succeeds.
+- **node/npm not found:** check that the NodeJS plugin is enabled, the tool is named exactly `nodejs22.23.5`, and its automatic download succeeds.
 - **Still seeing docker inspect/pull:** confirm Jenkins fetches the latest main, rather than replaying an old pipeline.
 - **Waiting for an executor:** make sure the node is online, has an executor, and allows this job to run there.
 - **Workspace permission denied:** earlier root-based builds may have left files owned by root. Repair ownership only in this job's workspace to match the Jenkins user.
