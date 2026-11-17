@@ -51,6 +51,8 @@ export interface ChromeMockControl {
   windowIds(): number[];
   /** Opens an empty window and returns its id (windows.onCreated is not modelled). */
   addWindow(): number;
+  /** Sets what windows.get reports as the window's type (default 'normal'). */
+  setWindowType(windowId: number, type: `${chrome.windows.WindowType}`): void;
   /** Closes a window: every tab fires onRemoved with isWindowClosing, then windows.onRemoved. */
   removeWindow(windowId: number): void;
   /** Creates a tab (onCreated). `windowId` defaults to the first window, which is created if none exists. */
@@ -166,6 +168,8 @@ export interface MockChrome {
   windows: {
     WINDOW_ID_NONE: -1;
     update(windowId: number, p: chrome.windows.UpdateInfo): Promise<unknown>;
+    /** Rejects for an unknown windowId; reports type 'normal' unless setWindowType changed it. */
+    get(windowId: number): Promise<{ id: number; type: string }>;
     /** Opens a window holding one tab per url (the first one active); without a url it holds one new-tab page. */
     create(p?: chrome.windows.CreateData): Promise<{ id: number; tabs: Tab[] }>;
     onRemoved: MockEvent<(windowId: number) => void>;
@@ -221,6 +225,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
   const alarms = new Map<string, Alarm>();
   const local = new Map<string, unknown>();
   const session = new Map<string, unknown>();
+  const windowTypes = new Map<number, string>();
   const sync = new Map<string, unknown>();
   const onStorageChanged = new MockEvent<(changes: StorageChanges, areaName: string) => void>();
   const area = (data: Map<string, unknown>, name: string) =>
@@ -353,6 +358,10 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
         if (p.focused) control.focusWindow(windowId);
         return { id: windowId };
       },
+      async get(windowId) {
+        if (!windows.includes(windowId)) throw new Error(`No window with id: ${windowId}.`);
+        return { id: windowId, type: windowTypes.get(windowId) ?? 'normal' };
+      },
       async create(p) {
         const urls = p?.url === undefined ? ['chrome://newtab/'] : Array.isArray(p.url) ? p.url : [p.url];
         const id = addWindow();
@@ -479,6 +488,7 @@ export function installChromeMock(seed?: MockSeed): ChromeMockControl {
     tabs: () => ordered().map(clone),
     windowIds: () => [...windows],
     addWindow,
+    setWindowType: (windowId, type) => void windowTypes.set(windowId, type),
     removeWindow(windowId) {
       for (const t of inWindow(windowId)) removeTab(t.id!, true);
       windows.splice(windows.indexOf(windowId), 1);

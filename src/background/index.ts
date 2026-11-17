@@ -11,6 +11,7 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
+import { forgetTab, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
 import { isBlankTab, isClutterTab } from '../shared/url';
 import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
@@ -453,6 +454,7 @@ function syncPanel(tab: chrome.tabs.Tab | undefined): void {
 }
 chrome.tabs.onCreated.addListener((tab) => {
   onTabEvent();
+  recordCreated(tab).catch(() => undefined);
   syncPanel(tab);
 });
 chrome.tabs.onUpdated.addListener((_id, info, tab) => {
@@ -465,6 +467,7 @@ chrome.tabs.onUpdated.addListener((_id, info, tab) => {
 void chrome.tabs.query({}).then((tabs) => tabs.forEach(syncPanel), () => undefined);
 chrome.tabs.onRemoved.addListener((tabId) => {
   onTabEvent();
+  forgetTab(tabId).catch(() => undefined);
   panelOn.delete(tabId);
 });
 chrome.tabs.onReplaced.addListener(() => onTabEvent());
