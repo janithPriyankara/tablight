@@ -46,7 +46,7 @@ pipeline {
             description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
         string(name: 'PERF_TABS', defaultValue: '100',
             description: 'Tabs opened by the @perf test. The nightly build always uses 500.')
-        string(name: 'E2E_WORKERS', defaultValue: '3',
+        string(name: 'E2E_WORKERS', defaultValue: '2',
             description: 'How many browser test files run at once (each starts its own Chromium). The 500-tab @perf test always runs alone afterwards.')
     }
     environment {
