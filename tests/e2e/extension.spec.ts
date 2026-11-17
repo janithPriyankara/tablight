@@ -7,20 +7,17 @@
  * may be contacted. Not covered: the first (navigation) request of tabs opened through chrome.windows /
  * chrome.tabs.create, which Playwright attaches to too late; those are the test pages themselves.
  */
-import { chromium, expect, test, type BrowserContext, type Page, type Worker } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page, type Worker } from '@playwright/test';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import type { Req } from '../../src/shared/rpc';
+import { join } from 'node:path';
 import type { DashboardState, Item } from '../../src/shared/types';
 import { captureNetwork, type NetworkCapture } from './fixtures/cdp-network';
+import { DIST, assertBuilt, escapeRe, launchExtension, navButton, rpc, state } from './fixtures/launch';
 import { PAGES, startPageServer, type PageServer } from './fixtures/server';
 import { MODEL_ID } from '../../scripts/model-manifest.mjs';
 
-const DIST = resolve('dist');
-if (!existsSync(join(DIST, 'manifest.json'))) {
-  throw new Error('dist/manifest.json not found: run "npm run build" before the e2e tests.');
-}
+assertBuilt();
 /** Generous: the first model load in a fresh profile, and 50+ tabs loading at once. */
 const SETTLE_MS = 120_000;
 
@@ -56,17 +53,6 @@ function tempDir(): string {
   return d;
 }
 
-/** Calls the background exactly as the UI does (same envelope, sent from an extension page). */
-async function rpc<T>(page: Page, req: Req): Promise<T> {
-  const reply = await page.evaluate(
-    (r) => chrome.runtime.sendMessage({ ...r, target: 'background' }) as Promise<{ ok: boolean; data?: unknown; error?: string }>,
-    req,
-  );
-  if (!reply?.ok) throw new Error(`rpc ${req.t} failed: ${reply?.error ?? 'no reply'}`);
-  return reply.data as T;
-}
-const state = (page: Page) => rpc<DashboardState>(page, { t: 'state' });
-
 /** Tabs of the local test server, read through the extension's own tabs API. */
 function serverTabs(page: Page): Promise<chrome.tabs.Tab[]> {
   return page.evaluate((origin) => chrome.tabs.query({ url: `${origin}/*` }), server.origin);
@@ -78,19 +64,12 @@ function serverTabs(page: Page): Promise<chrome.tabs.Tab[]> {
  */
 async function launch(): Promise<Ext> {
   const dir = tempDir();
-  const context = await chromium.launchPersistentContext(dir, {
-    channel: 'chromium',
-    headless: true,
-    acceptDownloads: true,
-    viewport: { width: 1280, height: 900 },
-    args: [`--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, '--remote-debugging-port=0'],
+  // The request recorder is attached before the extension's worker is even looked up.
+  const { context, sw, id } = await launchExtension(dir, ['--remote-debugging-port=0'], (c) => {
+    contexts.push(c);
+    c.on('request', (r) => requests.push({ source: r.serviceWorker() ? 'service-worker' : 'page', url: r.url() }));
   });
-  contexts.push(context);
   try {
-    context.on('request', (r) => requests.push({ source: r.serviceWorker() ? 'service-worker' : 'page', url: r.url() }));
-    const sw = context.serviceWorkers().find((w) => w.url().endsWith('/background.js'))
-      ?? await context.waitForEvent('serviceworker', { predicate: (w) => w.url().endsWith('/background.js'), timeout: 30_000 });
-    const id = new URL(sw.url()).host;
     const cdp = await captureNetwork(dir);
     cdpCaptures.push(cdp);
     const dashboard = await context.newPage();
@@ -130,10 +109,6 @@ async function waitSettled(page: Page, tabs: number): Promise<DashboardState> {
   }, { timeout: SETTLE_MS, intervals: [250] }).toBe(true);
   return last!;
 }
-
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const nav = (page: Page) => page.getByRole('navigation', { name: 'Views and groups' });
-const navButton = (page: Page, name: string) => nav(page).getByRole('button', { name: new RegExp(`^${escapeRe(name)}(\\s|$)`) }).first();
 
 function assertNoForeignRequests(id: string | undefined): void {
   const allowed = (url: string) =>

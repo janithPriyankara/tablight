@@ -80,6 +80,54 @@ export const PAGES: TestPage[] = [
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** Titles of the Suspicious-tabs test pages (tests/e2e/suspicious.spec.ts). */
+export const SUS_TITLES = {
+  normal: 'Neighbourhood notice board',
+  opener: 'Free movie streaming',
+  popupOpener: 'Free game downloads',
+  article: 'Gardening basics: growing tomatoes at home',
+  recipe: "You won't believe this recipe",
+  /** /click?key=1&visitor_id=2 */
+  spam: 'Reveal your deposit bonus',
+  /** /click?key=1&visitor_id=2&v=2 */
+  spam2: 'Claim your prize: 50 free spins',
+} as const;
+const htmlPage = (title: string, body: string) =>
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>` +
+  `<link rel="icon" href="data:,"></head><body><h1>${escapeHtml(title)}</h1>${body}</body></html>`;
+/**
+ * The Suspicious-tabs pages. Targets come from repeated `to` query parameters (absolute URLs, so a page on
+ * one host can open a page on another), rendered as attributes only.
+ * - /normal: a normal page with a link (target=_blank) per target;
+ * - /opener: a button per target that calls window.open(url);
+ * - /popup-opener: a button per target that opens it in a pop-up window;
+ * - /article, /recipe: plain pages; /click: the spam page (ad-click path and keys, scam-style title).
+ */
+function susPage(path: string, q: URLSearchParams): string | undefined {
+  const to = q.getAll('to');
+  const each = (fn: (u: string, n: number) => string) => to.map((u, n) => fn(escapeHtml(u), n)).join('');
+  const script = (call: string) =>
+    `<script>document.querySelectorAll('button[data-to]').forEach((b) => b.addEventListener('click', () => ${call}));</script>`;
+  switch (path) {
+    case '/normal':
+      return htmlPage(SUS_TITLES.normal, each((u, n) => `<p><a id="link${n}" href="${u}" target="_blank">Link ${n}</a></p>`));
+    case '/opener':
+      return htmlPage(SUS_TITLES.opener, each((u, n) => `<p><button id="open${n}" data-to="${u}">Watch now ${n}</button></p>`) +
+        script('window.open(b.dataset.to)'));
+    case '/popup-opener':
+      return htmlPage(SUS_TITLES.popupOpener, each((u, n) => `<p><button id="open${n}" data-to="${u}">Download ${n}</button></p>`) +
+        script(`window.open(b.dataset.to, '_blank', 'popup,width=400,height=300')`));
+    case '/article':
+      return htmlPage(SUS_TITLES.article, '<p>Water them in the morning.</p>');
+    case '/recipe':
+      return htmlPage(SUS_TITLES.recipe, '<p>Just flour, water and salt.</p>');
+    case '/click':
+      return htmlPage(q.get('v') === '2' ? SUS_TITLES.spam2 : SUS_TITLES.spam, '<p>Spin to win!</p>');
+    default:
+      return undefined;
+  }
+}
+
 export interface PageServer {
   /** http://127.0.0.1:<port> */
   origin: string;
@@ -90,15 +138,25 @@ export interface PageServer {
   close: () => Promise<void>;
 }
 
-/** Starts the page server. /p/<slug> serves that page; /favicon.ico is an empty 204; the rest is 404. */
+/**
+ * Starts the page server. /p/<slug> serves that page; the Suspicious-tabs pages are served by susPage;
+ * /favicon.ico is an empty 204; the rest is 404.
+ */
 export async function startPageServer(): Promise<PageServer> {
   const bySlug = new Map(PAGES.map((p) => [p.slug, p]));
   let lastServedAt = 0;
   const server: Server = createServer((req, res) => {
-    const path = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    const path = url.pathname;
     const page = path.startsWith('/p/') ? bySlug.get(path.slice(3)) : undefined;
     if (path === '/favicon.ico') {
       res.writeHead(204).end();
+      return;
+    }
+    const sus = susPage(path, url.searchParams);
+    if (sus !== undefined) {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      res.end(sus);
       return;
     }
     if (!page) {
