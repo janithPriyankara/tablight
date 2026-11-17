@@ -27,7 +27,7 @@ pipeline {
             description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
         string(name: 'PERF_TABS', defaultValue: '100',
             description: 'Tabs opened by the @perf test. The nightly build always uses 500.')
-        string(name: 'E2E_WORKERS', defaultValue: '2',
+        string(name: 'E2E_WORKERS', defaultValue: '3',
             description: 'How many browser test files run at once (each starts its own Chromium). The 500-tab @perf test always runs alone afterwards.')
     }
     environment {
@@ -41,20 +41,39 @@ pipeline {
         stage('Checkout') {
             steps {
                 script { workspaceStarted = true }
-                // Prevent old ZIPs, reports or downloaded assets from masking a failure.
-                deleteDir()
                 checkout scm
+                // Prevent old ZIPs, reports or downloaded assets from masking a failure: remove everything
+                // git does not track, except node_modules (Install dependencies decides whether it is current).
+                sh 'git clean -ffdx -e node_modules'
                 sh 'node --version && npm --version && mkdir -p reports'
             }
         }
         stage('Install dependencies') {
-            steps { sh 'npm ci --no-audit --no-fund' }
+            steps {
+                // npm ci only when the lockfile or Node changed since node_modules was installed. The stamp is
+                // written after a successful install, so a broken or partial install is never reused.
+                sh '''
+                    want="$(sha256sum package-lock.json | cut -c1-64) $(node --version)"
+                    if [ -d node_modules ] && [ "$(cat node_modules/.tablight-lock 2>/dev/null)" = "$want" ]; then
+                        echo "node_modules is current for this lockfile; skipping npm ci"
+                    else
+                        rm -f node_modules/.tablight-lock
+                        npm ci --no-audit --no-fund
+                        echo "$want" > node_modules/.tablight-lock
+                    fi
+                '''
+            }
         }
         stage('Checks and unit tests') {
             // Independent of each other, so they run side by side.
             parallel {
-                stage('Lint') { steps { sh 'npm run lint' } }
-                stage('Type check') { steps { sh 'npx --no-install tsc --noEmit' } }
+                // Both re-check only what changed since the last build (results kept in /tmp, keyed by file content).
+                stage('Lint') {
+                    steps { sh 'npm run lint -- --cache --cache-strategy content --cache-location /tmp/tablight-eslint-cache/' }
+                }
+                stage('Type check') {
+                    steps { sh 'npx --no-install tsc --noEmit --incremental --tsBuildInfoFile /tmp/tablight-tsc/tsbuildinfo' }
+                }
                 stage('Unit tests') {
                     steps {
                         sh 'npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
@@ -123,7 +142,8 @@ pipeline {
         cleanup {
             script {
                 if (workspaceStarted) {
-                    deleteDir()
+                    // Keep node_modules for the next build; everything else git does not track goes.
+                    sh 'git clean -ffdx -e node_modules'
                 } else {
                     echo 'No workspace was started; skipping cleanup.'
                 }
