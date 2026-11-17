@@ -67,7 +67,8 @@ pipeline {
             when { expression { params.RUN_E2E_TESTS } }
             steps {
                 sh 'npx --no-install playwright install chromium'
-                sh 'npm run test:e2e -- --reporter=list,junit'
+                // No root on this shared host: Chromium's system libraries go into a private folder.
+                sh 'scripts/ci/e2e-no-root.sh --reporter=list,junit'
             }
         }
         stage('Archive release') {
