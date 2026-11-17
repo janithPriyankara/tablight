@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } from '../../src/shared/types';
+import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item, type SyncStatus } from '../../src/shared/types';
 
 vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
 const { send } = await import('../../src/shared/rpc');
@@ -328,6 +328,37 @@ describe('popup', () => {
     serve(state());
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await screen.findByText(/5 tabs/);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Organizing')).toBeNull();
+  });
+  it('shows the “Organizing” pill while the model is not ready (UI test P-14)', async () => {
+    serve(state({ modelReady: false }));
+    render(<Popup />);
+    expect((await screen.findByText('Organizing')).closest('.status-pill')).toBeTruthy();
+  });
+  it('the sync line names every sync status in a few words (UI test S-11)', async () => {
+    const now = Date.now();
+    const cases: [SyncStatus, string][] = [
+      [{ ok: true, synced: 0, localOnly: 0, lastSyncAt: null }, 'Saved tabs not synced yet'],
+      [{ ok: true, synced: 412, localOnly: 37, lastSyncAt: now - 5 * 60_000 }, 'Saved tabs synced 5 min ago'],
+      [{ ok: false, reason: 'quota', message: 'x', lastSyncAt: null }, 'Sync full · saved tabs kept on this device'],
+      [{ ok: false, reason: 'rate', message: 'x', lastSyncAt: now - 3_600_000 }, 'Sync paused for a moment'],
+      [{ ok: false, reason: 'error', message: 'x', lastSyncAt: null }, 'Sync failed · will retry'],
+      [{ ok: false, reason: 'disabled', message: 'x', lastSyncAt: null }, 'Sync is off'],
+    ];
+    for (const [syncStatus, text] of cases) {
+      serve(state({ syncStatus }));
+      const { container, unmount } = render(<Popup />);
+      await screen.findByText(/5 tabs/);
+      expect(container.querySelector('.sync-line')!.textContent).toBe(text);
+      unmount();
+    }
+  });
+  it('with nothing grouped yet says so (UI test P-03)', async () => {
+    serve(state({ items: [], groups: [], windows: 0, sleeping: 0, dupCount: 0 }));
+    render(<Popup />);
+    await screen.findByText('0 tabs · 0 windows · 0 paused · 0 duplicates');
+    expect(screen.getByText('Your groups appear here once tabs are sorted.')).toBeTruthy();
   });
   it('points out suspicious tabs with a Review link to the dashboard view, only when there are some', async () => {
     const scam = item('i9', { title: 'Reveal your bonus' });

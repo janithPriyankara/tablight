@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item } from '../../src/shared/types';
+import { DEFAULT_SETTINGS, type DashboardState, type GroupSummary, type Item, type SyncStatus } from '../../src/shared/types';
 
 vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
 const { send } = await import('../../src/shared/rpc');
@@ -409,6 +409,27 @@ describe('dashboard', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Side panel' }));
     await waitFor(() => expect(sent('settings').at(-1)).toEqual({ t: 'settings', patch: { toolbarOpens: 'sidepanel' } }));
   });
+  it('settings: every sync status reads as it should, failures marked as errors (UI test S-11)', async () => {
+    location.hash = '#view=settings';
+    const now = Date.now();
+    const cases: [SyncStatus, string, boolean][] = [
+      [{ ok: true, synced: 0, localOnly: 0, lastSyncAt: null }, 'Not synced yet', false],
+      [{ ok: true, synced: 412, localOnly: 37, lastSyncAt: now - 5 * 60_000 }, 'Synced 412 · 37 only on this device · last synced 5 min ago', false],
+      [{ ok: false, reason: 'quota', message: 'Sync storage is full: 3 saved tabs stay on this device', lastSyncAt: null }, 'Sync storage is full: 3 saved tabs stay on this device', true],
+      [{ ok: false, reason: 'rate', message: 'Too many changes at once: retrying shortly', lastSyncAt: now - 3_600_000 }, 'Too many changes at once: retrying shortly · last synced 1 h ago', true],
+      [{ ok: false, reason: 'error', message: 'Sync failed: will retry', lastSyncAt: null }, 'Sync failed: will retry', true],
+      [{ ok: false, reason: 'disabled', message: 'Sync is turned off', lastSyncAt: null }, 'Sync is turned off', true],
+    ];
+    for (const [syncStatus, text, isError] of cases) {
+      serve(state({ syncStatus }));
+      const { container, unmount } = render(<Dashboard />);
+      await screen.findByRole('heading', { level: 1, name: 'Settings' });
+      const line = container.querySelector('.sync-status')!;
+      expect(line.textContent, text).toBe(text);
+      expect(line.className).toBe(isError ? 'sync-status is-error' : 'sync-status');
+      unmount();
+    }
+  });
   it('onboarding asks to pin the extension only while it is not on the toolbar', async () => {
     const getUserSettings = vi.fn(async () => ({ isOnToolbar: false }));
     (chrome as unknown as { action: unknown }).action = { getUserSettings };
@@ -612,6 +633,27 @@ describe('dashboard', () => {
     expect(screen.getByText(/backup file contains your saved tabs, your groups and your saved sessions/)).toBeTruthy();
   });
 
+  it('a failed load shows the error with Retry; a later failed refresh keeps the list; the grouping banner (UI tests D-90..D-91)', async () => {
+    sendMock.mockRejectedValueOnce(new Error('Background unavailable'));
+    render(<Dashboard />);
+    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t load your tabs: Background unavailable');
+    let s = state();
+    serve(() => s);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await screen.findByText('Title i1');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Grouping your tabs…')).toBeNull();
+    // A refresh that fails later keeps the last list on screen.
+    sendMock.mockRejectedValueOnce(new Error('Background unavailable'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t refresh (Background unavailable). Showing the last known tabs.');
+    expect(screen.getByText('Title i1')).toBeTruthy();
+    // Retry with the model still loading: the error goes, the grouping banner shows.
+    s = state({ modelReady: false });
+    fireEvent.click(within(screen.getByRole('alert')).getByRole('button', { name: 'Retry' }));
+    await screen.findByText('Grouping your tabs…');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
   describe('suspicious tabs', () => {
     const scam = item('s9', { title: 'Open an envelope and reveal your bonus', url: 'https://official-app.space/click?key=abc', domain: 'official-app.space', opened: false });
     const sus = () => state({ items: [...state().items, scam], suspicious: [{ item: scam, clues: ['opener', 'unseen', 'address'] }] });

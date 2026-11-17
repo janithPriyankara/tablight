@@ -61,7 +61,8 @@ test.afterAll(async () => {
 const dashboardUrl = (hash = '') => `chrome-extension://${extId}/dashboard.html${hash}`;
 
 /** Clean slate: only the dashboard tab, suspicious tabs pointed out, nothing flagged, dashboard reloaded. */
-test.beforeEach(async () => {
+test.beforeEach(() => cleanSlate());
+async function cleanSlate(): Promise<void> {
   if (dash.isClosed()) dash = await context.newPage();
   await dash.goto(dashboardUrl());
   await dash.bringToFront();
@@ -77,7 +78,7 @@ test.beforeEach(async () => {
   }).toBe(true);
   await expect.poll(() => actionTitle()).toBe('Tablight');
   await dash.reload();
-});
+}
 
 // ── helpers ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -145,245 +146,249 @@ const expectNoAlertBadges = () => expectEveryBadge((t) => t !== '!', 'no tab rea
 
 // ── not flagged ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('a normal background tab opened by another site is not flagged', async () => {
-  const article = `${B}/article`;
-  await openInBackground([article]);
-  // Two arrival clues (another site, never viewed) but nothing about the page itself: not suspicious.
-  const s = await state(dash);
-  expect(s.items.find((i) => i.url === article)?.opened).toBe(false);
-  expect(s.suspicious).toEqual([]);
-  await expect(navButton(dash, 'All tabs')).toBeVisible();
-  await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
-  await expectNoAlertBadges();
-  expect(await actionTitle()).toBe('Tablight');
+test('detection: what is flagged and what is not, on every surface (badge, title, sidebar, view, popup)', async () => {
+  // Journey: each part starts from a clean slate, so it checks exactly what its old test did.
+  await test.step('not flagged: a normal background tab from another site; a “You won’t believe…” tab opened from a link', async () => {
+    // Two cases in one browser state: neither may flag anything, and together they still prove no false "!".
+    await test.step('a normal background tab opened by another site', async () => {
+      const article = `${B}/article`;
+      await openInBackground([article]);
+      // Two arrival clues (another site, never viewed) but nothing about the page itself: not suspicious.
+      const s = await state(dash);
+      expect(s.items.find((i) => i.url === article)?.opened).toBe(false);
+      expect(s.suspicious).toEqual([]);
+      await expect(navButton(dash, 'All tabs')).toBeVisible();
+      await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
+      await expectNoAlertBadges();
+      expect(await actionTitle()).toBe('Tablight');
+    });
+    await test.step('a “You won’t believe…” background tab opened from a link', async () => {
+      const recipe = `${B}/recipe`;
+      // The normal page's link, Ctrl/Cmd-clicked: a background tab opened from a link.
+      const normal = await context.newPage();
+      await normal.goto(`${A}/normal?${qs([recipe])}`);
+      await normal.locator('#link0').click({ modifiers: ['ControlOrMeta'] });
+      await waitIndexed([recipe]);
+      expect((await tabFor(recipe))?.active).toBe(false);
+      const s = await state(dash);
+      expect(s.items.find((i) => i.url === recipe)?.title).toBe(SUS_TITLES.recipe);
+      expect(s.suspicious).toEqual([]);
+      await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
+      await expectNoAlertBadges();
+    });
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('a spam tab opened by another site and never viewed is flagged everywhere: badge, title, sidebar, view, popup → Review', async () => {
+    await openSpam();
+    await test.step('toolbar badge and title, sidebar entry, Suspicious view', async () => {
+      await expectAlertBadges();
+      expect(await actionTitle()).toBe('Tablight: 1 suspicious tab');
+      await expect(navButton(dash, 'Suspicious')).toHaveText(/^Suspicious\s*1$/);
+      await showSuspicious();
+      await expect(dash.getByText('These tabs opened in the background and look like ads or scams. Tablight never closes tabs on its own.')).toBeVisible();
+      await expect(susList(dash).getByRole('listitem')).toHaveCount(1);
+      await expect(reasons(dash, SUS_TITLES.spam)).toHaveText('Opened by another site · Never viewed · Ad-click address · Scam-style title');
+    });
+    await test.step('popup: “1 suspicious tab” and Review really opens the dashboard at #view=suspicious', async () => {
+      const popup = await context.newPage();
+      await popup.goto(`chrome-extension://${extId}/popup.html`);
+      await expect(popup.getByText('1 suspicious tab', { exact: true })).toBeVisible();
+      await popup.getByRole('button', { name: 'Review' }).click();
+      await expect.poll(async () => (await tabs()).some((t) => t.url === dashboardUrl('#view=suspicious'))).toBe(true);
+      const page = context.pages().find((p) => !p.isClosed() && p.url() === dashboardUrl('#view=suspicious'))!;
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Suspicious');
+      await expect(susRow(page, SUS_TITLES.spam)).toHaveCount(1);
+    });
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('a spam page in a pop-up window is flagged with “Opened in a pop-up window”', async () => {
+    const opener = await context.newPage();
+    await opener.goto(`${A}/popup-opener?${qs([SPAM])}`);
+    await opener.locator('#open0').click();
+    await waitIndexed([SPAM]);
+    const tab = (await tabFor(SPAM))!;
+    expect(await dash.evaluate((w) => chrome.windows.get(w).then((x) => x.type), tab.windowId)).toBe('popup');
+    await expect.poll(async () => (await state(dash)).suspicious.length).toBe(1);
+    await expectAlertBadges();
+    await showSuspicious();
+    await expect(reasons(dash, SUS_TITLES.spam)).toContainText(CLUE_TEXT.popup);
+    // Shown in its own (focused) window, so it was viewed: the other clues are the ones the page triggers.
+    await expect(reasons(dash, SUS_TITLES.spam)).toHaveText(reasonText('opener', 'popup', 'address', 'title'));
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('a spam tab that navigates to a normal page is no longer flagged', async () => {
+    await openSpam();
+    await expectAlertBadges();
+    const tabId = (await tabFor(SPAM))!.id;
+    const article = `${B}/article`;
+    await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, article] as const);
+    await waitIndexed([article]);
+    await expect.poll(async () => (await state(dash)).suspicious.length).toBe(0);
+    await expectNoAlertBadges();
+    await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
+  });
 });
-
-test('a “You won’t believe…” background tab is not flagged', async () => {
-  const recipe = `${B}/recipe`;
-  // The normal page's link, Ctrl/Cmd-clicked: a background tab opened from a link.
-  const normal = await context.newPage();
-  await normal.goto(`${A}/normal?${qs([recipe])}`);
-  await normal.locator('#link0').click({ modifiers: ['ControlOrMeta'] });
-  await waitIndexed([recipe]);
-  expect((await tabFor(recipe))?.active).toBe(false);
-  const s = await state(dash);
-  expect(s.items.find((i) => i.url === recipe)?.title).toBe(SUS_TITLES.recipe);
-  expect(s.suspicious).toEqual([]);
-  await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
-  await expectNoAlertBadges();
-});
-
 // ── flagged ─────────────────────────────────────────────────────────────────────────────────────────────
-
-test('a spam tab opened by another site and never viewed is flagged everywhere', async () => {
-  await openSpam();
-  await expectAlertBadges();
-  expect(await actionTitle()).toBe('Tablight: 1 suspicious tab');
-  await expect(navButton(dash, 'Suspicious')).toHaveText(/^Suspicious\s*1$/);
-  await showSuspicious();
-  await expect(dash.getByText('These tabs opened in the background and look like ads or scams. Tablight never closes tabs on its own.')).toBeVisible();
-  await expect(susList(dash).getByRole('listitem')).toHaveCount(1);
-  await expect(reasons(dash, SUS_TITLES.spam)).toHaveText('Opened by another site · Never viewed · Ad-click address · Scam-style title');
-});
-
-test('a spam page in a pop-up window is flagged with “Opened in a pop-up window”', async () => {
-  const opener = await context.newPage();
-  await opener.goto(`${A}/popup-opener?${qs([SPAM])}`);
-  await opener.locator('#open0').click();
-  await waitIndexed([SPAM]);
-  const tab = (await tabFor(SPAM))!;
-  expect(await dash.evaluate((w) => chrome.windows.get(w).then((x) => x.type), tab.windowId)).toBe('popup');
-  await expect.poll(async () => (await state(dash)).suspicious.length).toBe(1);
-  await expectAlertBadges();
-  await showSuspicious();
-  await expect(reasons(dash, SUS_TITLES.spam)).toContainText(CLUE_TEXT.popup);
-  // Shown in its own (focused) window, so it was viewed: the other clues are the ones the page triggers.
-  await expect(reasons(dash, SUS_TITLES.spam)).toHaveText(reasonText('opener', 'popup', 'address', 'title'));
-});
 
 // ── row actions ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('Go to tab switches to it, and “Never viewed” goes from its reasons', async () => {
-  await openSpam();
-  await showSuspicious();
-  await expect(reasons(dash, SUS_TITLES.spam)).toContainText(CLUE_TEXT.unseen);
-  await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Go to tab ${SUS_TITLES.spam}` }).click();
-  await expect.poll(async () => (await tabFor(SPAM))?.active).toBe(true);
-  // Still suspicious (three clues left), now without "Never viewed".
-  await expect(reasons(dash, SUS_TITLES.spam)).toHaveText(reasonText('opener', 'address', 'title'));
+test('dashboard row actions: Go to tab, Close with Undo, Keep (and flagged again), Close all', async () => {
+  await test.step('Go to tab switches to it (“Never viewed” goes); then Close closes the tab, offers Undo, and Undo reopens it', async () => {
+    await openSpam();
+    await showSuspicious();
+    await test.step('Go to tab', async () => {
+      await expect(reasons(dash, SUS_TITLES.spam)).toContainText(CLUE_TEXT.unseen);
+      await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Go to tab ${SUS_TITLES.spam}` }).click();
+      await expect.poll(async () => (await tabFor(SPAM))?.active).toBe(true);
+      // Still suspicious (three clues left), now without "Never viewed".
+      await expect(reasons(dash, SUS_TITLES.spam)).toHaveText(reasonText('opener', 'address', 'title'));
+    });
+    await test.step('Close, then Undo reopens the real tab', async () => {
+      await dash.bringToFront();
+      await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Close ${SUS_TITLES.spam}` }).click();
+      await expect.poll(async () => (await tabFor(SPAM)) === undefined).toBe(true);
+      const toast = dash.getByRole('status').filter({ hasText: 'Closed 1 tab' });
+      await expect(toast).toBeVisible();
+      await toast.getByRole('button', { name: 'Undo' }).click();
+      await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM).length).toBe(1);
+    });
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('Keep hides the row (also after a reload); leaving the site and coming back flags it again', async () => {
+    await openSpam();
+    await showSuspicious();
+    const keep = susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
+    await expect(keep).toHaveText('Keep'); // a visible word on the dashboard (the side panel has icon buttons)
+    await expect(keep.locator('.sus-btn-word')).toBeVisible();
+    await keep.click();
+    await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
+    await expectNoAlertBadges();
+    await dash.reload();
+    await expect(dash.getByText('No suspicious tabs.')).toBeVisible();
+    await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
+    expect((await state(dash)).suspicious).toEqual([]);
+
+    // The kept tab goes to another site (seen by the index), then back to the spam page.
+    const tabId = (await tabFor(SPAM))!.id;
+    const elsewhere = `${A}/article`;
+    await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, elsewhere] as const);
+    await waitIndexed([elsewhere]);
+    await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, SPAM] as const);
+    await waitIndexed([SPAM]);
+    await expect.poll(async () => (await state(dash)).suspicious.map((s) => s.item.tabId)).toEqual([tabId]);
+    await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(1);
+    await expectAlertBadges();
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('Close all with two spam tabs: confirmation lists both, Cancel keeps them, confirm closes both, Undo reopens', async () => {
+    await openSpam([SPAM, SPAM2]);
+    await expectAlertBadges();
+    expect(await actionTitle()).toBe('Tablight: 2 suspicious tabs');
+    await showSuspicious();
+    await expect(susList(dash).getByRole('listitem')).toHaveCount(2);
+
+    const closeAll = dash.getByRole('button', { name: 'Close all (2)' });
+    await closeAll.click();
+    let dialog = dash.getByRole('dialog', { name: 'Close 2 suspicious tabs?' });
+    await expect(dialog).toBeVisible();
+    // Listed most recently active first; the order between two never-viewed tabs is not the point here.
+    await expect.poll(async () => (await dialog.getByRole('listitem').allInnerTexts()).sort()).toEqual([SUS_TITLES.spam, SUS_TITLES.spam2].sort());
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toHaveCount(0);
+    expect((await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2)).toHaveLength(2);
+    await expect(susList(dash).getByRole('listitem')).toHaveCount(2);
+
+    await closeAll.click();
+    dialog = dash.getByRole('dialog', { name: 'Close 2 suspicious tabs?' });
+    await dialog.getByRole('button', { name: 'Close tabs' }).click();
+    await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2).length).toBe(0);
+    // No duplicates among the tabs left (dashboard and opener): the badge is back to empty.
+    await expectEveryBadge((t) => t === '', 'every badge is empty again');
+    await expect.poll(() => actionTitle()).toBe('Tablight');
+    const toast = dash.getByRole('status').filter({ hasText: 'Closed 2 tabs' });
+    await toast.getByRole('button', { name: 'Undo' }).click();
+    await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2).map((t) => t.url).sort())
+      .toEqual([SPAM, SPAM2].sort());
+  });
 });
 
-test('Keep hides the row (also after a reload); leaving the site and coming back flags it again', async () => {
-  await openSpam();
-  await showSuspicious();
-  const keep = susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
-  await expect(keep).toHaveText('Keep'); // a visible word on the dashboard (the side panel has icon buttons)
-  await expect(keep.locator('.sus-btn-word')).toBeVisible();
-  await keep.click();
-  await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
-  await expectNoAlertBadges();
-  await dash.reload();
-  await expect(dash.getByText('No suspicious tabs.')).toBeVisible();
-  await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
-  expect((await state(dash)).suspicious).toEqual([]);
-
-  // The kept tab goes to another site (seen by the index), then back to the spam page.
-  const tabId = (await tabFor(SPAM))!.id;
-  const elsewhere = `${A}/article`;
-  await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, elsewhere] as const);
-  await waitIndexed([elsewhere]);
-  await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, SPAM] as const);
-  await waitIndexed([SPAM]);
-  await expect.poll(async () => (await state(dash)).suspicious.map((s) => s.item.tabId)).toEqual([tabId]);
-  await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(1);
-  await expectAlertBadges();
-});
-
-test('Close closes the tab, offers Undo, and Undo reopens it', async () => {
-  await openSpam();
-  await showSuspicious();
-  await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Close ${SUS_TITLES.spam}` }).click();
-  await expect.poll(async () => (await tabFor(SPAM)) === undefined).toBe(true);
-  const toast = dash.getByRole('status').filter({ hasText: 'Closed 1 tab' });
-  await expect(toast).toBeVisible();
-  await toast.getByRole('button', { name: 'Undo' }).click();
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM).length).toBe(1);
-});
-
-test('Close all with two spam tabs: confirmation lists both, Cancel keeps them, confirm closes both, Undo reopens', async () => {
-  await openSpam([SPAM, SPAM2]);
-  await expectAlertBadges();
-  expect(await actionTitle()).toBe('Tablight: 2 suspicious tabs');
-  await showSuspicious();
-  await expect(susList(dash).getByRole('listitem')).toHaveCount(2);
-
-  const closeAll = dash.getByRole('button', { name: 'Close all (2)' });
-  await closeAll.click();
-  let dialog = dash.getByRole('dialog', { name: 'Close 2 suspicious tabs?' });
-  await expect(dialog).toBeVisible();
-  // Listed most recently active first; the order between two never-viewed tabs is not the point here.
-  await expect.poll(async () => (await dialog.getByRole('listitem').allInnerTexts()).sort()).toEqual([SUS_TITLES.spam, SUS_TITLES.spam2].sort());
-  await dialog.getByRole('button', { name: 'Cancel' }).click();
-  await expect(dialog).toHaveCount(0);
-  expect((await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2)).toHaveLength(2);
-  await expect(susList(dash).getByRole('listitem')).toHaveCount(2);
-
-  await closeAll.click();
-  dialog = dash.getByRole('dialog', { name: 'Close 2 suspicious tabs?' });
-  await dialog.getByRole('button', { name: 'Close tabs' }).click();
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2).length).toBe(0);
-  // No duplicates among the tabs left (dashboard and opener): the badge is back to empty.
-  await expectEveryBadge((t) => t === '', 'every badge is empty again');
-  await expect.poll(() => actionTitle()).toBe('Tablight');
-  const toast = dash.getByRole('status').filter({ hasText: 'Closed 2 tabs' });
-  await toast.getByRole('button', { name: 'Undo' }).click();
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2).map((t) => t.url).sort())
-    .toEqual([SPAM, SPAM2].sort());
-});
-
-test('a spam tab that navigates to a normal page is no longer flagged', async () => {
-  await openSpam();
-  await expectAlertBadges();
-  const tabId = (await tabFor(SPAM))!.id;
-  const article = `${B}/article`;
-  await dash.evaluate(([id, url]) => chrome.tabs.update(id, { url }).then(() => undefined), [tabId, article] as const);
-  await waitIndexed([article]);
-  await expect.poll(async () => (await state(dash)).suspicious.length).toBe(0);
-  await expectNoAlertBadges();
-  await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
-});
-
-test('the “Point out suspicious tabs” switch hides the entry and the “!” badge, and brings them back', async () => {
-  await openSpam();
-  await expectAlertBadges();
-  await expect(navButton(dash, 'Suspicious')).toBeVisible();
-  await navButton(dash, 'Settings').click();
-  const sw = dash.getByRole('checkbox', { name: /Point out suspicious tabs/ });
-  await expect(sw).toBeChecked();
-  await sw.uncheck();
-  await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
-  await expectNoAlertBadges();
-  await expect.poll(() => actionTitle()).toBe('Tablight');
-  await sw.check();
-  await expect(navButton(dash, 'Suspicious')).toHaveText(/^Suspicious\s*1$/);
-  await expectAlertBadges();
-  await expect.poll(() => actionTitle()).toBe('Tablight: 1 suspicious tab');
+test('the setting, the side panel, and the badge with duplicates', async () => {
+  await test.step('the “Point out suspicious tabs” switch hides the entry and the “!” badge, and brings them back', async () => {
+    await openSpam();
+    await expectAlertBadges();
+    await expect(navButton(dash, 'Suspicious')).toBeVisible();
+    await navButton(dash, 'Settings').click();
+    const sw = dash.getByRole('checkbox', { name: /Point out suspicious tabs/ });
+    await expect(sw).toBeChecked();
+    await sw.uncheck();
+    await expect(navButton(dash, 'Suspicious')).toHaveCount(0);
+    await expectNoAlertBadges();
+    await expect.poll(() => actionTitle()).toBe('Tablight');
+    await sw.check();
+    await expect(navButton(dash, 'Suspicious')).toHaveText(/^Suspicious\s*1$/);
+    await expectAlertBadges();
+    await expect.poll(() => actionTitle()).toBe('Tablight: 1 suspicious tab');
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('side panel: “Suspicious (N)” lists the same rows; Keep (icon) hides a row there and on the dashboard; Close all works there', async () => {
+    await openSpam([SPAM, SPAM2]);
+    // The panel page, opened as a tab (headless Chromium has no visible side panel).
+    const panel = await context.newPage();
+    await panel.goto(`chrome-extension://${extId}/sidepanel.html`);
+    await test.step('the same rows with their reasons', async () => {
+      const section = panel.getByRole('region', { name: 'Suspicious (2)' });
+      await expect(section).toBeVisible();
+      const rows = section.getByRole('list', { name: 'Suspicious tabs' }).getByRole('listitem');
+      await expect(rows).toHaveCount(2);
+      for (const title of [SUS_TITLES.spam, SUS_TITLES.spam2]) {
+        await expect(rows.filter({ hasText: title }).locator('.item-note'))
+          .toHaveText(reasonText('opener', 'unseen', 'address', 'title'));
+      }
+    });
+    await test.step('Keep is an icon button and hides the row in the panel and on the dashboard', async () => {
+      const keep = panel.getByRole('region', { name: 'Suspicious (2)' }).getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
+      await expect(keep).toHaveClass('icon-btn'); // icon only in the narrow panel (worded on the dashboard)
+      await expect(keep).toHaveText('');
+      await keep.click();
+      await expect(panel.getByRole('region', { name: 'Suspicious (1)' })).toBeVisible();
+      const rows = panel.getByRole('list', { name: 'Suspicious tabs' }).getByRole('listitem');
+      await expect(rows).toHaveCount(1);
+      await expect(rows).toContainText(SUS_TITLES.spam2);
+      await showSuspicious();
+      await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
+      await expect(susRow(dash, SUS_TITLES.spam2)).toHaveCount(1);
+      expect(await tabFor(SPAM)).toBeDefined(); // kept, not closed
+      await expectAlertBadges(); // the other one is still flagged
+    });
+    await test.step('Close all in the panel closes the rest', async () => {
+      await panel.bringToFront();
+      const section = panel.getByRole('region', { name: 'Suspicious (1)' });
+      await section.getByRole('button', { name: 'Close all (1)' }).click();
+      const confirm = section.getByRole('group', { name: 'Close 1 suspicious tab?' });
+      await expect(confirm.getByRole('listitem')).toHaveText([SUS_TITLES.spam2]);
+      await confirm.getByRole('button', { name: 'Close tabs' }).click();
+      await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM2).length).toBe(0);
+      expect(await tabFor(SPAM)).toBeDefined();
+      await expect(panel.getByRole('region', { name: /^Suspicious/ })).toHaveCount(0);
+      await expectNoAlertBadges();
+    });
+  });
+  await cleanSlate(); // a clean slate, as when this part was its own test
+  await test.step('a duplicate pair plus a spam tab shows “!”; closing the spam tab brings “2×” back', async () => {
+    const dup = server.url(PAGES[0]!.slug);
+    await dash.evaluate((u) => Promise.all([0, 1].map(() => chrome.tabs.create({ url: u, active: false }))).then(() => undefined), dup);
+    await waitIndexed([dup]);
+    await expect.poll(async () => (await tabs()).filter((t) => t.url === dup).map((t) => t.text)).toEqual(['2×', '2×']);
+    await openSpam();
+    await expectAlertBadges(); // suspicious wins over the copy count
+    await showSuspicious();
+    await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Close ${SUS_TITLES.spam}` }).click();
+    await expect.poll(async () => (await tabFor(SPAM)) === undefined).toBe(true);
+    await expect.poll(async () => (await tabs()).filter((t) => t.url === dup).map((t) => t.text)).toEqual(['2×', '2×']);
+    await expectNoAlertBadges();
+    expect((await tabs()).filter((t) => t.url !== dup).every((t) => t.text === '')).toBe(true);
+  });
 });
 
 // ── other surfaces ──────────────────────────────────────────────────────────────────────────────────────
 
-test('side panel: “Suspicious (N)” lists the same rows and Close all works there', async () => {
-  await openSpam([SPAM, SPAM2]);
-  // The panel page, opened as a tab (headless Chromium has no visible side panel).
-  const panel = await context.newPage();
-  await panel.goto(`chrome-extension://${extId}/sidepanel.html`);
-  const section = panel.getByRole('region', { name: 'Suspicious (2)' });
-  await expect(section).toBeVisible();
-  const rows = section.getByRole('list', { name: 'Suspicious tabs' }).getByRole('listitem');
-  await expect(rows).toHaveCount(2);
-  for (const title of [SUS_TITLES.spam, SUS_TITLES.spam2]) {
-    await expect(rows.filter({ hasText: title }).locator('.item-note'))
-      .toHaveText(reasonText('opener', 'unseen', 'address', 'title'));
-  }
-  await section.getByRole('button', { name: 'Close all (2)' }).click();
-  const confirm = section.getByRole('group', { name: 'Close 2 suspicious tabs?' });
-  await expect.poll(async () => (await confirm.getByRole('listitem').allInnerTexts()).sort()).toEqual([SUS_TITLES.spam, SUS_TITLES.spam2].sort());
-  await confirm.getByRole('button', { name: 'Close tabs' }).click();
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === SPAM || t.url === SPAM2).length).toBe(0);
-  await expect(panel.getByRole('region', { name: /^Suspicious/ })).toHaveCount(0);
-  await expectNoAlertBadges();
-});
-
-test('side panel: Keep is an icon button there and hides the row in the panel and on the dashboard', async () => {
-  await openSpam([SPAM, SPAM2]);
-  const panel = await context.newPage();
-  await panel.goto(`chrome-extension://${extId}/sidepanel.html`);
-  const section = panel.getByRole('region', { name: 'Suspicious (2)' });
-  const keep = section.getByRole('button', { name: `Keep ${SUS_TITLES.spam}` });
-  await expect(keep).toHaveClass('icon-btn'); // icon only in the narrow panel (worded on the dashboard)
-  await expect(keep).toHaveText('');
-  await keep.click();
-  await expect(panel.getByRole('region', { name: 'Suspicious (1)' })).toBeVisible();
-  const rows = panel.getByRole('list', { name: 'Suspicious tabs' }).getByRole('listitem');
-  await expect(rows).toHaveCount(1);
-  await expect(rows).toContainText(SUS_TITLES.spam2);
-  await showSuspicious();
-  await expect(susRow(dash, SUS_TITLES.spam)).toHaveCount(0);
-  await expect(susRow(dash, SUS_TITLES.spam2)).toHaveCount(1);
-  expect(await tabFor(SPAM)).toBeDefined(); // kept, not closed
-  await expectAlertBadges(); // the other one is still flagged
-});
-test('#view=suspicious with nothing flagged says “No suspicious tabs.”', async () => {
-  // A fresh load of the address (not a same-page hash change, which depends on what the last test left open).
-  await dash.goto('about:blank');
-  await dash.goto(dashboardUrl('#view=suspicious'));
-  await expect(dash.getByRole('heading', { level: 1 })).toHaveText('Suspicious');
-  await expect(dash.getByText('No suspicious tabs.')).toBeVisible();
-  await expect(susList(dash)).toHaveCount(0);
-});
-test('popup: “1 suspicious tab” and Review opens the dashboard at #view=suspicious', async () => {
-  await openSpam();
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extId}/popup.html`);
-  await expect(popup.getByText('1 suspicious tab', { exact: true })).toBeVisible();
-  await popup.getByRole('button', { name: 'Review' }).click();
-  await expect.poll(async () => (await tabs()).some((t) => t.url === dashboardUrl('#view=suspicious'))).toBe(true);
-  const page = context.pages().find((p) => !p.isClosed() && p.url() === dashboardUrl('#view=suspicious'))!;
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Suspicious');
-  await expect(susRow(page, SUS_TITLES.spam)).toHaveCount(1);
-});
-
-test('a duplicate pair plus a spam tab shows “!”; closing the spam tab brings “2×” back', async () => {
-  const dup = server.url(PAGES[0]!.slug);
-  await dash.evaluate((u) => Promise.all([0, 1].map(() => chrome.tabs.create({ url: u, active: false }))).then(() => undefined), dup);
-  await waitIndexed([dup]);
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === dup).map((t) => t.text)).toEqual(['2×', '2×']);
-  await openSpam();
-  await expectAlertBadges(); // suspicious wins over the copy count
-  await showSuspicious();
-  await susRow(dash, SUS_TITLES.spam).getByRole('button', { name: `Close ${SUS_TITLES.spam}` }).click();
-  await expect.poll(async () => (await tabFor(SPAM)) === undefined).toBe(true);
-  await expect.poll(async () => (await tabs()).filter((t) => t.url === dup).map((t) => t.text)).toEqual(['2×', '2×']);
-  await expectNoAlertBadges();
-  expect((await tabs()).filter((t) => t.url !== dup).every((t) => t.text === '')).toBe(true);
-});

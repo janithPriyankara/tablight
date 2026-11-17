@@ -169,6 +169,37 @@ describe('SidePanel', () => {
     expect(screen.queryByRole('region', { name: /This window/ })).toBeNull();
   });
 
+  it('a failed load shows “Couldn’t load your tabs.” with Retry; a failed refresh keeps the list; the “Organizing” pill (UI test P-14)', async () => {
+    sendMock.mockRejectedValueOnce(new Error('Background unavailable'));
+    render(<SidePanel />);
+    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t load your tabs.');
+    let s = state();
+    sendMock.mockImplementation(async (req) => (req.t === 'state' ? s : undefined) as never);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await loaded();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Organizing')).toBeNull();
+    sendMock.mockRejectedValueOnce(new Error('Background unavailable'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t refresh: showing the last known tabs.');
+    expect(windowSection()).toBeTruthy();
+    s = state({ modelReady: false });
+    fireEvent.click(within(screen.getByRole('alert')).getByRole('button', { name: 'Retry' }));
+    expect((await screen.findByText('Organizing')).closest('.status-pill')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+  it('a group of more than 300 tabs shows 300 rows and “Show all 301 in the dashboard” opens it (UI test SP-11)', async () => {
+    const create = vi.fn(async () => ({}));
+    (chrome.tabs as unknown as { create: typeof create }).create = create;
+    const bulk = Array.from({ length: 301 }, (_, n) => item(`b${n}`, { title: `Bulk page ${n}`, groupId: 'bulk', windowId: 2 }));
+    serve(state({ items: bulk, groups: [group('bulk', 'Bulk', 301)] }));
+    render(<SidePanel />);
+    fireEvent.click(await screen.findByRole('button', { name: /^Bulk/ }));
+    const region = screen.getByRole('region', { name: /^Bulk/ });
+    expect(within(region).getAllByRole('listitem')).toHaveLength(300);
+    fireEvent.click(within(region).getByRole('button', { name: 'Show all 301 in the dashboard' }));
+    await waitFor(() => expect(create).toHaveBeenCalledWith({ url: 'chrome-extension://ext/dashboard.html' }));
+  });
   describe('suspicious tabs', () => {
     const scam = item('i9', { title: 'Reveal your bonus', windowId: 2, opened: false });
     const sus = () => state({ suspicious: [{ item: scam, clues: ['popup', 'title'] }] });

@@ -42,6 +42,19 @@ describe('parseImport', () => {
     expect(parseImport('null').ok).toBe(false);
     expect(parseImport(file({ items: 'x' })).ok).toBe(false);
   });
+  it('names what is wrong with each kind of malformed file (the import toast text, UI test S-21)', () => {
+    const cases: [string, string][] = [
+      ['', 'not valid JSON'],
+      ['hello, this is not a backup', 'not valid JSON'],
+      ['{"format":"tab-organizer","version":1,"items":[{"url":', 'not valid JSON'],
+      ['{"tabs":[]}', 'not a Tablight backup'],
+      ['{"format":"tab-organizer","version":2,"items":[]}', 'not a Tablight backup'],
+      ['{"format":"tab-organizer","version":1,"items":{}}', 'malformed backup'],
+      [`{"format":"tab-organizer","version":1,"items":${'['.repeat(200)}${']'.repeat(200)}}`, 'file is nested too deeply'],
+      [' '.repeat(20 * 1024 * 1024 + 1), 'file is too large'],
+    ];
+    for (const [json, error] of cases) expect(parseImport(json), JSON.stringify(json.slice(0, 40))).toEqual({ ok: false, error });
+  });
   it('skips unsafe urls and items with non-string fields', () => {
     const items = [
       { url: 'javascript:alert(1)' }, { url: 'data:text/html,hi' }, { url: 'file:///etc/passwd' },

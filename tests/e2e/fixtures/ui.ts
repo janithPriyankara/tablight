@@ -206,21 +206,3 @@ export function backup(opts: {
     snapshots: (opts.snapshots ?? []).map((s) => ({ takenAt: s.takenAt, windows: s.windows.map((tabs) => ({ tabs })) })),
   };
 }
-
-/**
- * Init script for an extension page: lets a test make the page's `state` reads fail (window.__failState = true)
- * or report the model as still loading (window.__notReady = true), to show the error and "Organizing" states.
- * Everything else still talks to the real background.
- */
-export const FAULTS_SCRIPT = `(() => {
-  const rt = chrome.runtime;
-  const orig = rt.sendMessage.bind(rt);
-  const wrapped = (msg, ...rest) => {
-    if (msg && msg.t === 'state' && window.__failState) return Promise.reject(new Error('Background unavailable'));
-    const p = orig(msg, ...rest);
-    if (!(msg && msg.t === 'state' && window.__notReady)) return p;
-    return p.then((r) => (r && r.ok ? { ...r, data: { ...r.data, modelReady: false } } : r));
-  };
-  try { rt.sendMessage = wrapped; } catch { /* read-only */ }
-  if (rt.sendMessage !== wrapped) Object.defineProperty(rt, 'sendMessage', { value: wrapped, configurable: true, writable: true });
-})();`;
