@@ -4,6 +4,10 @@ def workspaceStarted = false
 def isNightly() {
     return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
 }
+// A release: a build of a pushed tag like v1.2.3 (multibranch job with tag discovery).
+def isRelease() {
+    return env.TAG_NAME ==~ /v\d+\.\d+\.\d+/
+}
 // Shows this build on the commit in GitHub (✓ / ✗ / pending), using the job's GitHub credential.
 // Best effort: a GitHub outage or a token without status rights never fails the build.
 def githubStatus(String state, String description) {
@@ -34,10 +38,9 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '5'))
     }
     triggers {
-        // Every push to GitHub (webhook → /github-webhook/) starts a build of the pushed commit.
-        githubPush()
-        // Nightly: full browser suite and the spec's 500-tab performance check (see Browser tests).
-        cron('H 2 * * *')
+        // Pushes, PRs and tags arrive through the multibranch job's GitHub webhook (/github-webhook/).
+        // Nightly, main only: full browser suite and the 200-tab performance check.
+        cron(env.BRANCH_NAME == 'main' ? 'H 2 * * *' : '')
     }
     parameters {
         booleanParam(name: 'RUN_QUALITY_TESTS', defaultValue: false,
@@ -45,7 +48,7 @@ pipeline {
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
             description: 'Download Chromium and test the extension; requires Chromium Linux libraries on this node.')
         string(name: 'PERF_TABS', defaultValue: '100',
-            description: 'Tabs opened by the @perf test. The nightly build always uses 500.')
+            description: 'Tabs opened by the @perf test. The nightly build uses 200 (500 crashes Chromium on this host).')
         string(name: 'E2E_WORKERS', defaultValue: '2',
             description: 'How many browser test files run at once (each starts its own Chromium). The 500-tab @perf test always runs alone afterwards.')
     }
@@ -113,7 +116,7 @@ pipeline {
             }
         }
         stage('Quality tests') {
-            when { expression { params.RUN_QUALITY_TESTS } }
+            when { expression { params.RUN_QUALITY_TESTS || isRelease() } }
             steps {
                 sh 'npm run test:quality -- --reporter=junit --outputFile.junit=reports/quality.xml'
             }
@@ -125,9 +128,11 @@ pipeline {
             }
         }
         stage('Browser tests') {
-            when { expression { params.RUN_E2E_TESTS || isNightly() } }
+            when { expression { params.RUN_E2E_TESTS || isNightly() || isRelease() } }
             environment {
-                PERF_TABS = "${isNightly() ? '500' : params.PERF_TABS}"
+                // Nightly: 200 tabs (500 real tabs crash Chromium on this host, build #30). Releases use the normal
+                // size so a release never depends on host memory.
+                PERF_TABS = "${isNightly() ? '200' : params.PERF_TABS}"
             }
             steps {
                 sh 'npx --no-install playwright install chromium'
@@ -147,6 +152,41 @@ pipeline {
         stage('Archive release') {
             steps {
                 archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+            }
+        }
+        stage('GitHub release') {
+            // Only for a v1.2.3 tag, and only when every stage above passed (a failed stage stops the build).
+            when { expression { isRelease() && currentBuild.currentResult == 'SUCCESS' } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dcc58858-b705-437a-adac-d64dd39c12a3',
+                        usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                    sh '''
+                        set -eu
+                        version=$(node -p "require('./package.json').version")
+                        if [ "v$version" != "$TAG_NAME" ]; then
+                            echo "Tag $TAG_NAME does not match package.json version $version; not releasing." >&2
+                            exit 1
+                        fi
+                        zip="release/tablight-$version.zip"
+                        api=https://api.github.com/repos/janithPriyankara/tablight
+                        auth="Authorization: Bearer $GH_TOKEN"
+                        code=$(curl -s -o release.json -w '%{http_code}' -X POST -H "$auth"                             -H "Accept: application/vnd.github+json" "$api/releases"                             -d "{\"tag_name\":\"$TAG_NAME\",\"name\":\"Tablight $version\",\"generate_release_notes\":true}")
+                        if [ "$code" != 201 ]; then
+                            echo "Creating the GitHub release failed: HTTP $code" >&2
+                            sed -n 1,20p release.json >&2
+                            exit 1
+                        fi
+                        id=$(node -p "require('./release.json').id")
+                        page=$(node -p "require('./release.json').html_url")
+                        code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth"                             -H "Content-Type: application/zip" --data-binary "@$zip"                             "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=tablight-$version.zip")
+                        if [ "$code" != 201 ]; then
+                            echo "Uploading $zip failed: HTTP $code" >&2
+                            sed -n 1,20p asset.json >&2
+                            exit 1
+                        fi
+                        echo "Released: $page"
+                    '''
+                }
             }
         }
     }
