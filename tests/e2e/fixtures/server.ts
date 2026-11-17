@@ -88,6 +88,14 @@ export const TOPIC_PAGES: TestPage[] = [
   { slug: 'bees-swarm', title: 'Why honey bees swarm and how beekeepers catch a swarm' },
   { slug: 'bees-varroa', title: 'Varroa mites in beehives: beekeeping treatments that work' },
 ];
+/** A second uncovered topic (knitting): its suggestion appearing proves a suggestion pass ran (ui-dashboard D-62). */
+export const TOPIC_PAGES_2: TestPage[] = [
+  { slug: 'knit-first-scarf', title: 'Knitting for beginners: how to knit your first scarf' },
+  { slug: 'knit-cast-on', title: 'How to cast on stitches: a knitting tutorial with pictures' },
+  { slug: 'knit-purl-stitch', title: 'Knit and purl stitches explained for new knitters' },
+  { slug: 'knit-yarn-weights', title: 'Knitting yarn weights and needle sizes: a chart for knitters' },
+  { slug: 'knit-sweater-pattern', title: 'Free knitting pattern: a cosy cable-knit sweater' },
+];
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -154,7 +162,7 @@ export interface PageServer {
  * /favicon.ico is an empty 204; the rest is 404.
  */
 export async function startPageServer(): Promise<PageServer> {
-  const bySlug = new Map([...PAGES, ...TOPIC_PAGES].map((p) => [p.slug, p]));
+  const bySlug = new Map([...PAGES, ...TOPIC_PAGES, ...TOPIC_PAGES_2].map((p) => [p.slug, p]));
   let lastServedAt = 0;
   const server: Server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');

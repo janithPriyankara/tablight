@@ -73,7 +73,7 @@ says what to do, what you should see, and which automated test already does the 
 | D-41 | Type it with a typo ("kyotto"). | Still found. | ui-dashboard.spec.ts › D-40..D-43 |
 | D-42 | Combination: search for a **saved** tab and click it. | It is listed, marked "Saved"; clicking opens it as a tab. | ui-dashboard.spec.ts › D-40..D-43 |
 | D-43 | Search for nonsense, then press Esc. | "No matches" / "0 matches"; Esc empties the box and shows the view again. | ui-dashboard.spec.ts › D-40..D-43 |
-| D-44 | Search for a topic word that is not in any title (e.g. "agent"). | Tabs similar in meaning are listed, marked "Similar by meaning". | extension.spec.ts › flows (search "agent") |
+| D-44 | Open pages about investing for retirement (index funds, a Roth IRA) and some others. Search for a word that is in no title, e.g. "pension". | Related tabs (the retirement pages first) are listed, marked "Similar by meaning". | ui-dashboard.spec.ts › D-44 |
 
 ## 5. Dashboard: groups and Unsorted
 

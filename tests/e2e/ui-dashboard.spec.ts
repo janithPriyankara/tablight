@@ -8,7 +8,7 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { HINTS } from '../../src/ui/common/hints';
 import { escapeRe, navButton, rpc } from './fixtures/launch';
-import { PAGES, TOPIC_PAGES } from './fixtures/server';
+import { PAGES, TOPIC_PAGES, TOPIC_PAGES_2 } from './fixtures/server';
 import { FAULTS_SCRIPT, Harness, backup } from './fixtures/ui';
 
 let h: Harness;
@@ -313,6 +313,20 @@ test('D-40..D-43 search: by words, typo, a saved tab (opens it), “No matches�
   await expect(heading()).toHaveText('All tabs');
 });
 
+test('D-44 search by meaning: a word in no title finds related tabs, marked “Similar by meaning”', async () => {
+  const savings = ['finance-index-funds', 'finance-roth-ira'];
+  await h.open([...savings, 'travel-kyoto-itinerary', 'games-steam-sale', 'music-jazz-playlist'].map(urlOf));
+  const q = 'pension';
+  // The word is in none of the titles or addresses: anything listed is found by meaning.
+  for (const i of (await h.state()).items) expect(`${i.title} ${i.url}`.toLowerCase()).not.toContain(q);
+  await page().getByRole('searchbox', { name: 'Search tabs' }).fill(q);
+  const rows = list(`Results for “${q}”`).getByRole('listitem');
+  await expect(rows.first()).toBeVisible();
+  await expect(rows.first()).toContainText('Similar by meaning');
+  expect(await rows.filter({ hasNotText: 'Similar by meaning' }).count()).toBe(0);
+  // The best match by meaning is one of the retirement-savings pages.
+  await expect(rows.first()).toContainText(new RegExp(savings.map((t) => escapeRe(titleOf(t))).join('|')));
+});
 // ── groups ──────────────────────────────────────────────────────────────────────────────────────────────
 
 test('D-50..D-55 group view: Pause group, Rename, Merge, Delete (tabs stay open); Other cannot be deleted', async () => {
@@ -409,9 +423,20 @@ test('D-60..D-62 suggested group: shown under “Suggested groups”, Dismiss se
   // Unsorted offers the group actions too.
   await expect(page().getByRole('button', { name: 'Save group for later' })).toBeEnabled();
   await expect(page().getByRole('button', { name: 'Pause group' })).toBeEnabled();
-  // Another classification pass (a new tab) does not suggest the same tabs again.
-  await h.open([urlOf('ai-rag-pipeline')]);
-  expect((await h.state()).groups.filter((g) => g.suggested)).toEqual([]);
+  // Proof that a suggestion pass ran after the dismiss: a second new topic (knitting) gets suggested. That pass also
+  // saw the beekeeping tabs (still Unsorted), and they must not be suggested again.
+  const knitting = TOPIC_PAGES_2.map((p) => h.url(p.slug));
+  await h.open(knitting);
+  await expect.poll(async () => (await h.state()).groups.filter((g) => g.suggested).length, { timeout: 60_000 }).toBe(1);
+  const s = await h.state();
+  const again = s.groups.find((g) => g.suggested)!;
+  const members = s.items.filter((i) => i.groupId === again.id).map((i) => i.url).sort();
+  expect(members.length).toBeGreaterThan(0);
+  expect(members.every((u) => knitting.includes(u)), `the new suggestion holds only knitting tabs: ${members.join(', ')}`).toBe(true);
+  const bees = TOPIC_PAGES.map((p) => h.url(p.slug));
+  expect(s.items.filter((i) => bees.includes(i.url)).map((i) => i.groupId)).toEqual(bees.map(() => null));
+  await expect(page().locator('section.suggestions')).toContainText(again.name);
+  await expect(page().locator('section.suggestions').getByRole('listitem')).toHaveCount(1);
 });
 
 test('D-63 suggested group: Accept from the sidebar makes it a normal group', async () => {
