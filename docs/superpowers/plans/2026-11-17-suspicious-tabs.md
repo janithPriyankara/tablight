@@ -243,3 +243,59 @@
   - from a normal tab, open a local test page that calls `window.open` to a page titled "Reveal your deposit bonus" at a `/click?key=1&visitor_id=2` path (the local static server is fine; the IP-host clue will also fire);
   - confirm the badge shows "!", the Suspicious view lists it with reasons, Keep hides it, and Close all asks, closes it and Undo restores it.
 - [ ] **Step 4: Commit** with `git commit -m "docs: suspicious tabs in privacy policy and listing"`.
+Added at the user's request: every Suspicious-tabs behaviour is exercised by operating the real built extension in Chrome for Testing, automatically.
+**Files:**
+- Create: `tests/e2e/suspicious.spec.ts`; extend `tests/e2e/fixtures/server.ts` with the spam and normal test pages it needs.
+**Interfaces:**
+- Consumes: the built `dist/` (run `npm run build` first) and the existing launch helpers in `tests/e2e/extension.spec.ts`. Extract any shared launch code into `tests/e2e/fixtures/launch.ts` rather than copying it.
+**Test pages served locally:**
+- a normal page with a link;
+- a page that calls `window.open` to a spam page (title "Reveal your deposit bonus", path `/click?key=1&visitor_id=2`);
+- a page that opens the spam page in a pop-up window (`window.open(url, '_blank', 'popup,width=400,height=300')`);
+- a normal article page;
+- a page whose title is "You won't believe this recipe".
+**Each scenario is its own `test(...)` and asserts what the user sees:**
+- **Not flagged:**
+  - a normal background tab opened from a link (Ctrl-click equivalent via `window.open` of the normal article page): no Suspicious entry, and the badge is not "!";
+  - a "You won't believe…" background tab: not flagged.
+- **Flagged:**
+  - a spam tab opened by another tab and never viewed: the badge reads "!" on every tab, the action title reads "Tablight: 1 suspicious tab", the dashboard sidebar shows "Suspicious 1", and the row lists "Opened by another site · Never viewed · Ad-click address · Scam-style title" (the exact clues the page triggers);
+  - a pop-up window: also flagged, with "Opened in a pop-up window" among its reasons.
+- **Go to tab:** that tab becomes active, and its reasons update (Never viewed disappears).
+- **Keep:** the row disappears and stays gone after a dashboard reload; navigating that tab to another site and back to the spam page flags it again.
+- **Close (one row):** the tab is closed, the undo toast appears, and Undo reopens it.
+- **Close all with two spam tabs:**
+  - the confirmation lists both titles;
+  - Cancel closes nothing;
+  - confirming closes both;
+  - Undo reopens both;
+  - the badge returns to normal (or to "2×" when duplicates exist) after closing.
+- **Spam tab navigates to a normal page:** its flag clears.
+- **Settings switch "Point out suspicious tabs" off:** the entry and the badge "!" go away; on again, they return.
+- **Side panel:** the "Suspicious (N)" section shows the same rows, and Close all works from there.
+- **Popup:** shows "N suspicious tab(s)" and Review, which opens the dashboard at `#view=suspicious`.
+- **Combination:** a duplicate pair plus a spam tab shows "!" (suspicious wins over "2×"); after closing the spam tab, "2×" returns on the duplicate tabs.
+- [ ] **Step 1:** Write the spec and the pages.
+- [ ] **Step 2:** Run `npm run build && npx playwright test tests/e2e/suspicious.spec.ts`. Expect every test to pass; fix product bugs found (with a unit test for each), not the assertions.
+- [ ] **Step 3:** Commit with `git commit -m "test: end-to-end Suspicious tabs scenarios"`.
+Added at the user's request: a written list of UI test cases the user can follow by hand, covering every user-facing feature, each marked with the automated test that covers it.
+**Files:**
+- Create: `docs/testing/ui-test-cases.md`
+- Create or extend: `tests/e2e/*.spec.ts` for the cases not yet automated
+**Content of `ui-test-cases.md`:** one table per surface: popup, dashboard (each view: All, Unsorted, each group, Suggested groups, Duplicates, Suspicious, Saved for later, Sessions, Settings), side panel, onboarding and tour, toolbar badge, keyboard and accessibility, light and dark themes. Columns: ID, Steps, Expected result, Automated by (spec file and test name, or "manual"). Cover combinations that matter, for example:
+- a tab that is both a duplicate and in a group;
+- stashing a tab from a group, then reopening it;
+- sleeping, then closing;
+- search hitting a stashed item;
+- toolbar setting = side panel versus popup;
+- sync on and off;
+- mirror tab groups on and off;
+- remove-on-open on and off;
+- auto-create groups on and off;
+- Delete all data, then onboarding again;
+- import a malformed file.
+**Automation:** for every row marked "manual" that Playwright can drive (anything inside extension pages and tabs), add an e2e test. Rows that stay manual must say why (for example, real cross-device sync or the OS theme).
+- [ ] **Step 1:** Inventory every user-facing control (grep the UI components for buttons, switches and links), then write the doc.
+- [ ] **Step 2:** Automate the drivable manual rows, grouped by surface in new spec files.
+- [ ] **Step 3:** Run `npm run build && npm run test:e2e`. Expect all to pass. Product bugs found get fixed with a unit test each.
+- [ ] **Step 4:** Commit with `git commit -m "test: UI test cases and end-to-end coverage for every surface"`.
