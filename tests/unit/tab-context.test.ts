@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetTab, keepTab, loadContexts, loadKept, recordCreated } from '../../src/background/tab-context';
+import { forgetTab, keepTab, loadContexts, loadKept, pruneKept, recordCreated } from '../../src/background/tab-context';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 let mock: ChromeMockControl;
 beforeEach(() => {
@@ -42,6 +42,17 @@ describe('tab context store', () => {
     await keepTab(5, 'a.example');
     await keepTab(6, 'b.example');
     expect(await loadKept()).toEqual(new Map([[5, 'a.example'], [6, 'b.example']]));
+  });
+  it('pruneKept ends a keep once its tab is on another site, and leaves the others', async () => {
+    await keepTab(5, 'a.example');
+    await keepTab(6, 'b.example');
+    await keepTab(7, 'c.example');
+    // Tab 5 left its site, tab 6 is still there, tab 7 is not in the list (unknown: untouched).
+    const kept = await pruneKept([{ tabId: 5, domain: 'elsewhere.example' }, { tabId: 6, domain: 'b.example' }]);
+    expect(kept).toEqual(new Map([[6, 'b.example'], [7, 'c.example']]));
+    expect(await loadKept()).toEqual(kept);
+    // Coming back to the first site does not bring the keep back.
+    expect((await pruneKept([{ tabId: 5, domain: 'a.example' }])).has(5)).toBe(false);
   });
   it('forgetTab drops the context and the kept entry', async () => {
     const opener = mock.addTab({ url: 'https://o.example/' });

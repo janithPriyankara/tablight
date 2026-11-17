@@ -12,7 +12,7 @@ import {
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { findSuspicious } from './suspicious';
-import { forgetTab, keepTab, loadContexts, loadKept, recordCreated } from './tab-context';
+import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
 import { isBlankTab, isClutterTab } from '../shared/url';
 import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
@@ -202,7 +202,9 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
 async function currentSuspicious(items: Item[], settings: Settings): Promise<SuspiciousTab[]> {
   if (!settings.suspiciousTabs) return [];
   const live = items.filter((i) => i.tabId !== undefined).map((i) => ({ tabId: i.tabId!, windowId: i.windowId }));
-  const [ctx, kept] = await Promise.all([loadContexts(live), loadKept()]);
+  // A keep ends when its tab moves to another site: drop those now, so coming back flags the tab again.
+  const onSite = items.filter((i) => i.tabId !== undefined && i.state !== 'stashed').map((i) => ({ tabId: i.tabId!, domain: i.domain }));
+  const [ctx, kept] = await Promise.all([loadContexts(live), pruneKept(onSite)]);
   return findSuspicious(items, ctx, kept);
 }
 /** Refreshes the toolbar badge with the current suspicious count (see updateBadge for `tabId`). */

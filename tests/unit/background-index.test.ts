@@ -455,5 +455,30 @@ describe('background index', () => {
       expect(await mock.sendMessage({ t: 'keepTab', id: 'nope' })).toMatchObject({ ok: false });
       mock.uninstall();
     });
+    it('a kept tab that goes to another site and back is flagged again', async () => {
+      const { mock, bg } = await boot();
+      const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+      const [a, scam] = mock.tabs();
+      const sus = async () => ((await bg.handleRequest({ t: 'state' })) as S).suspicious;
+      await vi.waitFor(async () => expect(await sus()).toHaveLength(1));
+      const id = (await sus())[0]!.item.id;
+      expect(await mock.sendMessage({ t: 'keepTab', id })).toMatchObject({ ok: true });
+      expect(await sus()).toEqual([]);
+      // Another site, seen by the index (and the badge pass after it)...
+      mock.updateTab(scam!.id!, { url: 'https://b.com/', title: 'B' });
+      await vi.waitFor(async () => {
+        await whenTabIndexIdle();
+        expect((await (await bg.getDb()).items.all()).some((i) => i.url === 'https://b.com/')).toBe(true);
+      });
+      await vi.waitFor(async () => expect(await sus()).toEqual([]));
+      // ...then back to the scam page: the keep ended when the tab left the site.
+      mock.updateTab(scam!.id!, SCAM);
+      await vi.waitFor(async () => {
+        await whenTabIndexIdle();
+        expect((await sus()).map((s) => s.item.tabId)).toEqual([scam!.id]);
+      });
+      await vi.waitFor(() => expect(mock.badgeText(a!.id)).toBe('!'));
+      mock.uninstall();
+    });
   });
 });

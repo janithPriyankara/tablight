@@ -94,6 +94,22 @@ export async function loadKept(): Promise<Map<number, string>> {
   const rec = await read<string>(KEPT);
   return new Map(Object.entries(rec).map(([k, v]) => [Number(k), v]));
 }
+/**
+ * Ends the keep of every listed tab that is now on another site (a keep lasts until the tab closes or its
+ * domain changes, so coming back later does not restore it). Unlisted tabs are left alone. Returns what
+ * stays kept.
+ */
+export async function pruneKept(tabs: { tabId: number; domain: string }[]): Promise<Map<number, string>> {
+  const current = await loadKept();
+  const stale = tabs.filter((t) => current.has(t.tabId) && current.get(t.tabId) !== t.domain).map((t) => String(t.tabId));
+  if (!stale.length) return current;
+  let out = current;
+  await update<string>(KEPT, (r) => {
+    for (const id of stale) delete r[id];
+    out = new Map(Object.entries(r).map(([k, v]) => [Number(k), v]));
+  });
+  return out;
+}
 export async function forgetTab(tabId: number): Promise<void> {
   await update<string>(OPENERS, (r) => {
     delete r[String(tabId)];
