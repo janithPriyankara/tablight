@@ -1,5 +1,7 @@
 # Jenkins build design
 
-Approved in conversation: Linux VM with Docker-hosted Jenkins; use a Node.js 22 build container, required static/unit checks, pinned model preparation and the existing release packaging command. Archive JUnit reports and the extension ZIP. Browser and quality suites are optional parameters. Include VM setup instructions; no store deployment.
+Updated per user request: build and test directly inside the existing Docker-hosted Jenkins container. Use `agent any`, Node.js 22 and npm installed in the Jenkins image, required lint/type/unit checks, pinned model preparation and existing release packaging. Archive JUnit reports and the extension ZIP; browser and quality suites remain optional. No Docker CLI/socket or Docker Pipeline plugin is required by the job.
 
-Approaches: host-installed Node requires maintaining a second runtime in Jenkins; a Docker Pipeline agent supplies the runtime consistently and fits the user's Docker installation, so it is selected. A dedicated Docker-capable agent is preferred; an existing controller can serve a personal lab if explicitly configured for builds.
+The Jenkins Dockerfile extends the existing Debian-based Jenkins image, installs browser OS libraries at image-build time as root, and returns to the Jenkins user. Preserve the Jenkins home volume when recreating the container. Multiple-node installations must target a node with the prepared runtime. No browser-store deployment.
+
+Approaches: a sibling Docker build container required extra daemon/CLI setup. The user selected direct builds in the Jenkins container instead, simplifying this single-node VM setup. Java and Node therefore coexist in the Jenkins image.

@@ -1,12 +1,8 @@
+// Commands run directly inside the existing Jenkins node/container.
+def workspaceStarted = false
+
 pipeline {
-    agent {
-        docker {
-            image 'node:22-bookworm'
-            label 'docker'
-            // Root is needed only for Playwright's optional Linux library installation.
-            args '--user 0:0 --init --shm-size=1g'
-        }
-    }
+    agent any
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
@@ -17,7 +13,7 @@ pipeline {
         booleanParam(name: 'RUN_QUALITY_TESTS', defaultValue: false,
             description: 'Run model/classification quality tests (requires extra CPU and memory).')
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
-            description: 'Install Chromium and Linux libraries, then test the built extension.')
+            description: 'Download Chromium and test the extension; Linux libraries are preinstalled in Jenkins.')
     }
     environment {
         CI = 'true'
@@ -28,6 +24,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                script { workspaceStarted = true }
                 // Prevent old ZIPs, reports or downloaded assets from masking a failure.
                 deleteDir()
                 checkout scm
@@ -66,7 +63,7 @@ pipeline {
         stage('Browser tests') {
             when { expression { params.RUN_E2E_TESTS } }
             steps {
-                sh 'npx --no-install playwright install --with-deps chromium'
+                sh 'npx --no-install playwright install chromium'
                 sh 'npm run test:e2e -- --reporter=list,junit'
             }
         }
@@ -78,13 +75,23 @@ pipeline {
     }
     post {
         always {
-            junit testResults: 'reports/*.xml', allowEmptyResults: true
-            archiveArtifacts artifacts: 'reports/**,test-results/**', allowEmptyArchive: true
+            script {
+                if (workspaceStarted) {
+                    junit testResults: 'reports/*.xml', allowEmptyResults: true
+                    archiveArtifacts artifacts: 'reports/**,test-results/**', allowEmptyArchive: true
+                } else {
+                    echo 'No workspace was started; skipping reports.'
+                }
+            }
         }
         cleanup {
-            // sh runs as container root; deleteDir uses the agent user and cannot remove root-owned dirs.
-            // Limit removal to entries in the allocated Jenkins workspace, including hidden files.
-            sh 'find . -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +'
+            script {
+                if (workspaceStarted) {
+                    deleteDir()
+                } else {
+                    echo 'No workspace was started; skipping cleanup.'
+                }
+            }
         }
     }
 }
