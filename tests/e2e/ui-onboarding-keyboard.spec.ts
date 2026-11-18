@@ -145,6 +145,7 @@ test('T-01..T-04 guided tour: every step, keys and focus trap, from Settings, in
     });
     await test.step('T-03 Settings → “Start the tour” goes to All tabs and starts it', async () => {
       await navButton(page(), 'Settings').click();
+      await page().getByRole('tab', { name: 'Help & about' }).click();
       await page().getByRole('button', { name: 'Start the tour' }).click();
       await expect(heading()).toHaveText('All tabs');
       await expect(card().getByRole('heading')).toHaveText(TOUR_STEPS[0]!.title);
@@ -227,6 +228,7 @@ test('K-01..K-04, A-01 keyboard and accessibility: search and list keys, dialogs
     await expect(page().getByRole('button', { name: 'Rename group' })).toBeFocused();
     // A risky one: Merge is not, Delete All Data is. Use Settings → Delete all data.
     await navButton(page(), 'Settings').click();
+    await page().getByRole('tab', { name: 'Privacy & data' }).click();
     const del = page().getByRole('button', { name: 'Delete all data' });
     await del.click();
     d = page().getByRole('dialog', { name: 'Delete all data?' });

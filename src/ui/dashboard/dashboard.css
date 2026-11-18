@@ -480,6 +480,67 @@ body.dashboard-page > #app {
   flex-direction: column;
   gap: var(--space-3);
 }
+/* Settings tabs: an underlined strip above the open panel. */
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+.settings-tab {
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-subtle);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.settings-tab:hover {
+  color: var(--text);
+}
+.settings-tab.is-on {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+.settings-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+/* Fine print, folded until asked for. */
+.settings-more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.settings-more > summary {
+  width: fit-content;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.settings-more[open] > summary {
+  margin-bottom: var(--space-2);
+}
+.settings-more > p + p {
+  margin-top: var(--space-2);
+}
+/* Delete all data: set apart from the harmless settings. */
+.danger-zone {
+  padding: var(--space-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+}
+.danger-zone .settings-h {
+  border-bottom: 0;
+  padding-bottom: 0;
+  color: var(--danger);
+}
 .settings-h {
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--border);

@@ -187,6 +187,7 @@ export class Harness {
   /** Imports a backup (as a JSON value) through Settings → Import, the way a user picks a file. */
   async importBackup(json: unknown, name = 'backup.json'): Promise<void> {
     await navButton(this.dash, 'Settings').click();
+    await this.dash.getByRole('tab', { name: 'Sync & backup' }).click();
     await this.dash.getByLabel('Import backup file').setInputFiles({
       name, mimeType: 'application/json', buffer: Buffer.from(typeof json === 'string' ? json : JSON.stringify(json)),
     });

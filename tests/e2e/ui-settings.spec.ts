@@ -32,9 +32,11 @@ const list = (name: string) => page().getByRole('list', { name, exact: true });
 const sw = (name: RegExp) => page().getByRole('checkbox', { name });
 /** A choice of a segmented control (Theme, Toolbar icon opens): the user clicks its label, the radio is hidden. */
 const pick = (name: string) => page().locator('label.segment').filter({ has: page().getByRole('radio', { name, exact: true }) }).click();
-const openSettings = async () => {
+/** Opens Settings (General), then the named tab when one is given. */
+const openSettings = async (tab?: 'Sync & backup' | 'Privacy & data' | 'Help & about') => {
   await navButton(page(), 'Settings').click();
   await expect(heading()).toHaveText('Settings');
+  if (tab) await page().getByRole('tab', { name: tab }).click();
 };
 const page0 = PAGES[0]!;
 const savedCount = async () => (await h.state()).items.filter((i) => i.state === 'stashed').length;
@@ -50,6 +52,7 @@ test('S-01..S-03 memory and grouping settings: remove-on-open on/off, the auto-p
       const url = h.url(page0.slug);
       await h.importBackup(backup({ items: [{ url, title: page0.title }] }));
       await expect(toast()).toContainText('Imported 1 tab');
+      await page().getByRole('tab', { name: 'General' }).click(); // the import left Settings on Sync & backup
       const s = sw(/Remove a saved tab from Saved for later when I open it/);
       await expect(s).toBeChecked(); // on by default
       await s.setChecked(removeOnOpen);
@@ -127,7 +130,7 @@ test('S-10..S-11 sync on/off through the browser account, and a recorded status 
     if (n > 0) { await h.reset(); } // each case from a clean slate, as when it was its own test
     await test.step(`S-10 sync ${on ? 'on' : 'off'}: status line, popup line, and whether a saved tab reaches the browser account`, async () => {
       // (Only this browser profile: real sync between two devices is a manual check.)
-      await openSettings();
+      await openSettings('Sync & backup');
       const s = sw(/Sync saved tabs through my browser account/);
       await expect(s).not.toBeChecked(); // reset() ran "Delete all data", which turns sync off
       const status = page().locator('.sync-status');
@@ -144,14 +147,14 @@ test('S-10..S-11 sync on/off through the browser account, and a recorded status 
       if (on) {
         // Pushed after the sync debounce (5 s).
         await expect.poll(syncKeys, { timeout: 30_000 }).not.toEqual([]);
-        await openSettings();
+        await openSettings('Sync & backup');
         await expect(status).toHaveText(/^Synced 1 · last synced/);
         expect(await popupSyncLine()).toMatch(/^Saved tabs synced/);
       } else {
         // Nothing can be polled for here: give a push the full debounce (5 s) and more to (wrongly) happen.
         await page().waitForTimeout(7_000);
         expect(await syncKeys()).toEqual([]);
-        await openSettings();
+        await openSettings('Sync & backup');
         await expect(status).toHaveText('Sync is turned off');
       }
     });
@@ -161,7 +164,7 @@ test('S-10..S-11 sync on/off through the browser account, and a recorded status 
     // The status the last sync attempt recorded (only reachable on demand by writing it: rate limits are the browser's).
     await page().evaluate((v) => chrome.storage.local.set({ syncStatus: v }),
       { ok: false, reason: 'rate', message: 'Too many changes at once: retrying shortly', lastSyncAt: Date.now() - 3_600_000 });
-    await openSettings();
+    await openSettings('Sync & backup');
     await page().reload();
     const status = page().locator('.sync-status');
     await expect(status).toHaveText(/^Too many changes at once: retrying shortly · last synced 1 h ago$/);
@@ -193,7 +196,7 @@ test('S-20..S-22 backup: Export downloads the file; a cut-off file is refused; a
   });
   await h.reset(); // a clean slate, as when this part was its own test
   await test.step('S-21..S-22 import: a cut-off file is refused and changes nothing; then a file with some bad entries imports the good ones', async () => {
-    await openSettings();
+    await openSettings('Sync & backup');
     const picker = page().getByLabel('Import backup file');
     await test.step('S-21 cut-off JSON shows “not valid JSON” and changes nothing', async () => {
       await picker.setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"tab-organizer","version":1,"items":[{"url":') });
@@ -218,7 +221,7 @@ test('S-20..S-22 backup: Export downloads the file; a cut-off file is refused; a
 
 // The error text for each kind of malformed file is a unit test (import-export.test.ts "UI test S-21"), as is the
 // 20 MB check before reading (ui-dashboard.test.tsx). This journey proves the real file picker → background path.
-// ── Look and browser: theme, toolbar, mirror ────────────────────────────────────────────────────────────
+// ── Appearance: theme, toolbar, tab groups ── ────────────────────────────────────────────────────────────
 
 const LIGHT_BG = 'rgb(252, 252, 251)';
 const DARK_BG = 'rgb(21, 24, 26)';
@@ -271,7 +274,7 @@ test('TH-01, S-30, S-50 look and browser: theme on every surface, the toolbar ic
   await test.step('S-50 About: the version, and a link opens its built page in a new tab', async () => {
     // Every link's target is a unit test (ui-dashboard.test.tsx "Settings → About links"); here one link proves
     // the pages are in the build and open in a new tab.
-    await openSettings();
+    await openSettings('Help & about');
     await expect(page().locator('.about-name')).toHaveText(`Tablight ${VERSION}`);
     const [p] = await Promise.all([h.context.waitForEvent('page'), page().getByRole('link', { name: 'Privacy policy', exact: true }).click()]);
     await p.waitForLoadState();
@@ -302,7 +305,7 @@ test('S-40 Delete all data: Cancel keeps everything; confirm wipes it, sync goes
   await expect(toast()).toContainText(HINTS.pause);
   await expect(navButton(page(), 'Reading pile')).toBeVisible();
 
-  await openSettings();
+  await openSettings('Privacy & data');
   await page().getByRole('button', { name: 'Delete all data' }).click();
   let d = dialog('Delete all data?');
   await expect(d.getByRole('button', { name: 'Cancel' })).toBeFocused();
@@ -312,9 +315,11 @@ test('S-40 Delete all data: Cancel keeps everything; confirm wipes it, sync goes
   d = dialog('Delete all data?');
   await d.getByRole('button', { name: 'Delete all data' }).click();
   await expect(toast()).toContainText('All data deleted');
-  // Onboarding again, nothing saved, no user group, no session, sync off; the open tabs are still listed.
-  await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toBeVisible();
+  // Onboarding again (shown outside Settings), nothing saved, no user group, no session, sync off; the open tabs stay.
+  await page().getByRole('tab', { name: 'Sync & backup' }).click();
   await expect(sw(/Sync saved tabs/)).not.toBeChecked();
+  await navButton(page(), 'All tabs').click();
+  await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toBeVisible();
   await expect(navButton(page(), 'Reading pile')).toHaveCount(0);
   expect(await savedCount()).toBe(0);
   expect(await serverUrls()).toEqual([h.url(a.slug), h.url(b.slug)].sort());

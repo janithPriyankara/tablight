@@ -23,7 +23,10 @@ import { Settings } from './Settings';
 import { UndoToast } from './UndoToast';
 import { Tour } from './Tour';
 import { SideResizer, loadSideWidth } from './SideResizer';
-import { type View, byDefaultOrder, itemsForView, lastCopies, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
+import {
+  type SettingsTab, type View, byDefaultOrder, itemsForView, lastCopies, parseHash, parseSettingsTab, parseUndoHash, settingsHash,
+  viewHash, windowNumbers,
+} from './views';
 
 /** Opening more than this many tabs at once asks first (same bound as the background's open-all). */
 export const OPEN_MANY_CONFIRM_ABOVE = 20;
@@ -53,6 +56,7 @@ export function Dashboard() {
   const search = useSearch(undefined, state);
   const { notice, notify, undo, dismiss } = useUndo();
   const [view, setViewState] = useState<View>(() => parseHash(location.hash));
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>(() => parseSettingsTab(location.hash));
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [sideWidth, setSideWidth] = useState(loadSideWidth);
@@ -82,6 +86,7 @@ export function Dashboard() {
     };
     const onHash = () => {
       setViewState(parseHash(location.hash));
+      setSettingsTab(parseSettingsTab(location.hash));
       takeUndo();
     };
     takeUndo();
@@ -106,6 +111,7 @@ export function Dashboard() {
     search.setQuery('');
     setNewOnly(false);
     setViewState(v);
+    if (v.kind === 'settings') setSettingsTab('general');
     const hash = `#${viewHash(v)}`;
     if (location.hash !== hash) location.hash = hash;
   };
@@ -445,6 +451,8 @@ export function Dashboard() {
   const title = searching
     ? `Results for “${search.query.trim()}”`
     : view.kind === 'group' ? currentGroup?.name ?? 'Group not found' : VIEW_TITLE[view.kind];
+  // Settings shows only its own controls: no welcome card and no list actions above it.
+  const onSettings = view.kind === 'settings' && !searching;
   const isList = searching || (view.kind !== 'sessions' && view.kind !== 'settings' && view.kind !== 'suspicious');
   const counts = useMemo(() => ({
     all: items.length,
@@ -522,12 +530,16 @@ export function Dashboard() {
                   <CloseIcon />{`Close all (${suspicious.length})`}
                 </button>
               )}
-              <button type="button" class="btn btn-sm" data-tour="close-duplicates" disabled={busy || !state?.dupCount} onClick={() => void closeDuplicates()}>
-                <CopyIcon />Close duplicates
-              </button>
-              <button type="button" class="btn btn-sm" disabled={busy || !state} onClick={() => void regroup()}>
-                <SparkIcon />Re-group everything
-              </button>
+              {!onSettings && (
+                <>
+                  <button type="button" class="btn btn-sm" data-tour="close-duplicates" disabled={busy || !state?.dupCount} onClick={() => void closeDuplicates()}>
+                    <CopyIcon />Close duplicates
+                  </button>
+                  <button type="button" class="btn btn-sm" disabled={busy || !state} onClick={() => void regroup()}>
+                    <SparkIcon />Re-group everything
+                  </button>
+                </>
+              )}
               <button type="button" class="icon-btn tour-open" aria-label="Guided tour" title="Guided tour" onClick={startTour}><HelpIcon /></button>
             </div>
           </header>
@@ -550,7 +562,7 @@ export function Dashboard() {
               <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
             </div>
           )}
-          {settings && !settings.onboarded && (
+          {settings && !settings.onboarded && !onSettings && (
             <Onboarding
               busy={busy}
               onAutoSleep={() => void act(async () => {
@@ -703,6 +715,12 @@ export function Dashboard() {
               settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)}
               onDeleteAll={() => void deleteAllData()}
               onTour={startTour}
+              tab={settingsTab}
+              onTab={(t) => {
+                setSettingsTab(t);
+                const hash = `#${settingsHash(t)}`;
+                if (location.hash !== hash) location.hash = hash;
+              }}
             />
           )}
         </main>

@@ -435,7 +435,7 @@ describe('dashboard', () => {
     await screen.findByText('Seen already');
   });
   it('Settings → About links to every information page, opening in a new tab', async () => {
-    location.hash = '#view=settings';
+    location.hash = '#view=settings&tab=help';
     serve(state());
     render(<Dashboard />);
     const about = await screen.findByRole('region', { name: 'About' });
@@ -448,7 +448,7 @@ describe('dashboard', () => {
     expect(about.textContent).toContain('The Moonstone (Pvt) Ltd');
   });
   it('import refuses files over 20 MB before reading them', async () => {
-    location.hash = '#view=settings';
+    location.hash = '#view=settings&tab=sync';
     serve(state(), (req) => (req.t === 'import' ? { added: 2, skipped: 1 } : undefined));
     const { container } = render(<Dashboard />);
     await screen.findByRole('heading', { level: 1, name: 'Settings' });
@@ -475,13 +475,16 @@ describe('dashboard', () => {
       return settings;
     });
     render(<Dashboard />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sync & backup' }));
     await screen.findByText('Synced 412 · 37 only on this device');
-    expect(screen.getByRole('link', { name: 'Read the privacy policy' }).getAttribute('href')).toBe('privacy.html');
-    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Privacy & data' }));
+    expect((await screen.findByRole('link', { name: 'Read the privacy policy' })).getAttribute('href')).toBe('privacy.html');
+    fireEvent.click(screen.getByRole('tab', { name: 'General' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Dark' }));
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
     expect(sent('settings')).toEqual([{ t: 'settings', patch: { theme: 'dark' } }]);
     permissionsRequest.mockResolvedValueOnce(false);
-    const mirror = screen.getByRole('checkbox', { name: /Mirror groups/ });
+    const mirror = screen.getByRole('checkbox', { name: /Show groups as tab groups in the tab strip/ });
     fireEvent.click(mirror);
     await screen.findByText(/Permission not granted/);
     expect(permissionsRequest).toHaveBeenCalledWith({ permissions: ['tabGroups'] });
@@ -492,7 +495,7 @@ describe('dashboard', () => {
     await waitFor(() => expect(sent('settings').at(-1)).toEqual({ t: 'settings', patch: { toolbarOpens: 'sidepanel' } }));
   });
   it('settings: every sync status reads as it should, failures marked as errors (UI test S-11)', async () => {
-    location.hash = '#view=settings';
+    location.hash = '#view=settings&tab=sync';
     const now = Date.now();
     const cases: [SyncStatus, string, boolean][] = [
       [{ ok: true, synced: 0, localOnly: 0, lastSyncAt: null }, 'Not synced yet', false],
@@ -557,6 +560,7 @@ describe('dashboard', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close duplicates' }));
     await screen.findByText('Closed 2 duplicate tabs');
     fireEvent.click(within(document.querySelector('.sidebar')!).getByRole('button', { name: /Settings/ }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sync & backup' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Export backup' }));
     await waitFor(() => expect(click).toHaveBeenCalled());
     const a = click.mock.contexts[0] as HTMLAnchorElement;
@@ -600,7 +604,7 @@ describe('dashboard', () => {
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tablight' });
     expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later and the examples you teach your groups/);
     act(() => {
-      location.hash = '#view=settings';
+      location.hash = '#view=settings&tab=privacy';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     const privacy = await screen.findByRole('region', { name: 'Privacy' });
@@ -625,7 +629,7 @@ describe('dashboard', () => {
     release();
   });
   it('a settings overlay is cleared per key, only once the state reflects it', async () => {
-    location.hash = '#view=settings';
+    location.hash = '#view=settings&tab=sync';
     let settings = { ...DEFAULT_SETTINGS, onboarded: true };
     let releaseSync!: () => void;
     serve(() => state({ settings }), async (req) => {
@@ -669,7 +673,7 @@ describe('dashboard', () => {
   });
   it('Settings → Delete all data asks first (Cancel focused), then sends deleteAllData', async () => {
     serve(state(), () => undefined);
-    history.replaceState(null, '', '/dashboard.html#view=settings');
+    history.replaceState(null, '', '/dashboard.html#view=settings&tab=privacy');
     render(<Dashboard />);
     fireEvent.click(await screen.findByRole('button', { name: 'Delete all data' }));
     let dialog = await screen.findByRole('dialog', { name: 'Delete all data?' });
@@ -692,6 +696,52 @@ describe('dashboard', () => {
     expect(importNotice({ added: 1, skipped: 0, skippedSessions: 3 })).toBe('Imported 1 tab · 3 sessions not imported (saved sessions are full)');
     expect(importNotice({ added: 0, skipped: 0, grouped: 3 })).toBe('Imported 0 tabs · 3 open tabs moved to their group');
   });
+  it('settings: four tabs; General first; switching writes the hash; arrows move between tabs; no welcome card or list buttons', async () => {
+    serve(state({ settings: { ...DEFAULT_SETTINGS, onboarded: false } }));
+    history.replaceState(null, '', '/dashboard.html#view=settings');
+    render(<Dashboard />);
+    const tablist = await screen.findByRole('tablist', { name: 'Settings sections' });
+    const tabs = within(tablist).getAllByRole('tab');
+    expect(tabs.map((t) => t.textContent)).toEqual(['General', 'Sync & backup', 'Privacy & data', 'Help & about']);
+    const selected = () => within(tablist).getAllByRole('tab').find((t) => t.getAttribute('aria-selected') === 'true')!.textContent;
+    expect(selected()).toBe('General');
+    expect(screen.getByRole('checkbox', { name: /Create new groups automatically/ })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: /Show groups as tab groups in the tab strip/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Export backup' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Welcome to Tablight' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Re-group everything/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Close duplicates/ })).toBeNull();
+    fireEvent.click(within(tablist).getByRole('tab', { name: 'Sync & backup' }));
+    await screen.findByRole('button', { name: 'Export backup' });
+    expect(location.hash).toBe('#view=settings&tab=sync');
+    expect(selected()).toBe('Sync & backup');
+    fireEvent.keyDown(within(tablist).getByRole('tab', { name: 'Sync & backup' }), { key: 'ArrowRight' });
+    await screen.findByRole('button', { name: 'Delete all data' });
+    expect(selected()).toBe('Privacy & data');
+    expect(document.activeElement?.textContent).toBe('Privacy & data');
+    fireEvent.keyDown(document.activeElement!, { key: 'End' });
+    await waitFor(() => expect(selected()).toBe('Help & about'));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' }); // wraps
+    await waitFor(() => expect(selected()).toBe('General'));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' }); // wraps back
+    await waitFor(() => expect(selected()).toBe('Help & about'));
+    expect(within(tablist).getAllByRole('tab').map((t) => t.tabIndex)).toEqual([-1, -1, -1, 0]);
+    // Back returns to the previous tab (the hash changes back).
+    act(() => {
+      location.hash = '#view=settings&tab=sync';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    await waitFor(() => expect(selected()).toBe('Sync & backup'));
+  });
+  it('settings tabs: parsed from the hash, unknown values fall back to General', async () => {
+    const { parseHash, parseSettingsTab, settingsHash } = await import('../../src/ui/dashboard/views');
+    expect(parseSettingsTab('#view=settings&tab=sync')).toBe('sync');
+    expect(parseSettingsTab('#view=settings')).toBe('general');
+    expect(parseSettingsTab('#view=settings&tab=xyz')).toBe('general');
+    expect(settingsHash('general')).toBe('view=settings');
+    expect(settingsHash('privacy')).toBe('view=settings&tab=privacy');
+    expect(parseHash('#view=settings&tab=sync')).toEqual({ kind: 'settings' });
+  });
   it('a "Stash this window" hash shows Stashed + Undo once (valid UUID only); Undo goes through the RPC', async () => {
     const { parseUndoHash } = await import('../../src/ui/dashboard/views');
     const tok = '0f8fad5b-d9cb-469f-a165-70867728950e';
@@ -710,7 +760,7 @@ describe('dashboard', () => {
   });
   it('the export text says the backup includes saved sessions', async () => {
     serve(state());
-    history.replaceState(null, '', '/dashboard.html#view=settings');
+    history.replaceState(null, '', '/dashboard.html#view=settings&tab=sync');
     render(<Dashboard />);
     await screen.findByRole('button', { name: 'Export backup' });
     expect(screen.getByText(/backup file contains your saved tabs, your groups and your saved sessions/)).toBeTruthy();

@@ -13,6 +13,22 @@ export function parseHash(hash: string): View {
   const view = params.get('view');
   return (SPECIAL_VIEWS as readonly string[]).includes(view ?? '') ? { kind: view as SpecialView } : { kind: 'all' };
 }
+/** The Settings page's tabs, in order. The open one is `tab=<id>` in the hash; General has no parameter. */
+export const SETTINGS_TABS = [
+  { id: 'general', label: 'General' },
+  { id: 'sync', label: 'Sync & backup' },
+  { id: 'privacy', label: 'Privacy & data' },
+  { id: 'help', label: 'Help & about' },
+] as const;
+export type SettingsTab = (typeof SETTINGS_TABS)[number]['id'];
+/** The Settings tab a hash names; missing or unknown values (old links, typos) open General. */
+export function parseSettingsTab(hash: string): SettingsTab {
+  const tab = new URLSearchParams(hash.replace(/^#/, '')).get('tab');
+  return SETTINGS_TABS.find((t) => t.id === tab)?.id ?? 'general';
+}
+export function settingsHash(tab: SettingsTab): string {
+  return tab === 'general' ? 'view=settings' : `view=settings&tab=${tab}`;
+}
 const UNDO_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /**
  * "#view=stashed&undo=<uuid>&n=<count>", left by the popup's "Stash this window": the undo token (a UUID,
