@@ -6,7 +6,11 @@ def isNightly() {
 }
 // A release: a build of a pushed tag like v1.2.3 (multibranch job with tag discovery).
 def isRelease() {
-    return env.TAG_NAME ==~ /v\d+\.\d+\.\d+/
+    return env.TAG_NAME ==~ /v\d+\.\d+\.\d+/ || isButtonRelease()
+}
+// A release started from Jenkins: Build with Parameters on main with RELEASE = patch, minor or major.
+def isButtonRelease() {
+    return env.BRANCH_NAME == 'main' && (params.RELEASE ?: 'none') in ['patch', 'minor', 'major']
 }
 // Shows this build on the commit in GitHub (✓ / ✗ / pending), using the job's GitHub credential.
 // Best effort: a GitHub outage or a token without status rights never fails the build.
@@ -43,6 +47,8 @@ pipeline {
         cron(env.BRANCH_NAME == 'main' ? 'H 2 * * *' : '')
     }
     parameters {
+        choice(name: 'RELEASE', choices: ['none', 'patch', 'minor', 'major'],
+            description: 'main only: run every check, bump the version (patch 1.0.1→1.0.2, minor →1.1.0, major →2.0.0), push the commit and tag, and publish a GitHub release.')
         booleanParam(name: 'RUN_QUALITY_TESTS', defaultValue: false,
             description: 'Run model/classification quality tests (requires extra CPU and memory).')
         booleanParam(name: 'RUN_E2E_TESTS', defaultValue: false,
@@ -154,14 +160,40 @@ pipeline {
                 archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
             }
         }
+        stage('Bump version') {
+            // Button release only, after every check passed: commit the new version and push it with its tag.
+            when { expression { isButtonRelease() && currentBuild.currentResult == 'SUCCESS' } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dcc58858-b705-437a-adac-d64dd39c12a3',
+                        usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                    sh '''
+                        set -eu
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@users.noreply.github.com"
+                        git checkout -B main
+                        npm version "$RELEASE" -m "release %s"
+                        # The ZIP was built before the bump; rebuild so its name and manifest carry the new version.
+                        npm run package
+                        tag="v$(node -p "require('./package.json').version")"
+                        url="https://x-access-token:$GH_TOKEN@github.com/janithPriyankara/tablight.git"
+                        # Fails (and releases nothing) if main moved on GitHub while this build ran.
+                        git push "$url" main "$tag"
+                        echo "$tag" > release-tag.txt
+                    '''
+                }
+                archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+            }
+        }
         stage('GitHub release') {
-            // Only for a v1.2.3 tag, and only when every stage above passed (a failed stage stops the build).
+            // Only for a v1.2.3 tag or the RELEASE button, and only when every stage above passed.
             when { expression { isRelease() && currentBuild.currentResult == 'SUCCESS' } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dcc58858-b705-437a-adac-d64dd39c12a3',
                         usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
                     sh '''
                         set -eu
+                        TAG_NAME="${TAG_NAME:-$(cat release-tag.txt)}"
+                        export TAG_NAME
                         version=$(node -p "require('./package.json').version")
                         if [ "v$version" != "$TAG_NAME" ]; then
                             echo "Tag $TAG_NAME does not match package.json version $version; not releasing." >&2
@@ -170,6 +202,12 @@ pipeline {
                         zip="release/tablight-$version.zip"
                         api=https://api.github.com/repos/janithPriyankara/tablight
                         auth="Authorization: Bearer $GH_TOKEN"
+                        # A button release pushes its tag, which starts a tag build too: whichever comes second
+                        # finds the release already there and stops here.
+                        if [ "$(curl -s -o /dev/null -w '%{http_code}' -H "$auth" "$api/releases/tags/$TAG_NAME")" = 200 ]; then
+                            echo "Release $TAG_NAME already exists; nothing to do."
+                            exit 0
+                        fi
                         # The request body is written by node, so no shell quoting can break the JSON.
                         node -e 'const v = require("./package.json").version; process.stdout.write(JSON.stringify({
                             tag_name: process.env.TAG_NAME, name: "Tablight " + v, generate_release_notes: true }))' > release-request.json
