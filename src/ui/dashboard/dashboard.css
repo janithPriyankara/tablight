@@ -73,7 +73,29 @@ body.dashboard-page > #app {
   gap: 1px;
 }
 .nav-list > li {
+  position: relative;
   border-radius: var(--radius-md);
+}
+/* A group's close button: appears on hover or keyboard focus, over the count, like a tab row's buttons. */
+.nav-actions {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  display: flex;
+  padding: 1px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  opacity: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.nav-list > li:hover .nav-actions,
+.nav-list > li:focus-within .nav-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.is-dragging .nav-actions {
+  display: none;
 }
 .nav-item {
   display: flex;

@@ -2,7 +2,7 @@ import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { GroupSummary } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
-import { ClockIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, ShieldIcon, StashIcon } from '../common/icons';
+import { ClockIcon, CloseIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, ShieldIcon, StashIcon } from '../common/icons';
 import { Suggestions } from './Suggestions';
 import { type SpecialView, type View, sameView } from './views';
 
@@ -28,6 +28,9 @@ export interface GroupListProps {
   onAccept: (id: string) => void;
   onDismiss: (id: string) => void;
   busy: boolean;
+  /** Open and paused tabs per group id; a group with some gets a close button on hover. */
+  openTabs?: ReadonlyMap<string, number>;
+  onCloseGroup?: (g: GroupSummary) => void;
 }
 
 /** Left column: special views, the user's groups (drop targets), then suggested groups. */
@@ -87,6 +90,17 @@ export function GroupList(props: GroupListProps) {
                 )}
                 <span class="nav-count">{g.count}</span>
               </button>
+              {props.onCloseGroup && (props.openTabs?.get(g.id) ?? 0) > 0 && (
+                // Like a tab row's buttons: shown on hover or keyboard focus, over the count.
+                <span class="nav-actions">
+                  <button
+                    type="button" class="icon-btn" aria-label={`Close all tabs in ${g.name}`} title="Close all tabs in this group"
+                    disabled={props.busy} onClick={() => props.onCloseGroup!(g)}
+                  >
+                    <CloseIcon />
+                  </button>
+                </span>
+              )}
             </li>
           );
         })}

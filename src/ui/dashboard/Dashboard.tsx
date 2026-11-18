@@ -337,15 +337,21 @@ export function Dashboard() {
   const stashView = () => act(() => stashIds(groupTargets.map((i) => i.id)));
   const sleepView = () => act(() => sleepIds(groupTargets.map((i) => i.id)));
   // A group's open and paused tabs in every window; its saved-for-later tabs stay.
-  const groupTabs = list.filter(hasTab);
+  const openTabsByGroup = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of items) if (i.groupId !== null && hasTab(i)) m.set(i.groupId, (m.get(i.groupId) ?? 0) + 1);
+    return m;
+  }, [items]);
   const closeGroup = (g: GroupSummary) =>
     act(async () => {
+      const ids = items.filter((i) => i.groupId === g.id && hasTab(i)).map((i) => i.id);
+      if (!ids.length) return;
       if (!(await confirm({
-        title: `Close ${plural(groupTabs.length, 'tab')} in ${g.name}?`,
+        title: `Close ${plural(ids.length, 'tab')} in ${g.name}?`,
         body: 'Saved-for-later tabs in this group stay. You can undo for 10 seconds.',
         confirmLabel: 'Close tabs', danger: true,
       }))) return;
-      await closeIds(groupTabs.map((i) => i.id));
+      await closeIds(ids);
     });
   const deleteAllData = () =>
     act(async () => {
@@ -510,6 +516,7 @@ export function Dashboard() {
           <GroupList
             view={searching ? { kind: 'all' } : view} groups={groups} counts={counts} onView={go} dragging={dragging}
             onDropOn={onDropOn} onAccept={(id) => void acceptSuggestion(id)} onDismiss={(id) => void dismissSuggestion(id)} busy={busy}
+            openTabs={openTabsByGroup} onCloseGroup={(g) => void closeGroup(g)}
           />
         </aside>
         <SideResizer width={sideWidth} onWidth={setSideWidth} />
@@ -616,7 +623,7 @@ export function Dashboard() {
                     <PauseIcon />Pause group
                   </button>
                   {currentGroup && (
-                    <button type="button" class="btn btn-sm" disabled={busy || !groupTabs.length} onClick={() => void closeGroup(currentGroup)}>
+                    <button type="button" class="btn btn-sm" disabled={busy || !openTabsByGroup.get(currentGroup.id)} onClick={() => void closeGroup(currentGroup)}>
                       <CloseIcon />Close group
                     </button>
                   )}

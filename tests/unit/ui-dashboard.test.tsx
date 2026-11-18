@@ -103,7 +103,7 @@ describe('dashboard', () => {
     await screen.findByText('3 selected');
     const row = screen.getByText('Title i3').closest('li')!;
     fireEvent.dragStart(row, { dataTransfer: { setData: vi.fn(), effectAllowed: 'none' } });
-    const target = within(container.querySelector('.sidebar')!).getByRole('button', { name: /Videos/ }).closest('li')!;
+    const target = within(container.querySelector('.sidebar')!).getByRole('button', { name: /^Videos/ }).closest('li')!;
     fireEvent.dragOver(target, { dataTransfer: { dropEffect: 'none' } });
     fireEvent.drop(target);
     await waitFor(() => expect(sent('moveItems')).toEqual([{ t: 'moveItems', ids: ['i1', 'i3', 'i4'], groupId: 'videos' }]));
@@ -202,7 +202,7 @@ describe('dashboard', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     await screen.findByRole('heading', { level: 1, name: 'Settings' });
-    fireEvent.click(within(document.querySelector('.sidebar')!).getByRole('button', { name: /Programming/ }));
+    fireEvent.click(within(document.querySelector('.sidebar')!).getByRole('button', { name: /^Programming/ }));
     expect(location.hash).toBe('#group=programming');
     await screen.findByRole('heading', { level: 1, name: 'Programming' });
     expect(screen.getByText('Title i1')).toBeTruthy();
@@ -782,6 +782,23 @@ describe('dashboard', () => {
     await screen.findByRole('heading', { level: 1, name: 'Unsorted' });
     expect(screen.queryByRole('button', { name: 'Close group' })).toBeNull();
   });
+  it('the sidebar: hovering a group shows a close button that asks first, then closes its open tabs from any view', async () => {
+    serve(state({ items: [...state().items, item('s1', { state: 'stashed', tabId: undefined, windowId: undefined, groupId: 'videos' })] }),
+      (req) => (req.t === 'close' ? { token: 'tok', closed: 3 } : undefined));
+    history.replaceState(null, '', '/dashboard.html#view=settings'); // works from any page, not only the group's own
+    render(<Dashboard />);
+    const sidebar = within(await waitFor(() => document.querySelector<HTMLElement>('.sidebar')!));
+    const btn = await sidebar.findByRole('button', { name: 'Close all tabs in Programming' });
+    expect(btn.closest('li')!.querySelector('.nav-actions')).toBeTruthy(); // the hover-revealed slot, like a tab row's
+    expect(sidebar.getByRole('button', { name: 'Close all tabs in Videos' })).toBeTruthy();
+    fireEvent.click(btn);
+    const dialog = await screen.findByRole('dialog', { name: 'Close 3 tabs in Programming?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close tabs' }));
+    await waitFor(() => expect(sent('close')).toHaveLength(1));
+    expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['i1', 'i2', 'i3']);
+    expect(location.hash).toBe('#view=settings'); // the page you were on stays
+    await screen.findByText('Closed 3 tabs');
+  });
   it('settings tabs: parsed from the hash, unknown values fall back to General', async () => {
     const { parseHash, parseSettingsTab, settingsHash } = await import('../../src/ui/dashboard/views');
     expect(parseSettingsTab('#view=settings&tab=sync')).toBe('sync');
@@ -844,7 +861,7 @@ describe('dashboard', () => {
       serve(sus());
       render(<Dashboard />);
       await ready();
-      const entry = sidebar().getByRole('button', { name: /Suspicious/ });
+      const entry = sidebar().getByRole('button', { name: /^Suspicious/ });
       expect(entry.textContent).toContain('1');
       const names = sidebar().getAllByRole('button').map((b) => b.textContent ?? '');
       expect(names.findIndex((n) => n.startsWith('Suspicious'))).toBe(names.findIndex((n) => n.startsWith('Duplicates')) + 1);
@@ -925,8 +942,8 @@ describe('dashboard', () => {
       serve(state());
       render(<Dashboard />);
       await screen.findByText('No suspicious tabs.');
-      expect(sidebar().getByRole('button', { name: /Suspicious/ }).getAttribute('aria-current')).toBe('page');
-      expect(screen.queryByRole('button', { name: /Close all/ })).toBeNull();
+      expect(sidebar().getByRole('button', { name: /^Suspicious/ }).getAttribute('aria-current')).toBe('page');
+      expect(screen.queryByRole('button', { name: /^Close all \(/ })).toBeNull();
     });
     it('Settings: the "Point out suspicious tabs" switch saves the setting', async () => {
       location.hash = '#view=settings';
