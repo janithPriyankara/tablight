@@ -61,6 +61,8 @@ export function SidePanel() {
   const [order, setOrder] = useState<Map<number, number>>(new Map());
   const [open, setOpen] = useState<Set<string>>(loadOpen);
   const [confirmClose, setConfirmClose] = useState(false);
+  /** The group whose "Close all tabs" confirmation is open, if any. */
+  const [confirmGroup, setConfirmGroup] = useState<string | null>(null);
   // The Suspicious section is open by default (not remembered: new suspicious tabs should be seen).
   const [susOpen, setSusOpen] = useState(true);
   const [susAll, setSusAll] = useState(false);
@@ -242,8 +244,12 @@ export function SidePanel() {
     const expanded = open.has(id);
     const headId = `sp-h-${id}`;
     const count = opts.count ?? list.length;
+    const g = opts.group;
+    // A group's open and paused tabs, in every window (its saved-for-later tabs stay).
+    const closable = g ? list.filter(hasTab) : [];
     return (
       <section key={id} class="sp-section" aria-labelledby={headId} role={expanded ? 'region' : undefined}>
+        <div class="sp-head-row">
         <button type="button" id={headId} class="sp-head" aria-expanded={expanded} onClick={() => toggle(id)}>
           <svg class="sp-chevron" viewBox="0 0 16 16" aria-hidden="true" style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}>
             <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -255,6 +261,30 @@ export function SidePanel() {
           )}
           <span class="sp-count">{count}</span>
         </button>
+        {g && closable.length > 0 && (
+          // Like a tab row's buttons: shown on hover or keyboard focus.
+          <span class="sp-head-actions">
+            <button
+              type="button" class="icon-btn" aria-label={`Close all tabs in ${title}`} title="Close all tabs in this group"
+              disabled={busy} onClick={() => setConfirmGroup(g.id)}
+            >
+              <CloseIcon />
+            </button>
+          </span>
+        )}
+        </div>
+        {g && confirmGroup === g.id && closable.length > 0 && (
+          <InlineCloseConfirm
+            title={`Close ${plural(closable.length, 'tab')} in ${title}?`}
+            body="Saved-for-later tabs in this group stay. You can undo for 10 seconds."
+            titles={closable.map((i) => displayTitle(i))} busy={busy}
+            onCancel={() => setConfirmGroup(null)}
+            onConfirm={() => {
+              setConfirmGroup(null);
+              void closeIds(closable.map((i) => i.id));
+            }}
+          />
+        )}
         {expanded && (
           list.length
             ? <ul class="item-list">{list.slice(0, MAX_ROWS).map((i) => row(i, !!opts.showGroup))}</ul>

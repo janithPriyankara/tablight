@@ -757,6 +757,31 @@ describe('dashboard', () => {
     expect(text).toContain('click one to resume it');
     expect(text).toContain('The side panel stays open beside your pages');
   });
+  it('a group page has "Close group": asks first, closes the group’s open tabs in every window, with Undo; Unsorted has none', async () => {
+    serve(state({ items: [...state().items, item('s1', { state: 'stashed', tabId: undefined, windowId: undefined })] }),
+      (req) => (req.t === 'close' ? { token: 'tok', closed: 3 } : undefined));
+    history.replaceState(null, '', '/dashboard.html#group=programming');
+    render(<Dashboard />);
+    await screen.findByRole('heading', { level: 1, name: 'Programming' });
+    fireEvent.click(screen.getByRole('button', { name: 'Close group' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Close 3 tabs in Programming?' });
+    expect(dialog.textContent).toMatch(/Saved-for-later tabs in this group stay/);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(sent('close')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Close group' }));
+    dialog = await screen.findByRole('dialog', { name: 'Close 3 tabs in Programming?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close tabs' }));
+    await waitFor(() => expect(sent('close')).toHaveLength(1));
+    expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['i1', 'i2', 'i3']);
+    await screen.findByText('Closed 3 tabs');
+    act(() => {
+      location.hash = '#view=unsorted';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    await screen.findByRole('heading', { level: 1, name: 'Unsorted' });
+    expect(screen.queryByRole('button', { name: 'Close group' })).toBeNull();
+  });
   it('settings tabs: parsed from the hash, unknown values fall back to General', async () => {
     const { parseHash, parseSettingsTab, settingsHash } = await import('../../src/ui/dashboard/views');
     expect(parseSettingsTab('#view=settings&tab=sync')).toBe('sync');

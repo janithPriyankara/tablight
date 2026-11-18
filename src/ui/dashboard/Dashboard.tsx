@@ -336,6 +336,17 @@ export function Dashboard() {
   const groupTargets = list.filter(isWebOpen);
   const stashView = () => act(() => stashIds(groupTargets.map((i) => i.id)));
   const sleepView = () => act(() => sleepIds(groupTargets.map((i) => i.id)));
+  // A group's open and paused tabs in every window; its saved-for-later tabs stay.
+  const groupTabs = list.filter(hasTab);
+  const closeGroup = (g: GroupSummary) =>
+    act(async () => {
+      if (!(await confirm({
+        title: `Close ${plural(groupTabs.length, 'tab')} in ${g.name}?`,
+        body: 'Saved-for-later tabs in this group stay. You can undo for 10 seconds.',
+        confirmLabel: 'Close tabs', danger: true,
+      }))) return;
+      await closeIds(groupTabs.map((i) => i.id));
+    });
   const deleteAllData = () =>
     act(async () => {
       if (!(await confirm({
@@ -604,6 +615,11 @@ export function Dashboard() {
                   <button type="button" class="btn btn-sm" disabled={busy || !groupTargets.length} onClick={() => void sleepView()}>
                     <PauseIcon />Pause group
                   </button>
+                  {currentGroup && (
+                    <button type="button" class="btn btn-sm" disabled={busy || !groupTabs.length} onClick={() => void closeGroup(currentGroup)}>
+                      <CloseIcon />Close group
+                    </button>
+                  )}
                 </>
               )}
               {currentGroup && !searching && currentGroup.suggested && (

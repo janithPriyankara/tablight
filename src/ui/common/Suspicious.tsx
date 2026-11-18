@@ -79,7 +79,11 @@ export function ConfirmTitles({ titles }: { titles: string[] }) {
  * cancels, and nothing closes until "Close tabs". While another action runs (`busy`), "Close tabs" is disabled
  * and the confirmation stays open, instead of closing with nothing done.
  */
-export function InlineCloseConfirm(props: { titles: string[]; busy?: boolean; onCancel: () => void; onConfirm: () => void }) {
+export function InlineCloseConfirm(props: {
+  titles: string[]; busy?: boolean; onCancel: () => void; onConfirm: () => void;
+  /** Defaults to the suspicious-tabs wording. */
+  title?: string; body?: string;
+}) {
   const cancel = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   useEffect(() => cancel.current?.focus(), []);
@@ -92,9 +96,9 @@ export function InlineCloseConfirm(props: { titles: string[]; busy?: boolean; on
         props.onCancel();
       }}
     >
-      <p class="sus-confirm-title" id={titleId}>{closeAllTitle(props.titles.length)}</p>
+      <p class="sus-confirm-title" id={titleId}>{props.title ?? closeAllTitle(props.titles.length)}</p>
       <ConfirmTitles titles={props.titles} />
-      <p class="sus-confirm-body">{CLOSE_ALL_BODY}</p>
+      <p class="sus-confirm-body">{props.body ?? CLOSE_ALL_BODY}</p>
       <div class="sus-confirm-actions">
         <button ref={cancel} type="button" class="btn btn-sm" onClick={props.onCancel}>Cancel</button>
         <button type="button" class="btn btn-sm btn-danger" disabled={props.busy} onClick={props.onConfirm}>Close tabs</button>

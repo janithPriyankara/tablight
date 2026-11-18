@@ -54,6 +54,30 @@ body.sidepanel-page > #app {
 .sp-head:hover {
   background: var(--surface-1);
 }
+/* A group heading's buttons (Close all tabs) appear on hover or focus, over the count, like a tab row's. */
+.sp-head-row {
+  position: relative;
+}
+.sp-head-row:hover .sp-head {
+  background: var(--surface-1);
+}
+.sp-head-actions {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  display: flex;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  opacity: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.sp-head-row:hover .sp-head-actions,
+.sp-head-row:focus-within .sp-head-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
 .sp-head:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;

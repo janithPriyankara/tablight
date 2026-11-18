@@ -108,6 +108,43 @@ describe('SidePanel', () => {
     expect((await screen.findByRole('button', { name: /^Movies/ })).getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('a group heading has a Close button (shown on hover) that asks first, then closes every open tab of the group, in all windows', async () => {
+    serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 2 } : req.t === 'undo' ? true : undefined));
+    render(<SidePanel />);
+    await loaded();
+    // Works whether or not the group is expanded; the heading's own button still toggles it.
+    const closeGroup = await screen.findByRole('button', { name: 'Close all tabs in Movies' });
+    expect(closeGroup.closest('.sp-head-row')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Movies/ }).getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(closeGroup);
+    const ask = await screen.findByRole('group', { name: 'Close 2 tabs in Movies?' });
+    // Open tabs from both windows are listed; the saved-for-later one is not closed.
+    expect(within(ask).getByText('Dune trailer')).toBeTruthy();
+    expect(within(ask).getByText('Other window tab')).toBeTruthy();
+    expect(within(ask).queryByText('Stashed film')).toBeNull();
+    expect(within(ask).getByText(/Saved-for-later tabs in this group stay/)).toBeTruthy();
+    expect(sendMock.mock.calls.some(([r]) => (r as { t: string }).t === 'close')).toBe(false);
+    fireEvent.keyDown(within(ask).getByRole('button', { name: 'Cancel' }), { key: 'Escape' });
+    expect(screen.queryByRole('group', { name: /tabs in Movies\?/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Close all tabs in Movies' }));
+    fireEvent.click(within(await screen.findByRole('group', { name: 'Close 2 tabs in Movies?' })).getByRole('button', { name: 'Close tabs' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'close', ids: ['i2', 'i3'] }));
+    await screen.findByText('Closed 2 tabs');
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok' }));
+  });
+  it('a group with only saved-for-later tabs has no Close button; This window and Unsorted have none', async () => {
+    serve(state({
+      items: [item('i1'), item('i5', { title: 'Stashed film', state: 'stashed', tabId: undefined, windowId: undefined, groupId: 'movies' })],
+      groups: [group('programming', 'Programming', 1), group('movies', 'Movies', 1)],
+    }));
+    render(<SidePanel />);
+    await loaded();
+    expect(screen.getByRole('button', { name: 'Close all tabs in Programming' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Close all tabs in Movies' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Close all tabs in (This window|Unsorted)/ })).toBeNull();
+  });
+
   it('closing a tab from its row offers Undo', async () => {
     serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
     render(<SidePanel />);
