@@ -234,7 +234,13 @@ export async function closeExtras(db: Db): Promise<{ closed: number; token: stri
     return false;
   };
   const ids: string[] = [];
-  for (const group of findDuplicates(await db.items.all()).values()) {
+  for (const records of findDuplicates(await db.items.all()).values()) {
+    // Only copies whose tab is open now count, one record per tab: the index is updated a moment after tab events,
+    // so a record can still point at a closed tab. Keeping such a record would close every real copy.
+    const byTab = new Map<number, Item>();
+    for (const i of records) if (live.has(i.tabId!) && !byTab.has(i.tabId!)) byTab.set(i.tabId!, i);
+    const group = [...byTab.values()];
+    if (group.length < 2) continue;
     const keep = group.reduce((a, b) => (better(a, b) ? b : a));
     for (const i of group) if (i !== keep) ids.push(i.id);
   }

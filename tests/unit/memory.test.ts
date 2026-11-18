@@ -217,6 +217,21 @@ describe('closeExtras / closeTabs / undo', () => {
     expect(r.closed).toBe(1);
     expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/x?utm_source=1', 'https://b.com/']);
   });
+  it('never closes every copy when the record it would keep has no live tab (index not caught up yet)', async () => {
+    const items = await setup([{ url: 'https://k.com/' }, { url: 'https://a.com/' }, { url: 'https://a.com/' }, { url: 'https://a.com/' }]);
+    const copies = items.filter((i) => i.url === 'https://a.com/');
+    await db.items.put({ ...copies[0]!, lastActiveAt: Date.now() + 1e6 });
+    mock.removeTab(copies[0]!.tabId!); // closed by the user; reconcile has not run yet
+    const r = await closeExtras(db);
+    expect(r.closed).toBe(1);
+    expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/', 'https://k.com/']);
+  });
+  it('closes nothing for a page whose other copies are all gone already', async () => {
+    const items = await setup([{ url: 'https://a.com/' }, { url: 'https://a.com/' }]);
+    mock.removeTab(items[0]!.tabId!);
+    expect((await closeExtras(db)).closed).toBe(0);
+    expect(mock.tabs().map((t) => t.url)).toEqual(['https://a.com/']);
+  });
   it('undo within 10 s recreates web tabs only; after 10 s returns false', async () => {
     const items = await setup([{ url: 'https://a.com/' }, { url: 'chrome://settings/' }]);
     vi.useFakeTimers({ toFake: ['Date'] });
