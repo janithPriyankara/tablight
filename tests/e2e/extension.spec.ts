@@ -256,6 +256,7 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
 
   // ── export ──
   await navButton(page, 'Settings').click();
+  await page.getByRole('tab', { name: 'Sync & backup' }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export backup' }).click(),
@@ -284,6 +285,7 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   const p2 = fresh.dashboard;
   expect((await state(p2)).items.filter((i) => i.state === 'stashed')).toHaveLength(0);
   await navButton(p2, 'Settings').click();
+  await p2.getByRole('tab', { name: 'Sync & backup' }).click();
   await p2.getByLabel('Import backup file').setInputFiles(backup);
   await expect(p2.getByRole('status').filter({ hasText: /^Imported/ })).toBeVisible();
   await expect.poll(async () =>

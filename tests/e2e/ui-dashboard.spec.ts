@@ -475,7 +475,7 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     await d.getByRole('button', { name: 'Close duplicates' }).click();
     await expect(toast()).toContainText('Closed 1 duplicate tab');
     await expect.poll(() => h.tabsAt(u)).toHaveLength(1);
-    await expect(page().getByText('No page is open more than once.')).toBeVisible();
+    await expect(page().getByText(/Last copy, still open/)).toHaveCount(1); // the copy left stays listed, marked
     await expect(page().getByRole('button', { name: 'Close duplicates' })).toBeDisabled();
     await expect(navButton(page(), group)).toHaveText(new RegExp(`^${escapeRe(group)}\\s*1$`));
     await toast().getByRole('button', { name: 'Undo' }).click();
@@ -487,7 +487,7 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     await selectionBar().getByRole('button', { name: 'Close' }).click();
     await expect(toast()).toContainText('Closed 1 tab · kept 1 copy of each page');
     await expect.poll(() => h.tabsAt(u)).toHaveLength(1);
-    await expect(page().getByText('No page is open more than once.')).toBeVisible();
+    await expect(page().getByText(/Last copy, still open/)).toHaveCount(1); // the copy left stays listed, marked
   });
 });
 

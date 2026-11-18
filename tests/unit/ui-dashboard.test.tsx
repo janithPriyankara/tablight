@@ -733,6 +733,30 @@ describe('dashboard', () => {
     });
     await waitFor(() => expect(selected()).toBe('Sync & backup'));
   });
+  it('settings: Home on the first tab moves nothing and never pulls focus back later', async () => {
+    serve(state());
+    history.replaceState(null, '', '/dashboard.html#view=settings');
+    render(<Dashboard />);
+    const general = await screen.findByRole('tab', { name: 'General' });
+    general.focus();
+    fireEvent.keyDown(general, { key: 'Home' });
+    const select = screen.getByRole('combobox', { name: /Auto-pause tabs/ });
+    select.focus();
+    for (const l of listeners) l({ target: 'ui', t: 'changed' }, { id: 'ext' }); // a refresh re-renders
+    await waitFor(() => expect(sent('state').length).toBeGreaterThan(1));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.activeElement).toBe(select);
+  });
+  it('settings: the short help lines keep what each setting does (nothing deleted, only shortened)', async () => {
+    serve(state());
+    history.replaceState(null, '', '/dashboard.html#view=settings');
+    const { container } = render(<Dashboard />);
+    await screen.findByRole('tab', { name: 'General' });
+    const text = container.querySelector('.settings')!.textContent!;
+    expect(text).toContain('instead of suggesting one');
+    expect(text).toContain('click one to resume it');
+    expect(text).toContain('The side panel stays open beside your pages');
+  });
   it('settings tabs: parsed from the hash, unknown values fall back to General', async () => {
     const { parseHash, parseSettingsTab, settingsHash } = await import('../../src/ui/dashboard/views');
     expect(parseSettingsTab('#view=settings&tab=sync')).toBe('sync');
@@ -763,7 +787,7 @@ describe('dashboard', () => {
     history.replaceState(null, '', '/dashboard.html#view=settings&tab=sync');
     render(<Dashboard />);
     await screen.findByRole('button', { name: 'Export backup' });
-    expect(screen.getByText(/backup file contains your saved tabs, your groups and your saved sessions/)).toBeTruthy();
+    expect(screen.getByText(/backup file contains your saved tabs, your groups, your open tabs’ groups and your saved sessions/)).toBeTruthy();
   });
 
   it('a failed load shows the error with Retry; a later failed refresh keeps the list; the grouping banner (UI tests D-90..D-91)', async () => {

@@ -473,12 +473,53 @@ body.dashboard-page > #app {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-8);
+  max-width: 760px;
 }
 .settings-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+/* A section's rows sit in one card, divided by hairlines: the eye takes one row at a time. */
+.settings-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.setting-row {
+  padding: var(--space-4) var(--space-5);
+}
+.setting-row + .setting-row {
+  border-top: 1px solid var(--border);
+}
+.setting-row > .setting-help {
+  max-width: 62ch;
+  margin-top: var(--space-2);
+}
+/* The ⓘ next to a setting's name: shows or hides its explanation. */
+.info-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: var(--space-1);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-subtle);
+  vertical-align: middle;
+  cursor: pointer;
+}
+.info-btn:hover,
+.info-btn.is-on {
+  background: var(--surface-1);
+  color: var(--accent);
+}
+.info-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 /* Settings tabs: an underlined strip above the open panel. */
 .settings-tabs {
@@ -511,53 +552,56 @@ body.dashboard-page > #app {
   outline-offset: -2px;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
-/* Fine print, folded until asked for. */
-.settings-more {
+/* Privacy: three short points, one line each. */
+.privacy-points {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.settings-more > summary {
-  width: fit-content;
+.privacy-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.privacy-points .icon {
+  flex: none;
+  margin-top: 2px;
   color: var(--accent);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
 }
-.settings-more[open] > summary {
-  margin-bottom: var(--space-2);
-}
-.settings-more > p + p {
-  margin-top: var(--space-2);
+.privacy-link {
+  display: inline-block;
+  margin-top: var(--space-3);
 }
 /* Delete all data: set apart from the harmless settings. */
-.danger-zone {
-  padding: var(--space-4);
-  border: 1px solid var(--danger);
-  border-radius: var(--radius-md);
+.danger-zone .settings-card {
+  border-color: var(--danger);
 }
 .danger-zone .settings-h {
-  border-bottom: 0;
-  padding-bottom: 0;
   color: var(--danger);
 }
 .settings-h {
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--border);
-  font-size: var(--text-lg);
+  padding-left: 2px;
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .setting {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  cursor: pointer;
 }
 .setting-text {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+}
+label.setting-name {
+  cursor: pointer;
 }
 .setting-name {
   font-weight: 500;

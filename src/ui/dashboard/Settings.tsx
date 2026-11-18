@@ -1,8 +1,9 @@
-import { useRef } from 'preact/hooks';
+import type { ComponentChildren } from 'preact';
+import { useRef, useState } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
 import { ago, plural } from '../common/format';
-import { DownloadIcon, ShieldIcon, TrashIcon, UploadIcon } from '../common/icons';
+import { DownloadIcon, InfoIcon, ShieldIcon, TrashIcon, UploadIcon } from '../common/icons';
 import { SETTINGS_TABS, type SettingsTab, isoDate, syncStatusLine } from './views';
 
 /** Same limit the background's import enforces; checked before the file is read. */
@@ -116,19 +117,27 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
       : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : -1;
     if (to < 0) return;
     e.preventDefault();
-    switchTo(SETTINGS_TABS[to]!.id);
+    // Already there (Home on the first tab): no switch, and no focus left pending for a later render.
+    if (SETTINGS_TABS[to]!.id !== tab) switchTo(SETTINGS_TABS[to]!.id);
   };
-  const toggle = (name: string, help: string, checked: boolean, onChange: (on: boolean) => void) => (
-    <label class="setting">
-      <span class="setting-text">
-        <span class="setting-name">{name}</span>
-        <span class="setting-help">{help}</span>
-      </span>
-      <input
-        type="checkbox" class="switch" checked={checked} disabled={busy}
-        onChange={(e) => onChange(e.currentTarget.checked)}
-      />
-    </label>
+  const sw = (id: string, checked: boolean, onChange: (on: boolean) => void) => (
+    <input
+      id={id} type="checkbox" class="switch" checked={checked} disabled={busy}
+      onChange={(e) => onChange(e.currentTarget.checked)}
+    />
+  );
+  const segmented = <T extends string>(name: string, value: T, options: { value: T; label: string }[], onPick: (v: T) => void) => (
+    <span class="segmented">
+      {options.map((o) => (
+        <label key={o.value} class={value === o.value ? 'segment is-on' : 'segment'}>
+          <input
+            type="radio" name={name} value={o.value} checked={value === o.value} disabled={busy}
+            onChange={() => onPick(o.value)}
+          />
+          {o.label}
+        </label>
+      ))}
+    </span>
   );
   const saveOn = (key: 'autoCreateGroups' | 'removeOnOpen' | 'syncEnabled' | 'suspiciousTabs') => (on: boolean) =>
     void act(() => save({ [key]: on }));
@@ -153,181 +162,198 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
         ))}
       </div>
       <div role="tabpanel" id={`set-panel-${tab}`} aria-labelledby={`set-tab-${tab}`}>
-      <form class="settings" onSubmit={(e) => e.preventDefault()}>
-        {tab === 'general' && (
-          <>
-            <section class="settings-group" aria-labelledby="set-grouping-h">
-              <h2 class="settings-h" id="set-grouping-h">Grouping</h2>
-              {toggle('Create new groups automatically',
-                'Makes a group when 3 or more unsorted tabs share a topic. A group you delete doesn’t come back.',
-                settings.autoCreateGroups, saveOn('autoCreateGroups'))}
-            </section>
-            <section class="settings-group" aria-labelledby="set-memory-h">
-              <h2 class="settings-h" id="set-memory-h">Tabs and memory</h2>
-              <label class="setting">
-                <span class="setting-text">
-                  <span class="setting-name">Auto-pause tabs I haven’t used for</span>
-                  <span class="setting-help">Paused tabs stay in your tab strip and use no memory. The tab you’re on, pinned tabs and tabs playing sound never pause.</span>
-                </span>
-                <select
-                  class="field field-inline" value={autoValue} disabled={busy}
-                  onChange={(e) => {
-                    const v = e.currentTarget.value;
-                    void act(() => save({ autoSleepMinutes: v === 'off' ? null : Number(v) }));
-                  }}
+        <form class="settings" onSubmit={(e) => e.preventDefault()}>
+          {tab === 'general' && (
+            <>
+              <Section id="grouping" title="Grouping">
+                <SettingRow
+                  id="set-autogroup" name="Create new groups automatically"
+                  help="When 3 or more unsorted tabs share a topic, Tablight makes a group for them right away instead of suggesting one. You can rename or delete it; a group you delete doesn’t come back."
                 >
-                  {choices.map((c) => <option key={String(c.value)} value={c.value === null ? 'off' : String(c.value)}>{c.label}</option>)}
-                </select>
-              </label>
-              {toggle('Remove a saved tab from Saved for later when I open it', 'Turn off to keep saved tabs as a reading list.',
-                settings.removeOnOpen, saveOn('removeOnOpen'))}
-            </section>
-            <section class="settings-group" aria-labelledby="set-look-h">
-              <h2 class="settings-h" id="set-look-h">Appearance</h2>
-              <div class="setting" role="radiogroup" aria-labelledby="theme-label">
-                <span class="setting-text">
-                  <span class="setting-name" id="theme-label">Theme</span>
-                </span>
-                <span class="segmented">
-                  {THEMES.map((t) => (
-                    <label key={t.value} class={settings.theme === t.value ? 'segment is-on' : 'segment'}>
-                      <input
-                        type="radio" name="theme" value={t.value} checked={settings.theme === t.value} disabled={busy}
-                        onChange={() => void act(() => save({ theme: t.value }))}
-                      />
-                      {t.label}
-                    </label>
-                  ))}
-                </span>
+                  {sw('set-autogroup', settings.autoCreateGroups, saveOn('autoCreateGroups'))}
+                </SettingRow>
+              </Section>
+              <Section id="memory" title="Tabs and memory">
+                <SettingRow
+                  id="set-autopause" name="Auto-pause tabs I haven’t used for"
+                  help="Paused tabs stay in your tab strip and use no memory; click one to resume it. The tab you’re on, pinned tabs and tabs playing sound are never paused."
+                >
+                  <select
+                    id="set-autopause" class="field field-inline" value={autoValue} disabled={busy}
+                    onChange={(e) => {
+                      const v = e.currentTarget.value;
+                      void act(() => save({ autoSleepMinutes: v === 'off' ? null : Number(v) }));
+                    }}
+                  >
+                    {choices.map((c) => <option key={String(c.value)} value={c.value === null ? 'off' : String(c.value)}>{c.label}</option>)}
+                  </select>
+                </SettingRow>
+                <SettingRow
+                  id="set-removeonopen" name="Remove a saved tab from Saved for later when I open it"
+                  help="Turn this off to keep saved tabs as a reading list."
+                >
+                  {sw('set-removeonopen', settings.removeOnOpen, saveOn('removeOnOpen'))}
+                </SettingRow>
+              </Section>
+              <Section id="look" title="Appearance">
+                <SettingRow id="theme" name="Theme" group>
+                  {segmented('theme', settings.theme, THEMES, (v) => void act(() => save({ theme: v })))}
+                </SettingRow>
+                <SettingRow
+                  id="toolbar" name="Toolbar icon opens" group
+                  help="The side panel stays open beside your pages. Alt+Shift+S opens it either way."
+                >
+                  {segmented('toolbar', settings.toolbarOpens, TOOLBAR, (v) => void act(() => save({ toolbarOpens: v })))}
+                </SettingRow>
+                <SettingRow
+                  id="set-mirror" name="Show groups as tab groups in the tab strip"
+                  help="Shows your groups in the browser’s tab strip too. Asks for the “tab groups” permission."
+                >
+                  {sw('set-mirror', settings.mirrorTabGroups, onMirror)}
+                </SettingRow>
+                <SettingRow
+                  id="set-suspicious" name="Point out suspicious tabs"
+                  help="Flags background tabs that look like ads or scams. Nothing is closed without your click."
+                >
+                  {sw('set-suspicious', settings.suspiciousTabs, saveOn('suspiciousTabs'))}
+                </SettingRow>
+              </Section>
+            </>
+          )}
+          {tab === 'sync' && (
+            <Section id="sync" title="Sync and backup">
+              <SettingRow
+                id="set-sync" name="Sync saved tabs through my browser account"
+                help="What syncs: saved tabs (address, short title, group) and the examples you taught your groups (the title and site of tabs you moved into a group). Other open tabs and sessions stay on this device. A device that stays offline for more than 30 days may bring back saved tabs you removed elsewhere."
+              >
+                {sw('set-sync', settings.syncEnabled, saveOn('syncEnabled'))}
+              </SettingRow>
+              <div class="setting-row">
+                <p class={syncStatus.ok ? 'sync-status' : 'sync-status is-error'} role="status">
+                  {syncStatusLine(syncStatus)}
+                  {syncStatus.lastSyncAt !== null && <span class="muted">{` · last synced ${ago(syncStatus.lastSyncAt)}`}</span>}
+                </p>
               </div>
-              <div class="setting" role="radiogroup" aria-labelledby="toolbar-label">
-                <span class="setting-text">
-                  <span class="setting-name" id="toolbar-label">Toolbar icon opens</span>
-                  <span class="setting-help">Alt+Shift+S opens the side panel either way.</span>
+              <SettingRow
+                id="set-backup" name="Backup file" group
+                help="A backup file contains your saved tabs, your groups, your open tabs’ groups and your saved sessions (the addresses and titles of their tabs). It stays on your computer; keep it somewhere private. Edge and Chrome don’t sync with each other: use Export and Import to move your saved tabs between them."
+              >
+                <span class="button-row">
+                  <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(async () => {
+                    await exportBackup();
+                    notify('Backup ready');
+                  })}>
+                    <DownloadIcon />Export backup
+                  </button>
+                  <button type="button" class="btn btn-sm" disabled={busy} onClick={() => fileInput.current?.click()}>
+                    <UploadIcon />Import backup…
+                  </button>
+                  <input
+                    ref={fileInput} type="file" accept="application/json,.json" class="sr-only" tabIndex={-1}
+                    aria-label="Import backup file" onChange={(e) => onImport(e.currentTarget)}
+                  />
                 </span>
-                <span class="segmented">
-                  {TOOLBAR.map((t) => (
-                    <label key={t.value} class={settings.toolbarOpens === t.value ? 'segment is-on' : 'segment'}>
-                      <input
-                        type="radio" name="toolbar" value={t.value} checked={settings.toolbarOpens === t.value} disabled={busy}
-                        onChange={() => void act(() => save({ toolbarOpens: t.value }))}
-                      />
-                      {t.label}
-                    </label>
-                  ))}
-                </span>
-              </div>
-              {toggle('Show groups as tab groups in the tab strip', 'Asks for the “tab groups” permission.',
-                settings.mirrorTabGroups, onMirror)}
-              {toggle('Point out suspicious tabs', 'Flags background tabs that look like ads or scams. Nothing is closed without your click.',
-                settings.suspiciousTabs, saveOn('suspiciousTabs'))}
-            </section>
-          </>
-        )}
-        {tab === 'sync' && (
-          <section class="settings-group" aria-labelledby="set-sync-h">
-            <h2 class="settings-h" id="set-sync-h">Sync and backup</h2>
-            {toggle('Sync saved tabs through my browser account',
-              'Saved tabs and the examples you taught your groups. Open tabs and sessions stay on this device.',
-              settings.syncEnabled, saveOn('syncEnabled'))}
-            <p class={syncStatus.ok ? 'sync-status' : 'sync-status is-error'} role="status">
-              {syncStatusLine(syncStatus)}
-              {syncStatus.lastSyncAt !== null && <span class="muted">{` · last synced ${ago(syncStatus.lastSyncAt)}`}</span>}
-            </p>
-            <div class="button-row">
-              <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void act(async () => {
-                await exportBackup();
-                notify('Backup ready');
-              })}>
-                <DownloadIcon />Export backup
-              </button>
-              <button type="button" class="btn btn-sm" disabled={busy} onClick={() => fileInput.current?.click()}>
-                <UploadIcon />Import backup…
-              </button>
-              <input
-                ref={fileInput} type="file" accept="application/json,.json" class="sr-only" tabIndex={-1}
-                aria-label="Import backup file" onChange={(e) => onImport(e.currentTarget)}
-              />
-            </div>
-            <details class="settings-more">
-              <summary>More about sync and backups</summary>
-              <p class="setting-help">
-                What syncs: saved tabs (address, short title, group) and the examples you taught your groups (the
-                title and site of tabs you moved into a group). Other open tabs and sessions stay on this device.
-              </p>
-              <p class="setting-help">
-                Edge and Chrome don’t sync with each other: use Export and Import to move your saved tabs between them.
-              </p>
-              <p class="setting-help">A device that stays offline for more than 30 days may bring back saved tabs you removed elsewhere.</p>
-              <p class="setting-help">
-                A backup file contains your saved tabs, your groups and your saved sessions (the addresses and titles of
-                their tabs). It stays on your computer; keep it somewhere private.
-              </p>
-            </details>
-          </section>
-        )}
-        {tab === 'privacy' && (
-          <>
-            <section class="settings-group" aria-labelledby="set-privacy-h">
-              <h2 class="settings-h" id="set-privacy-h">Privacy</h2>
-              <p class="privacy-line">
-                <ShieldIcon />
-                <span>
-                  Tablight sees only each tab’s title and address, never your passwords, cookies, what you type or what
-                  is on a page.{' '}
-                  Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
-                  through your browser account while sync is on. Grouping runs on your computer, and there are no analytics.{' '}
-                  <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
-                </span>
-              </p>
-            </section>
-            <section class="settings-group danger-zone" aria-labelledby="set-delete-h">
-              <h2 class="settings-h" id="set-delete-h">Delete all data</h2>
-              <div class="setting">
-                <span class="setting-text">
-                  <span class="setting-help">
-                    Deletes everything Tablight stored on this device and the synced copy of your saved tabs in your
-                    browser account, and turns sync off here. Open tabs stay open. Uninstalling also removes the data on
-                    this device.
-                  </span>
-                </span>
-                <button type="button" class="btn btn-sm btn-danger" disabled={busy} onClick={onDeleteAll}>
-                  <TrashIcon />Delete all data
-                </button>
-              </div>
-            </section>
-          </>
-        )}
-        {tab === 'help' && (
-          <>
-            {onTour && (
-              <section class="settings-group" aria-labelledby="set-help-h">
-                <h2 class="settings-h" id="set-help-h">Help</h2>
-                <div class="setting">
-                  <span class="setting-text">
-                    <span class="setting-name">Guided tour</span>
-                    <span class="setting-help">A short walk through every part of Tablight, using your own tabs.</span>
-                  </span>
-                  <button type="button" class="btn btn-sm" onClick={onTour}>Start the tour</button>
+              </SettingRow>
+            </Section>
+          )}
+          {tab === 'privacy' && (
+            <>
+              <Section id="privacy" title="Privacy">
+                <div class="setting-row">
+                  <ul class="privacy-points">
+                    <li><ShieldIcon />Sees only each tab’s title and address: never passwords, cookies, what you type or what is on a page.</li>
+                    <li><ShieldIcon />Grouping runs on your computer. No servers, no analytics.</li>
+                    <li>
+                      <ShieldIcon />Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
+                      through your browser account while sync is on.
+                    </li>
+                  </ul>
+                  <a class="link privacy-link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
                 </div>
-              </section>
-            )}
-            <section class="settings-group" aria-labelledby="set-about-h">
-              <h2 class="settings-h" id="set-about-h">About</h2>
-              <p class="about-line">
-                <span class="about-name">Tablight {VERSION}</span>
-                <span class="muted">Made by The Moonstone (Pvt) Ltd, Sri Lanka.</span>
-              </p>
-              <ul class="about-links">
-                {ABOUT_LINKS.map(([href, label]) => (
-                  <li key={href}><a class="link" href={href} target="_blank" rel="noopener">{label}</a></li>
-                ))}
-              </ul>
-            </section>
-          </>
-        )}
-      </form>
+              </Section>
+              <Section id="delete" title="Delete all data" danger>
+                <SettingRow
+                  id="set-delete" name="Delete everything Tablight stored" group
+                  help="Deletes everything Tablight stored on this device and the synced copy of your saved tabs in your browser account, and turns sync off here. Open tabs stay open. Uninstalling also removes the data on this device."
+                >
+                  <button type="button" class="btn btn-sm btn-danger" disabled={busy} onClick={onDeleteAll}>
+                    <TrashIcon />Delete all data
+                  </button>
+                </SettingRow>
+              </Section>
+            </>
+          )}
+          {tab === 'help' && (
+            <>
+              {onTour && (
+                <Section id="help" title="Help">
+                  <SettingRow id="set-tour" name="Guided tour" group help="A short walk through every part of Tablight, using your own tabs.">
+                    <button type="button" class="btn btn-sm" onClick={onTour}>Start the tour</button>
+                  </SettingRow>
+                </Section>
+              )}
+              <Section id="about" title="About">
+                <div class="setting-row">
+                  <p class="about-line">
+                    <span class="about-name">Tablight {VERSION}</span>
+                    <span class="muted">Made by The Moonstone (Pvt) Ltd, Sri Lanka.</span>
+                  </p>
+                  <ul class="about-links">
+                    {ABOUT_LINKS.map(([href, label]) => (
+                      <li key={href}><a class="link" href={href} target="_blank" rel="noopener">{label}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              </Section>
+            </>
+          )}
+        </form>
       </div>
+    </div>
+  );
+}
+/** A titled card of settings rows (the title is the region's name). */
+function Section(props: { id: string; title: string; danger?: boolean; children: ComponentChildren }) {
+  return (
+    <section class={props.danger ? 'settings-group danger-zone' : 'settings-group'} aria-labelledby={`set-${props.id}-h`}>
+      <h2 class="settings-h" id={`set-${props.id}-h`}>{props.title}</h2>
+      <div class="settings-card">{props.children}</div>
+    </section>
+  );
+}
+/**
+ * One setting: its name and its control on one line. The explanation is not on screen until the ⓘ button next to
+ * the name is pressed (it stays in the page, hidden, and describes the control for screen readers).
+ * `group`: the control is a radio group or buttons, so the name labels the row instead of one input.
+ */
+function SettingRow(props: { id: string; name: string; help?: string; group?: boolean; children: ComponentChildren }) {
+  const [open, setOpen] = useState(false);
+  const helpId = `${props.id}-help`;
+  const nameId = `${props.id}-name`;
+  const name = props.group
+    ? <span class="setting-name" id={nameId}>{props.name}</span>
+    : <label class="setting-name" id={nameId} for={props.id}>{props.name}</label>;
+  return (
+    <div
+      class="setting-row" role={props.group ? 'group' : undefined}
+      aria-labelledby={props.group ? nameId : undefined} aria-describedby={props.help ? helpId : undefined}
+    >
+      <div class="setting">
+        <span class="setting-text">
+          {name}
+          {props.help && (
+            <button
+              type="button" class={open ? 'info-btn is-on' : 'info-btn'} aria-expanded={open} aria-controls={helpId}
+              aria-label={`About “${props.name}”`} title={open ? 'Hide explanation' : 'What does this do?'}
+              onClick={() => setOpen(!open)}
+            >
+              <InfoIcon size={14} />
+            </button>
+          )}
+        </span>
+        {props.children}
+      </div>
+      {props.help && <p class="setting-help" id={helpId} hidden={!open}>{props.help}</p>}
     </div>
   );
 }
