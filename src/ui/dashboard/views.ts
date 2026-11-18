@@ -44,6 +44,16 @@ export function duplicateItems(items: Item[]): Item[] {
   return [...by.values()].filter((l) => l.length > 1).flat();
 }
 
+/**
+ * Duplicates view: open copies of pages the view listed earlier (`seen`, normalized URLs) that are no longer
+ * duplicates. Closing one of two copies would otherwise drop both rows, as if every copy had gone; the copy left
+ * stays listed (marked "Last copy, still open") until the view changes.
+ */
+export function lastCopies(listed: Item[], items: Item[], seen: ReadonlySet<string>): Item[] {
+  const still = new Set(listed.map((i) => i.normUrl));
+  return items.filter((i) => i.state !== 'stashed' && i.classifiable && i.tabId !== undefined &&
+    seen.has(i.normUrl) && !still.has(i.normUrl));
+}
 /** Open and sleeping tabs by window then recency, then the stash newest first. */
 export function byDefaultOrder(a: Item, b: Item): number {
   const sa = a.state === 'stashed' ? 1 : 0;

@@ -22,7 +22,7 @@ import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions 
 import { Settings } from './Settings';
 import { UndoToast } from './UndoToast';
 import { Tour } from './Tour';
-import { type View, itemsForView, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
+import { type View, byDefaultOrder, itemsForView, lastCopies, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
 
 /** Opening more than this many tabs at once asks first (same bound as the background's open-all). */
 export const OPEN_MANY_CONFIRM_ABOVE = 20;
@@ -39,6 +39,8 @@ type Dialog =
   | { kind: 'regroup'; rows: RegroupRow[] };
 
 const hasTab = (i: Item) => i.state !== 'stashed' && i.tabId !== undefined;
+/** An empty id set that keeps its identity across renders. */
+const NONE: ReadonlySet<string> = new Set();
 const isStashed = (i: Item) => i.state === 'stashed';
 /** A tab that was never switched to (see Item.opened). */
 const isNewTab = (i: Item) => i.state !== 'stashed' && i.opened === false;
@@ -126,9 +128,20 @@ export function Dashboard() {
   const searching = search.query.trim().length > 0;
   const results = search.results;
   const meaningIds = useMemo(() => new Set(results?.meaning.map((i) => i.id) ?? []), [results]);
-  const fullList = useMemo(() => {
-    if (searching) return results ? [...results.words, ...results.meaning] : [];
-    return itemsForView(view, items, groups);
+  // Pages the Duplicates view has listed since it was opened (see lastCopies); forgotten on leaving the view.
+  const dupSeen = useRef(new Set<string>());
+  const [fullList, lastCopyIds] = useMemo((): [Item[], ReadonlySet<string>] => {
+    if (searching) return [results ? [...results.words, ...results.meaning] : [], NONE];
+    const out = itemsForView(view, items, groups);
+    if (view.kind !== 'duplicates') {
+      dupSeen.current = new Set();
+      return [out, NONE];
+    }
+    for (const i of out) dupSeen.current.add(i.normUrl);
+    const left = lastCopies(out, items, dupSeen.current);
+    if (!left.length) return [out, NONE];
+    const all = [...out, ...left].sort((a, b) => a.normUrl.localeCompare(b.normUrl) || byDefaultOrder(a, b));
+    return [all, new Set(left.map((i) => i.id))];
   }, [searching, results, view, items, groups]);
   // "New" = tabs that were never switched to. "Show new only" narrows the current view to them.
   const newCount = useMemo(() => (searching ? 0 : fullList.filter(isNewTab).length), [searching, fullList]);
@@ -646,7 +659,8 @@ export function Dashboard() {
           {state && isList && (list.length ? (
             <ItemGrid
               items={list} label={title} selected={selected} groups={groupMap} showGroup={view.kind !== 'group' || searching}
-              windowNo={windowNo} extraMeta={searching ? (i) => (meaningIds.has(i.id) ? 'Similar by meaning' : undefined) : undefined}
+              windowNo={windowNo} extraMeta={searching ? (i) => (meaningIds.has(i.id) ? 'Similar by meaning' : undefined)
+                : lastCopyIds.size ? (i) => (lastCopyIds.has(i.id) ? 'Last copy, still open' : undefined) : undefined}
               onOpen={(i) => void openItem(i)} onSelect={select} onClearSelection={() => setSelected(new Set())}
               onAction={onRowAction} onDelete={onDelete} onDragStart={onDragStart}
               onDragEnd={() => {

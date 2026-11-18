@@ -208,6 +208,35 @@ describe('dashboard', () => {
     expect(screen.getByText('Title i1')).toBeTruthy();
   });
 
+  it('Duplicates view: after a copy is closed, the copy left stays listed as "Last copy, still open" until the view changes', async () => {
+    const u = 'https://dup.example/page';
+    let items = [item('d1', { url: u }), item('d2', { url: u, windowId: 2 }), item('i3')];
+    serve(() => state({ items, dupCount: items.filter((i) => i.url === u).length - 1 }),
+      (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : undefined));
+    location.hash = '#view=duplicates';
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title d1');
+    expect(screen.queryByText('Last copy, still open')).toBeNull();
+    const row = (title: string) => [...container.querySelectorAll<HTMLElement>('.grid-row')].find((r) => r.textContent!.includes(title))!;
+    fireEvent.click(within(row('Title d1')).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(sent('close')).toHaveLength(1));
+    items = items.filter((i) => i.id !== 'd1');
+    for (const l of listeners) l({ target: 'ui', t: 'changed' }, { id: 'ext' });
+    await waitFor(() => expect(screen.queryByText('Title d1')).toBeNull());
+    expect(row('Title d2').textContent).toContain('Last copy, still open');
+    expect(screen.queryByText('Title i3')).toBeNull(); // a page that was never a duplicate is not listed
+    // Leaving the view forgets it: back in Duplicates, a single copy is not listed.
+    act(() => {
+      location.hash = '#view=all';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    await screen.findByRole('heading', { level: 1, name: 'All tabs' });
+    act(() => {
+      location.hash = '#view=duplicates';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    await screen.findByText('No page is open more than once.');
+  });
   it('Duplicates view: closing the selected copies asks the background to keep one copy of each page', async () => {
     const u = 'https://dup.example/page';
     serve(state({ items: [item('d1', { url: u }), item('d2', { url: u }), item('i3', { windowId: 2 })], dupCount: 1 }),
