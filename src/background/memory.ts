@@ -207,23 +207,11 @@ async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Close
   }
   return done;
 }
-/** Closes the items' tabs; `closed` counts the tabs actually removed (already-gone tabs are skipped). */
-export async function closeTabs(db: Db, ids: string[]): Promise<{ token: string; closed: number }> {
-  const live = await liveTabs();
-  const entries: (readonly [Closed, number])[] = [];
-  for (const id of new Set(ids)) {
-    const item = await db.items.get(id);
-    if (!item || !hasTab(item)) continue;
-    entries.push([{ item, url: live.get(item.tabId)?.url || item.url, windowId: item.windowId,
-      pinned: live.get(item.tabId)?.pinned ?? false }, item.tabId]);
-  }
-  const closed = await removeTabs(entries);
-  return { token: remember({ closed }), closed: closed.length };
-}
-/** Closes duplicate tabs, keeping the most recently active copy of each page. */
-export async function closeExtras(db: Db): Promise<{ closed: number; token: string }> {
-  const live = await liveTabs();
-  // Keep a pinned copy, else the active one, else the most recently active.
+/**
+ * The copy of a page to keep: a pinned copy, else the active one, else the most recently active.
+ * `copies` must be non-empty.
+ */
+function bestCopy(copies: Item[], live: Map<number, chrome.tabs.Tab>): Item {
   const rank = (i: Item) => {
     const t = i.tabId === undefined ? undefined : live.get(i.tabId);
     return [t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
@@ -233,16 +221,57 @@ export async function closeExtras(db: Db): Promise<{ closed: number; token: stri
     for (let k = 0; k < 3; k++) if (ra[k] !== rb[k]) return rb[k]! > ra[k]!;
     return false;
   };
-  const ids: string[] = [];
-  for (const records of findDuplicates(await db.items.all()).values()) {
-    // Only copies whose tab is open now count, one record per tab: the index is updated a moment after tab events,
-    // so a record can still point at a closed tab. Keeping such a record would close every real copy.
+  return copies.reduce((a, b) => (better(a, b) ? b : a));
+}
+/**
+ * Duplicate copies whose tab is open now, one record per tab, by page. The index is updated a moment after tab
+ * events, so a record can still point at a closed tab; such records never count as a copy that stays open.
+ */
+function liveCopies(items: Item[], live: Map<number, chrome.tabs.Tab>): Item[][] {
+  const out: Item[][] = [];
+  for (const records of findDuplicates(items).values()) {
     const byTab = new Map<number, Item>();
     for (const i of records) if (live.has(i.tabId!) && !byTab.has(i.tabId!)) byTab.set(i.tabId!, i);
-    const group = [...byTab.values()];
-    if (group.length < 2) continue;
-    const keep = group.reduce((a, b) => (better(a, b) ? b : a));
-    for (const i of group) if (i !== keep) ids.push(i.id);
+    if (byTab.size >= 2) out.push([...byTab.values()]);
+  }
+  return out;
+}
+/**
+ * Closes the items' tabs; `closed` counts the tabs actually removed (already-gone tabs are skipped).
+ * `keepOne` (closing from the Duplicates view, which lists every copy): when the ids cover every open copy of a
+ * page, the best copy stays open; `kept` counts those pages.
+ */
+export async function closeTabs(
+  db: Db, ids: string[], opts: { keepOne?: boolean } = {},
+): Promise<{ token: string; closed: number; kept: number }> {
+  const live = await liveTabs();
+  const wanted = new Set(ids);
+  let kept = 0;
+  if (opts.keepOne) {
+    for (const copies of liveCopies(await db.items.all(), live)) {
+      if (copies.every((i) => wanted.has(i.id))) {
+        wanted.delete(bestCopy(copies, live).id);
+        kept++;
+      }
+    }
+  }
+  const entries: (readonly [Closed, number])[] = [];
+  for (const id of wanted) {
+    const item = await db.items.get(id);
+    if (!item || !hasTab(item)) continue;
+    entries.push([{ item, url: live.get(item.tabId)?.url || item.url, windowId: item.windowId,
+      pinned: live.get(item.tabId)?.pinned ?? false }, item.tabId]);
+  }
+  const closed = await removeTabs(entries);
+  return { token: remember({ closed }), closed: closed.length, kept };
+}
+/** Closes duplicate tabs, keeping the best copy of each page (see bestCopy). */
+export async function closeExtras(db: Db): Promise<{ closed: number; token: string }> {
+  const live = await liveTabs();
+  const ids: string[] = [];
+  for (const copies of liveCopies(await db.items.all(), live)) {
+    const keep = bestCopy(copies, live);
+    for (const i of copies) if (i !== keep) ids.push(i.id);
   }
   const { token, closed } = await closeTabs(db, ids);
   return { closed, token };

@@ -228,8 +228,10 @@ export function Dashboard() {
     else notify('Nothing saved: those tabs can’t be saved for later');
   };
   const closeIds = async (ids: string[]) => {
-    const r = await send<{ token: string; closed?: number }>({ t: 'close', ids });
-    notify(`Closed ${plural(r.closed ?? ids.length, 'tab')}`, r.token);
+    // The Duplicates view lists every copy, the original too: closing from it never closes the last copy of a page.
+    const keepOne = view.kind === 'duplicates' && !searching;
+    const r = await send<{ token: string; closed?: number; kept?: number }>({ t: 'close', ids, ...(keepOne ? { keepOne } : {}) });
+    notify(`Closed ${plural(r.closed ?? ids.length, 'tab')}${r.kept ? ' · kept 1 copy of each page' : ''}`, r.token);
   };
   const removeIds = async (ids: string[]) => {
     const r = await send<{ token: string; deleted: number }>({ t: 'stashDelete', ids });

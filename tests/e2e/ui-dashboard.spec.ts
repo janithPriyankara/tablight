@@ -481,6 +481,13 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     await toast().getByRole('button', { name: 'Undo' }).click();
     await expect.poll(() => h.tabsAt(u)).toHaveLength(2);
     await expect(dups).toHaveCount(2);
+    // D-73b: selecting every copy in this view and pressing Close still leaves one copy open.
+    for (const r of await dups.all()) await r.getByRole('checkbox').check();
+    await expect(selectionBar()).toContainText('2 selected');
+    await selectionBar().getByRole('button', { name: 'Close' }).click();
+    await expect(toast()).toContainText('Closed 1 tab · kept 1 copy of each page');
+    await expect.poll(() => h.tabsAt(u)).toHaveLength(1);
+    await expect(page().getByText('No page is open more than once.')).toBeVisible();
   });
 });
 

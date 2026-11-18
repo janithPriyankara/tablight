@@ -11,7 +11,7 @@ export type Req =
   | { t: 'stashWindow'; windowId: number } // popup: stash a window, leaving the dashboard (with Undo) in it
   | { t: 'stashDelete'; ids: string[] } // deletes stashed records (no tab opens); undoable
   | { t: 'open'; id: string }
-  | { t: 'close'; ids: string[] }
+  | { t: 'close'; ids: string[]; keepOne?: boolean } // keepOne: from the Duplicates view (never closes the last copy)
   | { t: 'closeExtras' }
   | { t: 'undo'; token: string }
   | { t: 'groupCreate'; name: string; ids: string[] }

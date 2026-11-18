@@ -208,6 +208,24 @@ describe('dashboard', () => {
     expect(screen.getByText('Title i1')).toBeTruthy();
   });
 
+  it('Duplicates view: closing the selected copies asks the background to keep one copy of each page', async () => {
+    const u = 'https://dup.example/page';
+    serve(state({ items: [item('d1', { url: u }), item('d2', { url: u }), item('i3', { windowId: 2 })], dupCount: 1 }),
+      (req) => (req.t === 'close' ? { token: 'tok', closed: 1, kept: 1 } : undefined));
+    location.hash = '#view=duplicates';
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title d1');
+    const mains = () => [...container.querySelectorAll<HTMLElement>('.grid-row .item-main')];
+    mains()[0]!.focus();
+    fireEvent.keyDown(mains()[0]!, { key: ' ' });
+    fireEvent.keyDown(mains()[0]!, { key: 'ArrowDown', shiftKey: true });
+    await screen.findByText('2 selected');
+    fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
+    await waitFor(() => expect(sent('close')).toHaveLength(1));
+    expect(sent('close')[0]).toMatchObject({ keepOne: true });
+    expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['d1', 'd2']);
+    await screen.findByText('Closed 1 tab · kept 1 copy of each page');
+  });
   it('keyboard: arrows move focus, Space selects, Delete closes with undo, "/" focuses search', async () => {
     serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
     const { container } = render(<Dashboard />);

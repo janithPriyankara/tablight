@@ -392,7 +392,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
         throw e;
       }
       break;
-    case 'close': out = await closeTabs(db, parseIds(req.ids)); break;
+    case 'close': out = await closeTabs(db, parseIds(req.ids), { keepOne: req.keepOne === true }); break;
     case 'closeExtras': out = await closeExtras(db); break;
     case 'undo': out = await undo(db, parseId(req.token)); break;
     case 'regroupPreview': return regroupPreview(db);

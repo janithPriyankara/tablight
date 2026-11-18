@@ -232,6 +232,31 @@ describe('closeExtras / closeTabs / undo', () => {
     expect((await closeExtras(db)).closed).toBe(0);
     expect(mock.tabs().map((t) => t.url)).toEqual(['https://a.com/']);
   });
+  it('keepOne (the Duplicates view): closing every copy of a page leaves the best one open', async () => {
+    const items = await setup([
+      { url: 'https://k.com/' }, { url: 'https://a.com/' }, { url: 'https://a.com/?utm_source=x', pinned: true },
+      { url: 'https://a.com/' }, { url: 'https://b.com/' }, { url: 'https://b.com/' }, { url: 'https://b.com/' },
+    ]);
+    const a = items.filter((i) => i.normUrl === 'https://a.com/');
+    const b = items.filter((i) => i.normUrl === 'https://b.com/');
+    await db.items.put({ ...b[2]!, lastActiveAt: Date.now() + 1e6 });
+    // Every copy of a.com, every copy of b.com, and k.com (a single page: closed as asked).
+    const r = await closeTabs(db, [...a, ...b, byUrl(items, 'https://k.com/')].map((i) => i.id), { keepOne: true });
+    expect(r).toMatchObject({ closed: 5, kept: 2 });
+    expect(mock.tabs().map((t) => t.url).sort()).toEqual(['https://a.com/?utm_source=x', 'https://b.com/']);
+    expect(mock.tabs().find((t) => t.url === 'https://b.com/')!.id).toBe(b[2]!.tabId);
+  });
+  it('keepOne closes only what was picked when another copy stays open anyway; without it every picked tab closes', async () => {
+    const items = await setup([
+      { url: 'https://a.com/' }, { url: 'https://a.com/' }, { url: 'https://a.com/' }, { url: 'https://c.com/' }, { url: 'https://c.com/' },
+    ]);
+    const a = items.filter((i) => i.url === 'https://a.com/');
+    const r = await closeTabs(db, a.slice(0, 2).map((i) => i.id), { keepOne: true });
+    expect(r).toMatchObject({ closed: 2, kept: 0 });
+    expect(mock.tabs().filter((t) => t.url === 'https://a.com/')).toHaveLength(1);
+    expect((await closeTabs(db, items.filter((i) => i.url === 'https://c.com/').map((i) => i.id))).closed).toBe(2);
+    expect(mock.tabs().map((t) => t.url)).toEqual(['https://a.com/']);
+  });
   it('undo within 10 s recreates web tabs only; after 10 s returns false', async () => {
     const items = await setup([{ url: 'https://a.com/' }, { url: 'chrome://settings/' }]);
     vi.useFakeTimers({ toFake: ['Date'] });
