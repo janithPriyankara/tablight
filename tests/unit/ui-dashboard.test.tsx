@@ -608,6 +608,7 @@ describe('dashboard', () => {
     const { importNotice } = await import('../../src/ui/dashboard/Settings');
     expect(importNotice({ added: 2, skipped: 1 })).toBe('Imported 2 tabs · skipped 1');
     expect(importNotice({ added: 1, skipped: 0, skippedSessions: 3 })).toBe('Imported 1 tab · 3 sessions not imported (saved sessions are full)');
+    expect(importNotice({ added: 0, skipped: 0, grouped: 3 })).toBe('Imported 0 tabs · 3 open tabs moved to their group');
   });
   it('a "Stash this window" hash shows Stashed + Undo once (valid UUID only); Undo goes through the RPC', async () => {
     const { parseUndoHash } = await import('../../src/ui/dashboard/views');

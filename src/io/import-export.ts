@@ -1,6 +1,7 @@
 // JSON backup: export the stash (also the bridge between Edge and Chrome) and import it back.
 // `parseImport` is pure and treats its input as hostile; `exportJson`/`applyImport` only touch the Db.
 import { sha1hex } from '../shared/hash';
+import { nextStamp } from '../shared/stamp';
 import type { Group, Item, Snapshot } from '../shared/types';
 import { isSafeToOpen, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
 import { OTHER_GROUP_ID } from '../classify/assign';
@@ -29,7 +30,9 @@ const COLORS: ReadonlySet<string> = new Set([...USER_COLORS, ...LEGACY_COLORS]);
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
 export interface ImportGroup { name: string; color: string | null; icon: string | null }
 export interface ImportItem { url: string; title: string; groupName: string | null; stashedAt: number | null }
-export interface ImportData { groups: ImportGroup[]; items: ImportItem[]; snapshots: Snapshot[] }
+/** An open tab in the backup and the group it was in: on import, the same page open here joins that group. */
+export interface ImportTab { url: string; title: string; groupName: string | null }
+export interface ImportData { groups: ImportGroup[]; items: ImportItem[]; tabs: ImportTab[]; snapshots: Snapshot[] }
 export type ParseResult = { ok: true; data: ImportData } | { ok: false; error: string };
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 function utf8Length(s: string): number {
@@ -125,15 +128,20 @@ export function parseImport(json: string): ParseResult {
   const rawItems = root['items'] ?? [];
   const rawGroups = root['groups'] ?? [];
   const rawSnaps = root['snapshots'] ?? [];
-  if (!Array.isArray(rawItems) || !Array.isArray(rawGroups) || !Array.isArray(rawSnaps)) {
+  const rawTabs = root['tabs'] ?? []; // added later: older backups have none
+  if (!Array.isArray(rawItems) || !Array.isArray(rawGroups) || !Array.isArray(rawSnaps) || !Array.isArray(rawTabs)) {
     return { ok: false, error: 'malformed backup' };
   }
-  if (rawItems.length > MAX_IMPORT_ITEMS) return { ok: false, error: 'too many items' };
+  if (rawItems.length > MAX_IMPORT_ITEMS || rawTabs.length > MAX_IMPORT_ITEMS) return { ok: false, error: 'too many items' };
   const now = Date.now();
   const items = rawItems.flatMap((v) => readItem(v, now) ?? []);
   const groups = rawGroups.flatMap((v) => readGroup(v) ?? []);
   const snapshots = rawSnaps.slice(0, MAX_FILE_SNAPSHOTS).flatMap((v) => readSnapshot(v, now) ?? []);
-  return { ok: true, data: { groups, items, snapshots } };
+  const tabs = rawTabs.flatMap((v) => {
+    const it = readItem(v, now);
+    return it ? [{ url: it.url, title: it.title, groupName: it.groupName }] : [];
+  });
+  return { ok: true, data: { groups, items, tabs, snapshots } };
 }
 export async function exportJson(db: Db): Promise<string> {
   const groups = (await db.groups.all()).filter((g) => !g.suggested && g.id !== OTHER_GROUP_ID);
@@ -142,19 +150,24 @@ export async function exportJson(db: Db): Promise<string> {
     url: i.url, title: i.title, groupName: (i.groupId !== null && names.get(i.groupId)) || null,
     state: 'stashed' as const, stashedAt: i.stashedAt ?? i.createdAt,
   }));
+  // Open and paused web tabs with the group each is in (Unsorted and pending suggestions export no group).
+  const tabs = (await db.items.all())
+    .filter((i) => i.state !== 'stashed' && i.classifiable)
+    .map((i) => ({ url: i.url, title: i.title, groupName: (i.groupId !== null && names.get(i.groupId)) || null }));
   const snapshots = (await db.snapshots.all()).map((s) => ({
     id: s.id, takenAt: s.takenAt, windows: s.windows.map((w) => ({ tabs: w.tabs.map((t) => ({ url: t.url, title: t.title })) })),
   }));
   return JSON.stringify({
     format: FORMAT, version: VERSION, exportedAt: Date.now(),
-    groups: groups.map((g) => ({ id: g.id, name: g.name, color: g.color, icon: g.icon })), items, snapshots,
+    groups: groups.map((g) => ({ id: g.id, name: g.name, color: g.color, icon: g.icon })), items, tabs, snapshots,
   }, null, 2);
 }
 /** Merges by normalized URL; never deletes or downgrades stashed records. A user's own group wins. */
 /** `skippedSessions`: new sessions from the file that did not fit (local sessions are never replaced). */
+/** `grouped`: open tabs here moved into the group the same page had in the file (tabs you placed stay put). */
 export async function applyImport(
   db: Db, data: ImportData,
-): Promise<{ added: number; skipped: number; skippedSessions: number }> {
+): Promise<{ added: number; skipped: number; skippedSessions: number; grouped: number }> {
   const now = Date.now();
   const seen = new Set<string>();
   const entries: { it: ImportItem; normUrl: string; id: string }[] = [];
@@ -170,10 +183,18 @@ export async function applyImport(
   }
   const given = new Map(data.groups.map((g) => [g.name.toLowerCase(), g]));
   const wanted = new Map<string, string>();
-  for (const n of [...data.groups.map((g) => g.name), ...entries.flatMap((e) => (e.it.groupName ? [e.it.groupName] : []))]) {
+  const tabGroup = new Map<string, string>(); // normUrl → group name; the first copy in the file wins
+  for (const t of data.tabs ?? []) {
+    const norm = normalizeUrl(t.url);
+    if (t.groupName && !tabGroup.has(norm)) tabGroup.set(norm, t.groupName);
+  }
+  const names = [...data.groups.map((g) => g.name), ...entries.flatMap((e) => (e.it.groupName ? [e.it.groupName] : [])),
+    ...tabGroup.values()];
+  for (const n of names) {
     if (!wanted.has(n.toLowerCase())) wanted.set(n.toLowerCase(), n);
   }
   let added = 0;
+  let grouped = 0;
   let skippedSessions = 0;
   await db.tx(['items', 'groups', 'queue', 'tombstones', 'snapshots'], async (s) => {
     const existing = (await s.groups.all()).filter((g) => !g.suggested);
@@ -213,6 +234,17 @@ export async function applyImport(
       if (prev) skipped++;
       else added++;
     }
+    if (tabGroup.size) {
+      for (const cur of await s.items.all()) {
+        if (cur.state === 'stashed' || cur.groupSource === 'user') continue; // a group the user chose here wins
+        const name = tabGroup.get(cur.normUrl);
+        const gid = name ? byName.get(name.toLowerCase())?.id : undefined;
+        if (gid === undefined || gid === cur.groupId) continue;
+        await s.items.put({ ...cur, groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now) });
+        await s.queue.remove([cur.id]);
+        grouped++;
+      }
+    }
     const all = await s.snapshots.all();
     const known = new Set(all.map((x) => fingerprint(x.windows)));
     const fresh: Snapshot[] = [];
@@ -228,5 +260,5 @@ export async function applyImport(
     for (const sn of take) await s.snapshots.put(sn);
     skippedSessions = fresh.length - take.length;
   });
-  return { added, skipped, skippedSessions };
+  return { added, skipped, skippedSessions, grouped };
 }

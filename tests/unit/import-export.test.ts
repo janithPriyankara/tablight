@@ -127,7 +127,7 @@ describe('export / import round trip', () => {
     await db.snapshots.put({ id: 's1', takenAt: 5, windows: [{ tabs: [{ url: 'https://a.com/', title: 'A' }] }] });
     const json = await exportJson(db);
     const fresh = await openDb(`io-fresh-${n++}`);
-    expect(await applyImport(fresh, ok(json))).toEqual({ added: 2, skipped: 0, skippedSessions: 0 });
+    expect(await applyImport(fresh, ok(json))).toEqual({ added: 2, skipped: 0, skippedSessions: 0, grouped: 0 });
     const items = await fresh.items.byState('stashed');
     expect(items.map((i) => i.normUrl).sort()).toEqual((await db.items.all()).map((i) => i.normUrl).sort());
     const a = items.find((i) => i.url.includes('a.com'))!;
@@ -139,10 +139,75 @@ describe('export / import round trip', () => {
     expect(b).toMatchObject({ groupId: null, groupSource: 'auto' });
     expect(await fresh.queue.take(10)).toEqual([b.id]);
     expect(await fresh.snapshots.all()).toHaveLength(1);
-    expect(await applyImport(fresh, ok(json))).toEqual({ added: 0, skipped: 2, skippedSessions: 0 });
+    expect(await applyImport(fresh, ok(json))).toEqual({ added: 0, skipped: 2, skippedSessions: 0, grouped: 0 });
     expect(await fresh.snapshots.all()).toHaveLength(1);
     expect((await fresh.groups.all()).filter((x) => x.name === 'Work')).toHaveLength(1);
     expect((await fresh.items.get(a.id))!.updatedAt).toBe(a.updatedAt);
+  });
+});
+describe('open tabs and their groups', () => {
+  const open = async (url: string, groupId: string | null, source: 'auto' | 'user' = 'auto', state: 'open' | 'sleeping' = 'open') => {
+    const item: Item = {
+      id: `o-${url}`, url, normUrl: normalizeUrl(url), title: `T ${url}`, domain: 'x', state, tabId: 7, windowId: 1, groupId,
+      groupSource: source, kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    };
+    await db.items.put(item);
+    return item;
+  };
+  it('exports every open and paused web tab with its group name (none for Unsorted or a pending suggestion)', async () => {
+    await db.groups.put(group('g1', 'Work'));
+    await db.groups.put(group('s1', 'Maybe', { suggested: true }));
+    await open('https://a.com/', 'g1');
+    await open('https://b.com/', 'g1', 'user', 'sleeping');
+    await open('https://c.com/', null);
+    await open('https://d.com/', 's1');
+    await db.items.put({ ...(await open('chrome://settings/', null)), classifiable: false });
+    const out = JSON.parse(await exportJson(db));
+    expect(out.tabs).toEqual([
+      { url: 'https://a.com/', title: 'T https://a.com/', groupName: 'Work' },
+      { url: 'https://b.com/', title: 'T https://b.com/', groupName: 'Work' },
+      { url: 'https://c.com/', title: 'T https://c.com/', groupName: null },
+      { url: 'https://d.com/', title: 'T https://d.com/', groupName: null },
+    ]);
+    expect(out.items).toEqual([]);
+  });
+  it('parses tabs like items (unsafe urls and bad fields dropped); a file without tabs still imports', () => {
+    const d = ok(file({ tabs: [
+      { url: 'https://a.com/', title: 'A', groupName: 'Work' }, { url: 'javascript:1', groupName: 'Work' },
+      { url: 'https://b.com/', groupName: 5 }, { url: 'https://c.com/' },
+    ] }));
+    expect(d.tabs).toEqual([
+      { url: 'https://a.com/', title: 'A', groupName: 'Work' }, { url: 'https://c.com/', title: '', groupName: null },
+    ]);
+    expect(ok(file()).tabs).toEqual([]);
+    expect(parseImport(file({ tabs: 'x' })).ok).toBe(false);
+  });
+  it('round trip: an open tab on the other side joins its group (created if missing); a tab you placed yourself stays', async () => {
+    await db.groups.put(group('g1', 'Work', { color: '#30a46c', icon: '💼' }));
+    await open('https://a.com/x', 'g1');
+    await open('https://b.com/', 'g1');
+    const json = await exportJson(db);
+    const fresh = await openDb(`io-tabs-${n++}`);
+    await fresh.groups.put(group('mine', 'Mine'));
+    const put = async (url: string, groupId: string | null, source: 'auto' | 'user') => {
+      const it: Item = { id: `f-${url}`, url, normUrl: normalizeUrl(url), title: url, domain: 'x', state: 'open', tabId: 1,
+        groupId, groupSource: source, kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true };
+      await fresh.items.put(it);
+      await fresh.queue.add(it.id);
+      return it;
+    };
+    const a = await put('https://a.com/x?utm_source=1', null, 'auto');
+    const b = await put('https://b.com/', 'mine', 'user');
+    const r = await applyImport(fresh, ok(json));
+    expect(r).toMatchObject({ added: 0, grouped: 1 });
+    const work = (await fresh.groups.all()).find((g) => g.name === 'Work')!;
+    expect(work).toMatchObject({ color: '#30a46c', icon: '💼' });
+    expect(await fresh.items.get(a.id)).toMatchObject({ groupId: work.id, groupSource: 'user', state: 'open' });
+    expect((await fresh.items.get(a.id))!.updatedAt).toBeGreaterThan(1);
+    expect(await fresh.items.get(b.id)).toEqual(b);
+    expect(await fresh.queue.take(10)).toEqual([b.id]); // a is placed, so it no longer waits for the classifier
+    expect(await fresh.items.byState('stashed')).toEqual([]); // tabs are never turned into saved-for-later records
+    expect((await applyImport(fresh, ok(json))).grouped).toBe(0);
   });
 });
 describe('applyImport', () => {
@@ -153,7 +218,7 @@ describe('applyImport', () => {
       { url: 'https://a.com/?utm_x=1', title: 'New', groupName: 'Theirs', stashedAt: 100 },
       { url: 'https://c.com/', groupName: 'Theirs' }, { url: 'https://c.com/#frag', groupName: 'Other' },
     ] })));
-    expect(r).toEqual({ added: 1, skipped: 2, skippedSessions: 0 });
+    expect(r).toEqual({ added: 1, skipped: 2, skippedSessions: 0, grouped: 0 });
     expect(await db.items.get(prev.id)).toEqual(prev);
   });
   it('applies the file group to an unclassified existing record and clears its tombstone', async () => {
@@ -187,7 +252,7 @@ describe('applyImport', () => {
     for (let i = 0; i < 10; i++) await db.snapshots.put(snap(`old${i}`, 100 + i, `https://e${i}.com/`));
     const incoming = [snap('same', 999, 'https://e9.com/'), ...Array.from({ length: 8 }, (_, i) => snap(`f${i}`, 200 + i, `https://f${i}.com/`))];
     const r = await applyImport(db, ok(file({ snapshots: incoming })));
-    expect(r).toEqual({ added: 0, skipped: 0, skippedSessions: 4 });
+    expect(r).toEqual({ added: 0, skipped: 0, skippedSessions: 4, grouped: 0 });
     const all = await db.snapshots.all();
     expect(all).toHaveLength(14);
     const url = (s: { windows: { tabs: { url: string }[] }[] }) => s.windows[0]!.tabs[0]!.url;

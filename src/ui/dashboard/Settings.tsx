@@ -43,7 +43,7 @@ export async function exportBackup(): Promise<void> {
 }
 
 /** Reads a backup file and imports it; files over 20 MB are refused before reading. */
-export interface ImportResult { added: number; skipped: number; skippedSessions?: number }
+export interface ImportResult { added: number; skipped: number; skippedSessions?: number; grouped?: number }
 export async function importBackup(file: File): Promise<ImportResult> {
   if (file.size > MAX_IMPORT_BYTES) throw new Error('That file is larger than 20 MB, so it can’t be a Tablight backup.');
   const json = await file.text();
@@ -53,6 +53,7 @@ export async function importBackup(file: File): Promise<ImportResult> {
 export function importNotice(r: ImportResult): string {
   return [
     `Imported ${plural(r.added, 'tab')}`,
+    r.grouped ? `${plural(r.grouped, 'open tab')} moved to ${r.grouped === 1 ? 'its' : 'their'} group` : '',
     r.skipped ? `skipped ${r.skipped}` : '',
     r.skippedSessions ? `${plural(r.skippedSessions, 'session')} not imported (saved sessions are full)` : '',
   ].filter(Boolean).join(' · ');
