@@ -22,6 +22,7 @@ import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions 
 import { Settings } from './Settings';
 import { UndoToast } from './UndoToast';
 import { Tour } from './Tour';
+import { SideResizer, loadSideWidth } from './SideResizer';
 import { type View, byDefaultOrder, itemsForView, lastCopies, parseHash, parseUndoHash, viewHash, windowNumbers } from './views';
 
 /** Opening more than this many tabs at once asks first (same bound as the background's open-all). */
@@ -54,6 +55,7 @@ export function Dashboard() {
   const [view, setViewState] = useState<View>(() => parseHash(location.hash));
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
+  const [sideWidth, setSideWidth] = useState(loadSideWidth);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const anchor = useRef<string | null>(null);
   const dragIds = useRef<string[]>([]);
@@ -480,7 +482,7 @@ export function Dashboard() {
 
   return (
     <>
-      <div class={dragging ? 'dash is-dragging' : 'dash'} inert={dialog ? true : undefined}>
+      <div class={dragging ? 'dash is-dragging' : 'dash'} inert={dialog ? true : undefined} style={{ '--side-w': `${sideWidth}px` }}>
         <aside class="dash-side">
           <div class="brand">
             <LogoMark />
@@ -491,6 +493,7 @@ export function Dashboard() {
             onDropOn={onDropOn} onAccept={(id) => void acceptSuggestion(id)} onDismiss={(id) => void dismissSuggestion(id)} busy={busy}
           />
         </aside>
+        <SideResizer width={sideWidth} onWidth={setSideWidth} />
 
         <main class="dash-main">
           <header class="dash-top">

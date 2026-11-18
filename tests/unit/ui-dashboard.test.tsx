@@ -255,6 +255,41 @@ describe('dashboard', () => {
     expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['d1', 'd2']);
     await screen.findByText('Closed 1 tab · kept 1 copy of each page');
   });
+  it('the sidebar resizes by dragging its edge or with the arrow keys, remembers its width, and double-click resets it', async () => {
+    localStorage.removeItem('dashboard.sideWidth');
+    serve(state());
+    const { container, unmount } = render(<Dashboard />);
+    await screen.findByText('Title i1');
+    const dash = container.querySelector<HTMLElement>('.dash')!;
+    const handle = screen.getByRole('separator', { name: 'Resize sidebar' });
+    const width = () => dash.style.getPropertyValue('--side-w');
+    expect(width()).toBe('252px');
+    expect(handle.getAttribute('aria-valuenow')).toBe('252');
+    fireEvent.pointerDown(handle, { clientX: 252, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(handle, { clientX: 352, pointerId: 1 });
+    expect(width()).toBe('352px');
+    fireEvent.pointerMove(handle, { clientX: 2000, pointerId: 1 }); // clamped
+    expect(width()).toBe('480px');
+    fireEvent.pointerMove(handle, { clientX: 10, pointerId: 1 });
+    expect(width()).toBe('200px');
+    fireEvent.pointerMove(handle, { clientX: 300, pointerId: 1 });
+    fireEvent.pointerUp(handle, { clientX: 300, pointerId: 1 });
+    expect(localStorage.getItem('dashboard.sideWidth')).toBe('300');
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    expect(width()).toBe('316px');
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+    expect(width()).toBe('284px');
+    expect(localStorage.getItem('dashboard.sideWidth')).toBe('284');
+    unmount();
+    // A new dashboard page opens at the remembered width.
+    const again = render(<Dashboard />);
+    await screen.findByText('Title i1');
+    expect(again.container.querySelector<HTMLElement>('.dash')!.style.getPropertyValue('--side-w')).toBe('284px');
+    fireEvent.dblClick(screen.getByRole('separator', { name: 'Resize sidebar' }));
+    expect(again.container.querySelector<HTMLElement>('.dash')!.style.getPropertyValue('--side-w')).toBe('252px');
+    expect(localStorage.getItem('dashboard.sideWidth')).toBeNull();
+  });
   it('keyboard: arrows move focus, Space selects, Delete closes with undo, "/" focuses search', async () => {
     serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
     const { container } = render(<Dashboard />);

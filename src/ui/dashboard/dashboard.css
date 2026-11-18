@@ -7,9 +7,39 @@ body.dashboard-page > #app {
   height: 100%;
 }
 .dash {
+  position: relative;
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-columns: var(--side-w, 252px) minmax(0, 1fr);
   height: 100%;
+}
+/* The sidebar's right edge: drag to resize (SideResizer). Out of the grid flow, over the border line. */
+.side-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--side-w, 252px) - 4px);
+  z-index: 5;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.side-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color 120ms;
+}
+.side-resizer:hover::after,
+.side-resizer:active::after,
+.side-resizer:focus-visible::after {
+  background: var(--accent);
+}
+.side-resizer:focus-visible {
+  outline: none;
 }
 
 /* ---------- Left column ---------- */
@@ -713,6 +743,9 @@ a.link {
     grid-template-columns: minmax(0, 1fr);
   }
   .dash-side {
+    display: none;
+  }
+  .side-resizer {
     display: none;
   }
   .view-select {
