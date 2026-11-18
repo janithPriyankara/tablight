@@ -208,9 +208,16 @@ pipeline {
                             echo "Release $TAG_NAME already exists; nothing to do."
                             exit 0
                         fi
-                        # The request body is written by node, so no shell quoting can break the JSON.
+                        # Notes: the feat/fix/perf commits since the previous version tag (scripts/release-notes.mjs).
+                        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+                            git fetch --quiet --unshallow https://github.com/janithPriyankara/tablight.git
+                        fi
+                        git fetch --quiet --tags --force https://github.com/janithPriyankara/tablight.git
+                        node scripts/release-notes.mjs HEAD --tag "$TAG_NAME" > release-notes.md
+                        echo "Release notes:" && cat release-notes.md
                         node -e 'const v = require("./package.json").version; process.stdout.write(JSON.stringify({
-                            tag_name: process.env.TAG_NAME, name: "Tablight " + v, generate_release_notes: true }))' > release-request.json
+                            tag_name: process.env.TAG_NAME, name: "Tablight " + v,
+                            body: require("fs").readFileSync("release-notes.md", "utf8") }))' > release-request.json
                         code=$(curl -s -o release.json -w '%{http_code}' -X POST -H "$auth" \\
                             -H "Accept: application/vnd.github+json" "$api/releases" --data @release-request.json || echo curl-failed)
                         if [ "$code" != 201 ]; then
