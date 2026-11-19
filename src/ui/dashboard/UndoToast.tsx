@@ -11,7 +11,7 @@ export function UndoToast(props: { notice: Notice | null; onUndo: () => void; on
             {notice.message}
             {notice.hint && <span class="notice-hint">{notice.hint}</span>}
           </span>
-          {notice.token && <button type="button" class="link toast-undo" onClick={props.onUndo}>Undo</button>}
+          {(notice.token || notice.undoRequest) && <button type="button" class="link toast-undo" onClick={props.onUndo}>Undo</button>}
           <button type="button" class="icon-btn toast-close" aria-label="Dismiss" onClick={props.onDismiss}>
             <CloseIcon />
           </button>

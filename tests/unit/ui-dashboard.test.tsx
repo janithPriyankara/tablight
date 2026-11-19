@@ -960,4 +960,50 @@ describe('dashboard', () => {
       await waitFor(() => expect(sent('settings')).toEqual([{ t: 'settings', patch: { suspiciousTabs: false } }]));
     });
   });
+  describe('a notice for a grown group', () => {
+    const grown = () => state({
+      items: [...state().items, item('g1', { groupId: 'hardware' }), item('g2', { groupId: 'hardware' })],
+      groups: [...state().groups, group('hardware', 'Hardware & making', 2, { grownAt: Date.now() + 60_000 })],
+    });
+    it('announces a group grown after the page loaded, once, with Undo that deletes it', async () => {
+      serve(grown());
+      render(<Dashboard />);
+      await ready();
+      await screen.findByText('New group: Hardware & making · 2 tabs');
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'groupDelete', id: 'hardware' }));
+      // The same group is not announced again by a later state.
+      await new Promise((r) => setTimeout(r, 20));
+      expect(screen.queryByText(/New group:/)).toBeNull();
+    });
+    it('does not announce a group grown before the page loaded', async () => {
+      const s = grown();
+      s.groups[s.groups.length - 1]!.grownAt = 1;
+      serve(s);
+      render(<Dashboard />);
+      await ready();
+      await new Promise((r) => setTimeout(r, 20));
+      expect(screen.queryByText(/New group:/)).toBeNull();
+    });
+    it('waits for a pending Undo instead of replacing it', async () => {
+      const first = state();
+      serve(() => ({ ...first }), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : undefined));
+      const { container } = render(<Dashboard />);
+      await screen.findByText('Title i1');
+      const row = container.querySelector<HTMLElement>('.grid-row .item-main')!;
+      row.focus();
+      fireEvent.keyDown(row, { key: 'Delete' });
+      await screen.findByText('Closed 1 tab');
+      // A group grows while the close can still be undone: its notice must not take the Undo away.
+      const g = grown();
+      first.groups = g.groups;
+      first.items = g.items;
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      await new Promise((r) => setTimeout(r, 30));
+      expect(screen.queryByText(/New group:/)).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok' }));
+    });
+  });
 });

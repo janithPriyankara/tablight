@@ -12,6 +12,7 @@ import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
+import { useGrownNotice } from '../common/useGrownNotice';
 import { hintOnce } from '../common/hints';
 import { CLOSE_ALL_BODY, SUSPICIOUS_INTRO, SuspiciousRows, closeAllTitle } from '../common/Suspicious';
 import { GroupList, ViewSelect } from './GroupList';
@@ -55,6 +56,7 @@ export function Dashboard() {
   const { state, error, refresh } = useDashboardState();
   const search = useSearch(undefined, state);
   const { notice, notify, undo, dismiss } = useUndo();
+  useGrownNotice(state, { notice, notify });
   const [view, setViewState] = useState<View>(() => parseHash(location.hash));
   const [settingsTab, setSettingsTab] = useState<SettingsTab>(() => parseSettingsTab(location.hash));
   const [busy, setBusy] = useState(false);

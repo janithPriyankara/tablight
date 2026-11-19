@@ -10,6 +10,7 @@ import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
 import { useUndo } from '../common/useUndo';
+import { useGrownNotice } from '../common/useGrownNotice';
 import { hintOnce } from '../common/hints';
 import { InlineCloseConfirm, SUSPICIOUS_INTRO, SuspiciousRows } from '../common/Suspicious';
 import { SearchResultsView, totalsLine } from '../popup/Popup';
@@ -54,6 +55,7 @@ export function SidePanel() {
   const { state, error, refresh } = useDashboardState();
   const search = useSearch(undefined, state);
   const { notice, notify, undo } = useUndo();
+  useGrownNotice(state, { notice, notify });
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [windowId, setWindowId] = useState<number | null>(null);
@@ -363,7 +365,7 @@ export function SidePanel() {
               {notice.hint && <span class="notice-hint">{notice.hint}</span>}
             </span>
           )}
-          {notice?.token && (
+          {(notice?.token || notice?.undoRequest) && (
             <button type="button" class="btn btn-ghost btn-sm" onClick={() => void runUndo()}>Undo</button>
           )}
         </div>

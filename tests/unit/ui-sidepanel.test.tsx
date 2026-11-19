@@ -318,4 +318,30 @@ describe('SidePanel', () => {
       expect(onConfirm).toHaveBeenCalledTimes(1);
     });
   });
+  describe('a notice for a grown group', () => {
+    const grown = () => state({
+      items: [...state().items, item('g1', { groupId: 'hardware' }), item('g2', { groupId: 'hardware' })],
+      groups: [...state().groups, { ...group('hardware', 'Hardware & making', 2), grownAt: Date.now() + 60_000 }],
+    });
+    it('announces a group grown after the page loaded, once, with Undo that deletes it', async () => {
+      serve(grown());
+      render(<SidePanel />);
+      await loaded();
+      await screen.findByText('New group: Hardware & making · 2 tabs');
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'groupDelete', id: 'hardware' }));
+      // The same group is not announced again by a later state.
+      await new Promise((r) => setTimeout(r, 20));
+      expect(screen.queryByText(/New group:/)).toBeNull();
+    });
+    it('does not announce a group grown before the page loaded', async () => {
+      const s = grown();
+      s.groups[s.groups.length - 1]!.grownAt = 1;
+      serve(s);
+      render(<SidePanel />);
+      await loaded();
+      await new Promise((r) => setTimeout(r, 20));
+      expect(screen.queryByText(/New group:/)).toBeNull();
+    });
+  });
 });
