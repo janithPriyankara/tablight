@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import { applyImport, exportJson, parseImport, type ImportData } from '../../src/io/import-export';
 import { sha1hex } from '../../src/shared/hash';
+import { installChromeMock } from '../../src/ui/mock/chrome-mock';
+import { REMOVED_TRAINED_KEY } from '../../src/background/grow';
+import { trainedIdForName } from '../../src/classify/seeds';
 import { normalizeUrl } from '../../src/shared/url';
 import type { Group, Item } from '../../src/shared/types';
 let n = 0;
@@ -269,5 +272,55 @@ describe('applyImport', () => {
     const r = await applyImport(db, ok(file({ snapshots: [snap('new', 9_999, 'https://n.com/')] })));
     expect(r.skippedSessions).toBe(1);
     expect((await db.snapshots.all()).every((s) => s.id.startsWith('old'))).toBe(true);
+  });
+});
+
+describe('trained group names', () => {
+  const vec = async (t: string[]) => t.map(() => new Float32Array(384).fill(0.05));
+  it('trainedIdForName matches installed and on-demand names, any case, never other', () => {
+    expect(trainedIdForName('hardware & making')).toBe('hardware');
+    expect(trainedIdForName(' MOVIES ')).toBe('movies');
+    expect(trainedIdForName('Other')).toBeNull();
+    expect(trainedIdForName('Mine')).toBeNull();
+  });
+  it('a backup group named like a trained group becomes it (trained id, builtIn) and holds its items', async () => {
+    const r = await applyImport(db, ok(file({
+      groups: [{ name: 'hardware & making' }], items: [{ url: 'https://a.com/', groupName: 'hardware & making' }],
+    })), vec);
+    expect(r.added).toBe(1);
+    const g = await db.groups.get('hardware');
+    expect(g).toMatchObject({ id: 'hardware', name: 'Hardware & making', builtIn: true });
+    expect(g!.centroid).not.toBeNull();
+    expect((await db.items.all())[0]!.groupId).toBe('hardware');
+    expect((await db.groups.all()).filter((x) => !x.builtIn)).toHaveLength(0);
+  });
+  it('without an embedder the trained group is still created, with no centroid', async () => {
+    await applyImport(db, ok(file({ items: [{ url: 'https://a.com/', groupName: 'Sports' }] })));
+    expect(await db.groups.get('sports')).toMatchObject({ builtIn: true, centroid: null });
+  });
+  it('an existing group with that name (any id) is reused and nothing new is created', async () => {
+    await db.groups.put(group('g-mine', 'hardware & MAKING'));
+    await applyImport(db, ok(file({ items: [{ url: 'https://a.com/', groupName: 'Hardware & making' }] })), vec);
+    expect((await db.groups.all()).map((g) => g.id)).toEqual(['g-mine']);
+    expect((await db.items.all())[0]!.groupId).toBe('g-mine');
+  });
+  it('a renamed group already holding the trained id is not overwritten: the name gets a user group', async () => {
+    await db.groups.put(group('sports', 'Games', { builtIn: true }));
+    await applyImport(db, ok(file({ items: [{ url: 'https://a.com/', groupName: 'Sports' }] })), vec);
+    const all = await db.groups.all();
+    expect(all).toHaveLength(2);
+    expect(await db.groups.get('sports')).toMatchObject({ name: 'Games' });
+    expect(all.find((g) => g.name === 'Sports')!.id).toMatch(/^g-/);
+  });
+  it('a removed trained group is created again by an explicit import and forgotten as removed', async () => {
+    const mock = installChromeMock({ windows: [] });
+    try {
+      await chrome.storage.local.set({ [REMOVED_TRAINED_KEY]: ['sports', 'hardware'] });
+      await applyImport(db, ok(file({ items: [{ url: 'https://a.com/', groupName: 'Sports' }] })), vec);
+      expect(await db.groups.get('sports')).toMatchObject({ builtIn: true });
+      expect((await chrome.storage.local.get(REMOVED_TRAINED_KEY))[REMOVED_TRAINED_KEY]).toEqual(['hardware']);
+    } finally {
+      mock.uninstall();
+    }
   });
 });

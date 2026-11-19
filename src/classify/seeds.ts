@@ -454,3 +454,13 @@ export const STARTER_GROUPS: StarterGroup[] = [
 export const INTEREST_CHOICES: { id: string; name: string }[] = STARTER_GROUPS
   .filter((g) => g.id !== 'other')
   .map(({ id, name }) => ({ id, name }));
+
+/** Seed ids by lower-cased name (never `other`: it has no seeds). */
+const TRAINED_BY_NAME = new Map(INTEREST_CHOICES.map((c) => [c.name.toLowerCase(), c.id]));
+/**
+ * The seed id of the trained group `name` names (case-insensitive, trimmed), or null. Covers the installed groups
+ * and the on-demand ones: a group that arrives by name (sync, backup) and matches either is that trained group.
+ */
+export function trainedIdForName(name: string): string | null {
+  return TRAINED_BY_NAME.get(name.trim().toLowerCase()) ?? null;
+}

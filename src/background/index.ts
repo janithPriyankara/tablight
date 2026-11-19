@@ -452,7 +452,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
       if (typeof req.json !== 'string') throw new Error('invalid import');
       const parsed = parseImport(req.json);
       if (!parsed.ok) throw new Error(parsed.error);
-      out = await applyImport(db, parsed.data);
+      out = await applyImport(db, parsed.data, embed);
       scheduleSync(db);
       break;
     }

@@ -365,3 +365,45 @@ describe('review fixes', () => {
     expect(set).not.toHaveBeenCalled();
   });
 });
+
+describe('trained group names', () => {
+  it('a pulled saved tab in "Sports" lands in the trained group (id sports, builtIn) with a seed centroid', async () => {
+    await remote([await remoteRec('https://a.com/', { group: 'Sports' })]);
+    await pullSync(db);
+    const g = await db.groups.get('sports');
+    expect(g).toMatchObject({ id: 'sports', name: 'Sports', builtIn: true });
+    expect(g!.centroid).not.toBeNull();
+    expect((await db.items.all())[0]).toMatchObject({ groupId: 'sports', groupSource: 'user' });
+    expect((await db.groups.all()).filter((x) => x.id.startsWith('g-'))).toHaveLength(0);
+  });
+  it('matches case-insensitively and gives other names a user group', async () => {
+    await remote([
+      await remoteRec('https://a.com/', { group: 'hardware & making' }), await remoteRec('https://b.com/', { group: 'Recipes' }),
+    ]);
+    await pullSync(db);
+    const all = await db.groups.all();
+    expect(all.find((g) => g.id === 'hardware')).toMatchObject({ name: 'Hardware & making', builtIn: true });
+    expect(all.find((g) => g.name === 'Recipes')).toMatchObject({ builtIn: false });
+  });
+  it('an existing group with that name (any id) is reused', async () => {
+    await db.groups.put(group('g-mine', 'sports', { builtIn: false }));
+    await remote([await remoteRec('https://a.com/', { group: 'Sports' })]);
+    await pullSync(db);
+    expect((await db.groups.all()).map((g) => g.id)).toEqual(['g-mine']);
+    expect((await db.items.all())[0]!.groupId).toBe('g-mine');
+  });
+  it('a model failure still creates the trained group, without a centroid', async () => {
+    vi.mocked(embed).mockRejectedValueOnce(new Error('model down'));
+    await remote([await remoteRec('https://a.com/', { group: 'Sports' })]);
+    await pullSync(db);
+    expect(await db.groups.get('sports')).toMatchObject({ builtIn: true, centroid: null });
+    expect((await db.items.all())[0]!.groupId).toBe('sports');
+  });
+  it('a group the user removed is created again by the synced data and forgotten as removed', async () => {
+    await chrome.storage.local.set({ removedTrainedGroups: ['sports', 'hardware'] });
+    await remote([await remoteRec('https://a.com/', { group: 'Sports' })]);
+    await pullSync(db);
+    expect(await db.groups.get('sports')).toBeDefined();
+    expect((await chrome.storage.local.get('removedTrainedGroups')).removedTrainedGroups).toEqual(['hardware']);
+  });
+});

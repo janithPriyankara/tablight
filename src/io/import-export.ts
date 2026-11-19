@@ -8,6 +8,7 @@ import { OTHER_GROUP_ID } from '../classify/assign';
 import { STARTER_GROUPS } from '../classify/seeds';
 import type { Db } from '../background/db';
 import { USER_COLORS, parseName } from '../background/groups';
+import { forgetRemovedTrained, trainedGroupsForNames } from '../background/grow';
 import { restashTime, stashRecord } from '../background/memory';
 import { MAX_SNAPSHOTS, fingerprint } from '../background/snapshots';
 import { domainOf } from '../background/tab-index';
@@ -166,7 +167,7 @@ export async function exportJson(db: Db): Promise<string> {
 /** `skippedSessions`: new sessions from the file that did not fit (local sessions are never replaced). */
 /** `grouped`: open tabs here moved into the group the same page had in the file (tabs you placed stay put). */
 export async function applyImport(
-  db: Db, data: ImportData,
+  db: Db, data: ImportData, embedFn?: (t: string[]) => Promise<Float32Array[]>,
 ): Promise<{ added: number; skipped: number; skippedSessions: number; grouped: number }> {
   const now = Date.now();
   const seen = new Set<string>();
@@ -193,6 +194,9 @@ export async function applyImport(
   for (const n of names) {
     if (!wanted.has(n.toLowerCase())) wanted.set(n.toLowerCase(), n);
   }
+  // A name that matches a trained group becomes that group (its id, builtIn). Embedding is not an IndexedDB request.
+  const trained = await trainedGroupsForNames(db, [...wanted.values()], embedFn);
+  const madeTrained: string[] = [];
   let added = 0;
   let grouped = 0;
   let skippedSessions = 0;
@@ -200,11 +204,21 @@ export async function applyImport(
     const existing = (await s.groups.all()).filter((g) => !g.suggested);
     const byName = new Map<string, Group>();
     for (const g of existing) if (!byName.has(g.name.toLowerCase())) byName.set(g.name.toLowerCase(), g);
+    const byId = new Set<string>();
     let count = existing.length;
     let created = 0;
     for (const [key, name] of wanted) {
       if (byName.has(key) || created >= MAX_NEW_GROUPS) continue;
       const meta = given.get(key);
+      const t = trained.get(key);
+      if (t && !existing.some((g) => g.id === t.id) && !byId.has(t.id)) {
+        byId.add(t.id);
+        created++;
+        await s.groups.put({ ...t, createdAt: now });
+        byName.set(key, t);
+        madeTrained.push(t.id);
+        continue;
+      }
       const g: Group = {
         id: `g-${crypto.randomUUID()}`, name, color: meta?.color ?? USER_COLORS[count % USER_COLORS.length]!,
         icon: meta?.icon ?? '📁', builtIn: false, exemplars: [], centroid: null, createdAt: now,
@@ -260,5 +274,7 @@ export async function applyImport(
     for (const sn of take) await s.snapshots.put(sn);
     skippedSessions = fresh.length - take.length;
   });
+  // The backup asked for these groups: they are no longer "removed" and may grow on the fly again.
+  if (madeTrained.length) await forgetRemovedTrained(madeTrained);
   return { added, skipped, skippedSessions, grouped };
 }

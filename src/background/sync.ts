@@ -13,6 +13,7 @@ import { MAX_EXEMPLARS, learn } from '../classify/assign';
 import type { Db } from './db';
 import { embed } from './embedder';
 import { USER_COLORS, parseName } from './groups';
+import { forgetRemovedTrained, trainedGroupsForNames } from './grow';
 import { domainOf } from './tab-index';
 import { nextStamp } from '../shared/stamp';
 
@@ -219,17 +220,31 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
     m.upserts.map((r) => validName(r[3])).filter((n): n is string => n !== null && !known.has(n.toLowerCase()))
       .map((n) => [n.toLowerCase(), n]),
   ).values()].slice(0, Math.min(MAX_NEW_GROUPS, room));
-  const vecs = await centroids(unknown);
+  // A name that matches a trained group becomes that group (its id, builtIn), so the classifier can fill it.
+  const trained = await trainedGroupsForNames(db, unknown, embed);
+  const plain = unknown.filter((n) => !trained.has(n.toLowerCase()));
+  const plainVecs = await centroids(plain);
+  const madeTrained: string[] = [];
   await db.tx(['items', 'groups', 'queue', 'tombstones'], async (s) => {
     const groups = (await s.groups.all()).filter((g) => !g.suggested);
     const byName = new Map<string, Group>();
     for (const g of groups) if (!byName.has(g.name.toLowerCase())) byName.set(g.name.toLowerCase(), g);
     let count = groups.length;
-    for (const [k, name] of unknown.entries()) {
+    const ids = new Set(groups.map((g) => g.id));
+    for (const name of unknown) {
       if (byName.has(name.toLowerCase())) continue;
+      const t = trained.get(name.toLowerCase());
+      if (t && !ids.has(t.id)) {
+        await s.groups.put({ ...t, createdAt: Date.now() });
+        byName.set(name.toLowerCase(), t);
+        ids.add(t.id);
+        madeTrained.push(t.id);
+        continue;
+      }
+      const k = plain.indexOf(name);
       const g: Group = {
         id: `g-${crypto.randomUUID()}`, name, color: USER_COLORS[count++ % USER_COLORS.length]!, icon: '📁',
-        builtIn: false, exemplars: [], centroid: vecs[k] ?? null, createdAt: Date.now(),
+        builtIn: false, exemplars: [], centroid: (k >= 0 ? plainVecs[k] : null) ?? null, createdAt: Date.now(),
       };
       await s.groups.put(g);
       byName.set(name.toLowerCase(), g);
@@ -261,6 +276,8 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
       if (deletedAt > (have.get(id) ?? -Infinity)) await s.tombstones.put({ id, deletedAt });
     }
   });
+  // The user's own data asked for these groups: they are no longer "removed" and may grow on the fly again.
+  if (madeTrained.length) await forgetRemovedTrained(madeTrained);
 }
 
 // ───────────────────────────── remote side ─────────────────────────────
