@@ -604,12 +604,15 @@ void chrome.alarms
   .catch((e: unknown) => console.error('snapshot alarm failed', e));
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   const fresh = reason === 'install';
-  // A fresh install shows the dashboard (its onboarding) at once instead of nothing.
-  if (fresh) openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
   void getDb()
     .then(async (db) => {
-      // Only a real install answers the interests step as fresh (an update keeps every group it has).
-      if (fresh) await db.settings.set({ interestsFresh: true });
+      if (fresh) {
+        // Only a real install answers the interests step as fresh (an update keeps every group it has). It is
+        // written before the dashboard opens, so the onboarding never reads the step as not fresh.
+        await db.settings.set({ interestsFresh: true }).catch((e: unknown) => console.error('interests flag failed', e));
+        // A fresh install shows the dashboard (its onboarding) at once instead of nothing.
+        openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
+      }
       await ensureStarterGroups(db);
     })
     .catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e))

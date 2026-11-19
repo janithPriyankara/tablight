@@ -76,6 +76,21 @@ describe('background index', () => {
     expect(suggest).toHaveBeenCalledTimes(1);
     mock.uninstall();
   });
+  it('a fresh install marks the interests step fresh before the dashboard opens', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    const seen: (boolean | undefined)[] = [];
+    const create = mock.chrome.tabs.create.bind(mock.chrome.tabs);
+    vi.spyOn(mock.chrome.tabs, 'create').mockImplementation((async (props: chrome.tabs.CreateProperties) => {
+      seen.push((await db.settings.get()).interestsFresh);
+      return create(props);
+    }) as typeof mock.chrome.tabs.create);
+    mock.fireInstalled();
+    await vi.waitFor(() => expect(seen).toHaveLength(1));
+    expect(seen).toEqual([true]);
+    mock.uninstall();
+  });
   it('pulls the stash when another device writes storage.sync; its own write-back does not loop', async () => {
     const mock = installChromeMock({ windows: [] });
     const bg = await import('../../src/background/index');
