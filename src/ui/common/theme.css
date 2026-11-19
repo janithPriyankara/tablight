@@ -590,6 +590,13 @@ button.item-main {
   font-size: var(--text-xs);
   white-space: normal;
 }
+/* The tab you are on in its window. */
+.state-now {
+  border-color: transparent;
+  background: var(--success-soft);
+  color: var(--success);
+  font-weight: 600;
+}
 /* A tab never switched to yet. */
 .state-new {
   border-color: transparent;

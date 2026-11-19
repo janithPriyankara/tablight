@@ -30,7 +30,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
     groups: [group('programming', 'Programming', 3), group('videos', 'Videos', 1, { watchCount: 1 })],
     dupCount: 0, windows: 2, sleeping: 0, suspicious: [],
     syncStatus: { ok: true, synced: 412, localOnly: 37, lastSyncAt: Date.now() },
-    modelReady: true, queued: 0,
+    modelReady: true, queued: 0, activeTabIds: [],
     settings: { ...ANSWERED, onboarded: true },
     ...p,
   };
@@ -293,6 +293,14 @@ describe('dashboard', () => {
     expect(again.container.querySelector<HTMLElement>('.dash')!.style.getPropertyValue('--side-w')).toBe('252px');
     expect(localStorage.getItem('dashboard.sideWidth')).toBeNull();
   });
+  it('marks the tab you are on in each window with "Now"', async () => {
+    serve(state({ activeTabIds: [2, 3] }));
+    const { container } = render(<Dashboard />);
+    await screen.findByText('Title i1');
+    const now = [...container.querySelectorAll('.grid-row')].filter((r) => r.querySelector('.state-now'));
+    expect(now.map((r) => r.querySelector('.item-title')!.textContent)).toEqual(['Title i2', 'Title i3']);
+    expect(now[0]!.querySelector('.state-now')!.textContent).toBe('Now');
+  });
   it('keyboard: arrows move focus, Space selects, Delete closes with undo, "/" focuses search', async () => {
     serve(state(), (req) => (req.t === 'close' ? { token: 'tok', closed: 1 } : req.t === 'undo' ? true : undefined));
     const { container } = render(<Dashboard />);
@@ -308,7 +316,7 @@ describe('dashboard', () => {
     await screen.findByText('2 selected');
     fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
     await waitFor(() => expect(sent('close')).toHaveLength(1));
-    expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['i2', 'i4']); // rows are ordered by window: i1 i2 i4 i3
+    expect((sent('close')[0]!.ids as string[]).sort()).toEqual(['i2', 'i3']); // open tabs by last use, not by window: i1 i2 i3 i4
     await screen.findByText('Closed 1 tab'); // the count the background actually closed
     fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(sent('undo')).toEqual([{ t: 'undo', token: 'tok' }]));

@@ -26,12 +26,14 @@ export interface ItemRowProps {
   note?: string;
   /** Leave out the "New" chip (where the note already says the tab was never viewed). */
   hideNew?: boolean;
+  /** The tab you are on in its window: shows a "Now" chip. */
+  now?: boolean;
 }
 /**
  * One tab/stash entry: favicon, title (single line, full title + URL in the tooltip), and a meta line.
  * Title, URL and domain are untrusted: they are only ever rendered as text nodes and attributes.
  */
-export function ItemRow({ item, group, onOpen, actions, selected, meta, note, hideNew, leading, rowProps, mainTabIndex }: ItemRowProps) {
+export function ItemRow({ item, group, onOpen, actions, selected, meta, note, hideNew, now, leading, rowProps, mainTabIndex }: ItemRowProps) {
   const title = displayTitle(item);
   const state = STATE_LABEL[item.state];
   const isNew = !hideNew && item.state !== 'stashed' && item.opened === false;
@@ -45,6 +47,7 @@ export function ItemRow({ item, group, onOpen, actions, selected, meta, note, hi
           <span class="item-domain">{item.domain || item.url}</span>
           {meta && <span class="item-extra">{meta}</span>}
           {from !== null && <span class="item-extra">{`from ${clock(from)}`}</span>}
+          {now && item.state === 'open' && <span class="state state-now" title="The tab you’re on in this window">Now</span>}
           {isNew && <span class="state state-new" title="You haven’t opened this tab yet">New</span>}
           {state && <span class={`state state-${item.state}`}>{state}</span>}
           {group && <GroupChip name={group.name} color={group.color} small />}

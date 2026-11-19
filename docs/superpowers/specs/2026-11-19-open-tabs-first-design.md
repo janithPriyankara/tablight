@@ -8,8 +8,9 @@ are mixed in with open ones.
 
 ## Goals
 
-- Every dashboard list (All tabs, each group, Unsorted, and the other views that use the default order) shows open
-  tabs first, most recently used at the top, across all windows; then paused tabs, most recent first; then
+- Every dashboard list (All tabs, each group, Unsorted, and the other views that use the default order) shows the tab
+  you are on in each window at the very top (the owner's ask: "the currently active tab on the top of each group"), then
+  open tabs, most recently used at the top, across all windows; then paused tabs, most recent first; then
   saved-for-later items as today (newest saved first).
 - The tab that is active right now in each window gets a small **Now** chip, like the existing New / Paused chips.
 - The list stays current: switching tabs refreshes an open dashboard (debounced, like other changes).

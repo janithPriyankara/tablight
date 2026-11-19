@@ -23,6 +23,8 @@ export interface ItemGridProps {
   /** Show each item's group chip (off inside a group view). */
   showGroup: boolean;
   windowNo: ReadonlyMap<number, number>;
+  /** Tab ids that are the active tab of their window (marked "Now"). */
+  nowTabIds?: ReadonlySet<number>;
   /** Extra meta text per item (e.g. "Similar by meaning"). */
   extraMeta?: (item: Item) => string | undefined;
   onOpen: (item: Item) => void;
@@ -181,6 +183,7 @@ export function ItemGrid(props: ItemGridProps) {
     rows.push(
       <ItemRow
         key={item.id} item={item} selected={isSel} meta={meta || undefined} mainTabIndex={tab}
+        now={item.tabId !== undefined && props.nowTabIds?.has(item.tabId) === true}
         {...(props.showGroup && g ? { group: g } : {})}
         onOpen={(it, e) => {
           if (e.shiftKey) onSelect(it.id, 'range');

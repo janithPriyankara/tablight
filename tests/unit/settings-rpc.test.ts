@@ -165,6 +165,20 @@ describe('settings rpc', () => {
     mock.uninstall();
   });
 
+  it('switching tabs refreshes open pages (the "Now" mark and the open-first order follow)', async () => {
+    const mock = installChromeMock();
+    const bg = await import('../../src/background/index');
+    await bg.getDb();
+    await new Promise((r) => setTimeout(r, 400)); // let start-up work settle
+    const tab = await mock.chrome.tabs.create({ url: 'https://example.com/a' });
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    await whenTabIndexIdle();
+    await new Promise((r) => setTimeout(r, 800)); // its own index update and broadcast are done
+    const base = mock.broadcasts().length;
+    mock.activateTab(tab.id!);
+    await vi.waitFor(() => expect(mock.broadcasts().slice(base)).toContainEqual({ target: 'ui', t: 'changed' }), { timeout: 1500 });
+    mock.uninstall();
+  });
   it('modelReady is true once the queue is empty, even with no groups at all', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

@@ -115,6 +115,8 @@ export interface DashboardState {
   /** Distinct windows holding open or sleeping items. */
   windows: number;
   sleeping: number;
+  /** The active tab of every window (the dashboard marks it "Now"). */
+  activeTabIds: number[];
   /** The last-focused window's active tab, when it has duplicates. */
   activeDup?: { item: Item; others: Item[] };
   /** Open or sleeping tabs that look like ad or scam pop-ups; empty when the setting is off. */

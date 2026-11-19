@@ -142,6 +142,7 @@ export function Dashboard() {
   const groups = state?.groups ?? [];
   const groupMap = useMemo(() => new Map(groups.map((g) => [g.id, g])), [groups]);
   const items = state?.items ?? [];
+  const nowTabIds = useMemo(() => new Set(state?.activeTabIds ?? []), [state?.activeTabIds]);
   const windowNo = useMemo(() => windowNumbers(items), [items]);
   const searching = search.query.trim().length > 0;
   const results = search.results;
@@ -150,7 +151,7 @@ export function Dashboard() {
   const dupSeen = useRef(new Set<string>());
   const [fullList, lastCopyIds] = useMemo((): [Item[], ReadonlySet<string>] => {
     if (searching) return [results ? [...results.words, ...results.meaning] : [], NONE];
-    const out = itemsForView(view, items, groups);
+    const out = itemsForView(view, items, groups, nowTabIds);
     if (view.kind !== 'duplicates') {
       dupSeen.current = new Set();
       return [out, NONE];
@@ -160,7 +161,7 @@ export function Dashboard() {
     if (!left.length) return [out, NONE];
     const all = [...out, ...left].sort((a, b) => a.normUrl.localeCompare(b.normUrl) || byDefaultOrder(a, b));
     return [all, new Set(left.map((i) => i.id))];
-  }, [searching, results, view, items, groups]);
+  }, [searching, results, view, items, groups, nowTabIds]);
   // "New" = tabs that were never switched to. "Show new only" narrows the current view to them.
   const newCount = useMemo(() => (searching ? 0 : fullList.filter(isNewTab).length), [searching, fullList]);
   const [newOnly, setNewOnly] = useState(false);
@@ -771,7 +772,7 @@ export function Dashboard() {
           {state && isList && (list.length ? (
             <ItemGrid
               items={list} label={title} selected={selected} groups={groupMap} showGroup={view.kind !== 'group' || searching}
-              windowNo={windowNo} extraMeta={searching ? (i) => (meaningIds.has(i.id) ? 'Similar by meaning' : undefined)
+              windowNo={windowNo} nowTabIds={nowTabIds} extraMeta={searching ? (i) => (meaningIds.has(i.id) ? 'Similar by meaning' : undefined)
                 : lastCopyIds.size ? (i) => (lastCopyIds.has(i.id) ? 'Last copy, still open' : undefined) : undefined}
               onOpen={(i) => void openItem(i)} onSelect={select} onClearSelection={() => setSelected(new Set())}
               onAction={onRowAction} onDelete={onDelete} onDragStart={onDragStart}

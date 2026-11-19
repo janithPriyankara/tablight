@@ -269,6 +269,7 @@ describe('background index', () => {
     expect(s.items.filter((i) => i.state !== 'stashed')).toHaveLength(4);
     expect(s.activeDup?.item.tabId).toBe(a!.id);
     expect(s.activeDup?.others.map((i) => i.tabId)).toEqual([b!.id]);
+    expect(s.activeTabIds).toContain(a!.id); // every window's active tab, for the dashboard's "Now" mark
     const inGroup = s.items.filter((i) => i.groupId === 'videos');
     const g = s.groups.find((x) => x.id === 'videos')!;
     expect(g.count).toBe(inGroup.length);

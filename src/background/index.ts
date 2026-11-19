@@ -209,6 +209,11 @@ async function readLastSession(db: Db): Promise<Snapshot | undefined> {
   if (typeof id !== 'string') return undefined;
   return (await db.snapshots.all()).find((s) => s.id === id);
 }
+/** The active tab of every window. */
+async function activeTabIds(): Promise<number[]> {
+  const tabs = await chrome.tabs.query({ active: true }).catch(() => [] as chrome.tabs.Tab[]);
+  return tabs.flatMap((t) => (t.id === undefined ? [] : [t.id]));
+}
 /** The last-focused window's active tab and its copies, when it has any. */
 async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promise<DashboardState['activeDup']> {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []);
@@ -269,8 +274,8 @@ async function dashboardState(db: Db): Promise<DashboardState> {
   const dups = findDuplicates(items);
   let dupCount = 0;
   for (const list of dups.values()) dupCount += list.length - 1;
-  const [activeDup, syncStatus, lastSession] = await Promise.all([
-    activeDuplicate(items, dups), readSyncStatus(), readLastSession(db),
+  const [activeDup, activeIds, syncStatus, lastSession] = await Promise.all([
+    activeDuplicate(items, dups), activeTabIds(), readSyncStatus(), readLastSession(db),
   ]);
   const suspicious = await currentSuspicious(items, settings);
   return {
@@ -278,6 +283,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
     // An empty queue is ready even with no groups (e.g. the user deleted them all): nothing is pending.
     modelReady: queued === 0 || (groups.length > 0 && isWarm()),
     queued,
+    activeTabIds: activeIds,
     ...(activeDup ? { activeDup } : {}),
     ...(lastSession ? { lastSession } : {}),
   };
@@ -286,6 +292,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
 async function activated(tabId: number): Promise<void> {
   const db = await getDb();
   await touchTab(db, tabId);
+  notifyChanged(); // open pages re-sort (open tabs by last use) and move the "Now" mark
   await refreshBadge(db, tabId); // opening a tab drops its "never viewed" clue, so the count can change
 }
 

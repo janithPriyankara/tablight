@@ -71,17 +71,23 @@ export function lastCopies(listed: Item[], items: Item[], seen: ReadonlySet<stri
     seen.has(i.normUrl) && !still.has(i.normUrl));
 }
 /** Open and sleeping tabs by window then recency, then the stash newest first. */
+const STATE_RANK: Record<Item['state'], number> = { open: 0, sleeping: 1, stashed: 2 };
+/**
+ * Open tabs first, most recently used at the top whatever their window; then paused tabs the same way; then
+ * saved-for-later items, newest saved first. Rows still say which window a tab is in.
+ */
 export function byDefaultOrder(a: Item, b: Item): number {
-  const sa = a.state === 'stashed' ? 1 : 0;
-  const sb = b.state === 'stashed' ? 1 : 0;
-  if (sa !== sb) return sa - sb;
-  if (sa === 1) return (b.stashedAt ?? b.updatedAt) - (a.stashedAt ?? a.updatedAt);
-  if ((a.windowId ?? 0) !== (b.windowId ?? 0)) return (a.windowId ?? 0) - (b.windowId ?? 0);
+  const byState = STATE_RANK[a.state] - STATE_RANK[b.state];
+  if (byState !== 0) return byState;
+  if (a.state === 'stashed') return (b.stashedAt ?? b.updatedAt) - (a.stashedAt ?? a.updatedAt);
   return b.lastActiveAt - a.lastActiveAt;
 }
 
-/** The items a list view shows (sessions/settings show none; suspicious has its own list). */
-export function itemsForView(v: View, items: Item[], groups: GroupSummary[]): Item[] {
+/**
+ * The items a list view shows (sessions/settings show none; suspicious has its own list). `now`: the tab ids that
+ * are the active tab of their window; those come first.
+ */
+export function itemsForView(v: View, items: Item[], groups: GroupSummary[], now: ReadonlySet<number> = NO_TABS): Item[] {
   const known = new Set(groups.map((g) => g.id));
   let out: Item[];
   switch (v.kind) {
@@ -92,8 +98,10 @@ export function itemsForView(v: View, items: Item[], groups: GroupSummary[]): It
     case 'group': out = items.filter((i) => i.groupId === v.id); break;
     default: return [];
   }
-  return out.sort(byDefaultOrder);
+  const isNow = (i: Item) => (i.state === 'open' && i.tabId !== undefined && now.has(i.tabId) ? 0 : 1);
+  return out.sort((a, b) => isNow(a) - isNow(b) || byDefaultOrder(a, b));
 }
+const NO_TABS: ReadonlySet<number> = new Set();
 
 /** Windows numbered 1..n in id order ("Window 2"). */
 export function windowNumbers(items: Item[]): Map<number, number> {
