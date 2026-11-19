@@ -31,6 +31,10 @@ describe('pickGroup', () => {
   });
   it('lets a rule hit win', () => {
     const r = pickGroup({ url: 'https://www.netflix.com/title/123', title: 'X' }, vec(0), [group('tv'), group('videos')], head);
-    expect(r.groupId).toBe('tv');
+    expect(r).toEqual({ groupId: 'tv', want: null });
+  });
+  it('wants nothing when a user exemplar decides', () => {
+    const taught = { ...group('mine'), exemplars: [vec(0)] };
+    expect(pickGroup(PAGE, vec(0), [taught], head)).toEqual({ groupId: 'mine', want: null });
   });
 });

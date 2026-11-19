@@ -22,6 +22,8 @@ import {
   whenTabIndexIdle,
 } from '../../src/background/tab-index';
 import type { Group, Item } from '../../src/shared/types';
+import { HEAD } from '../../src/classify/head';
+import { normalize } from '../../src/shared/vec';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 
 const DIM = 384;
@@ -399,6 +401,30 @@ describe('processQueue', () => {
   });
 });
 
+describe('want (local-only wanted topic)', () => {
+  const label = HEAD.labels.find((l) => l !== 'other')!;
+  const towards = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf(label)]!]));
+  const away = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+  it('is stored when set, removed when null or for user-placed tabs, and never bumps updatedAt', async () => {
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://zzz.example.net/a', title: 'a' },
+      { url: 'https://zzz.example.net/b', title: 'b' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [first, second] = await db.items.all();
+    await db.items.put({ ...second!, groupSource: 'user', want: 'stale' });
+    const before = (await db.items.get(first!.id))!.updatedAt;
+    await processQueue(db, async (texts: string[]) => texts.map(() => towards));
+    expect((await db.items.get(first!.id))!.want).toBe(label); // no groups exist: the topic waits
+    expect((await db.items.get(first!.id))!.updatedAt).toBe(before);
+    expect((await db.items.get(second!.id))!.want).toBeUndefined();
+    // Re-classified with nothing wanted: the stored want is removed.
+    await db.items.put({ ...(await db.items.get(first!.id))!, title: 'a2', normUrl: (await db.items.get(first!.id))!.normUrl });
+    await db.queue.add(first!.id);
+    await processQueue(db, async (texts: string[]) => texts.map(() => away));
+    expect((await db.items.get(first!.id))!.want).toBeUndefined();
+  });
+});
 describe('embedding cache hygiene (review 1.3)', () => {
   it('sweeps keys no item uses any more, keeps shared ones', async () => {
     mock = installChromeMock({ windows: [{ tabs: [web(1), web(1), web(2)] }] });
