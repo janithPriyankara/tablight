@@ -6,19 +6,24 @@
 //
 // Rules:
 // - BL web_archive_classification: a row keeps a label only when its (primary, secondary) category pair is in
-//   BL_MAP; every other row is dropped. Rows without a usable title (empty, the bare address, "Home", "Index of",
-//   error pages) are dropped.
+//   BL_MAP; every other row is dropped. TV and Radio rows that name radio (BL_RADIO) are dropped (tv is series and
+//   episodes). Rows without a usable title (empty, the bare address, "Home", "Index of", error pages) are dropped.
+//   Library-style inverted titles ("Friend, The") are turned back ("The Friend").
 // - subreddit-posts: only subreddits in REDDIT_MAP, which name six niche labels (anime, games, hardware, cars,
 //   photo, food). A post becomes a reddit tab: title "<post title> : r/<sub>", address
 //   https://www.reddit.com/r/<sub>/comments/<id>/<slug>/ (id from a hash of the title; the dataset has no addresses).
 // - Leakage: a public row is dropped when its title, near-duplicate title form or address (host + path, lowercased,
-//   without scheme, www., query or trailing slash) equals one of any row in training/*.json, tests/quality/*.json or
-//   tests/benchmark/benchmark.json. Only counts are printed; no test row is printed or written.
-// - Cap: public rows of a label are at most 40% of that label's rows once added to the pool
-//   (public ≤ ⅔ × pool rows of the label), BL and reddit together; BL rows are kept first. Rows over the cap are
-//   dropped by a seeded shuffle.
+//   without scheme, www., query or trailing slash) equals one of any git-tracked row in training/*.json or
+//   tests/quality/*.json (this script's outputs, training/public-*.json, excepted) or tests/benchmark/benchmark.json.
+//   Only counts are printed; no test row is printed or written.
+// - Cap: public rows of a label are at most 40% of that label's rows on the encoder's training side
+//   (public ≤ ⅔ × the label's pool rows the encoder trains on: the pool deduped as finetune.py load_pool does, less
+//   the round(n × CALIB_SHARE) calibration rows finetune.py holds out), BL and reddit together; BL rows are kept
+//   first. Rows over the cap are dropped by a seeded shuffle, one RNG per (source, label), so `--bl` alone gives the
+//   same BL rows as `--bl --reddit`.
 import { createHash } from 'node:crypto';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -43,7 +48,6 @@ export const BL_MAP = {
   'Literature|19th Century English Literature': 'books',
   'Computer Science, Information Technology and Web Technology|Video Games': 'games',
   'Business, Economy & Industry|Banking, Insurance, Accountancy and Financial Economics': 'finance',
-  'Business, Economy & Industry|Employment, Unemployment and Labour Economics': 'jobs',
   'Medicine & Health|Health Organisations and Services': 'health',
   'Medicine & Health|Conditions and Diseases': 'health',
   'Medicine & Health|Mental Health': 'health',
@@ -58,13 +62,13 @@ export const BL_MAP = {
   'Life Sciences|Darwin 200': 'science',
   'Popular Science|Darwin 200': 'science',
   'Science & Technology|Zoology, Veterinary Science and Animal Health': 'pets',
-  'Society & Culture|Sports and Recreation': 'sports',
   'Society & Culture|Food and Drink': 'food',
   'Society & Culture|Travel & Tourism': 'travel',
-  'Travel & Tourism|British Countryside': 'travel',
-  'Travel & Tourism|Cornwall': 'travel',
 };
 
+/** TV and Radio rows naming radio (a station, FM/AM, DAB): dropped, since tv is series and episodes. */
+const BL_RADIO = /\bradio\b|\b\d{2,3}(\.\d)?\s*(fm|am)\b|\b(fm|am|dab)\b|\bwireless\b/i;
+const BL_TV_RADIO = 'Arts & Humanities|TV and Radio';
 /** Subreddit (lowercase) → label, niche labels only. */
 export const REDDIT_MAP = {
   anime: 'anime', comicbooks: 'anime',
@@ -77,6 +81,8 @@ export const REDDIT_MAP = {
 };
 
 const CAP_SHARE = 0.4;
+/** finetune.py --calib-share used by the fine-tune recipe (pool rows the encoder never trains on). */
+const CALIB_SHARE = 0.2;
 const POOL_FILES = [
   'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json',
   'training/train-e.json', 'training/train-f.json', 'tests/quality/fixture.json',
@@ -102,6 +108,7 @@ function rng(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+const keyedRng = (seed, key) => rng(createHash('sha256').update(`${seed}:${key}`).digest().readUInt32BE(0));
 function shuffle(a, r) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(r() * (i + 1));
@@ -118,14 +125,20 @@ function cleanTitle(t) {
   if (BAD_TITLE.test(s)) return null;
   if (/^(https?:\/\/|www\.)\S+$/i.test(s) || /^[\w.-]+\.(co\.uk|org\.uk|ac\.uk|gov\.uk|uk|com|org|net)$/i.test(s)) return null;
   if (!/[a-z]/i.test(s)) return null;
-  return s;
+  // Catalogue inversion: "Friend, The" → "The Friend"; "Network, The (AVEN)" → "The Network (AVEN)".
+  const inv = /^(.+?), (The|A|An)(?=$|\s*[(:\-–|])(.*)$/.exec(s);
+  return inv ? `${inv[2]} ${inv[1]}${inv[3]}` : s;
 }
 
-/** Rows of every JSON file in `dir`, except this script's own outputs (public-*.json), so a re-run reproduces them. */
-async function rowsOf(dir) {
+/**
+ * Rows of every git-tracked JSON file matching `glob`, except this script's own outputs (training/public-*.json),
+ * so a re-run on a clean checkout reproduces them.
+ */
+async function rowsOf(glob) {
   const out = [];
-  for (const f of (await readdir(join(root, dir))).filter((x) => x.endsWith('.json') && !x.startsWith('public-'))) {
-    const data = JSON.parse(await readFile(join(root, dir, f), 'utf8'));
+  const files = execFileSync('git', ['ls-files', '--', glob], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  for (const f of files.filter((x) => x.endsWith('.json') && !/(^|\/)public-[^/]*$/.test(x))) {
+    const data = JSON.parse(await readFile(join(root, f), 'utf8'));
     if (Array.isArray(data)) out.push(...data.filter((r) => r && typeof r.title === 'string' && typeof r.url === 'string'));
   }
   return out;
@@ -168,17 +181,34 @@ const postId = (t) => BigInt(`0x${createHash('sha256').update(t).digest('hex').s
 
 // --- main ---
 const raw = resolve(values.raw);
-const labels = JSON.parse((await import('node:child_process')).execFileSync('node', [join(root, 'scripts/finetune/labels.mjs')], { cwd: root, encoding: 'utf8' })).map((g) => g.id);
+const labels = JSON.parse(execFileSync('node', [join(root, 'scripts/finetune/labels.mjs')], { cwd: root, encoding: 'utf8' })).map((g) => g.id);
 const labelSet = new Set(labels);
 for (const l of [...Object.values(BL_MAP), ...Object.values(REDDIT_MAP)]) if (!labelSet.has(l)) throw new Error(`unknown label ${l}`);
 
+// Pool rows per label as finetune.py load_pool reads them (first copy of each `url\ntitle` key), then the part the
+// encoder trains on: stratified_split holds out round(n × CALIB_SHARE) per label.
 const poolCount = {};
-for (const f of POOL_FILES) for (const r of JSON.parse(await readFile(join(root, f), 'utf8'))) poolCount[r.group] = (poolCount[r.group] ?? 0) + 1;
+const poolKeys = new Set();
+for (const f of POOL_FILES) {
+  for (const r of JSON.parse(await readFile(join(root, f), 'utf8'))) {
+    const k = `${r.url}\n${r.title}`;
+    if (poolKeys.has(k)) continue;
+    poolKeys.add(k);
+    poolCount[r.group] = (poolCount[r.group] ?? 0) + 1;
+  }
+}
+const trainCount = (label) => (poolCount[label] ?? 0) - pyRound((poolCount[label] ?? 0) * CALIB_SHARE);
+/** Python's round(): halves go to the even neighbour. */
+function pyRound(x) {
+  const f = Math.floor(x), d = x - f;
+  if (Math.abs(d - 0.5) < 1e-9) return f % 2 === 0 ? f : f + 1;
+  return Math.round(x);
+}
 
 // Every title / address in training/, tests/quality/ and the sealed benchmark (read for exclusion only).
 const taken = { title: new Set(), near: new Set(), url: new Set() };
 const takenRows = [
-  ...(await rowsOf('training')), ...(await rowsOf('tests/quality')),
+  ...(await rowsOf('training/*.json')), ...(await rowsOf('tests/quality/*.json')),
   ...JSON.parse(await readFile(join(root, 'tests/benchmark/benchmark.json'), 'utf8')),
 ];
 for (const r of takenRows) {
@@ -208,6 +238,7 @@ if (values.bl) {
     if (!label) { bump('bl dropped: category not mapped'); continue; }
     const title = cleanTitle(r.title);
     if (!title) { bump('bl dropped: no usable title'); continue; }
+    if (`${r.primary}|${r.secondary}` === BL_TV_RADIO && (BL_RADIO.test(title) || BL_RADIO.test(r.url))) { bump('bl dropped: radio'); continue; }
     if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(r.url.trim())) { bump('bl dropped: bad address'); continue; }
     const row = { title, url: r.url.trim(), group: label };
     if (admit(row)) add('bl', row);
@@ -225,19 +256,18 @@ if (values.reddit) {
   }
 }
 
-const r = rng(Number(values.seed));
 const out = { bl: [], reddit: [] };
 const table = [];
 for (const label of labels) {
   const g = byLabel[label];
   if (!g) continue;
-  const pool = poolCount[label] ?? 0;
+  const pool = trainCount(label);
   const cap = Math.floor(((CAP_SHARE / (1 - CAP_SHARE)) * pool) + 1e-9);
-  const bl = shuffle(g.bl.slice(), r).slice(0, cap);
-  const rd = shuffle(g.reddit.slice(), r).slice(0, cap - bl.length);
+  const bl = shuffle(g.bl.slice(), keyedRng(values.seed, `bl:${label}`)).slice(0, cap);
+  const rd = shuffle(g.reddit.slice(), keyedRng(values.seed, `reddit:${label}`)).slice(0, cap - bl.length);
   out.bl.push(...bl);
   out.reddit.push(...rd);
-  table.push({ label, pool, available_bl: g.bl.length, available_reddit: g.reddit.length, cap, kept_bl: bl.length, kept_reddit: rd.length, share: ((bl.length + rd.length) / (pool + bl.length + rd.length)).toFixed(3) });
+  table.push({ label, pool_train: pool, available_bl: g.bl.length, available_reddit: g.reddit.length, cap, kept_bl: bl.length, kept_reddit: rd.length, share_train: ((bl.length + rd.length) / (pool + bl.length + rd.length)).toFixed(3) });
 }
 console.table(table);
 console.log(stats);

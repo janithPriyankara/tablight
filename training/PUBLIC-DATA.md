@@ -3,9 +3,10 @@
 Licence-clean public datasets tried as **extra training rows for the encoder fine-tune only**
 (`scripts/finetune/finetune.py --extra`). They are never part of the head's pool (`scripts/train-head.mjs` reads
 train-a..f + the fixture only), never calibration rows, and never test rows. Result: see
-docs/superpowers/notes/2026-11-20-finetune.md, section "Public data (Task 5)". **Kept: training/public-bl.json
-(BL only).** The reddit rows were tried and dropped (worse than BL alone on the choosing sets); map.mjs still
-writes them with `--reddit`.
+docs/superpowers/notes/2026-11-20-finetune.md, section "Public data (Task 5)". **Not kept.** With the cleaned
+mapping below, the BL rows lowered holdout2 and sessions-tune against the same recipe without them (two-seed mean),
+so training/public-bl.json is not in the repo; the reddit rows were dropped earlier (worse than BL alone). The
+scripts regenerate both files.
 
 Scripts: `scripts/public-data/fetch.mjs` (download into a new directory outside the repo; downloaded data is
 untrusted and only parsed as JSON / CSV text) and `scripts/public-data/map.mjs` (category mapping, cleaning, leakage
@@ -13,7 +14,7 @@ filter, cap).
 
 ```sh
 node scripts/public-data/fetch.mjs --out "$RAW"          # RAW: a new, empty directory outside the repo
-node scripts/public-data/map.mjs --raw "$RAW" --bl training/public-bl.json [--reddit training/public-reddit.json]
+node scripts/public-data/map.mjs --raw "$RAW" --bl training/public-bl.json [--reddit training/public-reddit.json] [--seed 1]
 npx vitest run tests/unit/benchmark-seal.test.ts         # must still pass with the new files in training/
 ```
 
@@ -37,32 +38,34 @@ sha256 `71121e3f4c0bd57a2e13fa6ae7e74bcd3f04f811848674e590186f0e4494c111`.
 
 ### British Library (primary | secondary category → label)
 
-Every pair not listed is dropped (20,215 rows: government, politics, history, religion, company sites, higher
+Every pair not listed is dropped (21,566 rows: government, politics, history, religion, company sites, higher
 education, blogs, social welfare, …, which have no Tablight label or are institution sites rather than topics).
 Mapped pairs were chosen from category names and a sample of rows; no test set was consulted.
 
 | BL category pair | label |
 |---|---|
 | Arts & Humanities \| Film / Cinema | movies |
-| Arts & Humanities \| TV and Radio | tv |
+| Arts & Humanities \| TV and Radio, minus rows naming radio (a station, FM/AM, DAB; 12 rows) | tv |
 | Arts & Humanities \| Music | music |
 | Arts & Humanities \| Art and Design | design |
 | Arts & Humanities \| News and Contemporary Events | news |
 | Arts & Humanities \| Literature; Arts & Humanities \| Publishing, Printing and Bookselling; Literature \| 19th Century English Literature | books |
 | Computer Science, Information Technology and Web Technology \| Video Games | games |
 | Business, Economy & Industry \| Banking, Insurance, Accountancy and Financial Economics | finance |
-| Business, Economy & Industry \| Employment, Unemployment and Labour Economics | jobs |
 | Medicine & Health \| Health Organisations and Services; Conditions and Diseases; Mental Health; Medicines, Treatments and Therapies; Personal Experiences of Illness; Alternative Medicine / Complementary Medicine | health |
 | Science & Technology \| Life Sciences; Physical Sciences; Popular Science; Mathematics; Engineering; Life Sciences \| Darwin 200; Popular Science \| Darwin 200 | science |
 | Science & Technology \| Zoology, Veterinary Science and Animal Health | pets |
-| Society & Culture \| Sports and Recreation | sports |
 | Society & Culture \| Food and Drink | food |
-| Society & Culture \| Travel & Tourism; Travel & Tourism \| British Countryside; Travel & Tourism \| Cornwall | travel |
+| Society & Culture \| Travel & Tourism | travel |
 
 Considered and left out: Computer Science / IT (mostly IT company sites, not code), Dictionaries / Reference Works
 (mixed), Lifelong Learning and the education pairs (institution sites, not courses), the Olympic Games 2012 pair
-(many sponsor and council pages).
-
+(many sponsor and council pages). Dropped after review (fix round 1), as wrong for the label rather than noisy:
+Travel & Tourism | Cornwall and | British Countryside (any Cornwall or countryside site: party branches, colleges,
+genealogy), Employment, Unemployment and Labour Economics → jobs (trade unions and policy pages, not listings or
+career advice), Society & Culture | Sports and Recreation → sports (about 11 of 28 spot-checked rows off-topic:
+council 2012 pages, a donkey park, camping). Banking, Insurance, … → finance was spot-checked (about 6 of 25
+off-topic, mostly "staycation" pages) and kept.
 ### subreddit-posts (subreddit → label; niche labels only)
 
 | label | subreddits |
@@ -78,41 +81,40 @@ A post becomes a reddit tab as the pool writes them: title `<post title> : r/<su
 `https://www.reddit.com/r/<sub>/comments/<id>/<slug>/` (the dataset has no addresses; `id` is a hash of the title).
 
 ## Cleaning, leakage and cap
-
 - Titles: whitespace collapsed; dropped if under 4 or over 140 characters (reddit: 110), a bare address or domain,
-  or a placeholder ("Home", "Index of …", error and parked-domain pages).
+  or a placeholder ("Home", "Index of …", error and parked-domain pages). Library-style inverted titles are turned
+  back: "Friend, The" → "The Friend".
 - Leakage: a public row is dropped if its title, near-duplicate title form (the seal test's form) or address
   (host + path, lowercased, without scheme, `www.`, query or trailing slash; looser than the seal test's) equals
-  that of any row in training/*.json, tests/quality/*.json or tests/benchmark/benchmark.json (13 rows dropped).
-  Only counts are printed; map.mjs's own outputs (training/public-*.json) are not part of that set, so a re-run
-  reproduces them. Duplicates within the public data are dropped too (1,474).
-- Cap: public rows of a label are at most 40% of that label's rows once added to the pool (≤ ⅔ × its pool rows),
-  BL first, reddit filling the rest, chosen by a seeded shuffle (`--seed 1`).
-
-## Rows per label (map.mjs --seed 1)
-
-| label | pool rows | BL available | reddit available | cap | BL kept | reddit kept | public share |
+  that of any row in the git-tracked training/*.json and tests/quality/*.json files (`git ls-files`; map.mjs's own
+  outputs, training/public-*.json, excepted, so a re-run reproduces them) or tests/benchmark/benchmark.json. Only
+  counts are printed. With `--bl` alone: 4 rows dropped for overlap, 897 duplicates within the BL data
+  (with `--reddit` too: 13 and 1,032).
+- Cap, measured against the **encoder's training side**: public rows of a label are at most 40% of that label's
+  rows the encoder trains on, i.e. ≤ ⅔ × (the label's pool rows after finetune.py load_pool's `url\ntitle` dedupe,
+  less the round(n × 0.2) calibration rows finetune.py holds out with `--calib-share 0.2`). BL rows first, reddit
+  filling the rest. Rows over the cap are dropped by a seeded shuffle with one RNG per (source, label), so `--bl`
+  alone writes the same BL rows as `--bl --reddit`.
+"pool (train side)" is the label's pool rows the encoder trains on; "share" is public / (train side + public).
+| label | pool (train side) | BL available | reddit available | cap | BL kept | reddit kept | share |
 |---|---|---|---|---|---|---|---|
-| movies | 150 | 56 | – | 100 | 56 | – | 27% |
-| tv | 136 | 33 | – | 90 | 33 | – | 20% |
-| design | 119 | 434 | – | 79 | 79 | – | 40% |
-| news | 161 | 740 | – | 107 | 107 | – | 40% |
-| music | 129 | 194 | – | 86 | 86 | – | 40% |
-| travel | 140 | 235 | – | 93 | 93 | – | 40% |
-| finance | 146 | 260 | – | 97 | 97 | – | 40% |
-| health | 155 | 1,052 | – | 103 | 103 | – | 40% |
-| games | 121 | 32 | 9,243 | 80 | 32 | 48 | 40% |
-| hardware | 214 | – | 1,607 | 142 | – | 142 | 40% |
-| science | 216 | 449 | – | 144 | 144 | – | 40% |
-| sports | 245 | 675 | – | 163 | 163 | – | 40% |
-| food | 258 | 87 | 5,108 | 172 | 87 | 85 | 40% |
-| cars | 234 | – | 822 | 156 | – | 156 | 40% |
-| pets | 237 | 33 | – | 158 | 33 | – | 12% |
-| jobs | 253 | 119 | – | 168 | 119 | – | 32% |
-| books | 245 | 807 | – | 163 | 163 | – | 40% |
-| photo | 218 | – | 1,796 | 145 | – | 145 | 40% |
-| anime | 223 | – | 1,832 | 148 | – | 148 | 40% |
-| **total** | | | | | **1,395** | **724** | |
-
-Labels with no public rows: videos, ai, programming, shopping, social, learning, docs, work, home, fashion, family,
-realestate, other.
+| movies | 118 | 56 | – | 78 | 56 | – | 32% |
+| tv | 108 | 22 | – | 72 | 22 | – | 17% |
+| design | 90 | 434 | – | 60 | 60 | – | 40% |
+| news | 125 | 740 | – | 83 | 83 | – | 40% |
+| music | 102 | 194 | – | 68 | 68 | – | 40% |
+| travel | 111 | 144 | – | 74 | 74 | – | 40% |
+| finance | 116 | 260 | – | 77 | 77 | – | 40% |
+| health | 123 | 1,056 | – | 82 | 82 | – | 40% |
+| games | 95 | 32 | 9,243 | 63 | 32 | 31 | 40% (BL alone 25%) |
+| hardware | 171 | – | 1,607 | 114 | – | 114 | 40% |
+| science | 173 | 449 | – | 115 | 115 | – | 40% |
+| food | 206 | 87 | 5,108 | 137 | 87 | 50 | 40% (BL alone 30%) |
+| cars | 187 | – | 822 | 124 | – | 124 | 40% |
+| pets | 190 | 33 | – | 126 | 33 | – | 15% |
+| books | 196 | 807 | – | 130 | 130 | – | 40% |
+| photo | 174 | – | 1,796 | 116 | – | 116 | 40% |
+| anime | 178 | – | 1,832 | 118 | – | 118 | 40% |
+| **total** | | | | | **919** | **553** | |
+The first round (before review) had 1,395 BL rows over 15 labels (with sports, jobs and the Cornwall /
+countryside travel rows, capped at ⅔ of the full pool); its results are in the finetune note.
