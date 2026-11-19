@@ -4,7 +4,9 @@
 //   node scripts/train-head.mjs
 //
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
-// POOLING (mean|cls), OUT.
+// POOLING (mean|cls), OUT, CALIBRATION (path to finetune.py's calibration.json: the head still trains on every
+// pool row, but the L2 choice, Unsorted threshold and override similarity use only those rows, which a fine-tuned
+// encoder never saw; without it everything is unchanged).
 //
 // Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + train-f.json + tests/quality/fixture.json.
 // tests/quality/holdout.json, holdout2.json and holdout3.json are never read here: they are the blind test sets.
@@ -14,6 +16,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env, pipeline } from '@huggingface/transformers';
 import { runnerImport } from 'vite';
+import { calibrationIndices } from './calibration.mjs';
 import { MODEL_ID as DEFAULT_MODEL, MODEL_POOLING } from './model-manifest.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +25,7 @@ const MODEL_PATH = process.env.MODEL_PATH ?? join(root, 'public', 'models');
 const POOLING = process.env.POOLING ?? MODEL_POOLING;
 const OUT = process.env.OUT ?? join(root, 'src', 'classify', 'head.json');
 
+const CALIBRATION = process.env.CALIBRATION;
 const SEED = 42;
 const VAL_SHARE = 0.15;
 const EPOCHS = 600;
@@ -101,10 +105,17 @@ const DIM = X[0].length;
 const Y = pool.map((r) => LABELS.indexOf(r.group));
 const RULE = pool.map((r) => ruleGroup(r.url, r.title));
 
-// Stratified split.
+// Stratified split (with CALIBRATION: calibration rows are the validation split, the rest the training split).
 const valIdx = [];
 const trainIdx = [];
-for (let c = 0; c < LABELS.length; c++) {
+const calIdx = CALIBRATION ? calibrationIndices(pool, JSON.parse(await readFile(CALIBRATION, 'utf8'))) : null;
+if (calIdx) {
+  if (!calIdx.length) throw new Error(`${CALIBRATION}: no calibration row is in the pool`);
+  const inCal = new Set(calIdx);
+  valIdx.push(...calIdx);
+  trainIdx.push(...pool.map((_, i) => i).filter((i) => !inCal.has(i)));
+  console.log(`calibration: ${calIdx.length} of ${pool.length} rows`);
+} else for (let c = 0; c < LABELS.length; c++) {
   const idx = shuffle(Y.map((y, i) => (y === c ? i : -1)).filter((i) => i >= 0));
   const nVal = Math.round(idx.length * VAL_SHARE);
   valIdx.push(...idx.slice(0, nVal));
@@ -249,20 +260,22 @@ for (const l2 of L2_GRID) {
 // split is too small for it: the threshold it picks swings by 0.1+ when a few items change.
 const FOLDS = 5;
 const foldOf = new Array(pool.length);
+// With CALIBRATION only calibration rows are folded and scored; each fold's head trains on every other pool row.
+const scored = calIdx ?? pool.map((_, i) => i);
 for (let c = 0; c < LABELS.length; c++) {
-  shuffle(Y.map((y, i) => (y === c ? i : -1)).filter((i) => i >= 0)).forEach((i, k) => (foldOf[i] = k % FOLDS));
+  shuffle(scored.filter((i) => Y[i] === c)).forEach((i, k) => (foldOf[i] = k % FOLDS));
 }
 const oof = { cache: new Map() };
 for (let f = 0; f < FOLDS; f++) {
   const rest = pool.map((_, i) => i).filter((i) => foldOf[i] !== f);
   const h = { ...train(rest, chosen.l2), ref: rest };
-  for (let i = 0; i < pool.length; i++) if (foldOf[i] === f) predict(h, i, 0);
+  for (const i of scored) if (foldOf[i] === f) predict(h, i, 0);
   for (const [i, p] of h.cache ?? []) oof.cache.set(i, p);
 }
-const cv = bestThreshold(oof, pool.map((_, i) => i));
+const cv = bestThreshold(oof, scored);
 console.log(
   `${FOLDS}-fold: acc ${(cv.acc * 100).toFixed(1)}% @ t=${cv.threshold}, wrong ${(cv.wrongRate * 100).toFixed(1)}%, ` +
-    `other assigned ${(cv.otherRate * 100).toFixed(0)}% (at t=0: wrong ${(evaluate(oof, pool.map((_, i) => i), 0).wrongRate * 100).toFixed(1)}%)`,
+    `other assigned ${(cv.otherRate * 100).toFixed(0)}% (at t=0: wrong ${(evaluate(oof, scored, 0).wrongRate * 100).toFixed(1)}%)`,
 );
 
 // Learned-exemplar override: treat train-split items as a user's learned exemplars and pick the
