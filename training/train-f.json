@@ -1,0 +1,6002 @@
+[
+ {
+  "title": "(3) Building a ReAct Agent from Scratch with LangGraph - YouTube",
+  "url": "https://www.youtube.com/watch?v=MtI-RH36e-n",
+  "group": "ai"
+ },
+ {
+  "title": "Attention Is All You Need, Explained — Dr. Priya Raman (NeurIPS 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=m-dybeR7ZVe",
+  "group": "ai"
+ },
+ {
+  "title": "I Tried Claude Code for 30 Days #ai - YouTube",
+  "url": "https://www.youtube.com/watch?v=NFn5eZjbTV3",
+  "group": "ai"
+ },
+ {
+  "title": "Ep. 142: Scaling Laws and the End of Pretraining with Dara Okafor - YouTube",
+  "url": "https://www.youtube.com/shorts/01VcvjQytYu",
+  "group": "ai"
+ },
+ {
+  "title": "Why Fine-Tuning LLaMA Is Harder Than You Think - YouTube",
+  "url": "https://www.youtube.com/watch?v=3JmDKAt1MwT",
+  "group": "ai"
+ },
+ {
+  "title": "RAG vs Long Context: The Truth Nobody Admits - YouTube",
+  "url": "https://www.youtube.com/watch?v=LzKpfLHDsCf",
+  "group": "ai"
+ },
+ {
+  "title": "MCP Servers in 10 Minutes #shorts #aiagents - YouTube",
+  "url": "https://www.youtube.com/shorts/Xmh2MN7pEzO",
+  "group": "ai"
+ },
+ {
+  "title": "STOP Prompting Like This (Do This Instead) - YouTube",
+  "url": "https://www.youtube.com/shorts/RomNasXXBxG",
+  "group": "ai"
+ },
+ {
+  "title": "LoRA y QLoRA explicado paso a paso - YouTube",
+  "url": "https://www.youtube.com/watch?v=qs1sMd4RCl0",
+  "group": "ai"
+ },
+ {
+  "title": "(12) Transformers from Zero | Andrej-style lecture, part 3 - YouTube",
+  "url": "https://www.youtube.com/watch?v=soDXxaAg-rK",
+  "group": "ai"
+ },
+ {
+  "title": "GPT-5 vs Gemini 3 vs Opus: Honest Benchmarks - YouTube",
+  "url": "https://www.youtube.com/watch?v=L5U_qoFzYG8",
+  "group": "ai"
+ },
+ {
+  "title": "Diffusion Models, Intuitively — Hao Li (ICML 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/XG6yL4DvV53",
+  "group": "ai"
+ },
+ {
+  "title": "POV: your agent loops forever #fyp #llm - YouTube",
+  "url": "https://youtu.be/lpvdiQ0pJsl",
+  "group": "ai"
+ },
+ {
+  "title": "Nobody Talks About This: Context Window Rot - YouTube",
+  "url": "https://www.youtube.com/watch?v=MP66pRh0vtS",
+  "group": "ai"
+ },
+ {
+  "title": "Ollama + Open WebUI: Run LLMs Locally - YouTube",
+  "url": "https://www.youtube.com/watch?v=h2wrNEJ7C_e",
+  "group": "ai"
+ },
+ {
+  "title": "RLHF to GRPO: how reasoning models get trained | ML Reading Group - YouTube",
+  "url": "https://www.youtube.com/shorts/LPkMXLd5EB0",
+  "group": "ai"
+ },
+ {
+  "title": "Evals for LLM apps | Hamel-style workshop | AI Eng Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=Wk5ugoeWXLa",
+  "group": "ai"
+ },
+ {
+  "title": "vLLM Inference Tricks #shorts #mlops - YouTube",
+  "url": "https://www.youtube.com/shorts/A0ClokMLtQh",
+  "group": "ai"
+ },
+ {
+  "title": "大模型微调实战：从数据到部署 - YouTube",
+  "url": "https://www.youtube.com/watch?v=2g-iqfSBRcd",
+  "group": "ai"
+ },
+ {
+  "title": "Building a Multi-Agent Crew with CrewAI - YouTube",
+  "url": "https://www.youtube.com/shorts/ahFd-ujnuDG",
+  "group": "ai"
+ },
+ {
+  "title": "Mixture of Experts Explained in 8 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=_TMksYWFfUV",
+  "group": "ai"
+ },
+ {
+  "title": "(5) PyTorch Training Loop Debugging: Loss Goes NaN - YouTube",
+  "url": "https://www.youtube.com/watch?v=dhuoqOJ2I3G",
+  "group": "ai"
+ },
+ {
+  "title": "Tool Calling Is Not What You Think — Sam Whitfield (AI Engineer Summit 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=iPGHX-NS4u6",
+  "group": "ai"
+ },
+ {
+  "title": "Embeddings and Vector Search, Finally Clear - YouTube",
+  "url": "https://www.youtube.com/shorts/F4973JcTfMc",
+  "group": "ai"
+ },
+ {
+  "title": "Game Changer: Cursor Agents Write Whole PRs? #aicoding - YouTube",
+  "url": "https://www.youtube.com/watch?v=9a21cCgHdvn",
+  "group": "ai"
+ },
+ {
+  "title": "Karpathy-style nanoGPT walkthrough | Lex-style podcast #301 - YouTube",
+  "url": "https://youtu.be/BYX7x0IGiKH",
+  "group": "ai"
+ },
+ {
+  "title": "LLM 에이전트 만들기 기초 #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/grakutH-HL6",
+  "group": "ai"
+ },
+ {
+  "title": "Mamba and State Space Models: Are Transformers Dead? - YouTube",
+  "url": "https://www.youtube.com/shorts/77JVfjE7Pbm",
+  "group": "ai"
+ },
+ {
+  "title": "Cursor Pagination Done Right — Maya Lindqvist (GopherCon 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=WYUYAcnQSCN",
+  "group": "programming"
+ },
+ {
+  "title": "(3) Rust Ownership Finally Makes Sense - YouTube",
+  "url": "https://www.youtube.com/watch?v=osa48gzvX4h",
+  "group": "programming"
+ },
+ {
+  "title": "Why Kubernetes Is Harder Than You Think - YouTube",
+  "url": "https://www.youtube.com/watch?v=nhRuG_pR-9P",
+  "group": "programming"
+ },
+ {
+  "title": "Ep. 88: Maintaining a 10-Year-Old Django Codebase with Tom Reyes - YouTube",
+  "url": "https://www.youtube.com/shorts/RL1PJYGgr-3",
+  "group": "programming"
+ },
+ {
+  "title": "Python Decorators in 60 Seconds #shorts #python - YouTube",
+  "url": "https://www.youtube.com/shorts/-QjQr-Om8Hl",
+  "group": "programming"
+ },
+ {
+  "title": "STOP Writing Useless Unit Tests - YouTube",
+  "url": "https://www.youtube.com/watch?v=WccxSZiLMJk",
+  "group": "programming"
+ },
+ {
+  "title": "Designing APIs That Don't Break | Speaker: J. Okonkwo | Backend Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=FxjQsjg1G24",
+  "group": "programming"
+ },
+ {
+  "title": "TypeScript Generics Explained for Real - YouTube",
+  "url": "https://www.youtube.com/shorts/8m9mDtLgfCk",
+  "group": "programming"
+ },
+ {
+  "title": "Git Rebase vs Merge: The Truth - YouTube",
+  "url": "https://www.youtube.com/watch?v=9QRdMDmiOeM",
+  "group": "programming"
+ },
+ {
+  "title": "I Tried Vim for 30 Days as a Dev - YouTube",
+  "url": "https://www.youtube.com/watch?v=2QKioggacKh",
+  "group": "programming"
+ },
+ {
+  "title": "Docker Compose para principiantes - YouTube",
+  "url": "https://youtu.be/Dc5jvh-WaC1",
+  "group": "programming"
+ },
+ {
+  "title": "React Server Components Deep Dive — Lena Fischer (React Conf 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/lm79EWM1QRw",
+  "group": "programming"
+ },
+ {
+  "title": "POV: merge conflict at 5pm #fyp #coding - YouTube",
+  "url": "https://www.youtube.com/watch?v=Yjx_7skuKSy",
+  "group": "programming"
+ },
+ {
+  "title": "Level Up Your SQL Queries: Window Functions - YouTube",
+  "url": "https://www.youtube.com/watch?v=R5M4REi5zui",
+  "group": "programming"
+ },
+ {
+  "title": "Go Concurrency Patterns | Gophers Meetup #42 - YouTube",
+  "url": "https://www.youtube.com/watch?v=sW5LPYq4JAa",
+  "group": "programming"
+ },
+ {
+  "title": "(12) Zig vs C: Memory Safety Showdown - YouTube",
+  "url": "https://www.youtube.com/shorts/pGxR8tbzasd",
+  "group": "programming"
+ },
+ {
+  "title": "Clean Architecture Is Overrated? A Hot Take - YouTube",
+  "url": "https://www.youtube.com/watch?v=jVkkMkO_6Ux",
+  "group": "programming"
+ },
+ {
+  "title": "Linux Kernel Module Hello World #shorts #linux - YouTube",
+  "url": "https://www.youtube.com/shorts/NSQSUbdbyq8",
+  "group": "programming"
+ },
+ {
+  "title": "Postgres Indexing Nobody Talks About - YouTube",
+  "url": "https://www.youtube.com/watch?v=s65xQmu6UJN",
+  "group": "programming"
+ },
+ {
+  "title": "Refactoring Legacy Java: 5 Moves That Work - YouTube",
+  "url": "https://www.youtube.com/shorts/Hysw-cAWb7U",
+  "group": "programming"
+ },
+ {
+  "title": "Svelte 5 Runes Tutorial #webdev - YouTube",
+  "url": "https://www.youtube.com/watch?v=UzeNCiFjq17",
+  "group": "programming"
+ },
+ {
+  "title": "CI/CD with GitHub Actions from Scratch - YouTube",
+  "url": "https://www.youtube.com/watch?v=tkoeTLRvJcE",
+  "group": "programming"
+ },
+ {
+  "title": "Big O Notation in 5 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=JwaUzjyFukv",
+  "group": "programming"
+ },
+ {
+  "title": "プログラミング初心者がやりがちなミス #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/xU4QCt7hkWJ",
+  "group": "programming"
+ },
+ {
+  "title": "gRPC vs REST: Which One in 2026? - YouTube",
+  "url": "https://www.youtube.com/watch?v=RaoQtXNZpGv",
+  "group": "programming"
+ },
+ {
+  "title": "Writing a Compiler in a Weekend — Ravi Menon (StrangeLoop 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=6ZR7xNBdkcA",
+  "group": "programming"
+ },
+ {
+  "title": "जावास्क्रिप्ट क्लोजर आसान भाषा में - YouTube",
+  "url": "https://www.youtube.com/watch?v=VQt7YZqyMOa",
+  "group": "programming"
+ },
+ {
+  "title": "Debugging Race Conditions with rr and Friends - YouTube",
+  "url": "https://www.youtube.com/shorts/WArJticuByk",
+  "group": "programming"
+ },
+ {
+  "title": "(3) Typography Rules Designers Break on Purpose - YouTube",
+  "url": "https://www.youtube.com/watch?v=9XnIz2OZcme",
+  "group": "design"
+ },
+ {
+  "title": "Why Your UI Looks Cheap (Fix It Fast) #shorts #uidesign - YouTube",
+  "url": "https://www.youtube.com/shorts/gDOYYyGFNdm",
+  "group": "design"
+ },
+ {
+  "title": "Design Systems at Scale — Camille Duarte (Config 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/djWEZRHpdWr",
+  "group": "design"
+ },
+ {
+  "title": "Ep. 57: From Graphic Designer to Product Designer with Ines Park - YouTube",
+  "url": "https://www.youtube.com/watch?v=wnEyQxAbaDm",
+  "group": "design"
+ },
+ {
+  "title": "The Truth About Dark Mode Design - YouTube",
+  "url": "https://www.youtube.com/watch?v=IHzTOz0GjLp",
+  "group": "design"
+ },
+ {
+  "title": "Color Theory for Interfaces in 10 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=K6IxOMzGNi2",
+  "group": "design"
+ },
+ {
+  "title": "I Redesigned a Banking App in 7 Days - YouTube",
+  "url": "https://www.youtube.com/shorts/c33zT6ExafB",
+  "group": "design"
+ },
+ {
+  "title": "Kerning vs Tracking Explained #typography #fyp - YouTube",
+  "url": "https://youtu.be/1O576M9n8i0",
+  "group": "design"
+ },
+ {
+  "title": "Micro-interactions That Delight | Speaker: Noor Haddad | UX Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZK2Vny0Py8O",
+  "group": "design"
+ },
+ {
+  "title": "Nobody Talks About Accessibility Contrast Ratios - YouTube",
+  "url": "https://www.youtube.com/watch?v=ilQDlYtgZTg",
+  "group": "design"
+ },
+ {
+  "title": "Logo Design Process: Brief to Final - YouTube",
+  "url": "https://www.youtube.com/shorts/vt5qtfgkRUy",
+  "group": "design"
+ },
+ {
+  "title": "Framer vs Webflow for Designers - YouTube",
+  "url": "https://www.youtube.com/watch?v=N3FZjdduc76",
+  "group": "design"
+ },
+ {
+  "title": "(8) Designing an Icon Set in Illustrator - YouTube",
+  "url": "https://www.youtube.com/watch?v=nqvY4OfAWIn",
+  "group": "design"
+ },
+ {
+  "title": "Diseño de interfaces: errores comunes - YouTube",
+  "url": "https://www.youtube.com/watch?v=n8Z326ksVxb",
+  "group": "design"
+ },
+ {
+  "title": "Bento Grid Layouts in Figma #figma #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/1YNGWS1Spfl",
+  "group": "design"
+ },
+ {
+  "title": "UX Research Without a Budget — Aaron Kim (UX Week 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=T6yi4FlMGSs",
+  "group": "design"
+ },
+ {
+  "title": "Variable Fonts Deep Dive - YouTube",
+  "url": "https://www.youtube.com/watch?v=BCmaXSetaxk",
+  "group": "design"
+ },
+ {
+  "title": "Grids and Whitespace: The Invisible Skeleton - YouTube",
+  "url": "https://www.youtube.com/watch?v=cYo7lUxF0Kt",
+  "group": "design"
+ },
+ {
+  "title": "Stop Using Drop Shadows Like That - YouTube",
+  "url": "https://www.youtube.com/shorts/wX4f9h9LSUD",
+  "group": "design"
+ },
+ {
+  "title": "Branding a Coffee Shop from Zero | Design Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=N1mNlTLTzqd",
+  "group": "design"
+ },
+ {
+  "title": "Sketch to Prototype with Penpot - YouTube",
+  "url": "https://youtu.be/BRyhYVI-61F",
+  "group": "design"
+ },
+ {
+  "title": "Poster Design Tips from a Swiss Style Fan - YouTube",
+  "url": "https://www.youtube.com/watch?v=DoGwWJo6HHB",
+  "group": "design"
+ },
+ {
+  "title": "UI 디자인 포트폴리오 만드는 법 - YouTube",
+  "url": "https://www.youtube.com/shorts/DU-sYpPT2CA",
+  "group": "design"
+ },
+ {
+  "title": "Game Changer: Design Tokens Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=nE9oq1UksCN",
+  "group": "design"
+ },
+ {
+  "title": "Motion Design Principles for Apps - YouTube",
+  "url": "https://www.youtube.com/watch?v=-e9CzAts3BK",
+  "group": "design"
+ },
+ {
+  "title": "Affinity Designer 2 vs Illustrator - YouTube",
+  "url": "https://www.youtube.com/watch?v=cFX4SCiDX4g",
+  "group": "design"
+ },
+ {
+  "title": "Wireframing on Paper: Old School UX #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/Pizv4DMVkgI",
+  "group": "design"
+ },
+ {
+  "title": "How to Read the Kubernetes Docs Without Getting Lost - YouTube",
+  "url": "https://www.youtube.com/watch?v=9ssvTORCiik",
+  "group": "docs"
+ },
+ {
+  "title": "(3) Man Pages Are Great, Actually - YouTube",
+  "url": "https://www.youtube.com/watch?v=kxKeaej4m3a",
+  "group": "docs"
+ },
+ {
+  "title": "MDN Web Docs Tour: Hidden Gems - YouTube",
+  "url": "https://www.youtube.com/watch?v=wcioU-KjQHX",
+  "group": "docs"
+ },
+ {
+  "title": "Reading Datasheets Like a Pro (STM32 Reference Manual) #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/-vET2ZjPWZX",
+  "group": "docs"
+ },
+ {
+  "title": "Writing Documentation Developers Actually Read — Hannah Cole (Write the Docs 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=Xz7PO7I2gBf",
+  "group": "docs"
+ },
+ {
+  "title": "cppreference Tips Nobody Talks About - YouTube",
+  "url": "https://www.youtube.com/watch?v=I9T4RtHvYKL",
+  "group": "docs"
+ },
+ {
+  "title": "The Truth About README Files - YouTube",
+  "url": "https://youtu.be/Qq0yQDPJd-q",
+  "group": "docs"
+ },
+ {
+  "title": "Python Standard Library Reference: A Guided Tour - YouTube",
+  "url": "https://www.youtube.com/shorts/-Dd6ocA_zZG",
+  "group": "docs"
+ },
+ {
+  "title": "Ep. 33: Docs as Code with Priyanka Nair - YouTube",
+  "url": "https://www.youtube.com/watch?v=nn3oiaV7GeE",
+  "group": "docs"
+ },
+ {
+  "title": "Navigating the AWS Documentation Maze - YouTube",
+  "url": "https://www.youtube.com/watch?v=HnEJifQ68fw",
+  "group": "docs"
+ },
+ {
+  "title": "Rust Book Chapter 4 Walkthrough - YouTube",
+  "url": "https://www.youtube.com/watch?v=aE9JudA_75b",
+  "group": "docs"
+ },
+ {
+  "title": "ArchWiki Tricks Every Linux User Needs #linux #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/NHmwkRcIKAX",
+  "group": "docs"
+ },
+ {
+  "title": "OpenAPI Spec Explained: Reading API References - YouTube",
+  "url": "https://www.youtube.com/watch?v=Vy7VHAGm-q4",
+  "group": "docs"
+ },
+ {
+  "title": "(7) Reading RFCs: HTTP/3 Explained | Protocol Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=gpCeHWsdmCN",
+  "group": "docs"
+ },
+ {
+  "title": "Why Docs Are Harder to Write Than Code - YouTube",
+  "url": "https://www.youtube.com/watch?v=tBp2BnaXuFs",
+  "group": "docs"
+ },
+ {
+  "title": "How to Search Documentation Faster - YouTube",
+  "url": "https://www.youtube.com/shorts/0-zwRZDioHM",
+  "group": "docs"
+ },
+ {
+  "title": "Leyendo la documentación de Postgres - YouTube",
+  "url": "https://www.youtube.com/watch?v=WnZudRJTwmL",
+  "group": "docs"
+ },
+ {
+  "title": "Docusaurus Setup in 15 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=tAvu8FEGCU4",
+  "group": "docs"
+ },
+ {
+  "title": "Sphinx vs MkDocs for Project Docs - YouTube",
+  "url": "https://www.youtube.com/watch?v=ngegHsjvakY",
+  "group": "docs"
+ },
+ {
+  "title": "Wikipedia Editing 101: Citations and References - YouTube",
+  "url": "https://www.youtube.com/shorts/VrogIGFBsTJ",
+  "group": "docs"
+ },
+ {
+  "title": "TypeScript Handbook Summary #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/s1qATBVUaU2",
+  "group": "docs"
+ },
+ {
+  "title": "Swagger UI and Redoc Compared - YouTube",
+  "url": "https://www.youtube.com/watch?v=ty7h8WWl-EJ",
+  "group": "docs"
+ },
+ {
+  "title": "Understanding Changelogs and Release Notes - YouTube",
+  "url": "https://www.youtube.com/watch?v=nV2gZZfucJU",
+  "group": "docs"
+ },
+ {
+  "title": "ドキュメントの読み方入門 - YouTube",
+  "url": "https://www.youtube.com/shorts/0nEBD_aGW_p",
+  "group": "docs"
+ },
+ {
+  "title": "Reading the SQLite Docs | Database Meetup | Speaker: L. Ortiz - YouTube",
+  "url": "https://www.youtube.com/watch?v=WBVyYcReVPo",
+  "group": "docs"
+ },
+ {
+  "title": "Stripe-Style API Reference Design - YouTube",
+  "url": "https://www.youtube.com/watch?v=4_-0ZkpWUEr",
+  "group": "docs"
+ },
+ {
+  "title": "Linux Kernel Docs: Where to Start - YouTube",
+  "url": "https://www.youtube.com/watch?v=UMOKdSOoaV0",
+  "group": "docs"
+ },
+ {
+  "title": "Cheat Sheets vs Official Docs: Which Wins? - YouTube",
+  "url": "https://www.youtube.com/shorts/BIo77q3NNvt",
+  "group": "docs"
+ },
+ {
+  "title": "(3) Calculus 1 Full Course, Lecture 4: Limits - YouTube",
+  "url": "https://www.youtube.com/watch?v=t_6-yraC6AG",
+  "group": "learning"
+ },
+ {
+  "title": "Linear Algebra for Everyone | MIT 18.06 Lecture 7 - YouTube",
+  "url": "https://www.youtube.com/watch?v=9PszkTHColX",
+  "group": "learning"
+ },
+ {
+  "title": "Statistics Crash Course: p-values Demystified - YouTube",
+  "url": "https://www.youtube.com/watch?v=bXcyrGP8Xyi",
+  "group": "learning"
+ },
+ {
+  "title": "How I Learned Discrete Math in 30 Days - YouTube",
+  "url": "https://www.youtube.com/shorts/n4YJb7u3TS9",
+  "group": "learning"
+ },
+ {
+  "title": "Ep. 71: Learning How to Learn with Barbara Oakley-style Guest - YouTube",
+  "url": "https://youtu.be/MWUltXqyEN8",
+  "group": "learning"
+ },
+ {
+  "title": "STOP Re-reading Your Notes (Study Like This) - YouTube",
+  "url": "https://www.youtube.com/watch?v=GVfviKStQNS",
+  "group": "learning"
+ },
+ {
+  "title": "Organic Chemistry Course Lesson 12: SN1 vs SN2 - YouTube",
+  "url": "https://www.youtube.com/watch?v=cwHav3VauLR",
+  "group": "learning"
+ },
+ {
+  "title": "Probability Theory Full Lecture — Prof. A. Brandt (Open Course 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/ox1e86JAiSU",
+  "group": "learning"
+ },
+ {
+  "title": "Spaced Repetition Explained #shorts #studytips - YouTube",
+  "url": "https://www.youtube.com/shorts/XUlc_TOUP68",
+  "group": "learning"
+ },
+ {
+  "title": "Physics 101: Newton's Laws | Free Online Course - YouTube",
+  "url": "https://www.youtube.com/watch?v=L1236PWwWv2",
+  "group": "learning"
+ },
+ {
+  "title": "Fourier Series Made Simple - YouTube",
+  "url": "https://www.youtube.com/watch?v=MDse7ztYlbf",
+  "group": "learning"
+ },
+ {
+  "title": "Matemáticas básicas: fracciones desde cero - YouTube",
+  "url": "https://www.youtube.com/shorts/RzXZVPvtMo0",
+  "group": "learning"
+ },
+ {
+  "title": "Why Math Is Harder Than You Think (and How to Fix It) - YouTube",
+  "url": "https://www.youtube.com/watch?v=1ZMXiWSGQBf",
+  "group": "learning"
+ },
+ {
+  "title": "Intro to Economics Lecture 1 | Open University - YouTube",
+  "url": "https://www.youtube.com/watch?v=3-hOcE3kubl",
+  "group": "learning"
+ },
+ {
+  "title": "Biology Course Unit 3: Cell Division - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZZp7C4NtJUK",
+  "group": "learning"
+ },
+ {
+  "title": "Coursera vs edX: My Honest Review - YouTube",
+  "url": "https://www.youtube.com/shorts/YcBrOzOyUGf",
+  "group": "learning"
+ },
+ {
+  "title": "(12) Differential Equations in One Hour - YouTube",
+  "url": "https://www.youtube.com/watch?v=iyG_n_AntFD",
+  "group": "learning"
+ },
+ {
+  "title": "Level Up Your Study Habits #fyp #study - YouTube",
+  "url": "https://youtu.be/ahFTh_oSSss",
+  "group": "learning"
+ },
+ {
+  "title": "高等数学 第一讲 函数与极限 - YouTube",
+  "url": "https://www.youtube.com/watch?v=2NefGPtGRRk",
+  "group": "learning"
+ },
+ {
+  "title": "Number Theory for Beginners | Course Week 2 - YouTube",
+  "url": "https://www.youtube.com/shorts/BSIKJtBGDl9",
+  "group": "learning"
+ },
+ {
+  "title": "The Truth About Speed Reading Courses - YouTube",
+  "url": "https://www.youtube.com/watch?v=j-Q5mvG606b",
+  "group": "learning"
+ },
+ {
+  "title": "Logic and Proofs Lecture 5 - YouTube",
+  "url": "https://www.youtube.com/watch?v=TPPT5QOMFze",
+  "group": "learning"
+ },
+ {
+  "title": "गणित सीखें: बीजगणित का परिचय - YouTube",
+  "url": "https://www.youtube.com/watch?v=o70rpuSSik6",
+  "group": "learning"
+ },
+ {
+  "title": "Khan-style Algebra Review: Quadratics - YouTube",
+  "url": "https://www.youtube.com/shorts/0rP7Mv1epJd",
+  "group": "learning"
+ },
+ {
+  "title": "How to Pass AP Chemistry #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/zn6DR9Z-SHa",
+  "group": "learning"
+ },
+ {
+  "title": "Complete Beginner's Course in Data Structures — Week 1 - YouTube",
+  "url": "https://www.youtube.com/watch?v=bLb0E3TxguS",
+  "group": "learning"
+ },
+ {
+  "title": "Learn Any Subject Faster: Feynman Technique - YouTube",
+  "url": "https://www.youtube.com/watch?v=UVRGJh9_Fiz",
+  "group": "learning"
+ },
+ {
+  "title": "Geometry Basics Lesson 3: Triangles - YouTube",
+  "url": "https://www.youtube.com/shorts/ichgjo6-BFX",
+  "group": "learning"
+ },
+ {
+  "title": "Gmail Filters That Save Hours Every Week - YouTube",
+  "url": "https://www.youtube.com/watch?v=CUIJU_lr0L2",
+  "group": "work"
+ },
+ {
+  "title": "(3) Notion for Project Management: Full Setup - YouTube",
+  "url": "https://www.youtube.com/watch?v=wLvQk12Y04f",
+  "group": "work"
+ },
+ {
+  "title": "Google Sheets XLOOKUP Tutorial #shorts #sheets - YouTube",
+  "url": "https://www.youtube.com/shorts/mNIRDCnkm1U",
+  "group": "work"
+ },
+ {
+  "title": "Excel Pivot Tables in 10 Minutes - YouTube",
+  "url": "https://www.youtube.com/shorts/ca6XEOSPC02",
+  "group": "work"
+ },
+ {
+  "title": "Jira Workflow Setup for Small Teams - YouTube",
+  "url": "https://www.youtube.com/watch?v=4IABTvDO3qc",
+  "group": "work"
+ },
+ {
+  "title": "Slack Tips Nobody Talks About - YouTube",
+  "url": "https://www.youtube.com/watch?v=Amxfh4Pz0a6",
+  "group": "work"
+ },
+ {
+  "title": "Outlook Calendar Rules You Should Use - YouTube",
+  "url": "https://www.youtube.com/watch?v=9hVb-irhO6D",
+  "group": "work"
+ },
+ {
+  "title": "I Tried Linear for 30 Days at Work - YouTube",
+  "url": "https://www.youtube.com/shorts/bfjoIikgzsg",
+  "group": "work"
+ },
+ {
+  "title": "Google Docs Hidden Features #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=GUBrVQCBUFp",
+  "group": "work"
+ },
+ {
+  "title": "Ep. 19: Running Remote Teams with Chloe Barnes | Ops Podcast - YouTube",
+  "url": "https://www.youtube.com/watch?v=cLmD6WEoOrU",
+  "group": "work"
+ },
+ {
+  "title": "Trello vs Asana: Honest Comparison - YouTube",
+  "url": "https://www.youtube.com/watch?v=V3m30gJshq0",
+  "group": "work"
+ },
+ {
+  "title": "Airtable Automations Walkthrough — Dev Patel (Productivity Summit 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/wTyHDyMBkHu",
+  "group": "work"
+ },
+ {
+  "title": "Why Meetings Are Harder to Fix Than You Think - YouTube",
+  "url": "https://www.youtube.com/watch?v=CY2D0b-l-2r",
+  "group": "work"
+ },
+ {
+  "title": "Zapier Workflows for Busy Managers - YouTube",
+  "url": "https://www.youtube.com/watch?v=F1XuALxGK85",
+  "group": "work"
+ },
+ {
+  "title": "Microsoft Teams Setup for Your Company - YouTube",
+  "url": "https://www.youtube.com/watch?v=OHpwpJRtn5H",
+  "group": "work"
+ },
+ {
+  "title": "(9) Excel Macros and VBA Basics - YouTube",
+  "url": "https://www.youtube.com/shorts/m025jsOWQkO",
+  "group": "work"
+ },
+ {
+  "title": "Confluence Page Templates That Work - YouTube",
+  "url": "https://www.youtube.com/watch?v=rCA2_O-uIa1",
+  "group": "work"
+ },
+ {
+  "title": "Calendly and Google Calendar Integration - YouTube",
+  "url": "https://www.youtube.com/watch?v=PtkUh23TqcF",
+  "group": "work"
+ },
+ {
+  "title": "Hojas de cálculo para presupuestos de equipo - YouTube",
+  "url": "https://www.youtube.com/watch?v=jE30IFo-GcA",
+  "group": "work"
+ },
+ {
+  "title": "Asana Boards Tutorial for Beginners - YouTube",
+  "url": "https://www.youtube.com/shorts/x2qbhxUTaza",
+  "group": "work"
+ },
+ {
+  "title": "Inbox Zero Method | Productivity Meetup | Speaker: R. Silva - YouTube",
+  "url": "https://www.youtube.com/watch?v=mKyIqQ4hxUE",
+  "group": "work"
+ },
+ {
+  "title": "Zoom Shortcuts Cheat Sheet #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/HiagwSv24W8",
+  "group": "work"
+ },
+ {
+  "title": "Monday.com Review After 6 Months - YouTube",
+  "url": "https://www.youtube.com/watch?v=S2ibU8Dr2i0",
+  "group": "work"
+ },
+ {
+  "title": "Google Workspace Admin Console Basics - YouTube",
+  "url": "https://www.youtube.com/shorts/jzqKFt0VWLq",
+  "group": "work"
+ },
+ {
+  "title": "Notion Databases and Relations Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=vh7vGPx7V_5",
+  "group": "work"
+ },
+ {
+  "title": "ClickUp Setup for Agencies - YouTube",
+  "url": "https://www.youtube.com/watch?v=CTHVWKD8XBS",
+  "group": "work"
+ },
+ {
+  "title": "Level Up Your Spreadsheet Skills: Conditional Formatting - YouTube",
+  "url": "https://www.youtube.com/watch?v=GwUVRlMHXEf",
+  "group": "work"
+ },
+ {
+  "title": "Slack 活用術 仕事効率化 - YouTube",
+  "url": "https://www.youtube.com/shorts/JCF0HQaoC10",
+  "group": "work"
+ },
+ {
+  "title": "How Kalman Filters Actually Work - YouTube",
+  "url": "https://youtu.be/2gjdIremDfW",
+  "group": "science"
+ },
+ {
+  "title": "(3) Why Is the Sky Blue? Rayleigh Scattering Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=ASkMWfUXS0j",
+  "group": "science"
+ },
+ {
+  "title": "Black Holes and Hawking Radiation — Dr. Elena Voss (Perimeter Lecture 2025) - YouTube",
+  "url": "https://www.youtube.com/watch?v=MBNkLxS5hXO",
+  "group": "science"
+ },
+ {
+  "title": "CRISPR Explained in 5 Minutes #shorts #biology - YouTube",
+  "url": "https://www.youtube.com/shorts/CVY2s0lenaW",
+  "group": "science"
+ },
+ {
+  "title": "Ep. 210: The Physics of Time with Prof. Mark Sandoval - YouTube",
+  "url": "https://www.youtube.com/watch?v=Q61PG0VBKNV",
+  "group": "science"
+ },
+ {
+  "title": "Nobody Talks About This Chemistry Fact - YouTube",
+  "url": "https://www.youtube.com/watch?v=iAcsSYX5mCg",
+  "group": "science"
+ },
+ {
+  "title": "James Webb Telescope's Latest Image Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=UnOpP74bJnM",
+  "group": "science"
+ },
+ {
+  "title": "Why Quantum Entanglement Is Harder Than You Think - YouTube",
+  "url": "https://www.youtube.com/shorts/MkhUM6yfm0S",
+  "group": "science"
+ },
+ {
+  "title": "JWST Finds Early Galaxy #space #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=hlJA7jf3-Tv",
+  "group": "science"
+ },
+ {
+  "title": "The Truth About Dark Matter - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZGia3cibtql",
+  "group": "science"
+ },
+ {
+  "title": "How Bridges Don't Collapse: Structural Engineering - YouTube",
+  "url": "https://www.youtube.com/watch?v=gJTLYDlQRPU",
+  "group": "science"
+ },
+ {
+  "title": "Entropy Explained with a Deck of Cards - YouTube",
+  "url": "https://www.youtube.com/shorts/Kuo2xT1RDBG",
+  "group": "science"
+ },
+ {
+  "title": "Photosynthesis at the Molecular Level - YouTube",
+  "url": "https://www.youtube.com/watch?v=qUDnkf4H2CP",
+  "group": "science"
+ },
+ {
+  "title": "(11) How Do Jet Engines Work? - YouTube",
+  "url": "https://youtu.be/5-dszSoMOkt",
+  "group": "science"
+ },
+ {
+  "title": "Teoría de la relatividad en 10 minutos - YouTube",
+  "url": "https://www.youtube.com/watch?v=gh5MmSgSvSc",
+  "group": "science"
+ },
+ {
+  "title": "Superconductors Demystified | Physics Meetup | Speaker: K. Tanaka - YouTube",
+  "url": "https://www.youtube.com/shorts/vwWEyAgoPrp",
+  "group": "science"
+ },
+ {
+  "title": "Mars Sample Return: What Went Wrong - YouTube",
+  "url": "https://www.youtube.com/watch?v=-qJqZwjchKK",
+  "group": "science"
+ },
+ {
+  "title": "How Vaccines Train Your Immune System - YouTube",
+  "url": "https://www.youtube.com/watch?v=nWEEVOLXl2J",
+  "group": "science"
+ },
+ {
+  "title": "Fluid Dynamics: Why Golf Balls Have Dimples - YouTube",
+  "url": "https://www.youtube.com/watch?v=-6OrJjDUuDu",
+  "group": "science"
+ },
+ {
+  "title": "Thermodynamics Laws Simplified #shorts #physics - YouTube",
+  "url": "https://www.youtube.com/shorts/VorxnYspjUF",
+  "group": "science"
+ },
+ {
+  "title": "The Standard Model in 15 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=voIscRJfnL-",
+  "group": "science"
+ },
+ {
+  "title": "Engineering Marvels: How Dams Hold Back Oceans - YouTube",
+  "url": "https://www.youtube.com/watch?v=Nmk6UY9CmCt",
+  "group": "science"
+ },
+ {
+  "title": "黑洞是怎么形成的 - YouTube",
+  "url": "https://www.youtube.com/watch?v=6M-DMd0jb2o",
+  "group": "science"
+ },
+ {
+  "title": "Laplace Transform Intuition for Engineers - YouTube",
+  "url": "https://www.youtube.com/shorts/x0H4JxCfvOI",
+  "group": "science"
+ },
+ {
+  "title": "Evolution by Natural Selection, Visualized - YouTube",
+  "url": "https://www.youtube.com/watch?v=aKfk1b76sug",
+  "group": "science"
+ },
+ {
+  "title": "Cosmic Microwave Background Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=A9_pqn0ImXg",
+  "group": "science"
+ },
+ {
+  "title": "블랙홀 사건의 지평선 #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/gOn-Fx2FIcW",
+  "group": "science"
+ },
+ {
+  "title": "Inside a Nuclear Reactor: How Fission Works - YouTube",
+  "url": "https://www.youtube.com/shorts/5RmuQ6-0E8D",
+  "group": "science"
+ },
+ {
+  "title": "ESP32 Deep Sleep Tutorial #esp32 #maker #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/qzhH-NBPDTR",
+  "group": "hardware"
+ },
+ {
+  "title": "(3) Lathe Basics: Turning Your First Part - YouTube",
+  "url": "https://www.youtube.com/watch?v=v225RzAvB5k",
+  "group": "hardware"
+ },
+ {
+  "title": "Building a Drone with Kalman Filter on STM32 - YouTube",
+  "url": "https://www.youtube.com/watch?v=E4iTtnpTWfA",
+  "group": "hardware"
+ },
+ {
+  "title": "I Tried 3D Printing for 30 Days (PETG Edition) - YouTube",
+  "url": "https://www.youtube.com/shorts/ugBNhI-tYi9",
+  "group": "hardware"
+ },
+ {
+  "title": "Ep. 64: Running a CNC Job Shop with Dave Kowalski - YouTube",
+  "url": "https://www.youtube.com/watch?v=hQ-95m6OY3I",
+  "group": "hardware"
+ },
+ {
+  "title": "Soldering SMD Parts: The Truth - YouTube",
+  "url": "https://www.youtube.com/watch?v=OA5-FNGTigQ",
+  "group": "hardware"
+ },
+ {
+  "title": "Arduino Nano Servo Robot Arm Build - YouTube",
+  "url": "https://www.youtube.com/watch?v=L-DBe6beQC6",
+  "group": "hardware"
+ },
+ {
+  "title": "KiCad 8 PCB Layout Walkthrough — Tomasz Wrobel (Hackaday Supercon 2025) - YouTube",
+  "url": "https://www.youtube.com/shorts/tD8BUPNi0WC",
+  "group": "hardware"
+ },
+ {
+  "title": "Raspberry Pi Pico W Weather Station - YouTube",
+  "url": "https://www.youtube.com/watch?v=Twpj8HpmTov",
+  "group": "hardware"
+ },
+ {
+  "title": "Why CNC Router Calibration Is Harder Than You Think - YouTube",
+  "url": "https://www.youtube.com/watch?v=pv5J6cka454",
+  "group": "hardware"
+ },
+ {
+  "title": "Ender 3 V3 SE Bed Leveling Fix #3dprinting #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=VmfTvuIupiq",
+  "group": "hardware"
+ },
+ {
+  "title": "Hand-Plane Setup for Woodworking Beginners - YouTube",
+  "url": "https://www.youtube.com/shorts/rCLscuNfpAn",
+  "group": "hardware"
+ },
+ {
+  "title": "MPU6050 + ESP32 Self-Balancing Robot - YouTube",
+  "url": "https://www.youtube.com/watch?v=NtwDD7kH8MU",
+  "group": "hardware"
+ },
+ {
+  "title": "(14) Milling Aluminum on a Benchtop Mill - YouTube",
+  "url": "https://www.youtube.com/watch?v=ou1wxL3uv5i",
+  "group": "hardware"
+ },
+ {
+  "title": "Cómo soldar componentes SMD paso a paso - YouTube",
+  "url": "https://www.youtube.com/watch?v=wVDEAA6XAGl",
+  "group": "hardware"
+ },
+ {
+  "title": "Designing a Custom PCB for LoRa Sensors | Maker Meetup - YouTube",
+  "url": "https://www.youtube.com/shorts/YSuptPzlhez",
+  "group": "hardware"
+ },
+ {
+  "title": "Fusion 360 CAM for CNC: First Toolpath - YouTube",
+  "url": "https://www.youtube.com/watch?v=oOoSaI5Wmpe",
+  "group": "hardware"
+ },
+ {
+  "title": "Level Up Your Workbench: DIY Soldering Station #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/--qsGYiUzs9",
+  "group": "hardware"
+ },
+ {
+  "title": "Marlin Firmware Tuning Nobody Talks About - YouTube",
+  "url": "https://www.youtube.com/watch?v=L5QcSJaL3NG",
+  "group": "hardware"
+ },
+ {
+  "title": "WS2812B LED Matrix with Arduino Mega - YouTube",
+  "url": "https://www.youtube.com/shorts/iQkQ9U1FIu-",
+  "group": "hardware"
+ },
+ {
+  "title": "Building a Line-Following Robot from Scratch - YouTube",
+  "url": "https://www.youtube.com/watch?v=5LuzWXxczEg",
+  "group": "hardware"
+ },
+ {
+  "title": "Dovetail Joints by Hand #woodworking - YouTube",
+  "url": "https://www.youtube.com/watch?v=g2w8Rq7sgEf",
+  "group": "hardware"
+ },
+ {
+  "title": "ESP32-S3 Camera Streaming Project - YouTube",
+  "url": "https://www.youtube.com/watch?v=jyi0szzQD3I",
+  "group": "hardware"
+ },
+ {
+  "title": "3D프린터 필라멘트 건조기 만들기 #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/vBu6ocn0JlW",
+  "group": "hardware"
+ },
+ {
+  "title": "Oscilloscope Basics for Makers - YouTube",
+  "url": "https://youtu.be/yNgMDzm-MuY",
+  "group": "hardware"
+ },
+ {
+  "title": "GRBL Settings Explained for a 3018 CNC - YouTube",
+  "url": "https://www.youtube.com/watch?v=z5xuqs_EvUR",
+  "group": "hardware"
+ },
+ {
+  "title": "STM32 Blue Pill Bare-Metal Blinky - YouTube",
+  "url": "https://www.youtube.com/watch?v=1jHG6eC0gVI",
+  "group": "hardware"
+ },
+ {
+  "title": "Reflow Oven from a Toaster: Does It Work? - YouTube",
+  "url": "https://www.youtube.com/shorts/FtmeM3YGUqq",
+  "group": "hardware"
+ },
+ {
+  "title": "(3) Day in My Life as a College Student - YouTube",
+  "url": "https://www.youtube.com/watch?v=XMaRp6sN6UE",
+  "group": "videos"
+ },
+ {
+  "title": "I Spent 24 Hours in a Capsule Hotel - YouTube",
+  "url": "https://www.youtube.com/watch?v=Q9b3itnUW1T",
+  "group": "videos"
+ },
+ {
+  "title": "Funniest Fails of the Week Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=RqkNtAddeoB",
+  "group": "videos"
+ },
+ {
+  "title": "POV: you wake up late #fyp #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/ZD35XQScQQd",
+  "group": "videos"
+ },
+ {
+  "title": "ASMR Keyboard Sounds for Sleeping - YouTube",
+  "url": "https://www.youtube.com/watch?v=U2a6SUgg2LG",
+  "group": "videos"
+ },
+ {
+  "title": "Prank on My Roommate Went Wrong - YouTube",
+  "url": "https://www.youtube.com/watch?v=f0qohLx4gvL",
+  "group": "videos"
+ },
+ {
+  "title": "Try Not to Laugh Challenge #7 - YouTube",
+  "url": "https://www.youtube.com/shorts/ttT7VjxP0KP",
+  "group": "videos"
+ },
+ {
+  "title": "Morning Vlog: Rainy Day in the City - YouTube",
+  "url": "https://www.youtube.com/watch?v=5_R51_uZ21c",
+  "group": "videos"
+ },
+ {
+  "title": "(12) Subscribe Special: Q&A and Chill - YouTube",
+  "url": "https://youtu.be/3dzfgInjwwR",
+  "group": "videos"
+ },
+ {
+  "title": "Cats Being Weird Compilation #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/TwHA1Yzb3jy",
+  "group": "videos"
+ },
+ {
+  "title": "We Bought a Mystery Box for $500 - YouTube",
+  "url": "https://www.youtube.com/shorts/f1mbTNtQrkk",
+  "group": "videos"
+ },
+ {
+  "title": "Last-Minute Packing Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ayc43tfLbw1",
+  "group": "videos"
+ },
+ {
+  "title": "Unboxing Fan Mail from Subscribers - YouTube",
+  "url": "https://www.youtube.com/watch?v=rQqXryzQxrl",
+  "group": "videos"
+ },
+ {
+  "title": "Ep. 12: Just Chatting with Friends | Casual Podcast - YouTube",
+  "url": "https://www.youtube.com/watch?v=P8oy5ib3zfp",
+  "group": "videos"
+ },
+ {
+  "title": "Random Funny Clips That Made My Day - YouTube",
+  "url": "https://www.youtube.com/shorts/JPR0iAXe42L",
+  "group": "videos"
+ },
+ {
+  "title": "Weekend Reset Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=71u_STIHOqk",
+  "group": "videos"
+ },
+ {
+  "title": "24 Hours Without My Phone Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=HmzrBS1_QKk",
+  "group": "videos"
+ },
+ {
+  "title": "1 Hour of Rain Sounds ASMR - YouTube",
+  "url": "https://www.youtube.com/watch?v=yRpDtdUIFc5",
+  "group": "videos"
+ },
+ {
+  "title": "Reaction: Watching Old Cartoons Again - YouTube",
+  "url": "https://www.youtube.com/shorts/9JtyJ5NcAAZ",
+  "group": "videos"
+ },
+ {
+  "title": "People Doing Weird Things Compilation #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=qjWWy-pq8_R",
+  "group": "videos"
+ },
+ {
+  "title": "The Best Moments of the Month - YouTube",
+  "url": "https://youtu.be/HZLwexe-Qgc",
+  "group": "videos"
+ },
+ {
+  "title": "My Honest Thoughts After a Year on YouTube - YouTube",
+  "url": "https://www.youtube.com/shorts/NY7xAxsXytY",
+  "group": "videos"
+ },
+ {
+  "title": "Cooking Up Chaos: Our Chaotic Weekend - YouTube",
+  "url": "https://www.youtube.com/watch?v=YX-Zi26gZ53",
+  "group": "videos"
+ },
+ {
+  "title": "Satisfying Loop Video #shorts #satisfying - YouTube",
+  "url": "https://www.youtube.com/shorts/yCzw8ivWy1_",
+  "group": "videos"
+ },
+ {
+  "title": "Surprising My Friend for Her Birthday - YouTube",
+  "url": "https://www.youtube.com/watch?v=gTvaSnKKbzo",
+  "group": "videos"
+ },
+ {
+  "title": "Sunday Vlog: Errands and Coffee - YouTube",
+  "url": "https://www.youtube.com/shorts/NtayrGJ02KO",
+  "group": "videos"
+ },
+ {
+  "title": "Day in the Life: Night Shift Edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=6xFuzJf2U2F",
+  "group": "videos"
+ },
+ {
+  "title": "Whiteboard Challenge with Strangers - YouTube",
+  "url": "https://www.youtube.com/watch?v=TDmI09iWyNF",
+  "group": "videos"
+ },
+ {
+  "title": "POV: friends group chat #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/uoN5PJEh7hO",
+  "group": "videos"
+ },
+ {
+  "title": "Trying Weird Snacks from Around the World - YouTube",
+  "url": "https://www.youtube.com/shorts/wlDsqFLsmOJ",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Dog Reactions Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=dg0iqx1sYmn",
+  "group": "videos"
+ },
+ {
+  "title": "Vlog 047: Moving Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZfwOY-DUl8o",
+  "group": "videos"
+ },
+ {
+  "title": "Cute Moments Shorts Compilation #cute - YouTube",
+  "url": "https://www.youtube.com/watch?v=8foVBcQbhKD",
+  "group": "videos"
+ },
+ {
+  "title": "Challenge: Don't Blink for 5 Minutes - YouTube",
+  "url": "https://www.youtube.com/shorts/vI9ESpi2pzD",
+  "group": "videos"
+ },
+ {
+  "title": "Bloopers and Outtakes 2025 - YouTube",
+  "url": "https://www.youtube.com/watch?v=_w-SnrGC4R6",
+  "group": "videos"
+ },
+ {
+  "title": "Little Life Update | Channel Announcement - YouTube",
+  "url": "https://www.youtube.com/watch?v=ciWvojerhbD",
+  "group": "videos"
+ },
+ {
+  "title": "Reaction Video: Viral Clips - YouTube",
+  "url": "https://www.youtube.com/watch?v=xTpgDsriwt0",
+  "group": "videos"
+ },
+ {
+  "title": "Walking Around Tokyo at Night, No Talking - YouTube",
+  "url": "https://www.youtube.com/shorts/JnCQdVcSoX5",
+  "group": "videos"
+ },
+ {
+  "title": "Game Changer Moment Caught on Camera - YouTube",
+  "url": "https://www.youtube.com/watch?v=EFKLJ7XKcQv",
+  "group": "videos"
+ },
+ {
+  "title": "(5) Grocery Haul and Chitchat - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZVpPuPa7GT1",
+  "group": "videos"
+ },
+ {
+  "title": "我的一天 日常vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=e_ebM2liimO",
+  "group": "videos"
+ },
+ {
+  "title": "Mi día en la ciudad | vlog - YouTube",
+  "url": "https://www.youtube.com/shorts/VBuf0d5bDUN",
+  "group": "videos"
+ },
+ {
+  "title": "मेरा दिन: डेली व्लॉग - YouTube",
+  "url": "https://www.youtube.com/watch?v=7TJ31OfenJW",
+  "group": "videos"
+ },
+ {
+  "title": "ඔබේ දවස: එදිනෙදා වීඩියෝ - YouTube",
+  "url": "https://www.youtube.com/watch?v=bPZD1E_Fu61",
+  "group": "videos"
+ },
+ {
+  "title": "일상 브이로그 #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/67tT_P1Xpw-",
+  "group": "videos"
+ },
+ {
+  "title": "休日のVlog ゆるい一日 - YouTube",
+  "url": "https://www.youtube.com/shorts/eRPhDrVpz6p",
+  "group": "videos"
+ },
+ {
+  "title": "Stream Highlights: Chat Goes Wild - YouTube",
+  "url": "https://youtu.be/Bp_auKae9Zw",
+  "group": "videos"
+ },
+ {
+  "title": "Hiding from Siblings Challenge #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=577mqu43cWU",
+  "group": "videos"
+ },
+ {
+  "title": "Road Trip Playlist Talk and Snacks - YouTube",
+  "url": "https://www.youtube.com/watch?v=vG4FjiYM68k",
+  "group": "videos"
+ },
+ {
+  "title": "Roommate Reacts to My Cooking Fails - YouTube",
+  "url": "https://www.youtube.com/shorts/PFuTfVtsGez",
+  "group": "videos"
+ },
+ {
+  "title": "Things That Just Happened Today Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=UyOteHE1pGV",
+  "group": "videos"
+ },
+ {
+  "title": "Compilation of Awkward Moments - YouTube",
+  "url": "https://www.youtube.com/watch?v=BASOBKkep-X",
+  "group": "videos"
+ },
+ {
+  "title": "Trying to Stay Awake for 48 Hours - YouTube",
+  "url": "https://www.youtube.com/watch?v=8QLoddmRwpJ",
+  "group": "videos"
+ },
+ {
+  "title": "Silent Vlog: Slow Morning Routine - YouTube",
+  "url": "https://www.youtube.com/shorts/j3phpnGV-t9",
+  "group": "videos"
+ },
+ {
+  "title": "Reading Hate Comments Out Loud - YouTube",
+  "url": "https://www.youtube.com/watch?v=KnNMo_Ne94f",
+  "group": "videos"
+ },
+ {
+  "title": "Surprise Visit Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=z7D1rI3B8fh",
+  "group": "videos"
+ },
+ {
+  "title": "Best Shorts of the Week #shorts #funny - YouTube",
+  "url": "https://www.youtube.com/shorts/_Q7KChLa2Q8",
+  "group": "videos"
+ },
+ {
+  "title": "Nobody Talks About This Weird Trend - YouTube",
+  "url": "https://www.youtube.com/shorts/_dUgIMTHh0O",
+  "group": "videos"
+ },
+ {
+  "title": "I Let Strangers Pick My Outfit for a Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=q9E8qrv7aRt",
+  "group": "videos"
+ },
+ {
+  "title": "Throwback: Our Old Clips - YouTube",
+  "url": "https://youtu.be/Bqq5yU06b9B",
+  "group": "videos"
+ },
+ {
+  "title": "POV: Monday morning energy #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=vxFoXttv4C6",
+  "group": "videos"
+ },
+ {
+  "title": "Ep. 3: Random Talk with Mia and Leo - YouTube",
+  "url": "https://www.youtube.com/shorts/TTxDbxuyha6",
+  "group": "videos"
+ },
+ {
+  "title": "Tiktok Reposts That Made Me Laugh - YouTube",
+  "url": "https://www.youtube.com/watch?v=CYwY1vh6xrm",
+  "group": "videos"
+ },
+ {
+  "title": "Weekly Recap and Updates - YouTube",
+  "url": "https://www.youtube.com/watch?v=CcEJ3hs6mg7",
+  "group": "videos"
+ },
+ {
+  "title": "Quick Hello from the Backyard #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/hbmMRJG-dvg",
+  "group": "videos"
+ },
+ {
+  "title": "Our Cat Meets a Cucumber - YouTube",
+  "url": "https://www.youtube.com/shorts/mpGp_kCGXmI",
+  "group": "videos"
+ },
+ {
+  "title": "Prank Calling My Mom (She Fell for It) - YouTube",
+  "url": "https://www.youtube.com/watch?v=5edPRQVRdd6",
+  "group": "videos"
+ },
+ {
+  "title": "Summer Break Vlog Part 2 - YouTube",
+  "url": "https://www.youtube.com/watch?v=kzwzUPrJmWK",
+  "group": "videos"
+ },
+ {
+  "title": "(7) Spending a Day Offline - YouTube",
+  "url": "https://www.youtube.com/watch?v=vwDFXB0G_zz",
+  "group": "videos"
+ },
+ {
+  "title": "Blindfolded Taste Test Challenge - YouTube",
+  "url": "https://www.youtube.com/shorts/nWR0Puuciz9",
+  "group": "videos"
+ },
+ {
+  "title": "Sleepy Sunday Reaction Stream - YouTube",
+  "url": "https://www.youtube.com/watch?v=cruO9ssSfS6",
+  "group": "videos"
+ },
+ {
+  "title": "Street Interview: What Makes You Happy? - YouTube",
+  "url": "https://www.youtube.com/watch?v=2iGXa2gKpN2",
+  "group": "videos"
+ },
+ {
+  "title": "ASMR Page Turning and Whispering - YouTube",
+  "url": "https://youtu.be/yDijChsayxy",
+  "group": "videos"
+ },
+ {
+  "title": "Life Lately | Casual Catch-up - YouTube",
+  "url": "https://www.youtube.com/shorts/gPY-yyfgZ0p",
+  "group": "videos"
+ },
+ {
+  "title": "The Funniest Things My Little Brother Said - YouTube",
+  "url": "https://www.youtube.com/watch?v=ffPK4W7HMru",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Dune Part Three Official Trailer #2 - YouTube",
+  "url": "https://www.youtube.com/shorts/io6HfjmyCv9",
+  "group": "movies"
+ },
+ {
+  "title": "Oppenheimer Ending Explained | Nolan Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=dZ9Z8_qbfSb",
+  "group": "movies"
+ },
+ {
+  "title": "Why Everything Everywhere All at Once Works — Film Analysis - YouTube",
+  "url": "https://www.youtube.com/watch?v=F2TAdSk9AxT",
+  "group": "movies"
+ },
+ {
+  "title": "The Godfather (1972) Opening Scene Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=iqqnK7xduVt",
+  "group": "movies"
+ },
+ {
+  "title": "Top 10 Horror Movies of 2025 RANKED - YouTube",
+  "url": "https://www.youtube.com/watch?v=cNdqh3Z7vJr",
+  "group": "movies"
+ },
+ {
+  "title": "Inception Ending in 60 Seconds #shorts #movies - YouTube",
+  "url": "https://www.youtube.com/shorts/yyLHZ3uiPZ3",
+  "group": "movies"
+ },
+ {
+  "title": "Avengers: Doomsday Teaser: Every Easter Egg - YouTube",
+  "url": "https://www.youtube.com/watch?v=1sh5o6Yy0Gn",
+  "group": "movies"
+ },
+ {
+  "title": "(9) Spirited Away: Why Ghibli's Masterpiece Still Hits - YouTube",
+  "url": "https://www.youtube.com/watch?v=4FRxuYLS4Zx",
+  "group": "movies"
+ },
+ {
+  "title": "(11) Parasite (2019) Bong Joon-ho Q&A at Cannes - YouTube",
+  "url": "https://www.youtube.com/shorts/1jN5ZNr0_Aq",
+  "group": "movies"
+ },
+ {
+  "title": "Interstellar Docking Scene Hans Zimmer #film - YouTube",
+  "url": "https://www.youtube.com/watch?v=Gg6_TV75Lum",
+  "group": "movies"
+ },
+ {
+  "title": "Joker: Folie à Deux REVIEW - Did It Deserve the Hate? - YouTube",
+  "url": "https://www.youtube.com/watch?v=-xpcefXW8YH",
+  "group": "movies"
+ },
+ {
+  "title": "Nobody Talks About This Scene in The Matrix Resurrections - YouTube",
+  "url": "https://www.youtube.com/watch?v=c2JImkocdkX",
+  "group": "movies"
+ },
+ {
+  "title": "Mad Max: Fury Road - How They Filmed the Chase (BTS) - YouTube",
+  "url": "https://www.youtube.com/shorts/TLlAG3P6FWj",
+  "group": "movies"
+ },
+ {
+  "title": "Pulp Fiction Dance Scene #shorts #movie - YouTube",
+  "url": "https://www.youtube.com/shorts/JxOAVlYruHG",
+  "group": "movies"
+ },
+ {
+  "title": "Movie Review: Barbie (2023) — Is It Actually Good? - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZERxRhUauvI",
+  "group": "movies"
+ },
+ {
+  "title": "Blade Runner 2049 | Cinematography Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=FPY37alaONt",
+  "group": "movies"
+ },
+ {
+  "title": "Gladiator II Full Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=TaZ9Ji_uSUr",
+  "group": "movies"
+ },
+ {
+  "title": "Every Pixar Movie Ranked Worst to Best - YouTube",
+  "url": "https://www.youtube.com/watch?v=h1pvt8d1ArD",
+  "group": "movies"
+ },
+ {
+  "title": "(8) Spider-Man: Across the Spider-Verse - Official Trailer (HD) - YouTube",
+  "url": "https://www.youtube.com/watch?v=k4Lmw5JLkdV",
+  "group": "movies"
+ },
+ {
+  "title": "Fight Club Plot Twist Explained #fightclub #filmtok - YouTube",
+  "url": "https://www.youtube.com/shorts/skSW1LuJhXU",
+  "group": "movies"
+ },
+ {
+  "title": "सलमान खान की नई फिल्म का ट्रेलर | Official Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=N8SR5z3TK3m",
+  "group": "movies"
+ },
+ {
+  "title": "(3) Película: El Laberinto del Fauno — Análisis Completo - YouTube",
+  "url": "https://www.youtube.com/watch?v=IahSrV2bbXD",
+  "group": "movies"
+ },
+ {
+  "title": "Shawshank Redemption: 5 Things You Missed - YouTube",
+  "url": "https://www.youtube.com/shorts/WMx2LeVtL4w",
+  "group": "movies"
+ },
+ {
+  "title": "The Dark Knight Joker Interrogation Scene #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/FekMvczal0n",
+  "group": "movies"
+ },
+ {
+  "title": "Oscars 2026 Best Picture Nominees: Predictions - YouTube",
+  "url": "https://www.youtube.com/watch?v=aDl3S_cCZpS",
+  "group": "movies"
+ },
+ {
+  "title": "映画『君の名は。』感想レビュー ネタバレなし - YouTube",
+  "url": "https://www.youtube.com/watch?v=g807i4afc2y",
+  "group": "movies"
+ },
+ {
+  "title": "Frozen III Teaser Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=elp2BjgCrTr",
+  "group": "movies"
+ },
+ {
+  "title": "Tarantino on Writing Dialogue | Film Podcast Ep. 88 with Edgar Wright - YouTube",
+  "url": "https://youtu.be/AxKjypDyL1C",
+  "group": "movies"
+ },
+ {
+  "title": "Squid Game Season 3 Episode 6 Recap - YouTube",
+  "url": "https://www.youtube.com/watch?v=PsXOydMA-D9",
+  "group": "tv"
+ },
+ {
+  "title": "Breaking Bad: The Perfect Pilot Episode Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=k9HRtAc5Bmb",
+  "group": "tv"
+ },
+ {
+  "title": "Crash Landing on You - Hyun Bin & Son Ye-jin Best Moments #kdrama #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/sM4uoMPYgTW",
+  "group": "tv"
+ },
+ {
+  "title": "Queen of Tears Ep 12 Eng Sub Clip - YouTube",
+  "url": "https://www.youtube.com/watch?v=8pB6UzQzC8d",
+  "group": "tv"
+ },
+ {
+  "title": "(4) The Untamed 陈情令 Wei Wuxian Lan Wangji Edit #cdrama #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/toR_cj5eHko",
+  "group": "tv"
+ },
+ {
+  "title": "Hidden Love 偷偷藏不住 Sang Zhi & Duan Jiaxu Cute Scenes #cdrama - YouTube",
+  "url": "https://www.youtube.com/shorts/bjSay9Qt7RS",
+  "group": "tv"
+ },
+ {
+  "title": "F4 Thailand: Boys Over Flowers EP.3 Highlights #thaidrama - YouTube",
+  "url": "https://www.youtube.com/shorts/1w_intoabjs",
+  "group": "tv"
+ },
+ {
+  "title": "(14) Love Between Fairy and Devil Edit #cdrama #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/JhcCojw_zvH",
+  "group": "tv"
+ },
+ {
+  "title": "Succession Season 4 Finale: Roy Family Ranking - YouTube",
+  "url": "https://www.youtube.com/shorts/1QcX_R-O1at",
+  "group": "tv"
+ },
+ {
+  "title": "The Last of Us HBO Episode 3 Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=d_doQpISL3k",
+  "group": "tv"
+ },
+ {
+  "title": "Goblin 도깨비 Gong Yoo Sad Edit #kdrama #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/UzcBHuU8T7e",
+  "group": "tv"
+ },
+ {
+  "title": "(11) Stranger Things 5 Trailer Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=p1BLTg4zsxx",
+  "group": "tv"
+ },
+ {
+  "title": "Bad Buddy The Series EP.5 Highlights #thaiseries #lakorn - YouTube",
+  "url": "https://www.youtube.com/watch?v=XAs5gkxZzBq",
+  "group": "tv"
+ },
+ {
+  "title": "The Bear Season 3 Episode 7 Review: Forks - YouTube",
+  "url": "https://www.youtube.com/watch?v=15xRwxem-D2",
+  "group": "tv"
+ },
+ {
+  "title": "My Demon Ep 9 Song Kang x Kim You-jung Moments #kdrama - YouTube",
+  "url": "https://www.youtube.com/watch?v=7ZriM6lAUp8",
+  "group": "tv"
+ },
+ {
+  "title": "Game of Thrones: Why Season 8 Failed - YouTube",
+  "url": "https://www.youtube.com/watch?v=pFNhy9-1od3",
+  "group": "tv"
+ },
+ {
+  "title": "응답하라 1988 명장면 모음 - YouTube",
+  "url": "https://www.youtube.com/watch?v=pRnDk3Jt2H3",
+  "group": "tv"
+ },
+ {
+  "title": "Hospital Playlist Ep 1 Eng Sub | Doctors Band Scene - YouTube",
+  "url": "https://www.youtube.com/watch?v=lVsISl1Bx8S",
+  "group": "tv"
+ },
+ {
+  "title": "The Office US: Best Jim Pranks, Season 2 - YouTube",
+  "url": "https://www.youtube.com/watch?v=r6ieb8NFvmZ",
+  "group": "tv"
+ },
+ {
+  "title": "Lovely Runner 선재 업고 튀어 Sun-jae Moments #kdrama #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/d3nqidqVILo",
+  "group": "tv"
+ },
+ {
+  "title": "Story of Kunning Palace 宁安如梦 Edit #cdrama - YouTube",
+  "url": "https://www.youtube.com/watch?v=QguTEluhZ6s",
+  "group": "tv"
+ },
+ {
+  "title": "Severance Season 2: Ending Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=FIu0S7TIF3W",
+  "group": "tv"
+ },
+ {
+  "title": "Friends: The One with the Embryos Clip - YouTube",
+  "url": "https://www.youtube.com/watch?v=hXdpBY_50sP",
+  "group": "tv"
+ },
+ {
+  "title": "Doctor Who 60th Anniversary Special - Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=c3nv8LWcQf1",
+  "group": "tv"
+ },
+ {
+  "title": "Love Next Door Ep 4 Jung Hae-in #kdrama #netflix - YouTube",
+  "url": "https://www.youtube.com/watch?v=wjIgmHwKp4l",
+  "group": "tv"
+ },
+ {
+  "title": "Ted Lasso S3 Finale Discussion — TV Podcast #214 - YouTube",
+  "url": "https://www.youtube.com/watch?v=JQDRmvw3U_M",
+  "group": "tv"
+ },
+ {
+  "title": "Mr. Plankton Ep 8 Cut #kdrama #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/LnpImAqAgX-",
+  "group": "tv"
+ },
+ {
+  "title": "Wednesday Season 2 Dance Scene #wednesday #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/koYDrLLS4MH",
+  "group": "tv"
+ },
+ {
+  "title": "Arijit Singh Live in Concert 2025 | Full Show - YouTube",
+  "url": "https://www.youtube.com/watch?v=VcYG48BklBM",
+  "group": "music"
+ },
+ {
+  "title": "Bohemian Rhapsody - Queen (Official Video Remastered) - YouTube",
+  "url": "https://www.youtube.com/watch?v=Qe01SQ_cAml",
+  "group": "music"
+ },
+ {
+  "title": "Billie Eilish - BIRDS OF A FEATHER (Lyrics) - YouTube",
+  "url": "https://youtu.be/8d-kXtq9tX_",
+  "group": "music"
+ },
+ {
+  "title": "How to Play Wonderwall on Guitar - Easy Chords - YouTube",
+  "url": "https://www.youtube.com/watch?v=RzvBteRq-5l",
+  "group": "music"
+ },
+ {
+  "title": "The Weeknd - Blinding Lights (Official Audio) #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/uASwgPbWTeO",
+  "group": "music"
+ },
+ {
+  "title": "Metallica: Live at Wembley | Full Concert - YouTube",
+  "url": "https://www.youtube.com/watch?v=RNQDKM45WCh",
+  "group": "music"
+ },
+ {
+  "title": "Best of Ilayaraja Tamil Hits Jukebox - YouTube",
+  "url": "https://www.youtube.com/watch?v=BTu-BM55wnH",
+  "group": "music"
+ },
+ {
+  "title": "(2) BTS (방탄소년단) 'Dynamite' Official MV - YouTube",
+  "url": "https://youtu.be/RLfzcMaCkSj",
+  "group": "music"
+ },
+ {
+  "title": "Kendrick Lamar - Not Like Us (Verse Breakdown) - YouTube",
+  "url": "https://www.youtube.com/watch?v=O-prOm8-MtZ",
+  "group": "music"
+ },
+ {
+  "title": "Why Is This Chord Progression Everywhere? Music Theory Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=vwUn7CDg65h",
+  "group": "music"
+ },
+ {
+  "title": "Daft Punk - Get Lucky (Piano Cover) #piano #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/K84FcHfdYsW",
+  "group": "music"
+ },
+ {
+  "title": "Rick Rubin on Creativity | Songwriters Podcast Ep. 67 - YouTube",
+  "url": "https://www.youtube.com/watch?v=XgNYWkA8dvs",
+  "group": "music"
+ },
+ {
+  "title": "Bachata Mix 2025 | Romeo Santos, Prince Royce - YouTube",
+  "url": "https://www.youtube.com/watch?v=40-aMMCEjvb",
+  "group": "music"
+ },
+ {
+  "title": "Ed Sheeran - Perfect (Acoustic Session) - YouTube",
+  "url": "https://www.youtube.com/shorts/ZasTE5xBx10",
+  "group": "music"
+ },
+ {
+  "title": "සිංහල ගීත එකතුව | Best Sinhala Songs Nonstop - YouTube",
+  "url": "https://www.youtube.com/watch?v=JgMDvLRA3U9",
+  "group": "music"
+ },
+ {
+  "title": "(2) Hans Zimmer Live Prague 2025 Highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=BkPVb67TIGY",
+  "group": "music"
+ },
+ {
+  "title": "Pink Floyd - Comfortably Numb (Gilmour Solo Isolated) - YouTube",
+  "url": "https://www.youtube.com/watch?v=aU3CYiErEXT",
+  "group": "music"
+ },
+ {
+  "title": "Mozart: Piano Concerto No. 21 – Full Performance - YouTube",
+  "url": "https://www.youtube.com/watch?v=FlwKfxDkZF9",
+  "group": "music"
+ },
+ {
+  "title": "Lana Del Rey - Summertime Sadness (slowed + reverb) #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/Fbnf5L9ZFeB",
+  "group": "music"
+ },
+ {
+  "title": "周杰伦 Jay Chou - 晴天 Official MV - YouTube",
+  "url": "https://www.youtube.com/shorts/PA0zAG3sfPr",
+  "group": "music"
+ },
+ {
+  "title": "How I Produce a Beat in FL Studio in 10 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=ynetrUbY_CD",
+  "group": "music"
+ },
+ {
+  "title": "Radiohead – Creep (Live 1993) - YouTube",
+  "url": "https://www.youtube.com/watch?v=kaiDjdNepTO",
+  "group": "music"
+ },
+ {
+  "title": "Drake Type Beat 2025 \"Midnight\" prod. Nova - YouTube",
+  "url": "https://www.youtube.com/watch?v=P8tzQUR0_bj",
+  "group": "music"
+ },
+ {
+  "title": "Top 50 Songs of 2025 | Hits Playlist - YouTube",
+  "url": "https://www.youtube.com/watch?v=xElKEuSNbQh",
+  "group": "music"
+ },
+ {
+  "title": "Dua Lipa - Houdini (Live on SNL) #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/R4TNEmBqBDR",
+  "group": "music"
+ },
+ {
+  "title": "Level Up Your Drum Fills — Drum Lesson 12 - YouTube",
+  "url": "https://www.youtube.com/watch?v=JuOR-A7QWzF",
+  "group": "music"
+ },
+ {
+  "title": "Elden Ring Shadow of the Erdtree: Final Boss Guide - YouTube",
+  "url": "https://www.youtube.com/watch?v=OfeYVfh9O2C",
+  "group": "games"
+ },
+ {
+  "title": "Minecraft Hardcore Let's Play Episode 1 - YouTube",
+  "url": "https://www.youtube.com/watch?v=FclRHa7cgWR",
+  "group": "games"
+ },
+ {
+  "title": "GTA 6 Trailer 2 Breakdown - YouTube",
+  "url": "https://www.youtube.com/shorts/cSsSx9kDkTM",
+  "group": "games"
+ },
+ {
+  "title": "Baldur's Gate 3 Best Builds (Patch 8) - YouTube",
+  "url": "https://www.youtube.com/watch?v=yVmC_-b7e0W",
+  "group": "games"
+ },
+ {
+  "title": "Valorant Ranked Ace Clutch #shorts #valorant - YouTube",
+  "url": "https://www.youtube.com/shorts/iCfkPyEDrng",
+  "group": "games"
+ },
+ {
+  "title": "Zelda: Tears of the Kingdom — All Shrine Locations - YouTube",
+  "url": "https://www.youtube.com/watch?v=nYsu7Cv0hfv",
+  "group": "games"
+ },
+ {
+  "title": "Hollow Knight: Silksong Walkthrough Part 1 - YouTube",
+  "url": "https://www.youtube.com/shorts/Pv3cuLA6vO_",
+  "group": "games"
+ },
+ {
+  "title": "(14) Super Mario 64 16 Star Speedrun World Record - YouTube",
+  "url": "https://www.youtube.com/watch?v=ywAHvryHC12",
+  "group": "games"
+ },
+ {
+  "title": "Cyberpunk 2077 Phantom Liberty Full Playthrough - YouTube",
+  "url": "https://www.youtube.com/watch?v=MWOb87azuAV",
+  "group": "games"
+ },
+ {
+  "title": "Fortnite Chapter 6 Season 2 Map Changes #fortnite - YouTube",
+  "url": "https://www.youtube.com/watch?v=XCkS2KJSavy",
+  "group": "games"
+ },
+ {
+  "title": "Stardew Valley Perfect Farm Layout Guide Year 1 - YouTube",
+  "url": "https://www.youtube.com/watch?v=X3LIwG1Dmov",
+  "group": "games"
+ },
+ {
+  "title": "Why Dark Souls Is Harder Than You Think — Game Design Essay - YouTube",
+  "url": "https://www.youtube.com/watch?v=WmOSeo5Onpc",
+  "group": "games"
+ },
+ {
+  "title": "(9) CS2 Smoke Lineups Mirage #cs2 #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/prm4AdloWzt",
+  "group": "games"
+ },
+ {
+  "title": "Pokémon Scarlet & Violet Shiny Hunting Stream VOD - YouTube",
+  "url": "https://www.youtube.com/watch?v=vjrRpqikZuR",
+  "group": "games"
+ },
+ {
+  "title": "State of Play September 2025: Everything Announced - YouTube",
+  "url": "https://www.youtube.com/watch?v=s-T562YBQep",
+  "group": "games"
+ },
+ {
+  "title": "Red Dead Redemption 2 100% Walkthrough Chapter 2 - YouTube",
+  "url": "https://www.youtube.com/watch?v=LK9UreL-I0-",
+  "group": "games"
+ },
+ {
+  "title": "(3) League of Legends Worlds 2025 Finals Highlights - YouTube",
+  "url": "https://www.youtube.com/shorts/O53PDOpaHTI",
+  "group": "games"
+ },
+ {
+  "title": "Hades 2 Beginner Tips: STOP Wasting Boons - YouTube",
+  "url": "https://www.youtube.com/watch?v=OgjIeGh3kJr",
+  "group": "games"
+ },
+ {
+  "title": "Palworld Best Base Locations #palworld - YouTube",
+  "url": "https://www.youtube.com/watch?v=UfMC6VgOIcc",
+  "group": "games"
+ },
+ {
+  "title": "Silent Hill 2 Remake Ending Explained - YouTube",
+  "url": "https://www.youtube.com/shorts/Ty8UAQZ4qul",
+  "group": "games"
+ },
+ {
+  "title": "Starfield: Nobody Talks About This Mod - YouTube",
+  "url": "https://www.youtube.com/watch?v=m_Jvy6QmEWs",
+  "group": "games"
+ },
+ {
+  "title": "The Witcher 3 Next-Gen Update All Quests Guide - YouTube",
+  "url": "https://www.youtube.com/shorts/mHZw5gAhqEF",
+  "group": "games"
+ },
+ {
+  "title": "Dota 2 Hero Tier List Patch 7.37 - YouTube",
+  "url": "https://www.youtube.com/watch?v=n_KiAHt_wsl",
+  "group": "games"
+ },
+ {
+  "title": "Mario Kart World Tips and Tricks #nintendo - YouTube",
+  "url": "https://www.youtube.com/watch?v=TU4P7egM9fW",
+  "group": "games"
+ },
+ {
+  "title": "(9) Genshin Impact 5.4 Livestream Codes - YouTube",
+  "url": "https://www.youtube.com/watch?v=c7Fgryec6Pk",
+  "group": "games"
+ },
+ {
+  "title": "Apex Legends Movement Tech Guide (Season 24) - YouTube",
+  "url": "https://www.youtube.com/shorts/nF-Qqdltb3r",
+  "group": "games"
+ },
+ {
+  "title": "(4) The Last of Us Part II Gameplay Walkthrough 4K - YouTube",
+  "url": "https://www.youtube.com/shorts/n85h6cPiMfk",
+  "group": "games"
+ },
+ {
+  "title": "ゼルダの伝説 ブレスオブザワイルド 攻略 Part 3 - YouTube",
+  "url": "https://www.youtube.com/watch?v=7YFa2__CKVu",
+  "group": "games"
+ },
+ {
+  "title": "Attack on Titan Final Season Ending Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=MPZO0wkia-P",
+  "group": "anime"
+ },
+ {
+  "title": "One Piece Chapter 1130 Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=sF1LBqdZ6X_",
+  "group": "anime"
+ },
+ {
+  "title": "Demon Slayer: Infinity Castle Official Trailer #anime - YouTube",
+  "url": "https://www.youtube.com/shorts/j_KgqlkVYQw",
+  "group": "anime"
+ },
+ {
+  "title": "Jujutsu Kaisen S3 Episode 4 Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=7vg6Ozn-k7H",
+  "group": "anime"
+ },
+ {
+  "title": "(8) Naruto vs Sasuke Final Fight AMV #anime #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/oXSHLAcV_ky",
+  "group": "anime"
+ },
+ {
+  "title": "Frieren: Beyond Journey's End - Why It's a Masterpiece - YouTube",
+  "url": "https://www.youtube.com/shorts/nUmH2zWvC_5",
+  "group": "anime"
+ },
+ {
+  "title": "My Hero Academia Manga Finale Thoughts - YouTube",
+  "url": "https://www.youtube.com/watch?v=3OghtbDMlPL",
+  "group": "anime"
+ },
+ {
+  "title": "Solo Leveling Season 2 Ep 10 Eng Sub - YouTube",
+  "url": "https://www.youtube.com/watch?v=2Isjn1RGXJS",
+  "group": "anime"
+ },
+ {
+  "title": "Spy x Family Anya Moments #spyxfamily #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/xZ3IzrViOYX",
+  "group": "anime"
+ },
+ {
+  "title": "Chainsaw Man Reze Arc Teaser Analysis - YouTube",
+  "url": "https://www.youtube.com/watch?v=IqoHL4hoe8v",
+  "group": "anime"
+ },
+ {
+  "title": "Top 10 Anime of Winter 2026 - YouTube",
+  "url": "https://www.youtube.com/watch?v=9YlvF_Qes_9",
+  "group": "anime"
+ },
+ {
+  "title": "Berserk Manga: Golden Age Explained | Anime Podcast Ep. 51 - YouTube",
+  "url": "https://www.youtube.com/shorts/ZYbafl4KYqY",
+  "group": "anime"
+ },
+ {
+  "title": "(14) 鬼滅の刃 無限城編 感想 - YouTube",
+  "url": "https://www.youtube.com/watch?v=TYX4l6XL6Tx",
+  "group": "anime"
+ },
+ {
+  "title": "Vinland Saga Thorfinn Edit #anime #edit - YouTube",
+  "url": "https://www.youtube.com/watch?v=c1vwIdDG6hq",
+  "group": "anime"
+ },
+ {
+  "title": "Dragon Ball Daima Review: Is It Worth It? - YouTube",
+  "url": "https://www.youtube.com/watch?v=P8fH0Ygs4Nl",
+  "group": "anime"
+ },
+ {
+  "title": "Webtoon Review: Tower of God vs Lookism - YouTube",
+  "url": "https://www.youtube.com/watch?v=68lXtRPxA7o",
+  "group": "anime"
+ },
+ {
+  "title": "Death Note L vs Light Best Scenes - YouTube",
+  "url": "https://www.youtube.com/watch?v=CkAX6ffpfnP",
+  "group": "anime"
+ },
+ {
+  "title": "僕のヒーローアカデミア 最終回 感想 - YouTube",
+  "url": "https://www.youtube.com/watch?v=H0PvSeEZEEi",
+  "group": "anime"
+ },
+ {
+  "title": "Cyberpunk Edgerunners Lucy Edit #shorts #anime - YouTube",
+  "url": "https://www.youtube.com/shorts/za6lEbEvL04",
+  "group": "anime"
+ },
+ {
+  "title": "Bleach TYBW Part 3 Episode 2 Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=_HFbPLOuWQ5",
+  "group": "anime"
+ },
+ {
+  "title": "Hunter x Hunter: Chimera Ant Arc Ranked - YouTube",
+  "url": "https://www.youtube.com/watch?v=VxyhdDuVKkP",
+  "group": "anime"
+ },
+ {
+  "title": "Oshi no Ko Season 3 Trailer - YouTube",
+  "url": "https://www.youtube.com/shorts/aodBkJpvOWA",
+  "group": "anime"
+ },
+ {
+  "title": "(4) Anime Recommendations for Beginners | Anime Club Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=7gAs_QkB4IB",
+  "group": "anime"
+ },
+ {
+  "title": "Fullmetal Alchemist Brotherhood: Why Is It Still #1? - YouTube",
+  "url": "https://www.youtube.com/watch?v=Gi5azNQ9THC",
+  "group": "anime"
+ },
+ {
+  "title": "Manga Haul + Unboxing Vagabond Vol. 37 - YouTube",
+  "url": "https://www.youtube.com/shorts/5ydP8JaFzAm",
+  "group": "anime"
+ },
+ {
+  "title": "Haikyu!! Karasuno vs Nekoma Edit #haikyuu #anime - YouTube",
+  "url": "https://www.youtube.com/watch?v=0XQ3nPGyErN",
+  "group": "anime"
+ },
+ {
+  "title": "Dandadan Episode 12 Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=PLqPYLGYswt",
+  "group": "anime"
+ },
+ {
+  "title": "Boruto: Two Blue Vortex Chapter 20 Discussion - YouTube",
+  "url": "https://www.youtube.com/watch?v=zIOVTo0NObV",
+  "group": "anime"
+ },
+ {
+  "title": "Atomic Habits by James Clear | Book Summary - YouTube",
+  "url": "https://www.youtube.com/watch?v=E0XG9QhfI8c",
+  "group": "books"
+ },
+ {
+  "title": "Book Review: The Midnight Library - YouTube",
+  "url": "https://www.youtube.com/watch?v=litgTzrfTws",
+  "group": "books"
+ },
+ {
+  "title": "I Read 50 Books in 2025 — Here Are My Top 5 - YouTube",
+  "url": "https://www.youtube.com/shorts/KLpcTmgWrVY",
+  "group": "books"
+ },
+ {
+  "title": "Dune by Frank Herbert: Why It's Hard to Read (Book Club) - YouTube",
+  "url": "https://www.youtube.com/watch?v=nS41IxsmF6a",
+  "group": "books"
+ },
+ {
+  "title": "Brandon Sanderson on Writing Epic Fantasy | Author Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=-jwkU4h6n5z",
+  "group": "books"
+ },
+ {
+  "title": "BookTok Recommendations #booktok #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/6193ARTya2h",
+  "group": "books"
+ },
+ {
+  "title": "Project Hail Mary Spoiler-Free Review - YouTube",
+  "url": "https://www.youtube.com/shorts/P32lK2Ymbug",
+  "group": "books"
+ },
+ {
+  "title": "(14) Sapiens by Yuval Noah Harari — Chapter 1 Audiobook - YouTube",
+  "url": "https://www.youtube.com/watch?v=mdVtL0FRPhd",
+  "group": "books"
+ },
+ {
+  "title": "Tolkien's The Silmarillion Explained - YouTube",
+  "url": "https://www.youtube.com/shorts/bQIC0l8q75M",
+  "group": "books"
+ },
+ {
+  "title": "How to Read More Books: Habits That Work - YouTube",
+  "url": "https://www.youtube.com/watch?v=LX95Jj8wsEn",
+  "group": "books"
+ },
+ {
+  "title": "Stephen King Books Ranked: Best to Worst - YouTube",
+  "url": "https://www.youtube.com/watch?v=sBhI18caRvj",
+  "group": "books"
+ },
+ {
+  "title": "Haruki Murakami: Kafka on the Shore Analysis - YouTube",
+  "url": "https://www.youtube.com/watch?v=HoXtKPpJ0wj",
+  "group": "books"
+ },
+ {
+  "title": "Colleen Hoover Books In Order #bookish #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/LZxjZ36RM1h",
+  "group": "books"
+ },
+ {
+  "title": "Pride and Prejudice Chapter Analysis | Literature Lecture - YouTube",
+  "url": "https://www.youtube.com/watch?v=H_5lycS_FcR",
+  "group": "books"
+ },
+ {
+  "title": "Ep. 210: Margaret Atwood on Dystopian Fiction | Book Talk Podcast - YouTube",
+  "url": "https://youtu.be/NHyox9Bv3EI",
+  "group": "books"
+ },
+ {
+  "title": "My Unread Shelf Tour 2025 | TBR List - YouTube",
+  "url": "https://www.youtube.com/watch?v=zFWcvSwBfVu",
+  "group": "books"
+ },
+ {
+  "title": "Thinking, Fast and Slow Summary in 10 Mins - YouTube",
+  "url": "https://www.youtube.com/shorts/Wlmx0qIxsQX",
+  "group": "books"
+ },
+ {
+  "title": "Shakespeare's Hamlet in 5 Minutes #literature #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/yWnVOb9CxsI",
+  "group": "books"
+ },
+ {
+  "title": "Harry Potter Book Series Ranked - YouTube",
+  "url": "https://www.youtube.com/watch?v=yoEkATJbnmx",
+  "group": "books"
+ },
+ {
+  "title": "Books That Will Change Your Life (Not Clickbait) - YouTube",
+  "url": "https://www.youtube.com/shorts/nuxciFYMCsA",
+  "group": "books"
+ },
+ {
+  "title": "The Great Gatsby Symbolism Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=PZwjZucl2Ru",
+  "group": "books"
+ },
+ {
+  "title": "හොඳම සිංහල නවකතා 10 | Sinhala Novels Review - YouTube",
+  "url": "https://youtu.be/LHXMDFVuFuV",
+  "group": "books"
+ },
+ {
+  "title": "(4) Libro: Cien años de soledad — Reseña y Resumen - YouTube",
+  "url": "https://www.youtube.com/watch?v=kDnODN2l78X",
+  "group": "books"
+ },
+ {
+  "title": "Reading Vlog: Cozy Fantasy Books - YouTube",
+  "url": "https://www.youtube.com/watch?v=lkQgKc7WANi",
+  "group": "books"
+ },
+ {
+  "title": "Rich Dad Poor Dad Book Summary #bookreview - YouTube",
+  "url": "https://www.youtube.com/watch?v=msvlTf2QZj9",
+  "group": "books"
+ },
+ {
+  "title": "The Hobbit Chapter 1 Audiobook - YouTube",
+  "url": "https://www.youtube.com/watch?v=mCjdfsA8M4p",
+  "group": "books"
+ },
+ {
+  "title": "(6) 1984 by George Orwell — Novel Analysis - YouTube",
+  "url": "https://www.youtube.com/watch?v=dkrr7PcGTIo",
+  "group": "books"
+ },
+ {
+  "title": "Goodreads Choice Awards 2025 Winners Announced - YouTube",
+  "url": "https://www.youtube.com/watch?v=u8hH7qjy-qE",
+  "group": "books"
+ },
+ {
+  "title": "Sony A7 IV Review After 1 Year - YouTube",
+  "url": "https://www.youtube.com/watch?v=E7D60FJqVKt",
+  "group": "photo"
+ },
+ {
+  "title": "Lightroom Editing Tutorial: Moody Presets - YouTube",
+  "url": "https://www.youtube.com/shorts/6YceJJ-fVuF",
+  "group": "photo"
+ },
+ {
+  "title": "(11) Street Photography in Tokyo - POV #photography #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/UUtAuZgPYmj",
+  "group": "photo"
+ },
+ {
+  "title": "Best Lens for Portraits: 85mm f/1.4 vs f/1.8 - YouTube",
+  "url": "https://www.youtube.com/watch?v=1QmJh137vW9",
+  "group": "photo"
+ },
+ {
+  "title": "Composition Rules That Actually Work — Photography Workshop - YouTube",
+  "url": "https://www.youtube.com/watch?v=oaGr_GdHkN8",
+  "group": "photo"
+ },
+ {
+  "title": "Canon R5 II Autofocus Test - YouTube",
+  "url": "https://www.youtube.com/watch?v=G2CoLZ4HW0o",
+  "group": "photo"
+ },
+ {
+  "title": "How to Shoot the Milky Way (Astrophotography Basics) - YouTube",
+  "url": "https://www.youtube.com/watch?v=AFv7zbTX5mv",
+  "group": "photo"
+ },
+ {
+  "title": "Fujifilm X100VI Film Simulation Recipes - YouTube",
+  "url": "https://www.youtube.com/watch?v=YxT3GplAAwV",
+  "group": "photo"
+ },
+ {
+  "title": "Nikon Z8 vs Z9 | Camera Review - YouTube",
+  "url": "https://www.youtube.com/shorts/yRdMQY1K4UO",
+  "group": "photo"
+ },
+ {
+  "title": "Photoshop vs Lightroom: Which Should Photographers Use? - YouTube",
+  "url": "https://www.youtube.com/watch?v=CslhwkOjN0O",
+  "group": "photo"
+ },
+ {
+  "title": "Golden Hour Portrait Tips #portrait #photographytips - YouTube",
+  "url": "https://www.youtube.com/watch?v=hhBU09MQi1w",
+  "group": "photo"
+ },
+ {
+  "title": "Wedding Photographer Vlog: Behind the Scenes - YouTube",
+  "url": "https://www.youtube.com/shorts/hwdOJgP7ufV",
+  "group": "photo"
+ },
+ {
+  "title": "Understanding Aperture, ISO and Shutter Speed - YouTube",
+  "url": "https://www.youtube.com/watch?v=Sl5U91F4KXg",
+  "group": "photo"
+ },
+ {
+  "title": "Film Photography with Kodak Portra 400 — First Roll - YouTube",
+  "url": "https://youtu.be/xG8W4auvzR7",
+  "group": "photo"
+ },
+ {
+  "title": "(5) Sigma 24-70 f/2.8 Art II Real World Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=op4SThA7mu7",
+  "group": "photo"
+ },
+ {
+  "title": "Product Photography at Home with One Light - YouTube",
+  "url": "https://www.youtube.com/watch?v=kCknd2qmXMV",
+  "group": "photo"
+ },
+ {
+  "title": "Landscape Photography | Photo Talk Ep. 33 with Joe Cornish - YouTube",
+  "url": "https://www.youtube.com/watch?v=0zrxI4U7_3N",
+  "group": "photo"
+ },
+ {
+  "title": "DJI Mavic 4 Pro Drone Photography Settings - YouTube",
+  "url": "https://www.youtube.com/shorts/iTXYRFPMYlq",
+  "group": "photo"
+ },
+ {
+  "title": "Capture One vs Lightroom Color Grading - YouTube",
+  "url": "https://www.youtube.com/watch?v=jTnchXHW49F",
+  "group": "photo"
+ },
+ {
+  "title": "Wildlife Photography Tips: Birds in Flight - YouTube",
+  "url": "https://www.youtube.com/watch?v=I127RKHldiW",
+  "group": "photo"
+ },
+ {
+  "title": "STOP Using Auto ISO #shorts #camera - YouTube",
+  "url": "https://www.youtube.com/shorts/DlIQzdSyBv8",
+  "group": "photo"
+ },
+ {
+  "title": "Leica Q3 Street Photography | Is It Worth $6000? - YouTube",
+  "url": "https://www.youtube.com/shorts/YSQFtf8IxEi",
+  "group": "photo"
+ },
+ {
+  "title": "How I Edit Photos on My iPhone (Snapseed) - YouTube",
+  "url": "https://www.youtube.com/watch?v=lA2ctpKELqp",
+  "group": "photo"
+ },
+ {
+  "title": "(9) GoPro Hero 13 Photo Mode Review - YouTube",
+  "url": "https://youtu.be/FB3hPcyCmTT",
+  "group": "photo"
+ },
+ {
+  "title": "RAW vs JPEG Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=u60ghWY3TFn",
+  "group": "photo"
+ },
+ {
+  "title": "(2) Photo Walk Lisbon | Fuji X-T5 - YouTube",
+  "url": "https://www.youtube.com/watch?v=ICfjmU0kHmC",
+  "group": "photo"
+ },
+ {
+  "title": "Flash Photography for Beginners: Off-Camera Flash - YouTube",
+  "url": "https://www.youtube.com/watch?v=Yqlr_UaUA86",
+  "group": "photo"
+ },
+ {
+  "title": "写真の撮り方 初心者向け構図講座 - YouTube",
+  "url": "https://www.youtube.com/shorts/vEU20q45Ch5",
+  "group": "photo"
+ },
+ {
+  "title": "BREAKING: Prime Minister Announces Snap Election - YouTube",
+  "url": "https://www.youtube.com/watch?v=VLWuxujGpb6",
+  "group": "news"
+ },
+ {
+  "title": "World News Today | Live Coverage - YouTube",
+  "url": "https://www.youtube.com/watch?v=bGgQAbjW-KO",
+  "group": "news"
+ },
+ {
+  "title": "Evening News Bulletin 19 Nov 2026 - YouTube",
+  "url": "https://www.youtube.com/watch?v=vkOqc_V1cFH",
+  "group": "news"
+ },
+ {
+  "title": "Earthquake Strikes Coast; Rescue Teams Deployed #breakingnews - YouTube",
+  "url": "https://www.youtube.com/watch?v=MOfCa6pJdT9",
+  "group": "news"
+ },
+ {
+  "title": "UN Climate Summit: Leaders Clash Over Fossil Fuel Deal - YouTube",
+  "url": "https://www.youtube.com/watch?v=ycIMeQqQpOf",
+  "group": "news"
+ },
+ {
+  "title": "Election Results 2026: Live Coverage - YouTube",
+  "url": "https://www.youtube.com/watch?v=j7sQwJyjABq",
+  "group": "news"
+ },
+ {
+  "title": "Ukraine Ceasefire Talks: Latest Update | DW News - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ru8JCneO87n",
+  "group": "news"
+ },
+ {
+  "title": "Senate Passes Budget Bill After Overnight Session - YouTube",
+  "url": "https://www.youtube.com/watch?v=udDC8rO7HJ3",
+  "group": "news"
+ },
+ {
+  "title": "(4) Newsroom Live: Top Stories - YouTube",
+  "url": "https://www.youtube.com/watch?v=CCHfLeFB2Gk",
+  "group": "news"
+ },
+ {
+  "title": "Hurricane Landfall Update: Evacuations Ordered - YouTube",
+  "url": "https://www.youtube.com/shorts/G9SAALFxtWL",
+  "group": "news"
+ },
+ {
+  "title": "අද දිනයේ ප්‍රධාන පුවත් | Sri Lanka News Today - YouTube",
+  "url": "https://www.youtube.com/watch?v=A6HwPff68vN",
+  "group": "news"
+ },
+ {
+  "title": "(5) समाचार आज की ताज़ा खबरें | Live News - YouTube",
+  "url": "https://www.youtube.com/watch?v=0qQ65bAkygR",
+  "group": "news"
+ },
+ {
+  "title": "(14) Noticias de última hora: Debate presidencial - YouTube",
+  "url": "https://youtu.be/oS6a94W8HzM",
+  "group": "news"
+ },
+ {
+  "title": "今日要闻：全球头条速览 - YouTube",
+  "url": "https://www.youtube.com/shorts/WzM2kKyn2AG",
+  "group": "news"
+ },
+ {
+  "title": "(8) Explained: What the New Immigration Law Means - YouTube",
+  "url": "https://www.youtube.com/shorts/ON2-Kt-oipm",
+  "group": "news"
+ },
+ {
+  "title": "(8) Wildfires Spread Across State, Thousands Flee #news #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/O3M_ML0kfWn",
+  "group": "news"
+ },
+ {
+  "title": "Trade Talks Collapse: Tariffs Take Effect - YouTube",
+  "url": "https://www.youtube.com/shorts/0lomvKvUaZP",
+  "group": "news"
+ },
+ {
+  "title": "Press Conference: Government Responds to Protests - YouTube",
+  "url": "https://www.youtube.com/watch?v=es1YesNGFJ6",
+  "group": "news"
+ },
+ {
+  "title": "Al Jazeera English Live: Middle East Coverage - YouTube",
+  "url": "https://www.youtube.com/watch?v=AuSY3pDuCzn",
+  "group": "news"
+ },
+ {
+  "title": "(3) Supreme Court Ruling: Full Analysis - YouTube",
+  "url": "https://www.youtube.com/watch?v=lorsDvzgE8B",
+  "group": "news"
+ },
+ {
+  "title": "Top Stories This Hour | Sky News - YouTube",
+  "url": "https://www.youtube.com/shorts/viy0Ft4PYm4",
+  "group": "news"
+ },
+ {
+  "title": "Protests Erupt Over Fuel Prices | Ground Report - YouTube",
+  "url": "https://youtu.be/LhZf7bzrNby",
+  "group": "news"
+ },
+ {
+  "title": "The Daily Podcast: Inside the Budget Fight Ep. 1204 - YouTube",
+  "url": "https://www.youtube.com/shorts/ykhPEI173O0",
+  "group": "news"
+ },
+ {
+  "title": "Headlines in 60 Seconds #news #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/5Bsox0KGIvn",
+  "group": "news"
+ },
+ {
+  "title": "Court Verdict Announced in High-Profile Corruption Trial - YouTube",
+  "url": "https://www.youtube.com/watch?v=HzJlu8C6mTK",
+  "group": "news"
+ },
+ {
+  "title": "Local Elections: What You Need to Know | Newsnight - YouTube",
+  "url": "https://www.youtube.com/shorts/k1psDGTxFm3",
+  "group": "news"
+ },
+ {
+  "title": "Flood Warnings Issued in Northern Regions - YouTube",
+  "url": "https://www.youtube.com/watch?v=X065FYbNlc4",
+  "group": "news"
+ },
+ {
+  "title": "뉴스특보 대통령 기자회견 전문 - YouTube",
+  "url": "https://www.youtube.com/shorts/y4dQ6ARJDWr",
+  "group": "news"
+ },
+ {
+  "title": "I Spent 24 Hours in a Airport - Challenge - YouTube",
+  "url": "https://www.youtube.com/shorts/IxrlfUkS4E2",
+  "group": "videos"
+ },
+ {
+  "title": "Day in My Life as a College Student (Vlog) - YouTube",
+  "url": "https://www.youtube.com/watch?v=6cvOw0jbNGM",
+  "group": "videos"
+ },
+ {
+  "title": "Prank Gone Wrong!! (He Cried) - YouTube",
+  "url": "https://www.youtube.com/shorts/5dNgDlwt_2l",
+  "group": "videos"
+ },
+ {
+  "title": "(3) Try Not to Laugh Challenge #funny #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/UH7pdkMVSpx",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Cats Compilation 2025 - Try Not To Laugh - YouTube",
+  "url": "https://www.youtube.com/watch?v=lU3Wjk8Ei9L",
+  "group": "videos"
+ },
+ {
+  "title": "ASMR Whispering Triggers for Sleep (No Talking) - YouTube",
+  "url": "https://www.youtube.com/watch?v=93MGiIin16m",
+  "group": "videos"
+ },
+ {
+  "title": "(13) Reacting to My Old Videos (So Cringe) - YouTube",
+  "url": "https://www.youtube.com/watch?v=PKNxPF1OPUT",
+  "group": "videos"
+ },
+ {
+  "title": "I Tried Waking Up at 4AM for 30 Days - YouTube",
+  "url": "https://www.youtube.com/watch?v=cL3WqgyzKVR",
+  "group": "videos"
+ },
+ {
+  "title": "(9) Best Fails of the Week #fails #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/wpMWmL13OD7",
+  "group": "videos"
+ },
+ {
+  "title": "POV: You Wake Up Late on Monday #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/kvZrc1HXGja",
+  "group": "videos"
+ },
+ {
+  "title": "Weekly Vlog 47: Moving Day Chaos - YouTube",
+  "url": "https://www.youtube.com/shorts/OF8lflB4elC",
+  "group": "videos"
+ },
+ {
+  "title": "Last to Leave the Circle Wins $10,000 - YouTube",
+  "url": "https://www.youtube.com/watch?v=gDffjj-jOjT",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Moments Compilation | Week 12 - YouTube",
+  "url": "https://www.youtube.com/watch?v=7K9u9xCvrJz",
+  "group": "videos"
+ },
+ {
+  "title": "Unboxing Mystery Box - You Won't Believe What's Inside - YouTube",
+  "url": "https://www.youtube.com/shorts/wsHnOQ-_FbI",
+  "group": "videos"
+ },
+ {
+  "title": "Surprising My Best Friend for Her Birthday - YouTube",
+  "url": "https://www.youtube.com/watch?v=CpDk6quV5hP",
+  "group": "videos"
+ },
+ {
+  "title": "Satisfying Slime Videos #satisfying #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/gbXSPs2EBva",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Ice Cream Challenge with My Brother - YouTube",
+  "url": "https://www.youtube.com/watch?v=By6R6GEhJm9",
+  "group": "videos"
+ },
+ {
+  "title": "Trying Viral TikTok Trends So You Don't Have To - YouTube",
+  "url": "https://www.youtube.com/watch?v=Lzw_tZH5QGI",
+  "group": "videos"
+ },
+ {
+  "title": "Sunday Reset Vlog #vlog #aesthetic - YouTube",
+  "url": "https://www.youtube.com/watch?v=_FuWgIy84Os",
+  "group": "videos"
+ },
+ {
+  "title": "I Let My Subscribers Control My Life for a Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=EF_rvdMFyGr",
+  "group": "videos"
+ },
+ {
+  "title": "The Truth About Me... (Storytime) - YouTube",
+  "url": "https://www.youtube.com/watch?v=az5zXEOjZkn",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Dog Reacts to Mirror #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/xhP0okb9hNZ",
+  "group": "videos"
+ },
+ {
+  "title": "Fails Compilation: People Are Awesome - YouTube",
+  "url": "https://www.youtube.com/shorts/3aY4uRWafAN",
+  "group": "videos"
+ },
+ {
+  "title": "Social Experiment: Would You Help a Stranger? - YouTube",
+  "url": "https://www.youtube.com/watch?v=5eKNp2iiweU",
+  "group": "videos"
+ },
+ {
+  "title": "Q&A: Answering Your Questions (100K Special) - YouTube",
+  "url": "https://www.youtube.com/watch?v=KP9AJKY6dNF",
+  "group": "videos"
+ },
+ {
+  "title": "(5) Random Acts of Kindness #shorts #wholesome - YouTube",
+  "url": "https://www.youtube.com/shorts/Jr7vgjsZQ9T",
+  "group": "videos"
+ },
+ {
+  "title": "(2) Reaction: Reacting to Viral Videos Part 3 - YouTube",
+  "url": "https://www.youtube.com/shorts/aL687Iq1AMx",
+  "group": "videos"
+ },
+ {
+  "title": "(9) Rainy Day Walk — 4K Ambient No Talking - YouTube",
+  "url": "https://www.youtube.com/watch?v=g6E0mrSKjJl",
+  "group": "videos"
+ },
+ {
+  "title": "We Spent a Night in a Haunted-Looking House - YouTube",
+  "url": "https://www.youtube.com/watch?v=V_ehOrC5VFr",
+  "group": "videos"
+ },
+ {
+  "title": "Brutally Honest Channel Update - YouTube",
+  "url": "https://www.youtube.com/watch?v=4PMx05MhguA",
+  "group": "videos"
+ },
+ {
+  "title": "Satisfying Cleaning Compilation #oddlysatisfying - YouTube",
+  "url": "https://www.youtube.com/watch?v=yZai1NTe_Yt",
+  "group": "videos"
+ },
+ {
+  "title": "Dad Jokes Compilation That Will Make You Groan - YouTube",
+  "url": "https://www.youtube.com/shorts/fv_3gEzxtqt",
+  "group": "videos"
+ },
+ {
+  "title": "Surprise Reveal!! Big Announcement - YouTube",
+  "url": "https://www.youtube.com/watch?v=qn8Bj9oSQwc",
+  "group": "videos"
+ },
+ {
+  "title": "Hilarious Wedding Speech Gone Wrong - YouTube",
+  "url": "https://www.youtube.com/watch?v=XIbzKPRhpNr",
+  "group": "videos"
+ },
+ {
+  "title": "Grandma Tries the Latest Challenges - YouTube",
+  "url": "https://www.youtube.com/watch?v=AWkoNIpCttl",
+  "group": "videos"
+ },
+ {
+  "title": "Fun Friday: Office Pranks Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=OqRgGJZGoXI",
+  "group": "videos"
+ },
+ {
+  "title": "Lazy Sunday Vlog | Nothing Special - YouTube",
+  "url": "https://www.youtube.com/watch?v=3kv3KJ6IvkG",
+  "group": "videos"
+ },
+ {
+  "title": "Squad Goals: Our Trip Bloopers - YouTube",
+  "url": "https://www.youtube.com/shorts/wgnQ8j128K4",
+  "group": "videos"
+ },
+ {
+  "title": "I Gave a Stranger $100 - YouTube",
+  "url": "https://www.youtube.com/watch?v=JI7_vL65BXY",
+  "group": "videos"
+ },
+ {
+  "title": "Epic Handshake Fails #shorts #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/80n0jgCFu5X",
+  "group": "videos"
+ },
+ {
+  "title": "Morning Vlog Sri Lanka | දවසක් මා සමඟ - YouTube",
+  "url": "https://www.youtube.com/watch?v=FcS0hHfSod8",
+  "group": "videos"
+ },
+ {
+  "title": "Mi día en la vida | Vlog en español - YouTube",
+  "url": "https://www.youtube.com/watch?v=VFHe4iu06Wm",
+  "group": "videos"
+ },
+ {
+  "title": "मेरा एक दिन | Daily Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=dfrOTY1ThfI",
+  "group": "videos"
+ },
+ {
+  "title": "我的一天 日常Vlog 周末 - YouTube",
+  "url": "https://www.youtube.com/shorts/rRjjh_Jh1vq",
+  "group": "videos"
+ },
+ {
+  "title": "일상 브이로그 | 주말 하루 - YouTube",
+  "url": "https://www.youtube.com/shorts/NttYYK7ztUW",
+  "group": "videos"
+ },
+ {
+  "title": "一日ルーティン 休日Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=4Sft4METoPU",
+  "group": "videos"
+ },
+ {
+  "title": "Funniest Kids Moments Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=b4lJ1dxU7fg",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Playing Hide and Seek in a Mall (Gone Wrong) - YouTube",
+  "url": "https://www.youtube.com/watch?v=9CeVXUxWiBF",
+  "group": "videos"
+ },
+ {
+  "title": "24 Hour Challenge: Only Eating What I Can Reach - YouTube",
+  "url": "https://www.youtube.com/watch?v=a8ea9ZWiJt9",
+  "group": "videos"
+ },
+ {
+  "title": "Game Changer: Our Team Surprise Announcement - YouTube",
+  "url": "https://www.youtube.com/watch?v=DwvUn5SZSHv",
+  "group": "videos"
+ },
+ {
+  "title": "Cooking Up Chaos: Prank on Roommate - YouTube",
+  "url": "https://www.youtube.com/watch?v=iQOc9c53xwY",
+  "group": "videos"
+ },
+ {
+  "title": "(5) Designing My Own Day Challenge (Vlog) - YouTube",
+  "url": "https://www.youtube.com/watch?v=VQhsoKN4Xuw",
+  "group": "videos"
+ },
+ {
+  "title": "Level Up Your Life? Random Thoughts at 2AM - YouTube",
+  "url": "https://www.youtube.com/watch?v=8Z1qae7wjAo",
+  "group": "videos"
+ },
+ {
+  "title": "Engineering a Prank on My Dad - YouTube",
+  "url": "https://www.youtube.com/watch?v=dJGkZuNzypW",
+  "group": "videos"
+ },
+ {
+  "title": "(5) This Is Why I Disappeared for 3 Months - YouTube",
+  "url": "https://youtu.be/quRItDwyCwj",
+  "group": "videos"
+ },
+ {
+  "title": "ASMR Tapping and Scratching #asmr #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/xJWtfM8Sjqw",
+  "group": "videos"
+ },
+ {
+  "title": "Testing Strange Products From Online Ads - YouTube",
+  "url": "https://www.youtube.com/watch?v=X87qzNxOm1i",
+  "group": "videos"
+ },
+ {
+  "title": "Whispered Rambles for Relaxation - YouTube",
+  "url": "https://www.youtube.com/shorts/5RMIMLcMPu6",
+  "group": "videos"
+ },
+ {
+  "title": "Surprising Strangers With Gifts #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/qMuhFJ1YEPA",
+  "group": "videos"
+ },
+ {
+  "title": "Try Not to Cringe: Old School Photos - YouTube",
+  "url": "https://youtu.be/GYAp3omqud1",
+  "group": "videos"
+ },
+ {
+  "title": "The Best Moments of the Month | Highlights Reel - YouTube",
+  "url": "https://www.youtube.com/watch?v=Il0A2lksLRO",
+  "group": "videos"
+ },
+ {
+  "title": "Friends Take a Lie Detector Test - YouTube",
+  "url": "https://www.youtube.com/watch?v=HjOimcgq-6b",
+  "group": "videos"
+ },
+ {
+  "title": "Photobombing Strangers Prank - YouTube",
+  "url": "https://www.youtube.com/watch?v=WH0g8qIToSa",
+  "group": "videos"
+ },
+ {
+  "title": "Blindfolded Taste Test Challenge With Friends - YouTube",
+  "url": "https://www.youtube.com/watch?v=uVYTycsPvcd",
+  "group": "videos"
+ },
+ {
+  "title": "Silly Voice Challenge #fyp #funny - YouTube",
+  "url": "https://www.youtube.com/shorts/-7zNiMU6YMs",
+  "group": "videos"
+ },
+ {
+  "title": "Husband vs Wife Challenge: Who Wins? - YouTube",
+  "url": "https://www.youtube.com/watch?v=9KkUPLhMa8W",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Rating My Subscribers' Cringey Texts - YouTube",
+  "url": "https://www.youtube.com/watch?v=99aryS-Ta1p",
+  "group": "videos"
+ },
+ {
+  "title": "Do Not Press This Button Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=UT9VHwu5fZb",
+  "group": "videos"
+ },
+ {
+  "title": "Crazy Coincidences Compilation - YouTube",
+  "url": "https://www.youtube.com/shorts/BmDLjEBjuOS",
+  "group": "videos"
+ },
+ {
+  "title": "My Summer in 5 Minutes | Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=C0i1EutljJg",
+  "group": "videos"
+ },
+ {
+  "title": "Impossible Trick Shot Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=lWvS1lCln34",
+  "group": "videos"
+ },
+ {
+  "title": "Pranking My Parents With Fake Spiders - YouTube",
+  "url": "https://www.youtube.com/watch?v=2TBjFQLpK47",
+  "group": "videos"
+ },
+ {
+  "title": "Walking Around the City at Night (No Commentary) - YouTube",
+  "url": "https://www.youtube.com/watch?v=NW3xw4Px0_Y",
+  "group": "videos"
+ },
+ {
+  "title": "I Bought Everything in a Gas Station - YouTube",
+  "url": "https://www.youtube.com/shorts/Ag2LAjts9Cx",
+  "group": "videos"
+ },
+ {
+  "title": "Sony WH-1000XM6 Unboxing and Honest Review After 2 Weeks - YouTube",
+  "url": "https://www.youtube.com/watch?v=o-rrL4t0vVy",
+  "group": "shopping"
+ },
+ {
+  "title": "Amazon Prime Day 2025 Best Deals Worth Buying - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ny32HeuXRX6",
+  "group": "shopping"
+ },
+ {
+  "title": "I Bought the Cheapest Laptop on Aliexpress... #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/ab0LKUYg_dw",
+  "group": "shopping"
+ },
+ {
+  "title": "Is the Galaxy S25 Ultra Worth Your Money? | Tech Buyer's Guide - YouTube",
+  "url": "https://www.youtube.com/watch?v=0Ti2sHlFsZs",
+  "group": "shopping"
+ },
+ {
+  "title": "Best Budget Robot Vacuums 2025 (We Tested 12) - YouTube",
+  "url": "https://www.youtube.com/watch?v=a8bBQIqASRa",
+  "group": "shopping"
+ },
+ {
+  "title": "STOP Buying Cheap Mattresses Online - YouTube",
+  "url": "https://www.youtube.com/watch?v=i2nsBjcgqSf",
+  "group": "shopping"
+ },
+ {
+  "title": "Anker 737 Power Bank vs Baseus: Which One to Buy? - YouTube",
+  "url": "https://www.youtube.com/watch?v=6nAopZzrSy-",
+  "group": "shopping"
+ },
+ {
+  "title": "Black Friday Haul: What I Actually Ordered #haul - YouTube",
+  "url": "https://www.youtube.com/shorts/kr3ksF7FPdz",
+  "group": "shopping"
+ },
+ {
+  "title": "Temu vs Shein: Is It Really Worth It? - YouTube",
+  "url": "https://www.youtube.com/watch?v=zabAUt0y-l3",
+  "group": "shopping"
+ },
+ {
+  "title": "MacBook Air M3 or Pro M3? Buying Advice - YouTube",
+  "url": "https://www.youtube.com/shorts/Qhprrfp6rIk",
+  "group": "shopping"
+ },
+ {
+  "title": "Shopee 11.11 මිලදී ගැනීමේ උපදෙස් - YouTube",
+  "url": "https://www.youtube.com/watch?v=UrWYPVHi_sh",
+  "group": "shopping"
+ },
+ {
+  "title": "(11) Mi Band 9 vs Fitbit Charge 6 — Which to Buy - YouTube",
+  "url": "https://www.youtube.com/watch?v=eeI4WAmYGIH",
+  "group": "shopping"
+ },
+ {
+  "title": "Dyson V15 Is It Overpriced? Full Teardown and Verdict - YouTube",
+  "url": "https://www.youtube.com/watch?v=WNe7UG4W_OP",
+  "group": "shopping"
+ },
+ {
+  "title": "Best Mechanical Keyboards Under $100 | Buying Guide - YouTube",
+  "url": "https://www.youtube.com/watch?v=uT0ShuhsrRI",
+  "group": "shopping"
+ },
+ {
+  "title": "Costco Must Buys This Month #costco #shopping - YouTube",
+  "url": "https://www.youtube.com/shorts/IfdXsokWbbl",
+  "group": "shopping"
+ },
+ {
+  "title": "Flipkart Big Billion Days सबसे अच्छे ऑफर्स - YouTube",
+  "url": "https://www.youtube.com/watch?v=nZ4RCZZ7_Ca",
+  "group": "shopping"
+ },
+ {
+  "title": "What's Inside My Amazon Cart (Be Honest) - YouTube",
+  "url": "https://www.youtube.com/shorts/5S9t-ydq5Ty",
+  "group": "shopping"
+ },
+ {
+  "title": "Walmart Clearance Finds That Are Actually Good - YouTube",
+  "url": "https://www.youtube.com/watch?v=F6vBpS0u8h4",
+  "group": "shopping"
+ },
+ {
+  "title": "iPhone 16 Pro Max Case Roundup: Spigen, OtterBox, Casetify - YouTube",
+  "url": "https://www.youtube.com/shorts/O6zRU2xstM1",
+  "group": "shopping"
+ },
+ {
+  "title": "(4) Logitech MX Master 3S Review — Is the Hype Real? - YouTube",
+  "url": "https://www.youtube.com/watch?v=JFPWefEUo5L",
+  "group": "shopping"
+ },
+ {
+  "title": "Lazada 双11 好物开箱 #开箱 - YouTube",
+  "url": "https://www.youtube.com/watch?v=okHzbonUHlj",
+  "group": "shopping"
+ },
+ {
+  "title": "Kindle Paperwhite vs Kobo Clara: Which Should You Buy - YouTube",
+  "url": "https://youtu.be/-yzPMq7ae_r",
+  "group": "shopping"
+ },
+ {
+  "title": "(14) Ikea Haul 2025 | Finds Under $20 - YouTube",
+  "url": "https://www.youtube.com/watch?v=gstSQDK2fUA",
+  "group": "shopping"
+ },
+ {
+  "title": "Cheap vs Expensive Air Fryers: I Tested Both - YouTube",
+  "url": "https://www.youtube.com/watch?v=_yu1_pqIyWq",
+  "group": "shopping"
+ },
+ {
+  "title": "RTX 5070 Ti Prices Right Now: Should You Buy or Wait? - YouTube",
+  "url": "https://www.youtube.com/watch?v=CqHJ-ZcD7co",
+  "group": "shopping"
+ },
+ {
+  "title": "(9) Nike vs Adidas Running Shoes Price Check #shoppinghaul - YouTube",
+  "url": "https://www.youtube.com/watch?v=YOuDB1a3pQJ",
+  "group": "shopping"
+ },
+ {
+  "title": "(10) Coupon Hacks That Save Me Hundreds Every Month - YouTube",
+  "url": "https://www.youtube.com/watch?v=FRQFLGS2Ge6",
+  "group": "shopping"
+ },
+ {
+  "title": "LG C4 vs Samsung S90D OLED: Which TV to Buy - YouTube",
+  "url": "https://www.youtube.com/watch?v=AIMs0pNeOxB",
+  "group": "shopping"
+ },
+ {
+  "title": "쿠팡 로켓배송 꿀템 추천 #쇼핑 - YouTube",
+  "url": "https://www.youtube.com/watch?v=bbEC5Fh7zME",
+  "group": "shopping"
+ },
+ {
+  "title": "(8) How to Grow on Instagram in 2025 (Algorithm Explained) - YouTube",
+  "url": "https://www.youtube.com/watch?v=W9TFWpfcepi",
+  "group": "social"
+ },
+ {
+  "title": "TikTok Ban Explained: What Happens to Creators? - YouTube",
+  "url": "https://www.youtube.com/watch?v=3XeJiUezeZ0",
+  "group": "social"
+ },
+ {
+  "title": "(12) Why Is Everyone Leaving Twitter for Bluesky? - YouTube",
+  "url": "https://www.youtube.com/watch?v=b0j699HmtSd",
+  "group": "social"
+ },
+ {
+  "title": "Reddit's Worst Subreddits Ranked - YouTube",
+  "url": "https://youtu.be/J1KAwT5N9YO",
+  "group": "social"
+ },
+ {
+  "title": "Facebook Marketplace Scams to Avoid #scam - YouTube",
+  "url": "https://www.youtube.com/watch?v=tevqs7wUvGm",
+  "group": "social"
+ },
+ {
+  "title": "Instagram Reels Tips That Actually Work #instagram - YouTube",
+  "url": "https://youtu.be/9gz0dvlC8KA",
+  "group": "social"
+ },
+ {
+  "title": "The Truth About Threads vs X - YouTube",
+  "url": "https://www.youtube.com/watch?v=XekyiA1BmBW",
+  "group": "social"
+ },
+ {
+  "title": "Discord Server Setup Guide for Beginners - YouTube",
+  "url": "https://www.youtube.com/shorts/IU_l4a4Excc",
+  "group": "social"
+ },
+ {
+  "title": "LinkedIn Post Strategy: 10M Impressions Case Study - YouTube",
+  "url": "https://www.youtube.com/watch?v=UmLofjBUU2O",
+  "group": "social"
+ },
+ {
+  "title": "Snapchat Is Dying? Here's What the Data Says - YouTube",
+  "url": "https://www.youtube.com/watch?v=1o1JzGqyIka",
+  "group": "social"
+ },
+ {
+  "title": "(3) How the Facebook Algorithm Decides Your Feed - YouTube",
+  "url": "https://www.youtube.com/watch?v=3S5q2vB4-wS",
+  "group": "social"
+ },
+ {
+  "title": "WhatsApp Channels Tutorial — Grow Your Community - YouTube",
+  "url": "https://www.youtube.com/shorts/W5WtORomaca",
+  "group": "social"
+ },
+ {
+  "title": "Mastodon Explained in 5 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=uVHr0ftATf-",
+  "group": "social"
+ },
+ {
+  "title": "Why Social Media Is Making Us Lonelier - YouTube",
+  "url": "https://www.youtube.com/watch?v=qde-97A9Hqy",
+  "group": "social"
+ },
+ {
+  "title": "Instagram Notes and Close Friends: Hidden Features - YouTube",
+  "url": "https://www.youtube.com/watch?v=S9otuNWs9oZ",
+  "group": "social"
+ },
+ {
+  "title": "How I Got 100K Followers on TikTok in 90 Days - YouTube",
+  "url": "https://www.youtube.com/watch?v=vhK_odfIr66",
+  "group": "social"
+ },
+ {
+  "title": "Pinterest Boards Setup for Traffic - YouTube",
+  "url": "https://www.youtube.com/watch?v=ERlmaFhcXNh",
+  "group": "social"
+ },
+ {
+  "title": "Reddit AMA Disasters Compilation Reaction - YouTube",
+  "url": "https://www.youtube.com/shorts/s2Go7xxUVYW",
+  "group": "social"
+ },
+ {
+  "title": "(2) Telegram Groups vs Discord Servers - YouTube",
+  "url": "https://www.youtube.com/watch?v=7P4vixi94XP",
+  "group": "social"
+ },
+ {
+  "title": "Stop Doomscrolling: Delete These Apps - YouTube",
+  "url": "https://www.youtube.com/shorts/ySuXqRvm8No",
+  "group": "social"
+ },
+ {
+  "title": "YouTube Community Posts Strategy for Small Channels - YouTube",
+  "url": "https://youtu.be/_tya614uh4r",
+  "group": "social"
+ },
+ {
+  "title": "Inside Instagram's Teen Accounts Policy | Panel 2025 - YouTube",
+  "url": "https://youtu.be/AefCiOHzR2H",
+  "group": "social"
+ },
+ {
+  "title": "Twitter Spaces Hosting Tips - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZtBOeQgriLQ",
+  "group": "social"
+ },
+ {
+  "title": "ඉන්ස්ටාග්‍රෑම් ෆලෝවර්ස් වැඩි කරගන්නේ කොහොමද - YouTube",
+  "url": "https://www.youtube.com/watch?v=URSl4Km7ikG",
+  "group": "social"
+ },
+ {
+  "title": "(10) Instagram रील्स वायरल कैसे करें #instagramtips - YouTube",
+  "url": "https://www.youtube.com/shorts/6ERD4AUrDlx",
+  "group": "social"
+ },
+ {
+  "title": "(8) Weibo 热搜是怎么运作的 - YouTube",
+  "url": "https://www.youtube.com/watch?v=dlBlg1uIDV1",
+  "group": "social"
+ },
+ {
+  "title": "How Facebook Groups Moderation Works — Ep. 88 - YouTube",
+  "url": "https://www.youtube.com/watch?v=pv4hCiHAGeN",
+  "group": "social"
+ },
+ {
+  "title": "(11) Is BeReal Dead? #fyp #socialmedia - YouTube",
+  "url": "https://www.youtube.com/shorts/AAEFkbv2frP",
+  "group": "social"
+ },
+ {
+  "title": "Best Times to Post on Social Media 2025 - YouTube",
+  "url": "https://www.youtube.com/shorts/THz6REBT5eM",
+  "group": "social"
+ },
+ {
+  "title": "Tokyo in 5 Days: Itinerary That Isn't Exhausting - YouTube",
+  "url": "https://www.youtube.com/watch?v=Z8ZjRJbeCq5",
+  "group": "travel"
+ },
+ {
+  "title": "(1) How to Find Cheap Flights (Google Flights Tricks) - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZSvNlYpMq2M",
+  "group": "travel"
+ },
+ {
+  "title": "Is Business Class Worth It? Qatar Qsuite Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=7y6UMJx91pO",
+  "group": "travel"
+ },
+ {
+  "title": "Bali Hidden Gems Nobody Talks About #bali #travel - YouTube",
+  "url": "https://www.youtube.com/watch?v=rBlzlb7STKC",
+  "group": "travel"
+ },
+ {
+  "title": "Sri Lanka Train Ride Ella to Kandy | Travel Guide - YouTube",
+  "url": "https://www.youtube.com/shorts/wq6nZBHLLHh",
+  "group": "travel"
+ },
+ {
+  "title": "(1) Backpacking Europe on $50 a Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=RqlLERgE4O2",
+  "group": "travel"
+ },
+ {
+  "title": "(8) STOP Making These Airport Mistakes #traveltips - YouTube",
+  "url": "https://www.youtube.com/watch?v=aQ-x_9l6vyy",
+  "group": "travel"
+ },
+ {
+  "title": "Paris Hotels: Where to Stay in 2025 - YouTube",
+  "url": "https://www.youtube.com/watch?v=FkR8Jknt85U",
+  "group": "travel"
+ },
+ {
+  "title": "Eurail Pass Worth It? Full Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=l9zaMZoCwN9",
+  "group": "travel"
+ },
+ {
+  "title": "Visa-Free Countries for Indian Passport Holders 2025 - YouTube",
+  "url": "https://youtu.be/z8GiplXdgHC",
+  "group": "travel"
+ },
+ {
+  "title": "Packing Light for 2 Weeks: Carry-On Only - YouTube",
+  "url": "https://www.youtube.com/watch?v=ohrneuqDprc",
+  "group": "travel"
+ },
+ {
+  "title": "Santorini vs Mykonos: Which Greek Island? - YouTube",
+  "url": "https://www.youtube.com/watch?v=bqDNX0dBmAj",
+  "group": "travel"
+ },
+ {
+  "title": "Iceland Ring Road Road Trip Itinerary (7 Days) - YouTube",
+  "url": "https://www.youtube.com/watch?v=PU2qihZpwlj",
+  "group": "travel"
+ },
+ {
+  "title": "Hotel Review: Marina Bay Sands Infinity Pool - YouTube",
+  "url": "https://www.youtube.com/shorts/7WN8kMXyjkV",
+  "group": "travel"
+ },
+ {
+  "title": "Thailand Island Hopping Plan #thailand #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/0nyclxQSGX5",
+  "group": "travel"
+ },
+ {
+  "title": "Lisbon City Guide — Eat, Stay, See - YouTube",
+  "url": "https://youtu.be/7VB2o06bHi5",
+  "group": "travel"
+ },
+ {
+  "title": "Cómo viajar barato a Japón desde México - YouTube",
+  "url": "https://www.youtube.com/watch?v=L2doqPGFP1Y",
+  "group": "travel"
+ },
+ {
+  "title": "한국 여행 3박4일 코스 추천 - YouTube",
+  "url": "https://www.youtube.com/shorts/7bZAhFXEJl9",
+  "group": "travel"
+ },
+ {
+  "title": "如何用积分免费飞行 Travel Hacking 101 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Fi2SyrEeOOO",
+  "group": "travel"
+ },
+ {
+  "title": "Best Time to Visit Machu Picchu + Permit Tips - YouTube",
+  "url": "https://www.youtube.com/watch?v=S_85bSvci4g",
+  "group": "travel"
+ },
+ {
+  "title": "Cruise vs Land Trip: The Real Costs - YouTube",
+  "url": "https://www.youtube.com/watch?v=HcuSu4Dmdz3",
+  "group": "travel"
+ },
+ {
+  "title": "Nepal Everest Base Camp Trek Preparation Guide - YouTube",
+  "url": "https://www.youtube.com/shorts/ZMcp9lXTeZ9",
+  "group": "travel"
+ },
+ {
+  "title": "Maldives on a Budget? Local Islands Guide - YouTube",
+  "url": "https://www.youtube.com/watch?v=LcK37Ej56S6",
+  "group": "travel"
+ },
+ {
+  "title": "Layover in Dubai: What To Do in 12 Hours - YouTube",
+  "url": "https://www.youtube.com/watch?v=GR9OFhJU5h0",
+  "group": "travel"
+ },
+ {
+  "title": "New Zealand Campervan Route Planning - YouTube",
+  "url": "https://www.youtube.com/shorts/hQ98viFDEFH",
+  "group": "travel"
+ },
+ {
+  "title": "Airbnb or Hotel? Travel Mistakes I Regret - YouTube",
+  "url": "https://www.youtube.com/watch?v=qBn6zoAPa8s",
+  "group": "travel"
+ },
+ {
+  "title": "Switzerland Scenic Train Glacier Express Tips #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/SUCimS6LQfd",
+  "group": "travel"
+ },
+ {
+  "title": "Delhi to Ladakh Bike Trip Route and Costs - YouTube",
+  "url": "https://www.youtube.com/shorts/JkipE6zUoAg",
+  "group": "travel"
+ },
+ {
+  "title": "Singapore Changi Airport Tour: Why It's the Best - YouTube",
+  "url": "https://youtu.be/o_QbmE7Qup0",
+  "group": "travel"
+ },
+ {
+  "title": "Index Funds vs ETFs: What Beginners Get Wrong - YouTube",
+  "url": "https://www.youtube.com/shorts/agtTxnwfNdC",
+  "group": "finance"
+ },
+ {
+  "title": "(1) How I Pay Off $40K Debt in 18 Months - YouTube",
+  "url": "https://www.youtube.com/watch?v=Q1KMj6x1ZxL",
+  "group": "finance"
+ },
+ {
+  "title": "(12) Stock Market Crash Coming? What the Yield Curve Says - YouTube",
+  "url": "https://www.youtube.com/shorts/yJiLBCu1N5y",
+  "group": "finance"
+ },
+ {
+  "title": "Budgeting for Beginners: The 50/30/20 Rule Explained - YouTube",
+  "url": "https://www.youtube.com/shorts/BoBpWD8CeLC",
+  "group": "finance"
+ },
+ {
+  "title": "The Truth About Credit Scores - YouTube",
+  "url": "https://www.youtube.com/watch?v=hacbkALdWHN",
+  "group": "finance"
+ },
+ {
+  "title": "(1) Roth IRA vs 401k — Which First? - YouTube",
+  "url": "https://www.youtube.com/watch?v=eoI2C1_P0Tx",
+  "group": "finance"
+ },
+ {
+  "title": "Bitcoin ETF Explained in 10 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=i51bMJ72uF_",
+  "group": "finance"
+ },
+ {
+  "title": "Warren Buffett's Annual Letter Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=9v_vsUT8HiK",
+  "group": "finance"
+ },
+ {
+  "title": "(6) Dollar Cost Averaging Doesn't Work? Let's Look at Data - YouTube",
+  "url": "https://www.youtube.com/watch?v=qGsVlaFoZkZ",
+  "group": "finance"
+ },
+ {
+  "title": "Fed Rate Decision Reaction | Markets Live - YouTube",
+  "url": "https://www.youtube.com/watch?v=9LJre-WH1FM",
+  "group": "finance"
+ },
+ {
+  "title": "අලුතින් ආයෝජනය කරන්නේ කොහොමද? Beginner's Guide - YouTube",
+  "url": "https://www.youtube.com/shorts/a5uD0EHnsYb",
+  "group": "finance"
+ },
+ {
+  "title": "How Compound Interest Makes You Rich #money - YouTube",
+  "url": "https://www.youtube.com/watch?v=zs3XfAuPyCs",
+  "group": "finance"
+ },
+ {
+  "title": "Nifty 50 Analysis: Support and Resistance Levels - YouTube",
+  "url": "https://www.youtube.com/watch?v=el14tvXfsBI",
+  "group": "finance"
+ },
+ {
+  "title": "शेयर बाजार में पैसा कैसे लगाएं - YouTube",
+  "url": "https://www.youtube.com/watch?v=rqgdV6xxxTy",
+  "group": "finance"
+ },
+ {
+  "title": "Why Banks Are Failing: SVB Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=PO5M-kvBp0X",
+  "group": "finance"
+ },
+ {
+  "title": "Best High-Yield Savings Accounts Right Now - YouTube",
+  "url": "https://www.youtube.com/shorts/S8uWweQBUFc",
+  "group": "finance"
+ },
+ {
+  "title": "Dividend Investing: $1000 a Month Plan - YouTube",
+  "url": "https://www.youtube.com/watch?v=00xGg-UdErp",
+  "group": "finance"
+ },
+ {
+  "title": "Emergency Fund: How Much Do You Really Need? - YouTube",
+  "url": "https://www.youtube.com/watch?v=5-zstiakcnQ",
+  "group": "finance"
+ },
+ {
+  "title": "(4) I Invested $100 in S&P 500 Every Week for 1 Year - YouTube",
+  "url": "https://www.youtube.com/watch?v=ZS3Y5yytVAB",
+  "group": "finance"
+ },
+ {
+  "title": "Inflation 2025: What It Means for Your Savings - YouTube",
+  "url": "https://www.youtube.com/watch?v=VIvmePX6Rni",
+  "group": "finance"
+ },
+ {
+  "title": "Tax Loss Harvesting Tutorial | CPA Explains - YouTube",
+  "url": "https://www.youtube.com/watch?v=-AwWpEoYQOL",
+  "group": "finance"
+ },
+ {
+  "title": "(6) FIRE Movement: Retire at 40 Math - YouTube",
+  "url": "https://www.youtube.com/watch?v=9V8WZqO0bHK",
+  "group": "finance"
+ },
+ {
+  "title": "(11) Mortgage Rates and the Bond Market: What's Next - YouTube",
+  "url": "https://www.youtube.com/watch?v=c4UGA6T_3Uz",
+  "group": "finance"
+ },
+ {
+  "title": "(13) Vanguard VOO vs VTI Debate #investing - YouTube",
+  "url": "https://www.youtube.com/watch?v=UvIGPDI1waX",
+  "group": "finance"
+ },
+ {
+  "title": "Personal Finance Podcast Ep. 214: Net Worth Milestones - YouTube",
+  "url": "https://www.youtube.com/watch?v=qH3UPwWCv5C",
+  "group": "finance"
+ },
+ {
+  "title": "(2) S&P 500 Earnings Season Preview - YouTube",
+  "url": "https://www.youtube.com/watch?v=Y5dlAd38ELJ",
+  "group": "finance"
+ },
+ {
+  "title": "仕事を辞めずに資産運用する方法 NISA入門 - YouTube",
+  "url": "https://www.youtube.com/watch?v=sCLsp5xA0-a",
+  "group": "finance"
+ },
+ {
+  "title": "Budget App Showdown: YNAB vs Monarch vs Copilot - YouTube",
+  "url": "https://www.youtube.com/watch?v=qHSS3cK-odU",
+  "group": "finance"
+ },
+ {
+  "title": "Gold vs Stocks Over 50 Years #finance - YouTube",
+  "url": "https://www.youtube.com/watch?v=prqGQH19v8W",
+  "group": "finance"
+ },
+ {
+  "title": "Intermittent Fasting for 30 Days: My Blood Work Results - YouTube",
+  "url": "https://youtu.be/7xEsLm97fIc",
+  "group": "health"
+ },
+ {
+  "title": "10-Minute Morning Mobility Routine - YouTube",
+  "url": "https://www.youtube.com/shorts/wMPJy0HpC3X",
+  "group": "health"
+ },
+ {
+  "title": "(9) Why You're Always Tired: Doctor Explains - YouTube",
+  "url": "https://www.youtube.com/watch?v=Iude1LHR9VA",
+  "group": "health"
+ },
+ {
+  "title": "Zone 2 Cardio Explained — Dr. Attia Style Deep Dive - YouTube",
+  "url": "https://www.youtube.com/watch?v=GA61hAbWC3B",
+  "group": "health"
+ },
+ {
+  "title": "Protein Intake: How Much Do You Actually Need? - YouTube",
+  "url": "https://www.youtube.com/watch?v=JZu1p7Mquj8",
+  "group": "health"
+ },
+ {
+  "title": "(12) Beginner Push Day Workout #gym #fitness - YouTube",
+  "url": "https://www.youtube.com/watch?v=_19GQfYYgtR",
+  "group": "health"
+ },
+ {
+  "title": "STOP Doing Crunches for Abs - YouTube",
+  "url": "https://www.youtube.com/watch?v=nJttR8iS8WC",
+  "group": "health"
+ },
+ {
+  "title": "How to Fix Lower Back Pain at Your Desk - YouTube",
+  "url": "https://www.youtube.com/watch?v=JHTuCc4I2nB",
+  "group": "health"
+ },
+ {
+  "title": "Sleep Hygiene Tips From a Neurologist - YouTube",
+  "url": "https://www.youtube.com/watch?v=qXC8fXHQrjk",
+  "group": "health"
+ },
+ {
+  "title": "(3) Creatine: Myths vs Science - YouTube",
+  "url": "https://youtu.be/-uBXCftnKhW",
+  "group": "health"
+ },
+ {
+  "title": "Understanding High Blood Pressure | Cardiologist Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=PpSu1djjTLF",
+  "group": "health"
+ },
+ {
+  "title": "30 Day Yoga Challenge for Flexibility — Day 12 - YouTube",
+  "url": "https://www.youtube.com/watch?v=EfAllaBSeST",
+  "group": "health"
+ },
+ {
+  "title": "Mediterranean Diet Meal Plan for Weight Loss - YouTube",
+  "url": "https://www.youtube.com/watch?v=MTvNY8lu_xo",
+  "group": "health"
+ },
+ {
+  "title": "Anxiety and the Body: Panic Attack Coping Skills - YouTube",
+  "url": "https://www.youtube.com/watch?v=BFi2kdhRk86",
+  "group": "health"
+ },
+ {
+  "title": "Couch to 5K Week 1 Walkthrough - YouTube",
+  "url": "https://www.youtube.com/watch?v=q2Rdhlgu0DH",
+  "group": "health"
+ },
+ {
+  "title": "Vitamin D Deficiency Symptoms You Shouldn't Ignore - YouTube",
+  "url": "https://www.youtube.com/watch?v=hjLPJV1soz1",
+  "group": "health"
+ },
+ {
+  "title": "Home Workout No Equipment Full Body #homeworkout - YouTube",
+  "url": "https://www.youtube.com/watch?v=Of5ybGRa52R",
+  "group": "health"
+ },
+ {
+  "title": "Cold Plunge Benefits: Real or Hype? - YouTube",
+  "url": "https://www.youtube.com/watch?v=BgV3FxVg_wx",
+  "group": "health"
+ },
+ {
+  "title": "How Much Water Should You Drink? #health - YouTube",
+  "url": "https://youtu.be/B3TeiBuYeOs",
+  "group": "health"
+ },
+ {
+  "title": "Diabetes Type 2: Diet Changes That Work - YouTube",
+  "url": "https://www.youtube.com/watch?v=GHvegagV1uF",
+  "group": "health"
+ },
+ {
+  "title": "Knee Pain When Squatting — Physio Fix - YouTube",
+  "url": "https://www.youtube.com/watch?v=GVJz-R_OlLc",
+  "group": "health"
+ },
+ {
+  "title": "ඔබේ ශරීරය සවිමත් කරගන්න ව්‍යායාම - YouTube",
+  "url": "https://www.youtube.com/watch?v=SQNak8Bo6oC",
+  "group": "health"
+ },
+ {
+  "title": "वजन कम करने के आसान तरीके | Diet Plan - YouTube",
+  "url": "https://www.youtube.com/shorts/d2sIwViN4F2",
+  "group": "health"
+ },
+ {
+  "title": "减脂期一日三餐怎么吃 #减脂 - YouTube",
+  "url": "https://www.youtube.com/shorts/F3KQBrpcVnK",
+  "group": "health"
+ },
+ {
+  "title": "Cómo bajar el colesterol de forma natural - YouTube",
+  "url": "https://www.youtube.com/watch?v=5tHy19AIbtn",
+  "group": "health"
+ },
+ {
+  "title": "Mental Health Check-In: Burnout Signs - YouTube",
+  "url": "https://www.youtube.com/watch?v=arifyWuktN0",
+  "group": "health"
+ },
+ {
+  "title": "Strength Training for Women Over 40 - YouTube",
+  "url": "https://www.youtube.com/shorts/jjoXnImAnxa",
+  "group": "health"
+ },
+ {
+  "title": "What Happens to Your Body When You Quit Sugar - YouTube",
+  "url": "https://www.youtube.com/watch?v=FiLhOQF5HMH",
+  "group": "health"
+ },
+ {
+  "title": "Ep. 301: Longevity with Dr. Peter Lee | Health Hour Podcast - YouTube",
+  "url": "https://www.youtube.com/watch?v=i0gHHPQ3Fxd",
+  "group": "health"
+ },
+ {
+  "title": "(2) Premier League Highlights: Arsenal 3-1 Man City - YouTube",
+  "url": "https://www.youtube.com/shorts/JnZdXx_1eWu",
+  "group": "sports"
+ },
+ {
+  "title": "NBA Finals Game 7 Last 2 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=0F2WT9E3lyB",
+  "group": "sports"
+ },
+ {
+  "title": "IPL 2025 Final Highlights | RCB vs MI - YouTube",
+  "url": "https://www.youtube.com/watch?v=1Ktv2i-otck",
+  "group": "sports"
+ },
+ {
+  "title": "Messi Free Kick vs Dallas #messi #football - YouTube",
+  "url": "https://www.youtube.com/watch?v=qZyLFYwDgQZ",
+  "group": "sports"
+ },
+ {
+  "title": "Champions League Draw Reaction and Predictions - YouTube",
+  "url": "https://www.youtube.com/watch?v=ADWmLQ7YrAd",
+  "group": "sports"
+ },
+ {
+  "title": "Why Tennis Is So Mentally Brutal — Djokovic Interview - YouTube",
+  "url": "https://www.youtube.com/watch?v=7knFpZ2Kjw-",
+  "group": "sports"
+ },
+ {
+  "title": "Fantasy Premier League GW12 Tips and Captain Picks - YouTube",
+  "url": "https://www.youtube.com/watch?v=wUsDi8Nfqo8",
+  "group": "sports"
+ },
+ {
+  "title": "Ronaldo Goal Compilation 2025 #cr7 - YouTube",
+  "url": "https://www.youtube.com/watch?v=yDAOig_mpJO",
+  "group": "sports"
+ },
+ {
+  "title": "F1 Qualifying Recap: Verstappen vs Norris - YouTube",
+  "url": "https://www.youtube.com/watch?v=6kAFUc8dXE9",
+  "group": "sports"
+ },
+ {
+  "title": "Cricket World Cup: Sri Lanka vs India Match Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=LADu_FskNUP",
+  "group": "sports"
+ },
+ {
+  "title": "Tom Brady Greatest Comeback Explained - YouTube",
+  "url": "https://www.youtube.com/shorts/26WHPHm0H3u",
+  "group": "sports"
+ },
+ {
+  "title": "UFC 310 Full Fight Breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=ENd867fnTnH",
+  "group": "sports"
+ },
+ {
+  "title": "How Marathon Runners Train: Kipchoge's Weekly Plan - YouTube",
+  "url": "https://www.youtube.com/watch?v=jVF3pDwW4JC",
+  "group": "sports"
+ },
+ {
+  "title": "NFL Week 9 Power Rankings - YouTube",
+  "url": "https://www.youtube.com/watch?v=Azwi4c8UN9J",
+  "group": "sports"
+ },
+ {
+  "title": "LeBron's 40000 Points: A Look Back - YouTube",
+  "url": "https://www.youtube.com/watch?v=L7ichpxSn4X",
+  "group": "sports"
+ },
+ {
+  "title": "Lakers vs Celtics Full Game Highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=OhRgVBYC5Hd",
+  "group": "sports"
+ },
+ {
+  "title": "(12) Rugby Six Nations Try of the Tournament - YouTube",
+  "url": "https://www.youtube.com/shorts/eqZxxywzC-G",
+  "group": "sports"
+ },
+ {
+  "title": "Tour de France Stage 14 Highlights - YouTube",
+  "url": "https://www.youtube.com/shorts/AtKOFRqxClK",
+  "group": "sports"
+ },
+ {
+  "title": "(1) La Liga: Real Madrid vs Barcelona El Clásico - YouTube",
+  "url": "https://www.youtube.com/watch?v=G99rocYKWH_",
+  "group": "sports"
+ },
+ {
+  "title": "Wimbledon 2025 Final Set Tiebreak - YouTube",
+  "url": "https://www.youtube.com/watch?v=4zwHbW4srm8",
+  "group": "sports"
+ },
+ {
+  "title": "Olympic Sprint Finals Replay | Paris Highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=t3hfPWnC7lj",
+  "group": "sports"
+ },
+ {
+  "title": "NBA Trade Rumors Today with Insider - YouTube",
+  "url": "https://www.youtube.com/shorts/zbyRG9lXy_A",
+  "group": "sports"
+ },
+ {
+  "title": "Cricket: Virat Kohli's 50th ODI Hundred #cricket - YouTube",
+  "url": "https://www.youtube.com/watch?v=C9IH5FI9-Au",
+  "group": "sports"
+ },
+ {
+  "title": "Bundesliga Title Race Analysis | Podcast #77 - YouTube",
+  "url": "https://www.youtube.com/watch?v=zP9tUIHb38g",
+  "group": "sports"
+ },
+ {
+  "title": "Why Football Offside Rules Confuse Everyone - YouTube",
+  "url": "https://www.youtube.com/shorts/3_hyjFFjfP0",
+  "group": "sports"
+ },
+ {
+  "title": "Curry Logo Three Compilation #nba #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/tywWj6OsY9M",
+  "group": "sports"
+ },
+ {
+  "title": "MotoGP Race Crash and Restart - YouTube",
+  "url": "https://www.youtube.com/watch?v=K_fZIXh-Hgo",
+  "group": "sports"
+ },
+ {
+  "title": "Super Bowl Halftime Predictions and Odds - YouTube",
+  "url": "https://www.youtube.com/shorts/tj40cfPQ_eI",
+  "group": "sports"
+ },
+ {
+  "title": "ලංකා ක්‍රිකට් කණ්ඩායමේ අලුත් තරඟය - YouTube",
+  "url": "https://www.youtube.com/watch?v=VPfg_Q0EZlz",
+  "group": "sports"
+ },
+ {
+  "title": "大谷翔平 ホームラン 全打席ハイライト - YouTube",
+  "url": "https://www.youtube.com/watch?v=f_S9PmA4QRO",
+  "group": "sports"
+ },
+ {
+  "title": "The Easiest Butter Chicken You'll Ever Make - YouTube",
+  "url": "https://www.youtube.com/watch?v=Vy192us-gyU",
+  "group": "food"
+ },
+ {
+  "title": "I Tried Gordon Ramsay's Scrambled Eggs - YouTube",
+  "url": "https://www.youtube.com/watch?v=VneB34als7R",
+  "group": "food"
+ },
+ {
+  "title": "Sourdough for Beginners: Starter to Loaf - YouTube",
+  "url": "https://www.youtube.com/watch?v=HFvwHYmcI5J",
+  "group": "food"
+ },
+ {
+  "title": "Garlic Noodles in 10 Minutes #recipe #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/LjS_jZyyl1D",
+  "group": "food"
+ },
+ {
+  "title": "Street Food Tour in Bangkok: 10 Dishes - YouTube",
+  "url": "https://www.youtube.com/watch?v=FpQXOUQFr8M",
+  "group": "food"
+ },
+ {
+  "title": "What I Eat in a Week: Budget Meal Prep - YouTube",
+  "url": "https://www.youtube.com/shorts/uo35G206pbk",
+  "group": "food"
+ },
+ {
+  "title": "(12) Authentic Carbonara — No Cream, Please - YouTube",
+  "url": "https://www.youtube.com/watch?v=7pBzfXgX1cq",
+  "group": "food"
+ },
+ {
+  "title": "Cooking Up Dinner: 3 Weeknight Pasta Ideas - YouTube",
+  "url": "https://www.youtube.com/watch?v=ngQ55DYVXGn",
+  "group": "food"
+ },
+ {
+  "title": "Kottu Roti Recipe Sri Lankan Style | ලංකා කොත්තු - YouTube",
+  "url": "https://www.youtube.com/shorts/zpd_3RXc9iQ",
+  "group": "food"
+ },
+ {
+  "title": "Best Ramen in Tokyo? Restaurant Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=_wC60fXMOx3",
+  "group": "food"
+ },
+ {
+  "title": "Crispy Smash Burger Technique Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=Fs8_3JlGfVl",
+  "group": "food"
+ },
+ {
+  "title": "Nobody Tells You This About Cooking Rice - YouTube",
+  "url": "https://www.youtube.com/watch?v=96IoPjEIsrX",
+  "group": "food"
+ },
+ {
+  "title": "(14) Easy Tteokbokki 떡볶이 레시피 - YouTube",
+  "url": "https://www.youtube.com/watch?v=eqSR49qYZXo",
+  "group": "food"
+ },
+ {
+  "title": "Korean Fried Chicken: Double Fry Method - YouTube",
+  "url": "https://www.youtube.com/watch?v=pdhahP3N1Ct",
+  "group": "food"
+ },
+ {
+  "title": "Baking Soda vs Baking Powder: When to Use Which - YouTube",
+  "url": "https://www.youtube.com/watch?v=kscytBf6Fce",
+  "group": "food"
+ },
+ {
+  "title": "Chocolate Chip Cookie Experiment — 12 Variations - YouTube",
+  "url": "https://www.youtube.com/watch?v=wrW7Eyy-DT9",
+  "group": "food"
+ },
+ {
+  "title": "Paneer Tikka बिना ओवन के रेसिपी - YouTube",
+  "url": "https://www.youtube.com/shorts/qKXvkLYWZlK",
+  "group": "food"
+ },
+ {
+  "title": "Michelin Star Dinner Worth It? Full Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=eteeLkBRR4i",
+  "group": "food"
+ },
+ {
+  "title": "Chef Reacts to Viral TikTok Recipes - YouTube",
+  "url": "https://www.youtube.com/watch?v=6WCwnRJ61RH",
+  "group": "food"
+ },
+ {
+  "title": "Steak Doneness Guide: Reverse Sear Method #steak - YouTube",
+  "url": "https://www.youtube.com/watch?v=_AOqm4Bo9z8",
+  "group": "food"
+ },
+ {
+  "title": "Mexican Street Tacos al Pastor en Casa - YouTube",
+  "url": "https://www.youtube.com/shorts/QiIrIb9xv98",
+  "group": "food"
+ },
+ {
+  "title": "Knife Skills 101 | Culinary School Class - YouTube",
+  "url": "https://www.youtube.com/watch?v=hhQAb_BH3qy",
+  "group": "food"
+ },
+ {
+  "title": "Gordon Ramsay's Kitchen Nightmares Best Moments - YouTube",
+  "url": "https://www.youtube.com/shorts/9Gj5QMgKM-2",
+  "group": "food"
+ },
+ {
+  "title": "Dumpling Folding Techniques #dumplings #cooking - YouTube",
+  "url": "https://www.youtube.com/watch?v=S9ilQ9k9Owr",
+  "group": "food"
+ },
+ {
+  "title": "Homemade Pizza Dough 72 Hour Ferment - YouTube",
+  "url": "https://www.youtube.com/shorts/dhqQ4-J30VY",
+  "group": "food"
+ },
+ {
+  "title": "Ramadan Iftar Ideas: Quick Dates and Samosas - YouTube",
+  "url": "https://www.youtube.com/watch?v=gpCxIbHq_jp",
+  "group": "food"
+ },
+ {
+  "title": "Air Fryer Salmon in 8 Minutes #airfryer - YouTube",
+  "url": "https://www.youtube.com/watch?v=rr7lforkPJv",
+  "group": "food"
+ },
+ {
+  "title": "Ep. 58: Restaurant Owners on Surviving Inflation | Kitchen Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=inmafMcKlzy",
+  "group": "food"
+ },
+ {
+  "title": "麻婆豆腐 家常做法 #美食 - YouTube",
+  "url": "https://youtu.be/G_LafREBbRY",
+  "group": "food"
+ },
+ {
+  "title": "(11) 2025 Toyota Camry Review: Hybrid Only Now - YouTube",
+  "url": "https://www.youtube.com/shorts/la8S7AcQcnE",
+  "group": "cars"
+ },
+ {
+  "title": "Tesla Model 3 Highland 6 Months Ownership - YouTube",
+  "url": "https://www.youtube.com/shorts/otZkKgUeFvE",
+  "group": "cars"
+ },
+ {
+  "title": "How to Change Your Oil in 15 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=lAgie3BhYG_",
+  "group": "cars"
+ },
+ {
+  "title": "Used Car Buying Checklist (Don't Get Scammed) - YouTube",
+  "url": "https://www.youtube.com/watch?v=KYFas0Gk04p",
+  "group": "cars"
+ },
+ {
+  "title": "BMW M3 vs Mercedes C63: Drag Race - YouTube",
+  "url": "https://www.youtube.com/watch?v=PZ8u36XYgeT",
+  "group": "cars"
+ },
+ {
+  "title": "Honda Civic Type R: Daily Driver Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=L-hrhwFrLpr",
+  "group": "cars"
+ },
+ {
+  "title": "STOP Ignoring This Dashboard Warning Light - YouTube",
+  "url": "https://www.youtube.com/watch?v=VEaxlEK42WK",
+  "group": "cars"
+ },
+ {
+  "title": "Why EV Batteries Degrade — Engineer Explains - YouTube",
+  "url": "https://youtu.be/NJqD_d7XMIr",
+  "group": "cars"
+ },
+ {
+  "title": "Replacing Brake Pads and Rotors DIY - YouTube",
+  "url": "https://www.youtube.com/watch?v=hhTLVwmA0FR",
+  "group": "cars"
+ },
+ {
+  "title": "Mustang GT Exhaust Sound Comparison #mustang #cars - YouTube",
+  "url": "https://www.youtube.com/watch?v=j8iBfapXdum",
+  "group": "cars"
+ },
+ {
+  "title": "Royal Enfield Himalayan 450 Long Term Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=_VzhcvVw8ez",
+  "group": "cars"
+ },
+ {
+  "title": "Yamaha R15 vs KTM Duke 200: Which Bike? - YouTube",
+  "url": "https://www.youtube.com/watch?v=gAcUSNNLeQT",
+  "group": "cars"
+ },
+ {
+  "title": "(1) Rivian R1S Road Trip Charging Test - YouTube",
+  "url": "https://www.youtube.com/watch?v=nldFGrjuZqs",
+  "group": "cars"
+ },
+ {
+  "title": "Toyota Vitz ඉන්ධන පරිභෝජනය Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=yPI82pfQw7O",
+  "group": "cars"
+ },
+ {
+  "title": "(2) Why Manual Transmissions Are Disappearing - YouTube",
+  "url": "https://youtu.be/1F8Dxc8AqB2",
+  "group": "cars"
+ },
+ {
+  "title": "Timing Belt vs Chain: What You Need to Know - YouTube",
+  "url": "https://www.youtube.com/watch?v=5eT6CRM4HVd",
+  "group": "cars"
+ },
+ {
+  "title": "Porsche 911 GT3 RS Track Day POV - YouTube",
+  "url": "https://www.youtube.com/shorts/D5D3VDBxKGK",
+  "group": "cars"
+ },
+ {
+  "title": "Hyundai Ioniq 5 N Drift Mode Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=PuRZOQ0zXKJ",
+  "group": "cars"
+ },
+ {
+  "title": "Car Wash Detailing Hacks #detailing - YouTube",
+  "url": "https://www.youtube.com/watch?v=Kri_Mg5oyL8",
+  "group": "cars"
+ },
+ {
+  "title": "Maruti Swift 2025 पूरा रिव्यू - YouTube",
+  "url": "https://youtu.be/WFIkISUgz6O",
+  "group": "cars"
+ },
+ {
+  "title": "(8) BYD Seal vs Tesla Model 3 Comparison - YouTube",
+  "url": "https://www.youtube.com/watch?v=vQttO25S8iC",
+  "group": "cars"
+ },
+ {
+  "title": "Diagnosing a Misfire with OBD2 Scanner - YouTube",
+  "url": "https://www.youtube.com/watch?v=_UI4Lg5hL0K",
+  "group": "cars"
+ },
+ {
+  "title": "Best Cheap First Cars for New Drivers - YouTube",
+  "url": "https://www.youtube.com/watch?v=UJtWDnmzJQR",
+  "group": "cars"
+ },
+ {
+  "title": "Ford F-150 Lightning Real World Range - YouTube",
+  "url": "https://www.youtube.com/watch?v=PyImH8eXjKe",
+  "group": "cars"
+ },
+ {
+  "title": "Ep. 212: Car Dealers Confess | Garage Talk Podcast - YouTube",
+  "url": "https://www.youtube.com/shorts/K8jGROXJYD7",
+  "group": "cars"
+ },
+ {
+  "title": "Engine Rebuild Time Lapse: Honda K24 - YouTube",
+  "url": "https://www.youtube.com/shorts/NLTfm4WfeDV",
+  "group": "cars"
+ },
+ {
+  "title": "トヨタ GR86 試乗レビュー - YouTube",
+  "url": "https://youtu.be/s9aQKZiuM9q",
+  "group": "cars"
+ },
+ {
+  "title": "Kia EV9 Family SUV Review: Worth It? - YouTube",
+  "url": "https://www.youtube.com/watch?v=Y3u4y1qQacc",
+  "group": "cars"
+ },
+ {
+  "title": "Coche eléctrico: ¿Merece la pena en 2025? - YouTube",
+  "url": "https://www.youtube.com/shorts/nUQv08ZGIXk",
+  "group": "cars"
+ },
+ {
+  "title": "I Spent 24 Hours in a Box Fort - YouTube",
+  "url": "https://www.youtube.com/watch?v=L85sME4-LEV",
+  "group": "videos"
+ },
+ {
+  "title": "Day in My Life: Working From Home Edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=gb0P430tFXB",
+  "group": "videos"
+ },
+ {
+  "title": "Funniest Fails of the Week #funny #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/7MOxdT5H8gW",
+  "group": "videos"
+ },
+ {
+  "title": "Reacting to My Old Videos (Cringe Warning) - YouTube",
+  "url": "https://www.youtube.com/watch?v=aVCbaEl66h-",
+  "group": "videos"
+ },
+ {
+  "title": "Pranking My Roommate With Fake Spiders - YouTube",
+  "url": "https://www.youtube.com/watch?v=0fSArr3DVhr",
+  "group": "videos"
+ },
+ {
+  "title": "Satisfying Compilation Part 47 - YouTube",
+  "url": "https://www.youtube.com/watch?v=lJHS6nrFhUF",
+  "group": "videos"
+ },
+ {
+  "title": "POV: You Wake Up Late #pov - YouTube",
+  "url": "https://www.youtube.com/watch?v=2V3vn9T73QJ",
+  "group": "videos"
+ },
+ {
+  "title": "ASMR Keyboard Sounds No Talking - YouTube",
+  "url": "https://www.youtube.com/watch?v=urDeSvWrTkB",
+  "group": "videos"
+ },
+ {
+  "title": "(7) I Tried the Viral 75 Hard Challenge for a Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=6GCFe69T0ou",
+  "group": "videos"
+ },
+ {
+  "title": "Cat Fails Compilation 2025 #fails - YouTube",
+  "url": "https://www.youtube.com/shorts/Ie9ck5IZSMx",
+  "group": "videos"
+ },
+ {
+  "title": "Vlog: Sunday Reset and Random Errands - YouTube",
+  "url": "https://www.youtube.com/watch?v=Mk_9piqwz1P",
+  "group": "videos"
+ },
+ {
+  "title": "(8) Whisper Challenge With My Mom - YouTube",
+  "url": "https://www.youtube.com/shorts/LVxe7HbNttl",
+  "group": "videos"
+ },
+ {
+  "title": "(6) The Last Video I Wanted to Make - YouTube",
+  "url": "https://www.youtube.com/watch?v=skGs_G_lljD",
+  "group": "videos"
+ },
+ {
+  "title": "Try Not to Laugh Challenge | Impossible - YouTube",
+  "url": "https://www.youtube.com/watch?v=UEz-fjR2cGI",
+  "group": "videos"
+ },
+ {
+  "title": "We Went Viral... Here's What Happened - YouTube",
+  "url": "https://www.youtube.com/shorts/RIPNuBS3hSb",
+  "group": "videos"
+ },
+ {
+  "title": "Q&A: Your Questions Answered (Finally) - YouTube",
+  "url": "https://www.youtube.com/shorts/-l3z1o9ht_0",
+  "group": "videos"
+ },
+ {
+  "title": "Subscribers Decide My Weekend - YouTube",
+  "url": "https://www.youtube.com/shorts/mmcRAgKjoYY",
+  "group": "videos"
+ },
+ {
+  "title": "(9) Hot Takes That Will Make You Mad #hottakes - YouTube",
+  "url": "https://youtu.be/gSwh-37nLZO",
+  "group": "videos"
+ },
+ {
+  "title": "(10) Random Clips I Found on My Phone - YouTube",
+  "url": "https://www.youtube.com/watch?v=O-4uqoELDtI",
+  "group": "videos"
+ },
+ {
+  "title": "LIVE: Chilling and Chatting With You All - YouTube",
+  "url": "https://www.youtube.com/watch?v=XPS7m_ph90V",
+  "group": "videos"
+ },
+ {
+  "title": "Unboxing Mystery Box From a Stranger - YouTube",
+  "url": "https://www.youtube.com/watch?v=KH7VqeGZi9K",
+  "group": "videos"
+ },
+ {
+  "title": "Rain Sounds 10 Hours for Relaxation - YouTube",
+  "url": "https://www.youtube.com/shorts/Q35csc4D0vS",
+  "group": "videos"
+ },
+ {
+  "title": "Trying Weird Snacks From Vending Machines - YouTube",
+  "url": "https://youtu.be/DDiayo3TH1H",
+  "group": "videos"
+ },
+ {
+  "title": "Nobody Believes Me About This Story... Storytime - YouTube",
+  "url": "https://www.youtube.com/watch?v=hznB6-zufrU",
+  "group": "videos"
+ },
+ {
+  "title": "Day 1 vs Day 100 Challenge Highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=sgP80FwLFUo",
+  "group": "videos"
+ },
+ {
+  "title": "Things That Just Hit Different #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/ET70-NPihDh",
+  "group": "videos"
+ },
+ {
+  "title": "Best Moments of the Month Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=bM6yjBTR_Sr",
+  "group": "videos"
+ },
+ {
+  "title": "I Let Chat Control My Life For a Day - YouTube",
+  "url": "https://www.youtube.com/watch?v=qRXw4lfusiu",
+  "group": "videos"
+ },
+ {
+  "title": "The Internet Is Weird Sometimes - YouTube",
+  "url": "https://www.youtube.com/watch?v=etKOLqBTnbi",
+  "group": "videos"
+ },
+ {
+  "title": "Walking Around My City at Night 4K - YouTube",
+  "url": "https://www.youtube.com/watch?v=I3Zob_Dp7mf",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Dog Reactions to Mirror #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/h_19WI53KlO",
+  "group": "videos"
+ },
+ {
+  "title": "Weekly Vlog 56: Nothing Planned, Everything Happened - YouTube",
+  "url": "https://www.youtube.com/watch?v=0YjUv8DjQmb",
+  "group": "videos"
+ },
+ {
+  "title": "(9) Monday Motivation Quotes Edit #motivation - YouTube",
+  "url": "https://www.youtube.com/shorts/1wM8bJ6CGUz",
+  "group": "videos"
+ },
+ {
+  "title": "Reacting to Memes Sent By Subscribers - YouTube",
+  "url": "https://www.youtube.com/shorts/Ead7CiMW7X8",
+  "group": "videos"
+ },
+ {
+  "title": "Shorts Compilation: Wait For It... - YouTube",
+  "url": "https://www.youtube.com/shorts/N0F_VXjorPT",
+  "group": "videos"
+ },
+ {
+  "title": "Prank Call Gone Wrong LOL - YouTube",
+  "url": "https://www.youtube.com/shorts/agc186DE2Mi",
+  "group": "videos"
+ },
+ {
+  "title": "(3) Ranking My Subscribers' Weird Talents - YouTube",
+  "url": "https://www.youtube.com/watch?v=LkK_7TrsOjD",
+  "group": "videos"
+ },
+ {
+  "title": "අද දවසේ වීඩියෝව | Daily Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=1XVPXn7pZvs",
+  "group": "videos"
+ },
+ {
+  "title": "आज का दिन कैसा रहा | Daily Vlog #vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=nA8XFoKhS4J",
+  "group": "videos"
+ },
+ {
+  "title": "(12) 今日のVlog 何もしない休日 - YouTube",
+  "url": "https://www.youtube.com/watch?v=D2vlpLvrzkm",
+  "group": "videos"
+ },
+ {
+  "title": "(6) 오늘의 브이로그 #일상 - YouTube",
+  "url": "https://www.youtube.com/watch?v=gYzxsYhOaOb",
+  "group": "videos"
+ },
+ {
+  "title": "Minecraft Skin Reveal... Just Kidding #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/P2D3frsOvNM",
+  "group": "videos"
+ },
+ {
+  "title": "Moving Out Vlog: Last Night in the Apartment - YouTube",
+  "url": "https://www.youtube.com/shorts/0YQHMIZEaDx",
+  "group": "videos"
+ },
+ {
+  "title": "What's In My Bag? Mixed Edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=GVMkifGgH_I",
+  "group": "videos"
+ },
+ {
+  "title": "Accidentally Became a Meme - YouTube",
+  "url": "https://www.youtube.com/watch?v=qm6JOOf46tg",
+  "group": "videos"
+ },
+ {
+  "title": "(7) Birthday Surprise Reaction Goes Wrong - YouTube",
+  "url": "https://www.youtube.com/watch?v=NEIlNEtqRLP",
+  "group": "videos"
+ },
+ {
+  "title": "Best Wholesome Moments Compilation - YouTube",
+  "url": "https://youtu.be/Q-GAKVqZA4N",
+  "group": "videos"
+ },
+ {
+  "title": "This Is Why I Was Gone - YouTube",
+  "url": "https://www.youtube.com/watch?v=6Sm-7z-MsNJ",
+  "group": "videos"
+ },
+ {
+  "title": "Tag, You're It: Friends Edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=_ivyUwBCbD7",
+  "group": "videos"
+ },
+ {
+  "title": "Talking to Strangers for 10 Minutes - YouTube",
+  "url": "https://youtu.be/o810Ae6CBJ9",
+  "group": "videos"
+ },
+ {
+  "title": "Chill Beats Vlog Study With Me #studywithme - YouTube",
+  "url": "https://www.youtube.com/watch?v=aNbg-t62sSH",
+  "group": "videos"
+ },
+ {
+  "title": "(6) I Tried Waking Up at 4AM for a Week - YouTube",
+  "url": "https://www.youtube.com/shorts/JlJWIm038qx",
+  "group": "videos"
+ },
+ {
+  "title": "Vlogmas Day 12: Cozy Holiday Prep - YouTube",
+  "url": "https://www.youtube.com/watch?v=nolEqiltUzm",
+  "group": "videos"
+ },
+ {
+  "title": "Dad Jokes Battle Round 3 #funny - YouTube",
+  "url": "https://www.youtube.com/watch?v=oNVqGOgrxq6",
+  "group": "videos"
+ },
+ {
+  "title": "Mukbang and Chitchat About Nothing - YouTube",
+  "url": "https://youtu.be/ApQRTsWtz8m",
+  "group": "videos"
+ },
+ {
+  "title": "Another Random Upload Because Why Not - YouTube",
+  "url": "https://www.youtube.com/watch?v=1bkinUAiLrP",
+  "group": "videos"
+ },
+ {
+  "title": "Fails of 2025 Part 3 #fails #compilation - YouTube",
+  "url": "https://www.youtube.com/shorts/pFvZa_TKsIE",
+  "group": "videos"
+ },
+ {
+  "title": "(14) How We Spent a Rainy Saturday - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ct19TONcdRe",
+  "group": "videos"
+ },
+ {
+  "title": "The Internet Reacts to the Weirdest Ad - YouTube",
+  "url": "https://www.youtube.com/shorts/025pnwp25BM",
+  "group": "videos"
+ },
+ {
+  "title": "Last Minute Vlog: Packing and Panic - YouTube",
+  "url": "https://www.youtube.com/watch?v=Asjl4J66G0z",
+  "group": "videos"
+ },
+ {
+  "title": "Stream Highlights: Funny Clips Mix - YouTube",
+  "url": "https://youtu.be/L-k1PfayBST",
+  "group": "videos"
+ },
+ {
+  "title": "Things I Learned This Year (Unfiltered) - YouTube",
+  "url": "https://www.youtube.com/watch?v=f1UOCPC4QaI",
+  "group": "videos"
+ },
+ {
+  "title": "Prank War Escalates: Day 3 - YouTube",
+  "url": "https://www.youtube.com/shorts/UsBdrj9Xu-E",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Baby Laughing Compilation #babylaugh - YouTube",
+  "url": "https://www.youtube.com/shorts/KSiUprVQa2s",
+  "group": "videos"
+ },
+ {
+  "title": "Reading Mean Comments LIVE - YouTube",
+  "url": "https://youtu.be/IOM8GdMzfg-",
+  "group": "videos"
+ },
+ {
+  "title": "(4) 1 Hour of Lofi Sunset Views | No Ads - YouTube",
+  "url": "https://www.youtube.com/watch?v=vHHitjMrX4t",
+  "group": "videos"
+ },
+ {
+  "title": "Weekend in My Life: Cafés, Chores, Chaos - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ec2a8dvJviu",
+  "group": "videos"
+ },
+ {
+  "title": "What Happened at My Cousin's Wedding | Storytime - YouTube",
+  "url": "https://www.youtube.com/watch?v=OI5js4-7zIo",
+  "group": "videos"
+ },
+ {
+  "title": "Street Interview: What's Your Hot Take? - YouTube",
+  "url": "https://www.youtube.com/shorts/YQnM4AqWv40",
+  "group": "videos"
+ },
+ {
+  "title": "Try Not to Sing Along Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=I1LznLI4hPc",
+  "group": "videos"
+ },
+ {
+  "title": "New Channel Trailer 2025 - YouTube",
+  "url": "https://www.youtube.com/shorts/2E6uAsXdBfs",
+  "group": "videos"
+ },
+ {
+  "title": "(4) Plot Twist at the End #plottwist #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/3l3EbC_Krpc",
+  "group": "videos"
+ },
+ {
+  "title": "Subscriber Q&A: Ask Me Anything Live - YouTube",
+  "url": "https://www.youtube.com/watch?v=uZ_viLFXhC6",
+  "group": "videos"
+ },
+ {
+  "title": "(13) We Rated Gas Station Snacks 1 to 10 - YouTube",
+  "url": "https://www.youtube.com/watch?v=V8jsQMYYCZX",
+  "group": "videos"
+ },
+ {
+  "title": "Uploading Whatever I Filmed This Week - YouTube",
+  "url": "https://youtu.be/t0-hQMGoyCB",
+  "group": "videos"
+ },
+ {
+  "title": "Fixing My Sleep Schedule Vlog #relatable - YouTube",
+  "url": "https://www.youtube.com/watch?v=gSgWVcfp8TZ",
+  "group": "videos"
+ },
+ {
+  "title": "Insane Reaction Compilation Part 12 - YouTube",
+  "url": "https://www.youtube.com/shorts/p3HimXHLOiU",
+  "group": "videos"
+ },
+ {
+  "title": "Silly Faces Filter Challenge with Friends - YouTube",
+  "url": "https://www.youtube.com/shorts/SVAf1y2aUBJ",
+  "group": "videos"
+ },
+ {
+  "title": "Homeschool Day in Our Family of Five (Curriculum Tour) - YouTube",
+  "url": "https://youtu.be/j-_JQC6Pxjy",
+  "group": "family"
+ },
+ {
+  "title": "Cursed Videos Compilation (Don't Watch at Night) - YouTube",
+  "url": "https://www.youtube.com/watch?v=92UpzF-r73p",
+  "group": "videos"
+ },
+ {
+  "title": "(3) Reacting To My Own Fan Edits - YouTube",
+  "url": "https://youtu.be/r_S3sj9v-MT",
+  "group": "videos"
+ },
+ {
+  "title": "(2) Designing a Cozy Reading Nook With IKEA Billy - YouTube",
+  "url": "https://www.youtube.com/watch?v=g60TwWgrqVI",
+  "group": "home"
+ },
+ {
+  "title": "Bird Feeders: Attracting Finches to Your Yard - YouTube",
+  "url": "https://www.youtube.com/watch?v=GnnRxF4GeGS",
+  "group": "pets"
+ },
+ {
+  "title": "Gentle Parenting Without Losing Your Mind - YouTube",
+  "url": "https://www.youtube.com/shorts/GRdWvtT7V0_",
+  "group": "family"
+ },
+ {
+  "title": "Hydroponic Herb Shelf Setup for Apartments - YouTube",
+  "url": "https://www.youtube.com/shorts/puTc9kqyKaj",
+  "group": "home"
+ },
+ {
+  "title": "Rug Sizing Guide for Every Room - YouTube",
+  "url": "https://www.youtube.com/watch?v=S-5NBRIZ79H",
+  "group": "home"
+ },
+ {
+  "title": "Fun Facts About Octopus Intelligence #animals - YouTube",
+  "url": "https://www.youtube.com/shorts/N5aR6CkULMK",
+  "group": "pets"
+ },
+ {
+  "title": "Ep. 211: Building a Beauty Brand with Founder Lena - YouTube",
+  "url": "https://www.youtube.com/watch?v=RxzH5_8HDFG",
+  "group": "fashion"
+ },
+ {
+  "title": "(14) Cooking Up a Portfolio That Gets Interviews - YouTube",
+  "url": "https://www.youtube.com/watch?v=dijBU0gN3cg",
+  "group": "jobs"
+ },
+ {
+  "title": "Zillow Estimates: How Accurate Are They? - YouTube",
+  "url": "https://www.youtube.com/watch?v=9gsBXrBDaLc",
+  "group": "realestate"
+ },
+ {
+  "title": "POV: you got the keys to your first house #newhome #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=LBaaSfqNETo",
+  "group": "realestate"
+ },
+ {
+  "title": "Level Up Your Basics: Thrifted Menswear Haul - YouTube",
+  "url": "https://youtu.be/ZRzbOoan2xi",
+  "group": "fashion"
+ },
+ {
+  "title": "Teaching My Parents Internet Slang - YouTube",
+  "url": "https://www.youtube.com/watch?v=Sy7_Ne9MYsS",
+  "group": "videos"
+ },
+ {
+  "title": "Planning a Second Baby: Spacing Pros and Cons - YouTube",
+  "url": "https://www.youtube.com/watch?v=7TCCS9QXdI6",
+  "group": "family"
+ },
+ {
+  "title": "Ep. 76: Landing Your First Tech Job with Recruiter Dana - YouTube",
+  "url": "https://www.youtube.com/watch?v=B5ajX77dnn6",
+  "group": "jobs"
+ },
+ {
+  "title": "Memes Review: Rating the Internet's Best - YouTube",
+  "url": "https://www.youtube.com/watch?v=1pdV576OIdG",
+  "group": "videos"
+ },
+ {
+  "title": "(10) Removing Mold From Bathroom Ceiling Safely - YouTube",
+  "url": "https://www.youtube.com/watch?v=wBRXkbtSuo3",
+  "group": "home"
+ },
+ {
+  "title": "Best Moments of 2025 — Year in Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=Q9HNtF0ZF7y",
+  "group": "videos"
+ },
+ {
+  "title": "Layering Necklaces Without Tangles #jewelry #style - YouTube",
+  "url": "https://www.youtube.com/shorts/huu7nvrdulV",
+  "group": "fashion"
+ },
+ {
+  "title": "(7) 겨울 코디 추천 데일리룩 모음 - YouTube",
+  "url": "https://www.youtube.com/watch?v=XkXXeKb5ean",
+  "group": "fashion"
+ },
+ {
+  "title": "Parent-Teacher Conference: Questions to Ask - YouTube",
+  "url": "https://www.youtube.com/watch?v=5-HDRZ3Bulp",
+  "group": "family"
+ },
+ {
+  "title": "POV: toddler tantrum in the grocery store #momlife #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=bHgij070ZS9",
+  "group": "family"
+ },
+ {
+  "title": "The Best Drugstore Mascaras Tested - YouTube",
+  "url": "https://www.youtube.com/watch?v=KkddMy8s3VQ",
+  "group": "fashion"
+ },
+ {
+  "title": "I Spent $1 vs $10,000 on a Gift - YouTube",
+  "url": "https://www.youtube.com/watch?v=5eV509B8xOF",
+  "group": "videos"
+ },
+ {
+  "title": "Rating My Subscribers' Setups - YouTube",
+  "url": "https://www.youtube.com/watch?v=N8YcV3LnCTL",
+  "group": "videos"
+ },
+ {
+  "title": "Buying Land to Build: Costs You Forget - YouTube",
+  "url": "https://www.youtube.com/watch?v=6HInGQasJA5",
+  "group": "realestate"
+ },
+ {
+  "title": "How to Style an Oversized Blazer 5 Ways #outfit #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/ebEL4Qn-dfV",
+  "group": "fashion"
+ },
+ {
+  "title": "Nail Art Tutorial: Chrome French Tips #nails - YouTube",
+  "url": "https://www.youtube.com/shorts/5Kilb0t7Pd0",
+  "group": "fashion"
+ },
+ {
+  "title": "転職面接でよく聞かれる質問と回答 - YouTube",
+  "url": "https://www.youtube.com/watch?v=eFScI-ldyav",
+  "group": "jobs"
+ },
+ {
+  "title": "Cooking Up the Perfect Red Lip Combo - YouTube",
+  "url": "https://www.youtube.com/watch?v=23rr04KvA5H",
+  "group": "fashion"
+ },
+ {
+  "title": "Things I Can't Live Without (Channel Update) - YouTube",
+  "url": "https://www.youtube.com/watch?v=rajbxaAgIQN",
+  "group": "videos"
+ },
+ {
+  "title": "Postpartum Recovery Tips Nobody Mentions - YouTube",
+  "url": "https://www.youtube.com/shorts/LDbDmw58ZqO",
+  "group": "family"
+ },
+ {
+  "title": "(13) Breastfeeding Latch Troubleshooting - YouTube",
+  "url": "https://www.youtube.com/watch?v=vzKmdoyhfNe",
+  "group": "family"
+ },
+ {
+  "title": "POV: your friend takes 2 hours to get ready #fyp #funny - YouTube",
+  "url": "https://www.youtube.com/shorts/dVuUWf09CAT",
+  "group": "videos"
+ },
+ {
+  "title": "Challenge: Draw With Your Eyes Closed - YouTube",
+  "url": "https://www.youtube.com/shorts/g0WHpK52RDN",
+  "group": "videos"
+ },
+ {
+  "title": "(10) Cómo preparar la mochila del colegio - YouTube",
+  "url": "https://www.youtube.com/watch?v=EuhgcmpH19h",
+  "group": "family"
+ },
+ {
+  "title": "Fix a Leaky Faucet Without Calling a Plumber - YouTube",
+  "url": "https://www.youtube.com/watch?v=mrqylo3JP7c",
+  "group": "home"
+ },
+ {
+  "title": "I Applied to 200 Jobs in 30 Days: Results - YouTube",
+  "url": "https://www.youtube.com/watch?v=vbQ9ryf_Y3w",
+  "group": "jobs"
+ },
+ {
+  "title": "What Is Escrow? Home Buying Explained - YouTube",
+  "url": "https://www.youtube.com/shorts/6er0-gwxzsL",
+  "group": "realestate"
+ },
+ {
+  "title": "STOP Writing Your CV Like This - YouTube",
+  "url": "https://www.youtube.com/watch?v=mr6m8_8pElE",
+  "group": "jobs"
+ },
+ {
+  "title": "Networking Without Feeling Fake — Conference Talk 2025 - YouTube",
+  "url": "https://www.youtube.com/watch?v=dVwuLjO_kvI",
+  "group": "jobs"
+ },
+ {
+  "title": "Co-Parenting After Divorce — Practical Tips - YouTube",
+  "url": "https://www.youtube.com/watch?v=mmLBfFES1m4",
+  "group": "family"
+ },
+ {
+  "title": "I Tried Growing Tomatoes on a Balcony for 30 Days - YouTube",
+  "url": "https://www.youtube.com/watch?v=JZScovtbC0E",
+  "group": "home"
+ },
+ {
+  "title": "Curly Hair Wash Day Routine (3C Curls) - YouTube",
+  "url": "https://www.youtube.com/shorts/aKKRUqGK57l",
+  "group": "fashion"
+ },
+ {
+  "title": "Choosing a Primary School: A Parent's Checklist - YouTube",
+  "url": "https://www.youtube.com/watch?v=VxC5XAo7RNW",
+  "group": "family"
+ },
+ {
+  "title": "ගෙයක් මිලදී ගැනීමට පෙර දැනගත යුතු දේ - YouTube",
+  "url": "https://www.youtube.com/watch?v=PyZdyQ2lE5J",
+  "group": "realestate"
+ },
+ {
+  "title": "강아지 분리불안 해결 방법 - YouTube",
+  "url": "https://www.youtube.com/watch?v=pu_QjwV0cpA",
+  "group": "pets"
+ },
+ {
+  "title": "Cómo plantar un huerto en casa paso a paso - YouTube",
+  "url": "https://www.youtube.com/watch?v=UyaL0c_1p-s",
+  "group": "home"
+ },
+ {
+  "title": "Funny Cat and Dog Moments Mashup - YouTube",
+  "url": "https://www.youtube.com/watch?v=8JdH8goGSiB",
+  "group": "videos"
+ },
+ {
+  "title": "Career Advice From a Hiring Manager | Panel 2025 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Padg-utYhT-",
+  "group": "jobs"
+ },
+ {
+  "title": "10 Rainy Day Activities for Kids Under 5 - YouTube",
+  "url": "https://www.youtube.com/watch?v=_iy1gjxsGiq",
+  "group": "family"
+ },
+ {
+  "title": "Studio Apartment Tour in Toronto — Rent $1,900 - YouTube",
+  "url": "https://www.youtube.com/watch?v=E-FFkhwAHPq",
+  "group": "realestate"
+ },
+ {
+  "title": "(8) Livestream Replay: Q&A With Chat - YouTube",
+  "url": "https://www.youtube.com/watch?v=zsXgxK92D_5",
+  "group": "videos"
+ },
+ {
+  "title": "Cooking Up Fun: Kid-Friendly Weekend Activities - YouTube",
+  "url": "https://www.youtube.com/watch?v=GU7iTfj-8m9",
+  "group": "family"
+ },
+ {
+  "title": "My Honest Reaction to That Viral Clip - YouTube",
+  "url": "https://www.youtube.com/watch?v=mo2MbKUz4Nr",
+  "group": "videos"
+ },
+ {
+  "title": "(14) Cómo hacer un currículum sin experiencia - YouTube",
+  "url": "https://www.youtube.com/watch?v=9vFPA4_hxuR",
+  "group": "jobs"
+ },
+ {
+  "title": "How to Read a Home Inspection Report - YouTube",
+  "url": "https://www.youtube.com/watch?v=YsrvyqbtVkC",
+  "group": "realestate"
+ },
+ {
+  "title": "Mystery Challenge: Don't Open the Wrong Door - YouTube",
+  "url": "https://www.youtube.com/watch?v=pu9au-aI7K6",
+  "group": "videos"
+ },
+ {
+  "title": "What to Pack in Your Hospital Bag (Real Mom Edition) - YouTube",
+  "url": "https://www.youtube.com/shorts/IexOD9Lszgx",
+  "group": "family"
+ },
+ {
+  "title": "How to Hang Floating Shelves Level Every Time - YouTube",
+  "url": "https://youtu.be/rhVLrF1Yihc",
+  "group": "home"
+ },
+ {
+  "title": "Who Can Hold Their Breath Longer? Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=mF_n-no1SXz",
+  "group": "videos"
+ },
+ {
+  "title": "(4) Unboxing Mystery Box (You Won't Believe This) - YouTube",
+  "url": "https://youtu.be/3LX_1LYnfAL",
+  "group": "videos"
+ },
+ {
+  "title": "Staging a House to Sell Fast - YouTube",
+  "url": "https://www.youtube.com/watch?v=OTLfuJ9GU4H",
+  "group": "realestate"
+ },
+ {
+  "title": "Nobody Talks About Hamster Cage Size - YouTube",
+  "url": "https://www.youtube.com/watch?v=esYqY1So6Rk",
+  "group": "pets"
+ },
+ {
+  "title": "Reacting to Weird Wikipedia Pages - YouTube",
+  "url": "https://www.youtube.com/watch?v=qlskN5ghyhu",
+  "group": "videos"
+ },
+ {
+  "title": "डीप कंडीशनिंग हेयर मास्क घर पर बनाएं - YouTube",
+  "url": "https://www.youtube.com/watch?v=BAN5FYNFrb7",
+  "group": "fashion"
+ },
+ {
+  "title": "The Truth About Screen Time and Toddlers - YouTube",
+  "url": "https://www.youtube.com/watch?v=itfwpD3Fpgv",
+  "group": "family"
+ },
+ {
+  "title": "Linen Shirt Outfits for Humid Summers - YouTube",
+  "url": "https://www.youtube.com/watch?v=dmAOh0IA7Bk",
+  "group": "fashion"
+ },
+ {
+  "title": "Fixing a Running Toilet in 5 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=uYreoOFhzXi",
+  "group": "home"
+ },
+ {
+  "title": "Prank Call Gone Wrong — Part 2 - YouTube",
+  "url": "https://www.youtube.com/watch?v=rvQeRmKh1Tk",
+  "group": "videos"
+ },
+ {
+  "title": "POV: you finally descaled the kettle #cleaning #fyp - YouTube",
+  "url": "https://www.youtube.com/shorts/AFNKHlH77Me",
+  "group": "home"
+ },
+ {
+  "title": "बच्चों को पढ़ाई में रुचि कैसे दिलाएं - YouTube",
+  "url": "https://www.youtube.com/watch?v=0NfnJZUc2-J",
+  "group": "family"
+ },
+ {
+  "title": "Level Up Your Career Without Changing Companies - YouTube",
+  "url": "https://www.youtube.com/watch?v=eUaI8ZDlwAc",
+  "group": "jobs"
+ },
+ {
+  "title": "Mock Interview: Marketing Manager Role - YouTube",
+  "url": "https://www.youtube.com/watch?v=Err16MR_fD8",
+  "group": "jobs"
+ },
+ {
+  "title": "Blindfolded Challenge With My Brother - YouTube",
+  "url": "https://www.youtube.com/watch?v=oJLJWSPJBlT",
+  "group": "videos"
+ },
+ {
+  "title": "Adoption Journey: What Families Should Know - YouTube",
+  "url": "https://www.youtube.com/watch?v=GI9ZmzTUa_m",
+  "group": "family"
+ },
+ {
+  "title": "Is Grain-Free Dog Food Safe? A Vet Weighs In - YouTube",
+  "url": "https://www.youtube.com/shorts/8KnpEVj9EQi",
+  "group": "pets"
+ },
+ {
+  "title": "HOA Fees and Hidden Costs of Buying - YouTube",
+  "url": "https://www.youtube.com/watch?v=wmqzNVWrgYf",
+  "group": "realestate"
+ },
+ {
+  "title": "(13) Sleep Training Methods Compared - YouTube",
+  "url": "https://www.youtube.com/watch?v=pDK5LAKmAmf",
+  "group": "family"
+ },
+ {
+  "title": "Teaching Recall to a Husky | Dog Training Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=Xk35nfsCzYW",
+  "group": "pets"
+ },
+ {
+  "title": "면접 자기소개 잘하는 법 - YouTube",
+  "url": "https://www.youtube.com/shorts/nKt21ERTZfr",
+  "group": "jobs"
+ },
+ {
+  "title": "I Tried Baby-Led Weaning for 30 Days - YouTube",
+  "url": "https://www.youtube.com/watch?v=PVuaskXERAz",
+  "group": "family"
+ },
+ {
+  "title": "Birthday Party Ideas for a 4-Year-Old at Home - YouTube",
+  "url": "https://www.youtube.com/watch?v=e8VWRMMJ9K2",
+  "group": "family"
+ },
+ {
+  "title": "Epic Wins and Fails #compilation - YouTube",
+  "url": "https://youtu.be/shq6jX76BDr",
+  "group": "videos"
+ },
+ {
+  "title": "Monday Morning Chaos | Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=cO3Ya13ALE6",
+  "group": "videos"
+ },
+ {
+  "title": "Sunday Reset Vlog | Slow Morning Routine - YouTube",
+  "url": "https://www.youtube.com/watch?v=Md34GgksqF8",
+  "group": "videos"
+ },
+ {
+  "title": "Raised Garden Bed Build, Soil Mix and Layout - YouTube",
+  "url": "https://www.youtube.com/watch?v=Q9MGHUxkTGS",
+  "group": "home"
+ },
+ {
+  "title": "10 Capsule Wardrobe Pieces I Wear on Repeat - YouTube",
+  "url": "https://www.youtube.com/watch?v=wPuIVAABog_",
+  "group": "fashion"
+ },
+ {
+  "title": "Last One to Leave the Circle Wins $500 - YouTube",
+  "url": "https://youtu.be/97_nMY-oWcI",
+  "group": "videos"
+ },
+ {
+  "title": "Winter Garden Prep — Mulch, Cover Crops, Bulbs - YouTube",
+  "url": "https://www.youtube.com/watch?v=yl3VTHlJEiw",
+  "group": "home"
+ },
+ {
+  "title": "Crate Training Basics — Vet Behaviorist Explains - YouTube",
+  "url": "https://www.youtube.com/watch?v=8b2LVQUpMtC",
+  "group": "pets"
+ },
+ {
+  "title": "Baby Sign Language Basics - YouTube",
+  "url": "https://www.youtube.com/watch?v=JVYrl0cayXm",
+  "group": "family"
+ },
+ {
+  "title": "कुत्ते को बैठना कैसे सिखाएं - YouTube",
+  "url": "https://www.youtube.com/watch?v=7kn0UpsggQk",
+  "group": "pets"
+ },
+ {
+  "title": "Hair Gloss at Home vs Salon - YouTube",
+  "url": "https://www.youtube.com/watch?v=K2RrDcssUmi",
+  "group": "fashion"
+ },
+ {
+  "title": "Tour of a $1.2M Townhouse in Austin - YouTube",
+  "url": "https://www.youtube.com/watch?v=dGXVNNo-jmF",
+  "group": "realestate"
+ },
+ {
+  "title": "STOP Saying This to Your Toddler - YouTube",
+  "url": "https://www.youtube.com/watch?v=fKFTxp4qhZ3",
+  "group": "family"
+ },
+ {
+  "title": "Red Carpet Looks Ranked — Met Gala Fashion Review - YouTube",
+  "url": "https://www.youtube.com/watch?v=metwTYVLOys",
+  "group": "fashion"
+ },
+ {
+  "title": "(14) Family Budget Planning With Two Kids | Parent Meetup Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=fu_3nOxQmNC",
+  "group": "family"
+ },
+ {
+  "title": "Dancing in Public Dare #fyp - YouTube",
+  "url": "https://www.youtube.com/watch?v=SWPV3HPAZsI",
+  "group": "videos"
+ },
+ {
+  "title": "Caulking a Tub Like a Pro #diy #homerepair - YouTube",
+  "url": "https://www.youtube.com/shorts/vO4NlR5jDQO",
+  "group": "home"
+ },
+ {
+  "title": "My Korean Skincare Routine for Oily Skin - YouTube",
+  "url": "https://www.youtube.com/watch?v=RGpZQ3UX36B",
+  "group": "fashion"
+ },
+ {
+  "title": "(8) 猫の爪切り 嫌がらない方法 - YouTube",
+  "url": "https://www.youtube.com/watch?v=L1NRpYZFV6y",
+  "group": "pets"
+ },
+ {
+  "title": "100 Layers of Everything Challenge - YouTube",
+  "url": "https://www.youtube.com/watch?v=JXRTlLXgqpX",
+  "group": "videos"
+ },
+ {
+  "title": "घर पर तुलसी का पौधा कैसे उगाएं - YouTube",
+  "url": "https://www.youtube.com/watch?v=VcTmI149Gn0",
+  "group": "home"
+ },
+ {
+  "title": "LinkedIn Profile Tips to Get Recruiters to Message You - YouTube",
+  "url": "https://www.youtube.com/watch?v=C5FUyVkzw9z",
+  "group": "jobs"
+ },
+ {
+  "title": "Surprising My Best Friend (She Cried) - YouTube",
+  "url": "https://www.youtube.com/watch?v=q4RpdSScUc7",
+  "group": "videos"
+ },
+ {
+  "title": "Cringe Compilation Try Not to Cringe - YouTube",
+  "url": "https://www.youtube.com/watch?v=gxn8XoZ1CWc",
+  "group": "videos"
+ },
+ {
+  "title": "买房首付怎么凑 新手指南 - YouTube",
+  "url": "https://www.youtube.com/watch?v=nsBRrENAFVH",
+  "group": "realestate"
+ },
+ {
+  "title": "Tour of My Messy Desk - YouTube",
+  "url": "https://youtu.be/SAK4GxiLWWr",
+  "group": "videos"
+ },
+ {
+  "title": "Introducing a New Kitten to a Resident Cat - YouTube",
+  "url": "https://www.youtube.com/shorts/N_-n8FIu4O6",
+  "group": "pets"
+ },
+ {
+  "title": "搞笑视频合集 每日更新 - YouTube",
+  "url": "https://www.youtube.com/watch?v=vVsTHQe8x5H",
+  "group": "videos"
+ },
+ {
+  "title": "Oddly Satisfying Clips Loop #satisfying - YouTube",
+  "url": "https://www.youtube.com/shorts/U5rL49tCW9j",
+  "group": "videos"
+ },
+ {
+  "title": "Day Interview Prep: System Design Round Tips - YouTube",
+  "url": "https://www.youtube.com/watch?v=0wQW4Q0OqLK",
+  "group": "jobs"
+ },
+ {
+  "title": "Vlog 214 — Coming Back After a Month Off - YouTube",
+  "url": "https://www.youtube.com/watch?v=pMJNxkCkIRM",
+  "group": "videos"
+ },
+ {
+  "title": "Renting vs Buying in 2025: The Real Numbers - YouTube",
+  "url": "https://youtu.be/yVDooqFNTaD",
+  "group": "realestate"
+ },
+ {
+  "title": "(6) Resume Mistakes That Get You Rejected - YouTube",
+  "url": "https://www.youtube.com/watch?v=Rx5T2bxImx9",
+  "group": "jobs"
+ },
+ {
+  "title": "Reaccionando a vídeos virales - YouTube",
+  "url": "https://www.youtube.com/shorts/k82Qq1B-kWw",
+  "group": "videos"
+ },
+ {
+  "title": "베란다 식물 키우기 초보 가이드 - YouTube",
+  "url": "https://www.youtube.com/watch?v=AgIk2srxJsM",
+  "group": "home"
+ },
+ {
+  "title": "POV: the interviewer says 'any questions for us?' #fyp - YouTube",
+  "url": "https://youtu.be/12jqqBb3iq3",
+  "group": "jobs"
+ },
+ {
+  "title": "Minimalist Wardrobe Cleanout With Me - YouTube",
+  "url": "https://youtu.be/iYTPD1vrJ88",
+  "group": "fashion"
+ },
+ {
+  "title": "Nobody Talks About Layoff Severance Math - YouTube",
+  "url": "https://www.youtube.com/watch?v=QXHWt7v6BpO",
+  "group": "jobs"
+ },
+ {
+  "title": "24 Hours in a Hotel Room Prank - YouTube",
+  "url": "https://youtu.be/ZnD44Gu-dCj",
+  "group": "videos"
+ },
+ {
+  "title": "දරුවන්ගේ නින්ද පුරුද්ද හදන්නේ කොහොමද - YouTube",
+  "url": "https://youtu.be/x3xod4BDDfH",
+  "group": "family"
+ },
+ {
+  "title": "(11) Fall Outfit Ideas 2025 | Lookbook - YouTube",
+  "url": "https://www.youtube.com/watch?v=2iiSBE6dDrQ",
+  "group": "fashion"
+ },
+ {
+  "title": "Whisper ASMR Tapping Triggers - YouTube",
+  "url": "https://www.youtube.com/watch?v=dWnpez7Ue4c",
+  "group": "videos"
+ },
+ {
+  "title": "इंटरव्यू में सैलरी की बात कैसे करें - YouTube",
+  "url": "https://www.youtube.com/watch?v=w5I1GszwhiZ",
+  "group": "jobs"
+ },
+ {
+  "title": "Rabbit Care Guide for First-Time Owners - YouTube",
+  "url": "https://www.youtube.com/watch?v=OzxznFMoOJh",
+  "group": "pets"
+ },
+ {
+  "title": "How to Read a Job Description Like a Recruiter - YouTube",
+  "url": "https://www.youtube.com/watch?v=J59TfJuGX-J",
+  "group": "jobs"
+ },
+ {
+  "title": "Luxury Home Tour Beverly Hills #housetour - YouTube",
+  "url": "https://www.youtube.com/shorts/msufofBxdXe",
+  "group": "realestate"
+ },
+ {
+  "title": "Applying to Government Jobs Step by Step - YouTube",
+  "url": "https://www.youtube.com/watch?v=B1YoaZqAZkA",
+  "group": "jobs"
+ },
+ {
+  "title": "Sneaker Styling With Wide-Leg Trousers - YouTube",
+  "url": "https://www.youtube.com/watch?v=1fZYB6NlvWa",
+  "group": "fashion"
+ },
+ {
+  "title": "Dupes for Charlotte Tilbury Flawless Filter #beauty - YouTube",
+  "url": "https://www.youtube.com/watch?v=7CPPHN5g6D_",
+  "group": "fashion"
+ },
+ {
+  "title": "面白動画まとめ 笑ったら負け - YouTube",
+  "url": "https://www.youtube.com/watch?v=x80GKb2WJvP",
+  "group": "videos"
+ },
+ {
+  "title": "House Hunting Vlog: Open House Walkthrough #realestate - YouTube",
+  "url": "https://www.youtube.com/shorts/7YytyANvfGC",
+  "group": "realestate"
+ },
+ {
+  "title": "Potty Training in 3 Days: Does It Work? - YouTube",
+  "url": "https://www.youtube.com/watch?v=7O8yA7Uuy4c",
+  "group": "family"
+ },
+ {
+  "title": "(12) Bridal Makeup Trial: Before and After - YouTube",
+  "url": "https://www.youtube.com/watch?v=LrbA_pa1btW",
+  "group": "fashion"
+ },
+ {
+  "title": "(13) We Switched Phones for 24 Hours - YouTube",
+  "url": "https://www.youtube.com/watch?v=HDKvC53JEli",
+  "group": "videos"
+ },
+ {
+  "title": "マンション購入 頭金はいくら必要 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Ctty9CfjWHV",
+  "group": "realestate"
+ },
+ {
+  "title": "(11) I Adopted a Senior Rescue Dog (First 30 Days) - YouTube",
+  "url": "https://www.youtube.com/watch?v=4sGkKyq7yum",
+  "group": "pets"
+ },
+ {
+  "title": "The Truth About Retinol and Sensitive Skin - YouTube",
+  "url": "https://www.youtube.com/watch?v=y8qJu-E8yzi",
+  "group": "fashion"
+ },
+ {
+  "title": "Escape the Room Speedrun With Friends - YouTube",
+  "url": "https://www.youtube.com/watch?v=s-KouypgYqC",
+  "group": "videos"
+ },
+ {
+  "title": "Car Seat Installation Basics for Infants - YouTube",
+  "url": "https://www.youtube.com/watch?v=JVlClA9lHq4",
+  "group": "family"
+ },
+ {
+  "title": "Entry Level Jobs Hiring Now #jobsearch - YouTube",
+  "url": "https://www.youtube.com/shorts/d6BHj-McCF2",
+  "group": "jobs"
+ },
+ {
+  "title": "TikTok Cringe Compilation Reaction - YouTube",
+  "url": "https://youtu.be/36-7nO0kc24",
+  "group": "videos"
+ },
+ {
+  "title": "Level Up Bedtime: A Routine That Finally Works - YouTube",
+  "url": "https://www.youtube.com/shorts/Rv1KWhhtE6S",
+  "group": "family"
+ },
+ {
+  "title": "Cosplay Convention Vlog (Chaotic Weekend) - YouTube",
+  "url": "https://www.youtube.com/watch?v=zO_f2VLab4m",
+  "group": "videos"
+ },
+ {
+  "title": "Random Clips From My Phone #dump - YouTube",
+  "url": "https://www.youtube.com/shorts/pmefkM2CtFI",
+  "group": "videos"
+ },
+ {
+  "title": "Level Up Your Dog Walks With Scent Games - YouTube",
+  "url": "https://youtu.be/pf-RyteMy2u",
+  "group": "pets"
+ },
+ {
+  "title": "Cat Zoomies at 3AM: Why and What To Do - YouTube",
+  "url": "https://www.youtube.com/watch?v=YBHzWY5CQwp",
+  "group": "pets"
+ },
+ {
+  "title": "Cómo comprar una casa con un crédito hipotecario - YouTube",
+  "url": "https://www.youtube.com/watch?v=Zn1c7NGBSWn",
+  "group": "realestate"
+ },
+ {
+  "title": "Bearded Dragon Habitat: Lighting and Heat - YouTube",
+  "url": "https://www.youtube.com/shorts/LvbPImlGibz",
+  "group": "pets"
+ },
+ {
+  "title": "STOP Feeding Your Dog This #dogs #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/ZVr94k9zgtC",
+  "group": "pets"
+ },
+ {
+  "title": "Weeks 12 to 20 of Pregnancy: What to Expect - YouTube",
+  "url": "https://www.youtube.com/watch?v=kVRZcqrI_K5",
+  "group": "family"
+ },
+ {
+  "title": "Shelter Dog Transformation #adoption #rescue - YouTube",
+  "url": "https://www.youtube.com/shorts/rM6BXY0kAip",
+  "group": "pets"
+ },
+ {
+  "title": "Game Changer Vacuum Hack for Pet Hair on Couches - YouTube",
+  "url": "https://www.youtube.com/watch?v=S7Fn7qg7Bxl",
+  "group": "home"
+ },
+ {
+  "title": "Internship to Full-Time Offer: What Worked For Me - YouTube",
+  "url": "https://www.youtube.com/watch?v=0ySN75Ju7lL",
+  "group": "jobs"
+ },
+ {
+  "title": "How to Answer 'Tell Me About Yourself' in an Interview - YouTube",
+  "url": "https://www.youtube.com/watch?v=AYg-eywy3vX",
+  "group": "jobs"
+ },
+ {
+  "title": "Tailoring 101 | Talk — Savile Row Cutter | Menswear Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=kwm8t8u9x8U",
+  "group": "fashion"
+ },
+ {
+  "title": "Why Sunscreen Is the Only Skincare Step That Matters - YouTube",
+  "url": "https://www.youtube.com/watch?v=K6U34DnCVba",
+  "group": "fashion"
+ },
+ {
+  "title": "Parrot Talking Training Step by Step #parrot - YouTube",
+  "url": "https://www.youtube.com/shorts/RVThRK-ebK0",
+  "group": "pets"
+ },
+ {
+  "title": "Zara Haul Autumn Try-On (honest review) - YouTube",
+  "url": "https://www.youtube.com/watch?v=8zusonD-u59",
+  "group": "fashion"
+ },
+ {
+  "title": "Level Up Your Listing Photos to Sell Faster - YouTube",
+  "url": "https://youtu.be/9btdWpLPFre",
+  "group": "realestate"
+ },
+ {
+  "title": "Talking to Strangers: Social Experiment - YouTube",
+  "url": "https://www.youtube.com/watch?v=b5moGW7m1ab",
+  "group": "videos"
+ },
+ {
+  "title": "Behavioral Interview Questions: STAR Method Examples - YouTube",
+  "url": "https://www.youtube.com/watch?v=zZc4NY-f90h",
+  "group": "jobs"
+ },
+ {
+  "title": "POV: your cat judges your Zoom call #catsoftiktok - YouTube",
+  "url": "https://www.youtube.com/shorts/1cJIiN90pwO",
+  "group": "pets"
+ },
+ {
+  "title": "Leash Reactivity: Practical Training Plan - YouTube",
+  "url": "https://www.youtube.com/watch?v=pneW3UvzeaB",
+  "group": "pets"
+ },
+ {
+  "title": "Ep. 58: Declutter Your House with Marie-style Guest Maya - YouTube",
+  "url": "https://www.youtube.com/watch?v=sXfRitvLfGs",
+  "group": "home"
+ },
+ {
+  "title": "අද දවසේ වීඩියෝ බ්ලොග් එක - YouTube",
+  "url": "https://www.youtube.com/watch?v=pu_o8cozdwy",
+  "group": "videos"
+ },
+ {
+  "title": "(10) Subscriber Q&A: Ask Me Anything - YouTube",
+  "url": "https://www.youtube.com/watch?v=WxM_94bj81x",
+  "group": "videos"
+ },
+ {
+  "title": "전세 vs 월세 어느 쪽이 유리할까 - YouTube",
+  "url": "https://www.youtube.com/watch?v=xJiO1HHDnGK",
+  "group": "realestate"
+ },
+ {
+  "title": "Signs of Dental Disease in Cats — Vet Advice - YouTube",
+  "url": "https://www.youtube.com/watch?v=8AEKAhrYE0T",
+  "group": "pets"
+ },
+ {
+  "title": "STOP Wearing Your Jeans Wrong - YouTube",
+  "url": "https://www.youtube.com/watch?v=OKtMJ7A_64-",
+  "group": "fashion"
+ },
+ {
+  "title": "Fiddle Leaf Fig Dropping Leaves? Do This - YouTube",
+  "url": "https://www.youtube.com/watch?v=KMbY1Y5FT09",
+  "group": "home"
+ },
+ {
+  "title": "New Construction vs Resale: What Agents Say - YouTube",
+  "url": "https://youtu.be/m5ZktPXEJtC",
+  "group": "realestate"
+ },
+ {
+  "title": "Repainting Kitchen Cabinets: The Truth After 2 Years - YouTube",
+  "url": "https://www.youtube.com/watch?v=4T-rwpDgsmR",
+  "group": "home"
+ },
+ {
+  "title": "Preschool Craft: Paper Plate Animals #kidscrafts - YouTube",
+  "url": "https://www.youtube.com/watch?v=LQ69j2vO2Rh",
+  "group": "family"
+ },
+ {
+  "title": "(9) Pruning Hydrangeas in Spring | Garden Club Talk - YouTube",
+  "url": "https://www.youtube.com/watch?v=rnTJTVjwlYG",
+  "group": "home"
+ },
+ {
+  "title": "Men's Grooming Basics: Beard, Brows, Skin - YouTube",
+  "url": "https://www.youtube.com/watch?v=h-Muqt8WR-P",
+  "group": "fashion"
+ },
+ {
+  "title": "部屋の収納アイデア 狭い部屋を広く使う - YouTube",
+  "url": "https://www.youtube.com/watch?v=CpfGiQebv10",
+  "group": "home"
+ },
+ {
+  "title": "वायरल वीडियो रिएक्शन कॉमेडी - YouTube",
+  "url": "https://www.youtube.com/watch?v=VU4FKu9HlN9",
+  "group": "videos"
+ },
+ {
+  "title": "Software Engineer Salary Negotiation — Talk | Career Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=GCGz4UEzITY",
+  "group": "jobs"
+ },
+ {
+  "title": "Teen Talk: How to Start Hard Conversations - YouTube",
+  "url": "https://www.youtube.com/watch?v=jO51Ea5h2x2",
+  "group": "family"
+ },
+ {
+  "title": "赤ちゃんの離乳食 始め方 スケジュール - YouTube",
+  "url": "https://www.youtube.com/watch?v=afTw4Y58tyL",
+  "group": "family"
+ },
+ {
+  "title": "Live Stream Highlights #funny #clips - YouTube",
+  "url": "https://www.youtube.com/shorts/at5SjGJ2k42",
+  "group": "videos"
+ },
+ {
+  "title": "Why Your Dog Eats Grass (Vet Answers) - YouTube",
+  "url": "https://www.youtube.com/watch?v=CG6I5_1JxgL",
+  "group": "pets"
+ },
+ {
+  "title": "Funny Dog Barks at Vacuum (Wait for It) #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/L1m77jXQhhT",
+  "group": "videos"
+ },
+ {
+  "title": "(1) Rent Prices Falling? Market Update This Month - YouTube",
+  "url": "https://www.youtube.com/watch?v=5kIexD7pG7T",
+  "group": "realestate"
+ },
+ {
+  "title": "Quit Your Job the Right Way: Resignation Letter Tips - YouTube",
+  "url": "https://www.youtube.com/watch?v=6XHbYSFKSSr",
+  "group": "jobs"
+ },
+ {
+  "title": "(9) I Toured 20 Apartments in 30 Days - YouTube",
+  "url": "https://youtu.be/bbM18adxhmZ",
+  "group": "realestate"
+ },
+ {
+  "title": "ගෙවත්තේ එළවළු වගාව ආරම්භ කරන ආකාරය - YouTube",
+  "url": "https://www.youtube.com/watch?v=ry1UktgkHId",
+  "group": "home"
+ },
+ {
+  "title": "Paris Fashion Week Recap — Runway Highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=kwYPXVxeS7V",
+  "group": "fashion"
+ },
+ {
+  "title": "春季穿搭 通勤 简约风 - YouTube",
+  "url": "https://www.youtube.com/shorts/JkdWYklIJCl",
+  "group": "fashion"
+ },
+ {
+  "title": "New Grad Job Search Strategy for a Tough Market - YouTube",
+  "url": "https://www.youtube.com/watch?v=n3S1_BiGWZ7",
+  "group": "jobs"
+ },
+ {
+  "title": "Fan Mail Opening Stream Highlights - YouTube",
+  "url": "https://www.youtube.com/shorts/g57T3mjhcnK",
+  "group": "videos"
+ },
+ {
+  "title": "Housing Market Forecast — Prices, Inventory, Rates - YouTube",
+  "url": "https://www.youtube.com/watch?v=TGOCBGiEGRQ",
+  "group": "realestate"
+ },
+ {
+  "title": "Back to School Morning Routine for Busy Parents - YouTube",
+  "url": "https://www.youtube.com/shorts/OEmgh08hOJ0",
+  "group": "family"
+ },
+ {
+  "title": "Late Night Talk With Chat — Stream VOD - YouTube",
+  "url": "https://www.youtube.com/watch?v=bN6p2JLCq1f",
+  "group": "videos"
+ },
+ {
+  "title": "Horse Grooming Routine for Beginners - YouTube",
+  "url": "https://www.youtube.com/watch?v=Mlv5bhe0r0l",
+  "group": "pets"
+ },
+ {
+  "title": "How to Patch a Drywall Hole in 10 Minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=r0csFfj8cxn",
+  "group": "home"
+ },
+ {
+  "title": "Trying Weird Snacks From Around the World - YouTube",
+  "url": "https://www.youtube.com/watch?v=uvIQZ18nWmS",
+  "group": "videos"
+ },
+ {
+  "title": "Ep. 87: Wildlife Rehab with Dr. Amara - YouTube",
+  "url": "https://www.youtube.com/watch?v=ShFgdO0rRHG",
+  "group": "pets"
+ },
+ {
+  "title": "(8) Vintage Denim Guide — How to Spot Levi's 501 - YouTube",
+  "url": "https://www.youtube.com/watch?v=534Q3i84Ws6",
+  "group": "fashion"
+ },
+ {
+  "title": "Puppy Vaccination Schedule Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=ikGDrbEaMYe",
+  "group": "pets"
+ },
+ {
+  "title": "Landlord Tips: Screening Tenants Properly - YouTube",
+  "url": "https://youtu.be/Q6Gu6w28SPh",
+  "group": "realestate"
+ },
+ {
+  "title": "(2) Cap Rate Explained for Rental Properties | Investor Meetup - YouTube",
+  "url": "https://www.youtube.com/watch?v=2lk8mpCwVW_",
+  "group": "realestate"
+ },
+ {
+  "title": "पहला घर खरीदने से पहले ये बातें जानें - YouTube",
+  "url": "https://www.youtube.com/watch?v=ysLbtnTwj6V",
+  "group": "realestate"
+ },
+ {
+  "title": "STOP Overwatering Your Monstera - YouTube",
+  "url": "https://youtu.be/3lbHjANPOzs",
+  "group": "home"
+ },
+ {
+  "title": "Trying Viral Life Hacks That Don't Work - YouTube",
+  "url": "https://youtu.be/ZpfHS_j5c0l",
+  "group": "videos"
+ },
+ {
+  "title": "We Pranked Our Roommate With Fake Spiders - YouTube",
+  "url": "https://www.youtube.com/watch?v=AQuaJPvBuPY",
+  "group": "videos"
+ },
+ {
+  "title": "Funny Moments Compilation 2025 #shorts #funny - YouTube",
+  "url": "https://www.youtube.com/shorts/dh3JzR5Evj0",
+  "group": "videos"
+ },
+ {
+  "title": "Fixed vs Adjustable Rate Mortgage for Buying a Home - YouTube",
+  "url": "https://www.youtube.com/watch?v=JU7flMmQBi3",
+  "group": "realestate"
+ },
+ {
+  "title": "Shorts Compilation #17 Best Moments - YouTube",
+  "url": "https://www.youtube.com/shorts/hBPakZrXBZv",
+  "group": "videos"
+ },
+ {
+  "title": "Betta Fish Tank Setup Done Right - YouTube",
+  "url": "https://www.youtube.com/shorts/wl5X9f_cuZX",
+  "group": "pets"
+ },
+ {
+  "title": "Ranking Every Snack in the Vending Machine - YouTube",
+  "url": "https://www.youtube.com/watch?v=KZ6DBLtnwDo",
+  "group": "videos"
+ },
+ {
+  "title": "New Years Eve Vlog 2025 - YouTube",
+  "url": "https://www.youtube.com/shorts/md8PsStcFLP",
+  "group": "videos"
+ },
+ {
+  "title": "(8) How I Trained My Puppy to Stop Biting in 3 Days - YouTube",
+  "url": "https://www.youtube.com/shorts/vaQNl4_xaX2",
+  "group": "pets"
+ },
+ {
+  "title": "Behind the Scenes Bloopers Reel - YouTube",
+  "url": "https://www.youtube.com/watch?v=xEhZQ8VN3vf",
+  "group": "videos"
+ },
+ {
+  "title": "How to Ask for a Raise With Data - YouTube",
+  "url": "https://www.youtube.com/watch?v=VxV3nFP9FyX",
+  "group": "jobs"
+ },
+ {
+  "title": "Terrarium Build with Closed Ecosystem Plants #plantsoftiktok - YouTube",
+  "url": "https://www.youtube.com/watch?v=DJblaBqDehU",
+  "group": "home"
+ },
+ {
+  "title": "Replacing a Light Switch Safely — Home Repair Basics - YouTube",
+  "url": "https://www.youtube.com/watch?v=jjuLRRXJXr2",
+  "group": "home"
+ },
+ {
+  "title": "The Truth About Real Estate Agent Commissions - YouTube",
+  "url": "https://youtu.be/g_zWb9ZVWuE",
+  "group": "realestate"
+ },
+ {
+  "title": "Mukbang ASMR Crunchy Sounds - YouTube",
+  "url": "https://www.youtube.com/watch?v=dHnP7sLFbZa",
+  "group": "videos"
+ },
+ {
+  "title": "Newborn Bath Routine Step by Step #newborn #shorts - YouTube",
+  "url": "https://www.youtube.com/shorts/2sxn2fn4XBp",
+  "group": "family"
+ },
+ {
+  "title": "Sunday Vlog: Errands, Coffee and Chaos - YouTube",
+  "url": "https://www.youtube.com/watch?v=EYSNE_SW7JK",
+  "group": "videos"
+ },
+ {
+  "title": "Reference Check: What Employers Really Ask - YouTube",
+  "url": "https://www.youtube.com/watch?v=dVBMoekINB6",
+  "group": "jobs"
+ },
+ {
+  "title": "Wait for the End... #fyp #viral - YouTube",
+  "url": "https://www.youtube.com/shorts/OgGt3tNktkq",
+  "group": "videos"
+ },
+ {
+  "title": "(11) First-Time Home Buyer Mistakes to Avoid - YouTube",
+  "url": "https://www.youtube.com/watch?v=o74McGMqRGT",
+  "group": "realestate"
+ },
+ {
+  "title": "(4) Lo que pasó en mi cumpleaños | Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=3cG3Ye_jHgg",
+  "group": "videos"
+ },
+ {
+  "title": "简历怎么写才能通过筛选 - YouTube",
+  "url": "https://www.youtube.com/shorts/rsdqu8-j_jy",
+  "group": "jobs"
+ },
+ {
+  "title": "I Tried the Viral Hair Oil for 30 Days - YouTube",
+  "url": "https://www.youtube.com/watch?v=XDfaj88LRU1",
+  "group": "fashion"
+ },
+ {
+  "title": "Is a 30-Year Mortgage Still Worth It for a Home? - YouTube",
+  "url": "https://www.youtube.com/watch?v=o5Q0s-rHORT",
+  "group": "realestate"
+ },
+ {
+  "title": "Down Payment Assistance Programs for Buyers - YouTube",
+  "url": "https://www.youtube.com/watch?v=oJ-JvxEWiy7",
+  "group": "realestate"
+ },
+ {
+  "title": "What's In My Bag? Random Edition - YouTube",
+  "url": "https://www.youtube.com/shorts/hNt_lZ6akdb",
+  "group": "videos"
+ },
+ {
+  "title": "웃긴 영상 모음 한국 유튜버 브이로그 - YouTube",
+  "url": "https://www.youtube.com/watch?v=oQZlolB2PNq",
+  "group": "videos"
+ },
+ {
+  "title": "Road Trip Vlog Day 3: Lost in the Middle of Nowhere - YouTube",
+  "url": "https://www.youtube.com/watch?v=MSyQxVwGX4c",
+  "group": "videos"
+ },
+ {
+  "title": "Real Estate Investing for Beginners — Duplex Strategy - YouTube",
+  "url": "https://www.youtube.com/watch?v=ocfdEU6K9ZS",
+  "group": "realestate"
+ },
+ {
+  "title": "Backyard Chickens: Coop Basics - YouTube",
+  "url": "https://www.youtube.com/watch?v=TDygf9Chvtk",
+  "group": "pets"
+ },
+ {
+  "title": "(4) Cat Litter Box Problems and Easy Fixes - YouTube",
+  "url": "https://www.youtube.com/shorts/QHAhNhoxAdY",
+  "group": "pets"
+ },
+ {
+  "title": "සමට ගැලපෙන ස්කින්කෙයාර් රුටීන් එක - YouTube",
+  "url": "https://youtu.be/BXWJ-B8U_ci",
+  "group": "fashion"
+ },
+ {
+  "title": "(12) Japandi Bedroom Makeover on a Budget - YouTube",
+  "url": "https://www.youtube.com/watch?v=KcLry47pRj6",
+  "group": "home"
+ },
+ {
+  "title": "Small Living Room Layout Ideas That Actually Work - YouTube",
+  "url": "https://www.youtube.com/watch?v=yoD1CJaEHv0",
+  "group": "home"
+ },
+ {
+  "title": "POV: you found the perfect slip dress #fyp #ootd - YouTube",
+  "url": "https://www.youtube.com/shorts/tWwuElAy4pe",
+  "group": "fashion"
+ },
+ {
+  "title": "Composting for Beginners: Bin Setup #garden #shorts - YouTube",
+  "url": "https://www.youtube.com/watch?v=k7uZGHVIOdl",
+  "group": "home"
+ },
+ {
+  "title": "The Truth About Cover Letters in 2025 - YouTube",
+  "url": "https://www.youtube.com/shorts/gyTrxnQq1Pj",
+  "group": "jobs"
+ },
+ {
+  "title": "孕期饮食注意事项 准妈妈必看 - YouTube",
+  "url": "https://www.youtube.com/watch?v=HipGHDmreXB",
+  "group": "family"
+ },
+ {
+  "title": "임신 초기 증상과 주의사항 - YouTube",
+  "url": "https://www.youtube.com/watch?v=7nWceEhHwuL",
+  "group": "family"
+ },
+ {
+  "title": "(12) Hedgehog Rescue in Winter: What to Do - YouTube",
+  "url": "https://www.youtube.com/watch?v=ViN69-ijYwY",
+  "group": "pets"
+ },
+ {
+  "title": "Cooking Up a New Look for the Bathroom: Grout Refresh - YouTube",
+  "url": "https://www.youtube.com/watch?v=G2WzSFLtFo6",
+  "group": "home"
+ },
+ {
+  "title": "Chunky Loafers: Worth the Hype? - YouTube",
+  "url": "https://www.youtube.com/watch?v=trzMp2y5Uh-",
+  "group": "fashion"
+ },
+ {
+  "title": "Funniest Fails of the Week Compilation - YouTube",
+  "url": "https://www.youtube.com/watch?v=bkZSoXwNZWY",
+  "group": "videos"
+ },
+ {
+  "title": "Day in My Life as a Night Shift Worker - YouTube",
+  "url": "https://www.youtube.com/shorts/JNMQCipdPtX",
+  "group": "videos"
+ },
+ {
+  "title": "Seeing Eye Dogs — How They're Trained - YouTube",
+  "url": "https://www.youtube.com/watch?v=C4XGIzFN-oT",
+  "group": "pets"
+ },
+ {
+  "title": "පුසාට පුහුණුව දෙන ආකාරය - YouTube",
+  "url": "https://www.youtube.com/watch?v=GVKmw0ZAh80",
+  "group": "pets"
+ },
+ {
+  "title": "(12) Why Your Lawn Keeps Dying (and the Fix) - YouTube",
+  "url": "https://www.youtube.com/watch?v=YBbWBZd6289",
+  "group": "home"
+ },
+ {
+  "title": "Summer Camp Guide for First-Timers - YouTube",
+  "url": "https://www.youtube.com/watch?v=DyMbhTzk5zL",
+  "group": "family"
+ },
+ {
+  "title": "Sibling Rivalry: What Actually Helps - YouTube",
+  "url": "https://www.youtube.com/watch?v=dY2DkIHekD5",
+  "group": "family"
+ },
+ {
+  "title": "Channel Trailer 2025 - YouTube",
+  "url": "https://www.youtube.com/watch?v=Qvy5BtWdk3f",
+  "group": "videos"
+ },
+ {
+  "title": "Remote Job Hunting: Where to Actually Look - YouTube",
+  "url": "https://www.youtube.com/watch?v=vwtTv_nM6Di",
+  "group": "jobs"
+ },
+ {
+  "title": "(13) How Elephants Mourn Their Dead — Animal Behavior - YouTube",
+  "url": "https://www.youtube.com/watch?v=L4mHaVqBgKC",
+  "group": "pets"
+ },
+ {
+  "title": "Succulent Care: What the Label Won't Tell You - YouTube",
+  "url": "https://www.youtube.com/watch?v=dTuzeTauzKa",
+  "group": "home"
+ },
+ {
+  "title": "Thrift Flip: Dresser to Entry Console - YouTube",
+  "url": "https://www.youtube.com/watch?v=jzbLtYPB8T9",
+  "group": "home"
+ },
+ {
+  "title": "(7) Cómo combinar un blazer beige con jeans - YouTube",
+  "url": "https://www.youtube.com/watch?v=PDMPcWp3eGM",
+  "group": "fashion"
+ },
+ {
+  "title": "Cómo bañar a un perro sin estrés - YouTube",
+  "url": "https://www.youtube.com/watch?v=rO-Y1qznSHC",
+  "group": "pets"
+ },
+ {
+  "title": "Gap in Your Resume? Say This - YouTube",
+  "url": "https://www.youtube.com/watch?v=amebkArIVsh",
+  "group": "jobs"
+ },
+ {
+  "title": "Why Job Offers Fall Through and What to Do - YouTube",
+  "url": "https://www.youtube.com/watch?v=x1E6cjUdwAS",
+  "group": "jobs"
+ },
+ {
+  "title": "Selling Your Home Without an Agent - YouTube",
+  "url": "https://www.youtube.com/watch?v=YUDe97YcBhb",
+  "group": "realestate"
+ },
+ {
+  "title": "Career Pivot to Product Management — Interview Prep - YouTube",
+  "url": "https://www.youtube.com/watch?v=q7KhOXDHTiP",
+  "group": "jobs"
+ },
+ {
+  "title": "Salary Transparency Laws Explained for Job Seekers - YouTube",
+  "url": "https://www.youtube.com/watch?v=swnMx8Smgik",
+  "group": "jobs"
+ },
+ {
+  "title": "Level Up Your Entryway With Peel-and-Stick Tile - YouTube",
+  "url": "https://www.youtube.com/shorts/AGs_bj0AXjI",
+  "group": "home"
+ },
+ {
+  "title": "Golden Retriever Puppy Growth Week by Week - YouTube",
+  "url": "https://www.youtube.com/shorts/_DKacJsR7if",
+  "group": "pets"
+ },
+ {
+  "title": "(3) 秋の着回しコーデ ユニクロ - YouTube",
+  "url": "https://www.youtube.com/watch?v=vTuRq2bO6ru",
+  "group": "fashion"
+ },
+ {
+  "title": "Come With Me to Costco Vlog - YouTube",
+  "url": "https://www.youtube.com/watch?v=xCDHKXpyF77",
+  "group": "videos"
+ },
+ {
+  "title": "ඉන්ටර්වීව් එකට සූදානම් වෙන්නේ කොහොමද - YouTube",
+  "url": "https://www.youtube.com/watch?v=Eu1HT6sbDPO",
+  "group": "jobs"
+ },
+ {
+  "title": "Ep. 203: Flipping Houses with Investor Marcus - YouTube",
+  "url": "https://www.youtube.com/shorts/XYIDekY2ibJ",
+  "group": "realestate"
+ },
+ {
+  "title": "Condo vs Townhouse: Which Should You Buy - YouTube",
+  "url": "https://www.youtube.com/watch?v=pLq8u0nY4GN",
+  "group": "realestate"
+ },
+ {
+  "title": "Paper Airplane Contest Gone Wild - YouTube",
+  "url": "https://www.youtube.com/watch?v=ieByH_H2QoC",
+  "group": "videos"
+ },
+ {
+  "title": "How I Organized My Pantry With Dollar Store Bins - YouTube",
+  "url": "https://www.youtube.com/watch?v=GhHem4vXgOx",
+  "group": "home"
+ },
+ {
+  "title": "(11) The Weirdest Thing I Bought Online - YouTube",
+  "url": "https://www.youtube.com/watch?v=FeYg7htHIg2",
+  "group": "videos"
+ },
+ {
+  "title": "We Tried Eating Like Our Subscribers for a Day - YouTube",
+  "url": "https://www.youtube.com/shorts/TvXg-6NP4cn",
+  "group": "videos"
+ },
+ {
+  "title": "(13) Ep. 134: Raising Resilient Kids with Dr. Patel - YouTube",
+  "url": "https://www.youtube.com/shorts/BqEHW4gapwu",
+  "group": "family"
+ },
+ {
+  "title": "(3) Why Does My Cat Knead Blankets? - YouTube",
+  "url": "https://www.youtube.com/watch?v=vo7ktgNK5N-",
+  "group": "pets"
+ },
+ {
+  "title": "STOP Overpaying Closing Costs - YouTube",
+  "url": "https://www.youtube.com/watch?v=TmNblzUwBk_",
+  "group": "realestate"
+ },
+ {
+  "title": "Satisfying Slime ASMR No Talking - YouTube",
+  "url": "https://youtu.be/yRhGen9hWCl",
+  "group": "videos"
+ },
+ {
+  "title": "Prank Wars Finale Episode - YouTube",
+  "url": "https://www.youtube.com/watch?v=-S_HwcxpVJ2",
+  "group": "videos"
+ },
+ {
+  "title": "(5) Lease Negotiation Tips for Tenants - YouTube",
+  "url": "https://www.youtube.com/shorts/SpNMjKtANEl",
+  "group": "realestate"
+ },
+ {
+  "title": "Deep Cleaning Hacks Nobody Talks About - YouTube",
+  "url": "https://www.youtube.com/watch?v=X_ggdB07acE",
+  "group": "home"
+ },
+ {
+  "title": "Braid Styles for Short Hair Step by Step - YouTube",
+  "url": "https://www.youtube.com/watch?v=OGAjjOkNOEF",
+  "group": "fashion"
+ },
+ {
+  "title": "How Mortgage Pre-Approval Actually Works - YouTube",
+  "url": "https://www.youtube.com/watch?v=0guxH-w1R_s",
+  "group": "realestate"
+ },
+ {
+  "title": "GRWM: Soft Glam for a Wedding Guest #grwm #makeup - YouTube",
+  "url": "https://www.youtube.com/shorts/8EHXQUElurA",
+  "group": "fashion"
+ },
+ {
+  "title": "新手养猫必备清单 猫咪护理 - YouTube",
+  "url": "https://youtu.be/kjtgOE7zUDO",
+  "group": "pets"
+ },
+ {
+  "title": "Weekly Vlog: Nothing Happened and That's OK - YouTube",
+  "url": "https://www.youtube.com/watch?v=XlzErAUHWbU",
+  "group": "videos"
+ },
+ {
+  "title": "Mid-Century Sofa Styling: 7 Mistakes - YouTube",
+  "url": "https://www.youtube.com/watch?v=wOw4XUJrgO5",
+  "group": "home"
+ },
+ {
+  "title": "Designing a Career Change at 35 #careers #shorts - YouTube",
+  "url": "https://www.youtube.com/watch?v=g-bc2UvVKBi",
+  "group": "jobs"
+ }
+]

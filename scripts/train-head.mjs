@@ -6,7 +6,7 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT.
 //
-// Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + tests/quality/fixture.json.
+// Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + train-f.json + tests/quality/fixture.json.
 // tests/quality/holdout.json, holdout2.json and holdout3.json are never read here: they are the blind test sets.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -53,7 +53,7 @@ const OTHER = LABELS.indexOf('other');
 
 // ---------- data ----------
 const files = [
-  'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json', 'training/train-e.json',
+  'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json', 'training/train-e.json', 'training/train-f.json',
   'tests/quality/fixture.json',
 ];
 const seen = new Set();
