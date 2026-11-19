@@ -6,6 +6,7 @@ import { HEAD } from '../../src/classify/head';
 import { nameCluster, suggestGroups } from '../../src/classify/cluster';
 import type { Group } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
+import { embedText } from '../../src/shared/url';
 
 const DIM = 16;
 /** Unit vector along axis `a`, nudged slightly towards axis `b` by `eps`. */
@@ -280,5 +281,23 @@ describe('classify: neighbour blend', () => {
   it('a user-taught exemplar still overrides everything', () => {
     const taught = groups.map((g) => (g.id === 'a' ? { ...g, exemplars: [[0.1, 0.99]] } : g));
     expect(classify([0.1, 0.99], taught, head).groupId).toBe('a');
+  });
+});
+
+describe('embedText for YouTube', () => {
+  it('leaves out the source word for YouTube videos only', () => {
+    const title = 'How To Cut Threads On A Lathe - YouTube';
+    for (const url of [
+      'https://www.youtube.com/watch?v=x',
+      'https://m.youtube.com/watch?v=x',
+      'https://www.youtube.com/shorts/x',
+      'https://youtu.be/x',
+    ]) {
+      const t = embedText({ title, url });
+      expect(t).not.toContain('YouTube');
+      expect(t).toBe('How To Cut Threads On A Lathe');
+    }
+    expect(embedText({ title: 'Some Channel - YouTube', url: 'https://www.youtube.com/@channel' })).toContain('— ');
+    expect(embedText({ title: 'Some Page', url: 'https://example.com/a' })).toContain('— example.com');
   });
 });

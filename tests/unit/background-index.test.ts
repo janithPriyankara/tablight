@@ -499,3 +499,16 @@ describe('background index', () => {
     });
   });
 });
+
+describe('embedding key', () => {
+  it('changes with the input version', async () => {
+    const { embeddingKey, EMBED_INPUT_VERSION } = await import('../../src/background/tab-index');
+    const { sha1hex } = await import('../../src/shared/hash');
+    const { EMBED_MODEL } = await import('../../src/classify/model');
+    const { cleanTitle } = await import('../../src/shared/url');
+    const item = { url: 'https://example.com/a', normUrl: 'example.com/a', title: 'A page' };
+    const old = await sha1hex(`${EMBED_MODEL}\n${item.normUrl}\n${cleanTitle(item.title, item.url)}`);
+    expect(EMBED_INPUT_VERSION).toBe(2);
+    expect(await embeddingKey(item)).not.toBe(old);
+  });
+});

@@ -35,14 +35,16 @@ const SUGGEST_COLORS = ['#8c6ebd', '#008cba', '#439458', '#b86838', '#a864a2'];
 /** chrome.storage.session key: present while the browser session that the index's tab ids belong to lasts. */
 export const SESSION_KEY = 'tabIndexSession';
 
-/** Embedding cache key: one vector per normalized URL + cleaned title. */
+/** Bump when the text fed to the model changes (embedText), so cached vectors of the old input are re-embedded. */
+export const EMBED_INPUT_VERSION = 2;
+/** Embedding cache key: one vector per normalized URL + model input. */
 /**
  * Cache key of an item's vector. It names the model, so vectors from a previous model (after an update that
  * changed it) are never mixed with the current one: they miss the cache, get re-embedded, and the old ones
  * are swept.
  */
 export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promise<string> {
-  return sha1hex(`${EMBED_MODEL}\n${i.normUrl}\n${cleanTitle(i.title, i.url)}`);
+  return sha1hex(`${EMBED_MODEL}\n${EMBED_INPUT_VERSION}\n${i.normUrl}\n${embedText(i)}`);
 }
 
 export { domainOf };

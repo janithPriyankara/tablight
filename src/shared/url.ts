@@ -198,7 +198,15 @@ export function pathWords(url: string): string {
   }
   return out.join(' ');
 }
+function isYouTubeVideo(url: string): boolean {
+  const u = webUrl(url);
+  if (!u) return false;
+  const host = bareHost(u);
+  return (host === 'youtube.com' || host === 'youtu.be') && kindOf(url) === 'watch';
+}
+/** Title and address only. A YouTube video is read by its title alone: the source word would pull every video together. */
 export function embedText(item: Pick<Item, 'title' | 'url'>): string {
+  if (isYouTubeVideo(item.url)) return cleanTitle(item.title, item.url);
   const words = pathWords(item.url);
   return `${cleanTitle(item.title, item.url)} — ${readableSource(item.url)}${words ? ` ${words}` : ''}`;
 }

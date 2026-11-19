@@ -118,7 +118,9 @@ describe('cleanTitle', () => {
 describe('embedText', () => {
   it('joins clean title and readable source', () => {
     expect(embedText({ title: '(3) Agents - YouTube', url: 'https://www.youtube.com/watch?v=1' }))
-      .toBe('Agents — YouTube video');
+      .toBe('Agents');
+    expect(embedText({ title: 'Agents', url: 'https://www.youtube.com/@agents' }))
+      .toBe('Agents — YouTube video @agents');
   });
   it('appends meaningful path words (spec 7.3.1)', () => {
     expect(embedText({ title: 'Overview', url: 'https://docs.claude.com/en/docs/agent-sdk/overview' }))
