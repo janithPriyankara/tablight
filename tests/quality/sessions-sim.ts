@@ -1,4 +1,4 @@
-// Replays imagined people's browsing sessions through the product pipeline, to tune and gate the neighbour step.
+// Replays imagined people's browsing sessions through the product pipeline, to check the neighbour step.
 import { buildStarterGroups, buildTrainedGroup, headTop, learn, OTHER_GROUP_ID, TRAINED_IDS } from '../../src/classify/assign';
 import { neighbourGroup, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type NeighbourOpts, type PlacedBy } from '../../src/classify/pick';
 import { embedText, normalizeUrl } from '../../src/shared/url';
