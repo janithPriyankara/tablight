@@ -261,8 +261,13 @@ export function Dashboard() {
 
   /** Undo bypasses the busy guard: its 10 s window must not be lost to another action still running. */
   const runUndo = async () => {
+    const request = notice?.undoRequest;
     try {
-      notify((await undo()) ? 'Undone' : 'Too late to undo');
+      const done = await undo();
+      notify(done ? 'Undone' : 'Too late to undo');
+      // Undoing a grown group deletes it: its own page would say "Group not found", so All tabs instead.
+      const v = parseHash(location.hash);
+      if (done && request?.t === 'groupDelete' && v.kind === 'group' && v.id === request.id) go({ kind: 'all' });
     } catch (e) {
       notify(errorText(e));
     } finally {

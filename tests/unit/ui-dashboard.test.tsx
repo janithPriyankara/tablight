@@ -979,6 +979,21 @@ describe('dashboard', () => {
       await new Promise((r) => setTimeout(r, 20));
       expect(screen.queryByText(/New group:/)).toBeNull();
     });
+    it('Undo while viewing that group\'s page goes to All tabs', async () => {
+      let s = grown();
+      serve(() => s, (req) => {
+        if (req.t === 'groupDelete') s = { ...s, groups: s.groups.filter((g) => g.id !== 'hardware') };
+        return undefined;
+      });
+      history.replaceState(null, '', '/dashboard.html#group=hardware');
+      render(<Dashboard />);
+      await screen.findByRole('heading', { level: 1, name: 'Hardware & making' });
+      await screen.findByText('New group: Hardware & making · 2 tabs');
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      await screen.findByRole('heading', { level: 1, name: 'All tabs' });
+      expect(location.hash).toBe('#view=all');
+      expect(screen.queryByText('Group not found')).toBeNull();
+    });
     it('does not announce a group grown before the page loaded', async () => {
       const s = grown();
       s.groups[s.groups.length - 1]!.grownAt = 1;
