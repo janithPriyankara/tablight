@@ -37,9 +37,8 @@ export const SESSION_KEY = 'tabIndexSession';
 
 /** Bump when the text fed to the model changes (embedText), so cached vectors of the old input are re-embedded. */
 export const EMBED_INPUT_VERSION = 2;
-/** Embedding cache key: one vector per normalized URL + model input. */
 /**
- * Cache key of an item's vector. It names the model, so vectors from a previous model (after an update that
+ * Cache key of an item's vector: one per normalized URL + model input. It names the model, so vectors from a previous model (after an update that
  * changed it) are never mixed with the current one: they miss the cache, get re-embedded, and the old ones
  * are swept.
  */
