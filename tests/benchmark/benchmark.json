@@ -229,12 +229,6 @@
  },
  {
   "person": "b01-chef",
-  "title": "(1) Inbox - kitchen schedule updates",
-  "url": "https://mail.google.com/mail/u/0/#inbox",
-  "group": "work"
- },
- {
-  "person": "b01-chef",
   "title": "Staff meal: fried rice with day-old rice #shorts #chef - YouTube",
   "url": "https://www.youtube.com/shorts/fR4iCe9wLd0",
   "group": "food"
@@ -292,12 +286,6 @@
   "title": "Run The Jewels - Legend Has It (Official Video) - YouTube",
   "url": "https://www.youtube.com/watch?v=rT4jLh1eSg9",
   "group": "music"
- },
- {
-  "person": "b01-chef",
-  "title": "Chrome Settings - Passwords",
-  "url": "chrome://settings/passwords",
-  "group": "other"
  },
  {
   "person": "b01-chef",
@@ -568,12 +556,6 @@
  },
  {
   "person": "b02-pilot",
-  "title": "Daily budget tracker - YNAB",
-  "url": "https://app.ynab.com/budget",
-  "group": "finance"
- },
- {
-  "person": "b02-pilot",
   "title": "How Planes Fly: Bernoulli vs Newton - Veritasium - YouTube",
   "url": "https://www.youtube.com/watch?v=bN7vTa2xRq4",
   "group": "science"
@@ -832,12 +814,6 @@
  },
  {
   "person": "b03-dataeng",
-  "title": "Garmin Connect - Weekly mileage",
-  "url": "https://connect.garmin.com/modern/activities",
-  "group": "health"
- },
- {
-  "person": "b03-dataeng",
   "title": "Talk proposal: Taming 10,000 dbt models (draft) - Google Docs",
   "url": "https://docs.google.com/document/d/1xYz2AbCdEfGh3IjKlMnOpQrSt/edit",
   "group": "work"
@@ -961,12 +937,6 @@
   "title": "Terraform AWS EMR cluster autoscaling example - GitHub",
   "url": "https://github.com/terraform-aws-modules/terraform-aws-emr",
   "group": "programming"
- },
- {
-  "person": "b03-dataeng",
-  "title": "Sign in - Google Accounts",
-  "url": "https://accounts.google.com/v3/signin/identifier",
-  "group": "other"
  },
  {
   "person": "b03-dataeng",
@@ -1165,12 +1135,6 @@
  },
  {
   "person": "b04-teacher",
-  "title": "(2) Mrs T's Class Parents - WhatsApp Web",
-  "url": "https://web.whatsapp.com/",
-  "group": "social"
- },
- {
-  "person": "b04-teacher",
   "title": "Making a Murderer - Netflix",
   "url": "https://www.netflix.com/title/80000770",
   "group": "tv"
@@ -1300,12 +1264,6 @@
  },
  {
   "person": "b04-teacher",
-  "title": "Wordle 1,321 today answer hints - NYT",
-  "url": "https://www.nytimes.com/games/wordle/index.html",
-  "group": "games"
- },
- {
-  "person": "b04-teacher",
   "title": "Teacher mental health and workload - Education Support",
   "url": "https://www.educationsupport.org.uk/resources/workload",
   "group": "health",
@@ -1384,12 +1342,6 @@
   "title": "Mrs Cooper's guide to composting with kids - YouTube",
   "url": "https://www.youtube.com/watch?v=mC4cCm7pKd0",
   "group": "home"
- },
- {
-  "person": "b04-teacher",
-  "title": "Netflix - Sign in",
-  "url": "https://www.netflix.com/login",
-  "group": "other"
  },
  {
   "person": "b04-teacher",
@@ -1513,12 +1465,6 @@
  },
  {
   "person": "b05-streamer",
-  "title": "Elden Ring Shadow of the Erdtree boss guide - IGN",
-  "url": "https://www.ign.com/wikis/elden-ring/shadow-of-the-erdtree-boss-guide",
-  "group": "games"
- },
- {
-  "person": "b05-streamer",
   "title": "Messmer the Impaler solo no hit run - YouTube",
   "url": "https://www.youtube.com/watch?v=Lp0sWq81nTc",
   "group": "games"
@@ -1558,12 +1504,6 @@
   "also": [
    "shopping"
   ]
- },
- {
-  "person": "b05-streamer",
-  "title": "Shopify Admin - Orders",
-  "url": "https://admin.shopify.com/store/nightowl-merch/orders",
-  "group": "work"
  },
  {
   "person": "b05-streamer",
@@ -1663,15 +1603,6 @@
   "title": "Helldivers 2 Warbond guide: best Warbond to buy first - YouTube",
   "url": "https://www.youtube.com/watch?v=Bc2vL9sTjRk",
   "group": "games"
- },
- {
-  "person": "b05-streamer",
-  "title": "Steam Deck OLED - Steam",
-  "url": "https://store.steampowered.com/steamdeck",
-  "group": "shopping",
-  "also": [
-   "games"
-  ]
  },
  {
   "person": "b05-streamer",
@@ -1822,12 +1753,6 @@
  },
  {
   "person": "b06-retiree",
-  "title": "Fidelity Investments - Account Summary",
-  "url": "https://digital.fidelity.com/ftgw/digital/portfolio/summary",
-  "group": "finance"
- },
- {
-  "person": "b06-retiree",
   "title": "will I pay tax on my pension if I move to Florida - Google Search",
   "url": "https://www.google.com/search?q=will+I+pay+tax+on+my+pension+if+I+move+to+Florida",
   "group": "finance"
@@ -1903,12 +1828,6 @@
   "title": "Cruise ship tour: what a balcony cabin is REALLY like - YouTube",
   "url": "https://www.youtube.com/watch?v=Gx4cW9sPd1E",
   "group": "travel"
- },
- {
-  "person": "b06-retiree",
-  "title": "Facebook",
-  "url": "https://www.facebook.com/",
-  "group": "social"
  },
  {
   "person": "b06-retiree",
@@ -2045,12 +1964,6 @@
  },
  {
   "person": "b06-retiree",
-  "title": "Chase Online - Sign In",
-  "url": "https://secure.chase.com/web/auth/dashboard",
-  "group": "finance"
- },
- {
-  "person": "b06-retiree",
   "title": "How much do I need to retire at 67? - Vanguard",
   "url": "https://investor.vanguard.com/retirement/how-much-do-i-need",
   "group": "finance"
@@ -2129,12 +2042,6 @@
   "title": "Frank Sinatra - Fly Me To The Moon (Official Audio) - YouTube",
   "url": "https://www.youtube.com/watch?v=Bk5nD2qLm8X",
   "group": "music"
- },
- {
-  "person": "b06-retiree",
-  "title": "Gmail - Inbox",
-  "url": "https://mail.google.com/mail/u/1/#inbox",
-  "group": "work"
  },
  {
   "person": "b06-retiree",
@@ -2540,15 +2447,6 @@
  },
  {
   "person": "b07-nurse",
-  "title": "Commercial Bank - Online Banking Login",
-  "url": "https://www.combankdigital.com/",
-  "group": "finance",
-  "also": [
-   "other"
-  ]
- },
- {
-  "person": "b07-nurse",
   "title": "People's Bank - Fixed Deposit rates 2024",
   "url": "https://www.peoplesbank.lk/deposit-rates/",
   "group": "finance"
@@ -2675,12 +2573,6 @@
   "title": "SQE1 revision notes: land law - BARBRI",
   "url": "https://www.barbri.co.uk/sqe-prep/sqe1/land-law",
   "group": "learning"
- },
- {
-  "person": "b08-lawyer",
-  "title": "Associate - Commercial Litigation | LinkedIn Jobs",
-  "url": "https://www.linkedin.com/jobs/view/3912345678/",
-  "group": "jobs"
  },
  {
   "person": "b08-lawyer",
@@ -2903,12 +2795,6 @@
  },
  {
   "person": "b08-lawyer",
-  "title": "Wise - Send money abroad",
-  "url": "https://wise.com/gb/",
-  "group": "finance"
- },
- {
-  "person": "b08-lawyer",
   "title": "Monzo - Joint account",
   "url": "https://monzo.com/features/joint-accounts/",
   "group": "finance"
@@ -2960,18 +2846,6 @@
  },
  {
   "person": "b08-lawyer",
-  "title": "Spotify - Web Player",
-  "url": "https://open.spotify.com/",
-  "group": "music"
- },
- {
-  "person": "b08-lawyer",
-  "title": "Google Account",
-  "url": "https://myaccount.google.com/",
-  "group": "other"
- },
- {
-  "person": "b08-lawyer",
   "title": "Common law vs civil law explained in 10 minutes - YouTube",
   "url": "https://www.youtube.com/watch?v=Lq5nD3sKm7A",
   "group": "learning"
@@ -3017,12 +2891,6 @@
  },
  {
   "person": "b09-biohacker",
-  "title": "Creatine monohydrate: dosage, timing and safety | Examine",
-  "url": "https://examine.com/supplements/creatine/",
-  "group": "health"
- },
- {
-  "person": "b09-biohacker",
   "title": "Huberman Lab - Optimize Your Sleep With These Tools - YouTube",
   "url": "https://www.youtube.com/watch?v=hb09sl3ep01",
   "group": "health"
@@ -3038,12 +2906,6 @@
   "title": "Oura Ring 4 - Smart Ring for Sleep & Recovery",
   "url": "https://ouraring.com/oura-ring",
   "group": "shopping"
- },
- {
-  "person": "b09-biohacker",
-  "title": "Bitcoin price today, BTC to USD live | CoinMarketCap",
-  "url": "https://coinmarketcap.com/currencies/bitcoin/",
-  "group": "finance"
  },
  {
   "person": "b09-biohacker",
@@ -3530,12 +3392,6 @@
  },
  {
   "person": "b10-architect",
-  "title": "(4) LinkedIn - Senior Architect, Part II - Copenhagen",
-  "url": "https://www.linkedin.com/jobs/view/3912345678",
-  "group": "jobs"
- },
- {
-  "person": "b10-architect",
   "title": "Architect portfolio template InDesign - Behance",
   "url": "https://www.behance.net/gallery/180001/architecture-portfolio-template",
   "group": "design"
@@ -3557,12 +3413,6 @@
   "title": "Scandinavian lighting: Louis Poulsen PH 5 Pendant",
   "url": "https://www.louispoulsen.com/en/products/ph-5",
   "group": "shopping"
- },
- {
-  "person": "b10-architect",
-  "title": "Autodesk Account - Sign in",
-  "url": "https://accounts.autodesk.com/logon",
-  "group": "other"
  },
  {
   "person": "b10-architect",
@@ -3670,12 +3520,6 @@
   "person": "b10-architect",
   "title": "Autodesk Construction Cloud - Project Home",
   "url": "https://acc.autodesk.com/docs/files/projects/abc",
-  "group": "work"
- },
- {
-  "person": "b10-architect",
-  "title": "Competition Q&A deadline - Google Calendar",
-  "url": "https://calendar.google.com/calendar/u/0/r/week",
   "group": "work"
  },
  {
@@ -4175,21 +4019,6 @@
  },
  {
   "person": "b12-founder",
-  "title": "Best baby monitors 2026 - Wirecutter",
-  "url": "https://www.nytimes.com/wirecutter/reviews/best-baby-monitors/",
-  "group": "shopping"
- },
- {
-  "person": "b12-founder",
-  "title": "Cursor - the AI code editor",
-  "url": "https://cursor.com/",
-  "group": "ai",
-  "also": [
-   "programming"
-  ]
- },
- {
-  "person": "b12-founder",
   "title": "Mercury - Business banking for startups",
   "url": "https://app.mercury.com/dashboard",
   "group": "finance"
@@ -4589,12 +4418,6 @@
  },
  {
   "person": "b13-esports",
-  "title": "Stray Kids \"Chk Chk Boom\" M/V",
-  "url": "https://www.youtube.com/watch?v=-4SMmbmkPse",
-  "group": "music"
- },
- {
-  "person": "b13-esports",
   "title": "ITZY \"Cheshire\" M/V",
   "url": "https://www.youtube.com/shorts/Wj34nae_I9c",
   "group": "music"
@@ -4705,12 +4528,6 @@
   "person": "b13-esports",
   "title": "Sign in - Riot Games Account",
   "url": "https://auth.riotgames.com/login",
-  "group": "other"
- },
- {
-  "person": "b13-esports",
-  "title": "Settings - Discord",
-  "url": "https://discord.com/channels/@me",
   "group": "other"
  },
  {
@@ -5231,12 +5048,6 @@
   "title": "Net Price Calculator | Purdue University",
   "url": "https://www.purdue.edu/dfa/netpricecalculator/",
   "group": "learning"
- },
- {
-  "person": "b15-collegeapp",
-  "title": "adidas Samba OG Shoes - White | adidas US",
-  "url": "https://www.adidas.com/us/samba-og-shoes/B75806.html",
-  "group": "shopping"
  },
  {
   "person": "b15-collegeapp",
@@ -5879,12 +5690,6 @@
  },
  {
   "person": "b17-designer",
-  "title": "(2) Figma",
-  "url": "https://www.figma.com/files/recent",
-  "group": "design"
- },
- {
-  "person": "b17-designer",
   "title": "Pentagram - Work",
   "url": "https://www.pentagram.com/work",
   "group": "design"
@@ -5993,12 +5798,6 @@
  },
  {
   "person": "b17-designer",
-  "title": "Mobbin - Latest mobile & web design inspiration",
-  "url": "https://mobbin.com/browse/ios/apps",
-  "group": "design"
- },
- {
-  "person": "b17-designer",
   "title": "Jobs to be done interview script template – Dovetail",
   "url": "https://dovetail.com/research/jobs-to-be-done-interview-guide/",
   "group": "design"
@@ -6032,12 +5831,6 @@
   "title": "A day in my life as a product designer in Berlin - YouTube",
   "url": "https://www.youtube.com/watch?v=dilPdBerlin3",
   "group": "videos"
- },
- {
-  "person": "b17-designer",
-  "title": "Dribbble - Discover the World’s Top Designers",
-  "url": "https://dribbble.com/shots/popular",
-  "group": "design"
  },
  {
   "person": "b17-designer",
@@ -6187,12 +5980,6 @@
   "group": "design"
  },
  {
-  "person": "b17-designer",
-  "title": "Cookie settings - chrome://settings/cookies",
-  "url": "https://support.google.com/chrome/answer/95647",
-  "group": "other"
- },
- {
   "person": "b18-expat",
   "title": "EU Blue Card Germany: Requirements 2026 - Make it in Germany",
   "url": "https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card",
@@ -6200,21 +5987,9 @@
  },
  {
   "person": "b18-expat",
-  "title": "wohnung münchen 2 zimmer - ImmoScout24",
-  "url": "https://www.immobilienscout24.de/Suche/de/bayern/muenchen/wohnung-mieten",
-  "group": "realestate"
- },
- {
-  "person": "b18-expat",
   "title": "Bayern Munich vs Dortmund - Der Klassiker Highlights - YouTube",
   "url": "https://www.youtube.com/watch?v=byDortKl2201",
   "group": "sports"
- },
- {
-  "person": "b18-expat",
-  "title": "Anmeldung Wohnsitz Berlin - Service Berlin",
-  "url": "https://service.berlin.de/dienstleistung/120686/",
-  "group": "other"
  },
  {
   "person": "b18-expat",
@@ -6251,12 +6026,6 @@
   "title": "I moved to Germany 6 months ago: what nobody tells you - YouTube",
   "url": "https://www.youtube.com/watch?v=mvGer6mo881",
   "group": "videos"
- },
- {
-  "person": "b18-expat",
-  "title": "Bundesliga: Table, Fixtures and Results | kicker",
-  "url": "https://www.kicker.de/bundesliga/tabelle",
-  "group": "sports"
  },
  {
   "person": "b18-expat",
@@ -6443,12 +6212,6 @@
  },
  {
   "person": "b18-expat",
-  "title": "Berlin Wetter 14 Tage - wetter.com",
-  "url": "https://www.wetter.com/deutschland/berlin/DE0001020.html",
-  "group": "other"
- },
- {
-  "person": "b18-expat",
   "title": "Germans and recycling Pfand explained #germany #shorts",
   "url": "https://www.youtube.com/shorts/shPfandGer03",
   "group": "videos"
@@ -6497,12 +6260,6 @@
   "title": "Dark (TV Series 2017–2020) - IMDb",
   "url": "https://www.imdb.com/title/tt5753856/",
   "group": "tv"
- },
- {
-  "person": "b18-expat",
-  "title": "Tagesschau - Nachrichten aktuell",
-  "url": "https://www.tagesschau.de/",
-  "group": "news"
  },
  {
   "person": "b18-expat",
@@ -6629,12 +6386,6 @@
   "title": "Stacking in Siril: M31 from raw to final - YouTube",
   "url": "https://www.youtube.com/watch?v=sirilM31stk01",
   "group": "photo"
- },
- {
-  "person": "b19-astronomy",
-  "title": "Project Hail Mary by Andy Weir - Goodreads",
-  "url": "https://www.goodreads.com/book/show/54493401-project-hail-mary",
-  "group": "books"
  },
  {
   "person": "b19-astronomy",
@@ -7069,12 +6820,6 @@
   "person": "b20-shopper",
   "title": "Camelcamelcamel: Anker 737 Power Bank price history",
   "url": "https://camelcamelcamel.com/product/B09VPHVT2Z",
-  "group": "shopping"
- },
- {
-  "person": "b20-shopper",
-  "title": "Temu - Team Up, Price Down",
-  "url": "https://www.temu.com/",
   "group": "shopping"
  },
  {
