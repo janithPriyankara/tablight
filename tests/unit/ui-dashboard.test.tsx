@@ -1033,9 +1033,10 @@ describe('dashboard', () => {
     function serveLive(s: DashboardState): void {
       serve(() => s, (req) => {
         if (req.t === 'settings') s = { ...s, settings: { ...s.settings, ...(req.patch as object) } };
+        const fresh = s.settings.interestsFresh; // only a fresh install's first answer removes groups
         if (req.t === 'interests') s = { ...s, settings: { ...s.settings, interestsAnswered: true, interestsFresh: false } };
         if (req.t === 'settings') return s.settings;
-        if (req.t === 'interests') return { created: ['movies', 'u1'], removed: ['videos'] };
+        if (req.t === 'interests') return { created: ['movies', 'u1'], removed: fresh ? ['videos'] : [] };
         return undefined;
       });
     }
@@ -1070,12 +1071,27 @@ describe('dashboard', () => {
       // Seeds order, not click order.
       await waitFor(() => expect(sent('interests')).toEqual([{ t: 'interests', picked: [idOf('Movies'), idOf('Sports')], custom: ['Woodworking'] }]));
       expect(sent('settings')).toEqual([]);
-      await screen.findByText('Added 2 groups');
+      await screen.findByText('Added 2 groups, removed 1 you didn’t pick');
       // The rest of onboarding follows, unchanged.
       await screen.findByRole('region', { name: 'Welcome to Tablight' });
       expect(screen.queryByRole('region', { name: 'What do you browse most?' })).toBeNull();
     });
 
+    it('the Continue notice says what changed: groups removed even when none was added', async () => {
+      for (const [r, text] of [
+        [{ created: [], removed: Array.from({ length: 14 }, (_, k) => `g${k}`) }, 'Removed 14 groups you didn’t pick'],
+        [{ created: [], removed: ['videos'] }, 'Removed 1 group you didn’t pick'],
+        [{ created: [], removed: [] }, 'No new groups needed: you have them all'],
+      ] as const) {
+        serve(state({ settings: FRESH }), (req) => (req.t === 'interests' ? r : undefined));
+        render(<Dashboard />);
+        const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+        fireEvent.click(chip(region, 'Programming'));
+        fireEvent.click(within(region).getByRole('button', { name: 'Continue' }));
+        await screen.findByText(text);
+        cleanup();
+      }
+    });
     it('Skip saves interestsAnswered: true and sends nothing else', async () => {
       serveLive(state({ settings: FRESH }));
       render(<Dashboard />);

@@ -53,6 +53,12 @@ const isStashed = (i: Item) => i.state === 'stashed';
 const isNewTab = (i: Item) => i.state !== 'stashed' && i.opened === false;
 const isWebOpen = (i: Item) => i.state === 'open' && i.classifiable && i.tabId !== undefined;
 const errorText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
+/** What Continue on the interests step did: groups added, and (a fresh install's first answer) groups removed. */
+function interestsNotice(created: number, removed: number): string {
+  if (created && removed) return `Added ${plural(created, 'group')}, removed ${removed} you didn’t pick`;
+  if (removed) return `Removed ${plural(removed, 'group')} you didn’t pick`;
+  return created ? `Added ${plural(created, 'group')}` : 'No new groups needed: you have them all';
+}
 
 export function Dashboard() {
   const { state, error, refresh } = useDashboardState();
@@ -472,7 +478,7 @@ export function Dashboard() {
       // From the Settings dialog, focus returns to "Choose…" (dialogOpener) once it is enabled again.
       if (then) focusAfterInterests.current = then;
       setDialog(null);
-      notify(r.created.length ? `Added ${plural(r.created.length, 'group')}` : 'No new groups needed: you have them all');
+      notify(interestsNotice(r.created.length, r.removed.length));
       const v = parseHash(location.hash);
       if (v.kind !== 'group') return;
       const now = await send<DashboardState>({ t: 'state' });
