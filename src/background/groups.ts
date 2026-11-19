@@ -4,7 +4,7 @@ import { embedText } from '../shared/url';
 import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
-import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
+import { autoGroup, cachedVectors, fingerprintOf, recordDismissed } from './tab-index';
 import { recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
@@ -30,14 +30,10 @@ export function parseId(v: unknown): string {
 
 // ───────────────────────────── helpers ─────────────────────────────
 
-/** Cached vectors of items (by embedding key); items without one are left out. */
+/** Cached vectors of items (current key, else the pre-upgrade `embKey`); items without one are left out. */
 async function vectorsOf(db: Db, items: Item[]): Promise<Map<string, number[]>> {
-  const out = new Map<string, number[]>();
-  for (const i of items) {
-    const v = await db.embeddings.get(await embeddingKey(i));
-    if (v) out.set(i.id, Array.from(v));
-  }
-  return out;
+  const got = await cachedVectors(db, items);
+  return new Map([...got].map(([id, v]) => [id, Array.from(v)]));
 }
 
 interface Taught { vec: number[]; text: string }
@@ -237,10 +233,12 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
   const regular = groups.filter((g) => !g.suggested);
   const suggestedIds = new Set(groups.filter((g) => g.suggested).map((g) => g.id));
   const moves: Move[] = [];
-  for (const i of items) {
-    if (!i.classifiable || i.groupSource !== 'auto') continue;
-    if (i.groupId !== null && suggestedIds.has(i.groupId)) continue; // pending suggestions stay as they are
-    const v = await db.embeddings.get(await embeddingKey(i));
+  const candidates = items.filter(
+    (i) => i.classifiable && i.groupSource === 'auto' && !(i.groupId !== null && suggestedIds.has(i.groupId)), // pending suggestions stay as they are
+  );
+  const vecs = await cachedVectors(db, candidates);
+  for (const i of candidates) {
+    const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
     const to = autoGroup(i, v, regular);
     if (to !== i.groupId) moves.push({ itemId: i.id, from: i.groupId, to });

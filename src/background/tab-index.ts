@@ -47,6 +47,22 @@ export function embeddingKey(i: Pick<Item, 'normUrl' | 'title' | 'url'>): Promis
 
 export { domainOf };
 
+/**
+ * Each item's cached vector by item id: under its current key, or else under `embKey` (the key it was embedded
+ * under, which can be an older input version's after an update). Items with neither are left out.
+ */
+export async function cachedVectors(db: Db, items: Item[]): Promise<Map<string, Float32Array>> {
+  const keys = await Promise.all(items.map(embeddingKey));
+  const all = [...new Set([...keys, ...items.flatMap((i) => (i.embKey !== undefined ? [i.embKey] : []))])];
+  const got = all.length ? await db.embeddings.getMany(all) : new Map<string, Float32Array>();
+  const out = new Map<string, Float32Array>();
+  items.forEach((i, k) => {
+    const v = got.get(keys[k]!) ?? (i.embKey !== undefined ? got.get(i.embKey) : undefined);
+    if (v) out.set(i.id, v);
+  });
+  return out;
+}
+
 // ───────────────────────────── reconcile ─────────────────────────────
 
 export interface ReconcileResult {
@@ -606,8 +622,9 @@ async function suggestPass(db: Db): Promise<void> {
     .filter((i) => i.groupId === null || suggestedIds.has(i.groupId))
     .sort((a, b) => a.createdAt - b.createdAt);
   const input: { id: string; title: string; domain: string; vec: number[] }[] = [];
+  const poolVecs = await cachedVectors(db, pool);
   for (const i of pool) {
-    const v = await db.embeddings.get(await embeddingKey(i));
+    const v = poolVecs.get(i.id);
     if (v) input.push({ id: i.id, title: cleanTitle(i.title, i.url), domain: i.domain, vec: Array.from(v) });
   }
   const vecOf = new Map(input.map((x) => [x.id, x.vec]));
