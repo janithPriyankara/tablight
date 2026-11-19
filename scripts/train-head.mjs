@@ -6,8 +6,8 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT.
 //
-// Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + tests/quality/fixture.json.
-// tests/quality/holdout.json and holdout2.json are never read here: they are the blind test sets.
+// Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + tests/quality/fixture.json.
+// tests/quality/holdout.json, holdout2.json and holdout3.json are never read here: they are the blind test sets.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -46,13 +46,15 @@ const load = async (p) => (await runnerImport(join(root, p))).module;
 const { embedText } = await load('src/shared/url.ts');
 const { ruleGroup } = await load('src/classify/rules.ts');
 const { STARTER_GROUPS } = await load('src/classify/seeds.ts');
-// Installed groups only until the on-demand groups have training data.
-const LABELS = STARTER_GROUPS.filter((g) => !g.onDemand).map((g) => g.id);
+// Every seed group, installed and on-demand: the head knows all of them, and classify() only assigns a label
+// whose group exists.
+const LABELS = STARTER_GROUPS.map((g) => g.id);
 const OTHER = LABELS.indexOf('other');
 
 // ---------- data ----------
 const files = [
-  'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json', 'tests/quality/fixture.json',
+  'training/train-a.json', 'training/train-b.json', 'training/train-c.json', 'training/train-d.json', 'training/train-e.json',
+  'tests/quality/fixture.json',
 ];
 const seen = new Set();
 const pool = [];

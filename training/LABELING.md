@@ -8,7 +8,7 @@ label from the list below. The label says what the tab is **about**, judged from
 | id | Group | What goes here |
 |---|---|---|
 | `movies` | Movies | films: listings, reviews, trailers, streaming pages for a film |
-| `tv` | TV Series | series, episodes, K-dramas, anime series pages on streaming sites, show reviews |
+| `tv` | TV Series | series, episodes, K-dramas, show reviews |
 | `videos` | YouTube / Videos | video pages with **no clear subject** (see the YouTube rule) |
 | `ai` | AI & Agents | AI models, agents, LLM tools, ML research and tutorials |
 | `programming` | Programming | code, repos, Q&A, dev tools, programming tutorials |
@@ -24,6 +24,20 @@ label from the list below. The label says what the tab is **about**, judged from
 | `finance` | Finance | banking, investing, budgeting, markets |
 | `health` | Health | medical info, fitness, diet and nutrition advice |
 | `games` | Games | video games, game stores, walkthroughs, game streams |
+| `hardware` | Hardware & making | machining, lathes, CNC, 3D printing, woodworking, electronics, PCBs, soldering, microcontrollers (ESP32, Arduino, Raspberry Pi projects), robotics builds, maker forums and repos |
+| `science` | Science & engineering | science explainers, research news, physics, chemistry, biology, space, engineering explainers, papers outside AI |
+| `sports` | Sports | sports news, scores, fixtures, leagues, teams, athletes, match highlights, fantasy sports |
+| `food` | Food & cooking | recipes, cooking videos, restaurants, food delivery menus, baking, food blogs |
+| `cars` | Cars & vehicles | car reviews, car listings, repair and maintenance, motorbikes, EVs, car forums |
+| `home` | Home & garden | DIY home repair, interior decor, furniture ideas, gardening, plants, cleaning tips |
+| `fashion` | Fashion & beauty | clothing style, outfits, skincare, makeup, hair, fashion news and lookbooks |
+| `pets` | Pets & animals | pet care, dog/cat training, pet adoption, vets advice for pets, wildlife and animal facts |
+| `family` | Parenting & family | parenting advice, babies, pregnancy guides, kids' activities, schools from a parent's view, family planning |
+| `jobs` | Jobs & careers | job listings, applications, resumes/CVs, interview prep, salaries, career advice, LinkedIn jobs |
+| `books` | Books & reading | book reviews, reading lists, Goodreads-like pages, ebooks, author pages, literature |
+| `photo` | Photography | photography techniques, cameras and lenses reviews, photo editing (Lightroom), photo sharing portfolios |
+| `anime` | Anime & comics | anime news and reviews, manga, comics, webtoons, anime streaming pages |
+| `realestate` | Real estate | property listings, renting and buying homes, mortgages for a home purchase, real-estate market news |
 | `other` | (Unsorted) | genuinely miscellaneous pages, account/sign-in pages, browser tools |
 
 ## The YouTube rule
@@ -37,16 +51,21 @@ video is about**, exactly as a web page on the same subject would be:
 - `videos` is only for videos with **no clear subject**: vlogs, challenges, reactions, pranks, compilations,
   shorts compilations, "day in my life", funny clips, and YouTube channel or home pages (`youtube.com/@name`,
   `youtube.com/`);
-- if the subject has no label in the table (for example woodworking or a lathe video while there is no such
-  label), the video stays `videos`.
+- if the subject has no label in the table, the video stays `videos`.
 
 The word "YouTube" in a title never decides the label.
 
 ## Borders
 
-- Sports news → sports (when a `sports` label exists; until then → `news`).
-- Recipes, restaurants, cooking videos → food (when it exists); diet and nutrition advice → `health`.
-- Science explainers and research news → science (when it exists).
-- ESP32 / Arduino / PCB / CNC / 3D-printing docs, forums, repos and videos → hardware (when it exists).
+- Sports news → sports.
+- Recipes, restaurants, cooking videos → food; diet and nutrition advice → `health`.
+- Science explainers and research news → science.
+- ESP32 / Arduino / PCB / CNC / 3D-printing docs, forums, repos and videos → hardware.
 - Electronics product pages → `shopping`.
-- Maker courses → hardware (when it exists); general STEM courses → `learning`.
+- Maker courses → hardware; general STEM courses → `learning`.
+- Anime series and manga → `anime`; live-action series and K-dramas → `tv`; animated feature films → `movies`.
+- Mortgage rates as investing/markets → `finance`; mortgages for buying a home, listings → `realestate`.
+- Car purchase product pages on dealer sites → `cars`; car parts on a general store → `shopping`.
+- Camera product pages on a store → `shopping`; camera reviews and photo technique → `photo`.
+- Job listings for developers → `jobs` (not `programming`); career courses → `learning`.
+- Pet food product pages on a store → `shopping`; pet care advice → `pets`.

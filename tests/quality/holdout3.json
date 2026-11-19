@@ -1,0 +1,3492 @@
+[
+ {
+  "title": "Facing a brass bushing on a 7x12 mini lathe - YouTube",
+  "url": "https://www.youtube.com/watch?v=hw1aB3cDe4f",
+  "group": "hardware"
+ },
+ {
+  "title": "Tramming a benchtop mill head without a dial indicator - YouTube",
+  "url": "https://www.youtube.com/watch?v=hw2Qk8LmN0p",
+  "group": "hardware"
+ },
+ {
+  "title": "ESP32-S3 deep sleep current measurements - YouTube",
+  "url": "https://www.youtube.com/shorts/hw3XyZ12AbC",
+  "group": "hardware"
+ },
+ {
+  "title": "Printing PETG at 250mm/s on a Voron 2.4 - YouTube",
+  "url": "https://www.youtube.com/watch?v=hw4Tt9UuVv7w",
+  "group": "hardware"
+ },
+ {
+  "title": "Dovetail jig build for the router table - YouTube",
+  "url": "https://youtu.be/hw5RrSsTt8x",
+  "group": "hardware"
+ },
+ {
+  "title": "Soldering SMD 0402 resistors with a cheap hot air station - YouTube",
+  "url": "https://www.youtube.com/watch?v=hw6Ww1QqEe2z",
+  "group": "hardware"
+ },
+ {
+  "title": "r/hobbycnc - Spindle runout after crash, advice?",
+  "url": "https://www.reddit.com/r/hobbycnc/comments/1c8k2xq/spindle_runout_after_crash_advice/",
+  "group": "hardware"
+ },
+ {
+  "title": "r/3Dprinting - First layer keeps peeling on textured PEI",
+  "url": "https://www.reddit.com/r/3Dprinting/comments/1d2m9ab/first_layer_keeps_peeling_on_textured_pei/",
+  "group": "hardware"
+ },
+ {
+  "title": "Arduino Forum - Stepper stalls at high microstepping",
+  "url": "https://forum.arduino.cc/t/stepper-stalls-at-high-microstepping/1187342",
+  "group": "hardware"
+ },
+ {
+  "title": "Practical Machinist - Sheldon vs South Bend lathe restoration",
+  "url": "https://www.practicalmachinist.com/forum/threads/sheldon-vs-south-bend-lathe-restoration.412233/",
+  "group": "hardware"
+ },
+ {
+  "title": "GitHub - FluidNC/FluidNC: The next generation of CNC firmware",
+  "url": "https://github.com/bdring/FluidNC",
+  "group": "hardware"
+ },
+ {
+  "title": "GitHub - klipper3d/klipper: Klipper is a 3d-printer firmware",
+  "url": "https://github.com/Klipper3d/klipper",
+  "group": "hardware"
+ },
+ {
+  "title": "Raspberry Pi Pico W: Getting started with MicroPython and the web",
+  "url": "https://projects.raspberrypi.org/en/projects/get-started-pico-w",
+  "group": "hardware"
+ },
+ {
+  "title": "Build a Raspberry Pi weather station | Hackster.io",
+  "url": "https://www.hackster.io/projects/pi-weather-station-9f2c41",
+  "group": "hardware"
+ },
+ {
+  "title": "ESP32 Wi-Fi mesh network tutorial | Random Nerd Tutorials",
+  "url": "https://randomnerdtutorials.com/esp32-esp-now-wi-fi-web-server/",
+  "group": "hardware"
+ },
+ {
+  "title": "KiCad 8 - Differential pair routing for USB",
+  "url": "https://docs.kicad.org/8.0/en/pcbnew/pcbnew.html#routing-differential-pairs",
+  "group": "hardware"
+ },
+ {
+  "title": "Thread cutting charts for imperial lathes (UNC/UNF)",
+  "url": "https://www.machiningdoctor.com/charts/unc-unf-thread-chart/",
+  "group": "hardware"
+ },
+ {
+  "title": "Make a Mini Wood Lathe from an Old Drill Press | Instructables",
+  "url": "https://www.instructables.com/Mini-Wood-Lathe-From-Drill-Press/",
+  "group": "hardware"
+ },
+ {
+  "title": "Printables - Parametric gridfinity baseplate generator",
+  "url": "https://www.printables.com/model/417152-parametric-gridfinity-baseplate",
+  "group": "hardware"
+ },
+ {
+  "title": "Thingiverse - Raspberry Pi 5 case with fan mount",
+  "url": "https://www.thingiverse.com/thing:6392011",
+  "group": "hardware"
+ },
+ {
+  "title": "Hackaday - A DIY CNC router built from scrap aluminium extrusions",
+  "url": "https://hackaday.com/2026/09/12/a-diy-cnc-router-built-from-scrap-aluminium-extrusions/",
+  "group": "hardware"
+ },
+ {
+  "title": "Fusion 360 CAM tutorial: 2D adaptive clearing for beginners",
+  "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/2d-adaptive-clearing.html",
+  "group": "hardware"
+ },
+ {
+  "title": "OpenBuilds - GRBL 1.1 settings explained",
+  "url": "https://openbuilds.com/threads/grbl-1-1-settings-explained.9112/",
+  "group": "hardware"
+ },
+ {
+  "title": "Seeed Studio Wiki - XIAO RP2040 pinout and getting started",
+  "url": "https://wiki.seeedstudio.com/XIAO-RP2040/",
+  "group": "hardware"
+ },
+ {
+  "title": "How to read an oscilloscope probe compensation signal - EEVblog Forum",
+  "url": "https://www.eevblog.com/forum/beginners/probe-compensation-signal-square-wave/",
+  "group": "hardware"
+ },
+ {
+  "title": "Woodworking: Mortise and tenon with a hand-cut chisel set | Fine Woodworking",
+  "url": "https://www.finewoodworking.com/project-guides/joinery/hand-cut-mortise-and-tenon",
+  "group": "hardware"
+ },
+ {
+  "title": "Robot arm inverse kinematics with Arduino and servos",
+  "url": "https://www.instructables.com/Robot-Arm-Inverse-Kinematics-Arduino/",
+  "group": "hardware"
+ },
+ {
+  "title": "Marlin Firmware - Configuring TMC2209 UART mode",
+  "url": "https://marlinfw.org/docs/hardware/tmc_drivers.html",
+  "group": "hardware"
+ },
+ {
+  "title": "Ender 3 V3 SE bed leveling mod forum thread",
+  "url": "https://forum.creality.com/t/ender-3-v3-se-bed-leveling-mod/5521",
+  "group": "hardware"
+ },
+ {
+  "title": "Maker course: Introduction to CNC Machining and CAM",
+  "url": "https://www.makerschool.example/courses/intro-cnc-machining",
+  "group": "hardware"
+ },
+ {
+  "title": "How Black Holes Evaporate: Hawking Radiation Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=sc1Hk7Jj2Lm",
+  "group": "science"
+ },
+ {
+  "title": "Why is the sky blue? Rayleigh scattering in 10 minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=sc2Pp4Oo9Ii",
+  "group": "science"
+ },
+ {
+  "title": "CRISPR base editing explained - YouTube",
+  "url": "https://www.youtube.com/shorts/sc3Zz8Xx1Cc",
+  "group": "science"
+ },
+ {
+  "title": "JWST finds the earliest galaxy yet - YouTube",
+  "url": "https://www.youtube.com/watch?v=sc4Vv5Bb6Nn",
+  "group": "science"
+ },
+ {
+  "title": "How a mass spectrometer actually works - YouTube",
+  "url": "https://youtu.be/sc5Mm3Ll0Kk",
+  "group": "science"
+ },
+ {
+  "title": "Astronomers detect unusual radio burst from nearby galaxy | Space.com",
+  "url": "https://www.space.com/astronomers-detect-fast-radio-burst-nearby-galaxy",
+  "group": "science"
+ },
+ {
+  "title": "Nature - A room-temperature superconductor claim fails replication",
+  "url": "https://www.nature.com/articles/d41586-026-01293-4",
+  "group": "science"
+ },
+ {
+  "title": "Quanta Magazine - New Proof Settles Decades-Old Question About Prime Gaps",
+  "url": "https://www.quantamagazine.org/new-proof-settles-prime-gaps-question-20260504/",
+  "group": "science"
+ },
+ {
+  "title": "arXiv:2603.04417 [hep-ph] Neutrino mass ordering from combined oscillation data",
+  "url": "https://arxiv.org/abs/2603.04417",
+  "group": "science"
+ },
+ {
+  "title": "Phys.org - Physicists observe time crystal in a diamond lattice",
+  "url": "https://phys.org/news/2026-07-physicists-time-crystal-diamond-lattice.html",
+  "group": "science"
+ },
+ {
+  "title": "Chemistry LibreTexts - Molecular Orbital Theory",
+  "url": "https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/molecular-orbital-theory",
+  "group": "science"
+ },
+ {
+  "title": "NASA - Europa Clipper completes second flyby of Mars",
+  "url": "https://www.nasa.gov/missions/europa-clipper-second-flyby/",
+  "group": "science"
+ },
+ {
+  "title": "Science News - Why some bacteria survive in boiling springs",
+  "url": "https://www.sciencenews.org/article/bacteria-boiling-hot-springs-survive",
+  "group": "science"
+ },
+ {
+  "title": "ScienceDirect: Graphene oxide membranes for desalination - a review",
+  "url": "https://www.sciencedirect.com/science/article/pii/S0011916426001234",
+  "group": "science"
+ },
+ {
+  "title": "Veritasium-style explainer: the physics of a bouncing ball",
+  "url": "https://www.explainthatstuff.com/bouncing-ball-physics.html",
+  "group": "science"
+ },
+ {
+  "title": "Physics Stack Exchange - Why does a spinning top not fall over?",
+  "url": "https://physics.stackexchange.com/questions/114532/why-does-a-spinning-top-not-fall-over",
+  "group": "science"
+ },
+ {
+  "title": "Quantum entanglement: what it is and isn't | New Scientist",
+  "url": "https://www.newscientist.com/article/explainer-quantum-entanglement/",
+  "group": "science"
+ },
+ {
+  "title": "How do bridges resist earthquakes? Structural engineering explained",
+  "url": "https://www.engineeringexplained.example/earthquake-resistant-bridges",
+  "group": "science"
+ },
+ {
+  "title": "bioRxiv: Single-cell atlas of the developing zebrafish heart",
+  "url": "https://www.biorxiv.org/content/10.1101/2026.08.14.600132v1",
+  "group": "science"
+ },
+ {
+  "title": "The Chemistry of Fireworks: colours and compounds | Compound Interest",
+  "url": "https://www.compoundchem.com/2015/12/30/fireworks/",
+  "group": "science"
+ },
+ {
+  "title": "ESA - Gaia DR4 maps a billion stars in the Milky Way",
+  "url": "https://www.esa.int/Science_Exploration/Space_Science/Gaia/Gaia_DR4",
+  "group": "science"
+ },
+ {
+  "title": "Reddit r/askscience - How do lithium batteries degrade at the molecular level?",
+  "url": "https://www.reddit.com/r/askscience/comments/1b7k3xa/how_do_lithium_batteries_degrade_at_the_molecular/",
+  "group": "science"
+ },
+ {
+  "title": "MIT News - Engineers develop a fusion magnet that holds record field",
+  "url": "https://news.mit.edu/2026/engineers-fusion-magnet-record-field-0618",
+  "group": "science"
+ },
+ {
+  "title": "Science (AAAS): Ancient DNA reveals migration of Neolithic farmers",
+  "url": "https://www.science.org/doi/10.1126/science.adk1234",
+  "group": "science"
+ },
+ {
+  "title": "Wikipedia - Photosynthesis",
+  "url": "https://en.wikipedia.org/wiki/Photosynthesis",
+  "group": "science"
+ },
+ {
+  "title": "Neil deGrasse Tyson on dark matter and dark energy - Big Think",
+  "url": "https://bigthink.com/starts-with-a-bang/dark-matter-dark-energy-explained/",
+  "group": "science"
+ },
+ {
+  "title": "Heat exchangers explained: counterflow vs parallel flow",
+  "url": "https://www.thermalengineering.example/heat-exchangers-counterflow-parallel",
+  "group": "science"
+ },
+ {
+  "title": "Lab notebook: titration of acetic acid with NaOH - protocol",
+  "url": "https://www.protocols.io/view/titration-acetic-acid-naoh-3byl4qzzjvo5/v1",
+  "group": "science"
+ },
+ {
+  "title": "Astronomía: ¿Qué es una supernova? | Muy Interesante",
+  "url": "https://www.muyinteresante.es/ciencia/que-es-una-supernova",
+  "group": "science"
+ },
+ {
+  "title": "Arsenal vs Liverpool: Extended Highlights | Premier League - YouTube",
+  "url": "https://www.youtube.com/watch?v=sp1Gg9Hh3Jj",
+  "group": "sports"
+ },
+ {
+  "title": "Mbappe scores a stunning bicycle kick in Madrid derby - YouTube",
+  "url": "https://www.youtube.com/shorts/sp2Aa6Ss0Dd",
+  "group": "sports"
+ },
+ {
+  "title": "NBA Finals Game 6 full game recap - YouTube",
+  "url": "https://www.youtube.com/watch?v=sp3Ff2Gg8Hh",
+  "group": "sports"
+ },
+ {
+  "title": "Federer-style backhand slice analysis, ATP tennis tactics - YouTube",
+  "url": "https://www.youtube.com/watch?v=sp4Jk1Ll7Zx",
+  "group": "sports"
+ },
+ {
+  "title": "Cricket: Kohli's masterclass 112 vs Australia, 3rd ODI highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=sp5Cc4Vv9Bb",
+  "group": "sports"
+ },
+ {
+  "title": "BBC Sport - Premier League table, results and fixtures",
+  "url": "https://www.bbc.com/sport/football/premier-league/table",
+  "group": "sports"
+ },
+ {
+  "title": "ESPN - Lakers vs Celtics Game Score and Box Score",
+  "url": "https://www.espn.com/nba/game/_/gameId/401584123",
+  "group": "sports"
+ },
+ {
+  "title": "Sky Sports - Transfer centre: all the done deals",
+  "url": "https://www.skysports.com/transfer-centre",
+  "group": "sports"
+ },
+ {
+  "title": "Official Formula 1 Website - 2026 Race Calendar",
+  "url": "https://www.formula1.com/en/racing/2026",
+  "group": "sports"
+ },
+ {
+  "title": "ESPNcricinfo - India vs England, 4th Test, Scorecard",
+  "url": "https://www.espncricinfo.com/series/india-vs-england-2026/scorecard-4th-test",
+  "group": "sports"
+ },
+ {
+  "title": "Fantasy Premier League - My Team (Gameweek 14)",
+  "url": "https://fantasy.premierleague.com/my-team",
+  "group": "sports"
+ },
+ {
+  "title": "r/soccer - Match Thread: Barcelona vs Real Madrid",
+  "url": "https://www.reddit.com/r/soccer/comments/1gm5r8d/match_thread_barcelona_vs_real_madrid/",
+  "group": "sports"
+ },
+ {
+  "title": "NFL.com - Week 11 Power Rankings",
+  "url": "https://www.nfl.com/news/nfl-power-rankings-week-11-2026",
+  "group": "sports"
+ },
+ {
+  "title": "The Athletic - Why the Knicks' defence collapsed in the fourth quarter",
+  "url": "https://theathletic.com/5812345/2026/11/08/knicks-defense-collapse-fourth-quarter/",
+  "group": "sports"
+ },
+ {
+  "title": "Wimbledon - Order of Play, Day 8",
+  "url": "https://www.wimbledon.com/en_GB/scores/schedule/order_of_play.html",
+  "group": "sports"
+ },
+ {
+  "title": "UFC 312 results: main event ends in second round stoppage",
+  "url": "https://www.mmafighting.com/2026/11/9/ufc-312-results-main-event-stoppage",
+  "group": "sports"
+ },
+ {
+  "title": "Rugby World Cup fixtures and results | World Rugby",
+  "url": "https://www.world.rugby/tournaments/fixtures-results",
+  "group": "sports"
+ },
+ {
+  "title": "Tour de France 2026 Stage 14 report and standings",
+  "url": "https://www.letour.fr/en/stage-14",
+  "group": "sports"
+ },
+ {
+  "title": "MLB.com - Yankees vs Dodgers Gameday",
+  "url": "https://www.mlb.com/gameday/yankees-vs-dodgers/2026/10/28/776543",
+  "group": "sports"
+ },
+ {
+  "title": "Transfermarkt - Erling Haaland: player profile and market value",
+  "url": "https://www.transfermarkt.com/erling-haaland/profil/spieler/418560",
+  "group": "sports"
+ },
+ {
+  "title": "Goal.com - Champions League draw: full list of last-16 ties",
+  "url": "https://www.goal.com/en/news/champions-league-last-16-draw-2026",
+  "group": "sports"
+ },
+ {
+  "title": "Cricbuzz - Live Cricket Score: Mumbai Indians vs CSK",
+  "url": "https://www.cricbuzz.com/live-cricket-scores/92314/mi-vs-csk",
+  "group": "sports"
+ },
+ {
+  "title": "Marathon training: how elite runners taper before race day | Runner's World",
+  "url": "https://www.runnersworld.com/training/a42516/elite-marathon-taper/",
+  "group": "sports"
+ },
+ {
+  "title": "NHL - Standings by division",
+  "url": "https://www.nhl.com/standings/2026/division",
+  "group": "sports"
+ },
+ {
+  "title": "Bundesliga: Bayern gewinnt Topspiel gegen Dortmund 3:1",
+  "url": "https://www.kicker.de/bayern-gewinnt-topspiel-dortmund-4912233/spielbericht",
+  "group": "sports"
+ },
+ {
+  "title": "Olympics - Paris to LA28: medal table history",
+  "url": "https://olympics.com/en/olympic-games/medals-history",
+  "group": "sports"
+ },
+ {
+  "title": "Sofascore - Live scores, football, tennis, basketball",
+  "url": "https://www.sofascore.com/",
+  "group": "sports"
+ },
+ {
+  "title": "Golf: Masters leaderboard, round 3 | Golf Digest",
+  "url": "https://www.golfdigest.com/story/masters-leaderboard-round-3-2026",
+  "group": "sports"
+ },
+ {
+  "title": "Perfect Neapolitan pizza dough at home, 72 hour ferment - YouTube",
+  "url": "https://www.youtube.com/watch?v=fd1Pz5Aa8Bn",
+  "group": "food"
+ },
+ {
+  "title": "5-minute garlic butter shrimp pasta - YouTube",
+  "url": "https://www.youtube.com/shorts/fd2Sh4Rr7Mp",
+  "group": "food"
+ },
+ {
+  "title": "How to make real ramen broth from scratch - YouTube",
+  "url": "https://www.youtube.com/watch?v=fd3Rm9Bb2Kt",
+  "group": "food"
+ },
+ {
+  "title": "Sourdough bread for beginners: full walkthrough - YouTube",
+  "url": "https://www.youtube.com/watch?v=fd4Sd6Cc1Lq",
+  "group": "food"
+ },
+ {
+  "title": "Gordon-style beef Wellington, step by step - YouTube",
+  "url": "https://youtu.be/fd5Bw0Ee3Nz",
+  "group": "food"
+ },
+ {
+  "title": "Easy Chicken Tikka Masala Recipe | RecipeTin Eats",
+  "url": "https://www.recipetineats.com/chicken-tikka-masala/",
+  "group": "food"
+ },
+ {
+  "title": "Best Banana Bread Recipe - Allrecipes",
+  "url": "https://www.allrecipes.com/recipe/20144/banana-banana-bread/",
+  "group": "food"
+ },
+ {
+  "title": "Serious Eats: The Food Lab's Best Chocolate Chip Cookies",
+  "url": "https://www.seriouseats.com/the-food-lab-best-chocolate-chip-cookies",
+  "group": "food"
+ },
+ {
+  "title": "Menu - Luigi's Trattoria | Order online with Uber Eats",
+  "url": "https://www.ubereats.com/store/luigis-trattoria/xk29aBcD",
+  "group": "food"
+ },
+ {
+  "title": "DoorDash: Thai Orchid Kitchen delivery menu",
+  "url": "https://www.doordash.com/store/thai-orchid-kitchen-123456/",
+  "group": "food"
+ },
+ {
+  "title": "Tripadvisor - Top 10 Best Sushi Restaurants in Lisbon",
+  "url": "https://www.tripadvisor.com/Restaurants-g189158-c38-Lisbon.html",
+  "group": "food"
+ },
+ {
+  "title": "Yelp - Best ramen near me, open now",
+  "url": "https://www.yelp.com/search?find_desc=Ramen&find_loc=Seattle",
+  "group": "food"
+ },
+ {
+  "title": "r/Cooking - What's your go-to weeknight dinner under 30 minutes?",
+  "url": "https://www.reddit.com/r/Cooking/comments/1fm3xyz/whats_your_goto_weeknight_dinner_under_30_minutes/",
+  "group": "food"
+ },
+ {
+  "title": "r/Breadit - My first sourdough boule, crumb shot",
+  "url": "https://www.reddit.com/r/Breadit/comments/1gq8wlr/my_first_sourdough_boule_crumb_shot/",
+  "group": "food"
+ },
+ {
+  "title": "King Arthur Baking - Classic Sandwich Bread",
+  "url": "https://www.kingarthurbaking.com/recipes/classic-sandwich-bread-recipe",
+  "group": "food"
+ },
+ {
+  "title": "NYT Cooking - Simple Roast Chicken With Lemon",
+  "url": "https://cooking.nytimes.com/recipes/1019456-simple-roast-chicken",
+  "group": "food"
+ },
+ {
+  "title": "Bon Appetit: 40 Vegetarian Dinners to Cook This Winter",
+  "url": "https://www.bonappetit.com/gallery/vegetarian-dinner-recipes",
+  "group": "food"
+ },
+ {
+  "title": "Budget Bytes - Slow Cooker Chickpea Curry",
+  "url": "https://www.budgetbytes.com/slow-cooker-chickpea-curry/",
+  "group": "food"
+ },
+ {
+  "title": "Maangchi - Kimchi jjigae (Kimchi stew)",
+  "url": "https://www.maangchi.com/recipe/kimchi-jjigae",
+  "group": "food"
+ },
+ {
+  "title": "Minimalist Baker - Easy Vegan Pancakes",
+  "url": "https://minimalistbaker.com/easy-vegan-pancakes/",
+  "group": "food"
+ },
+ {
+  "title": "OpenTable - Reserve a table at Noma, Copenhagen",
+  "url": "https://www.opentable.com/r/noma-copenhagen",
+  "group": "food"
+ },
+ {
+  "title": "Knife skills 101: how to dice an onion fast | Epicurious",
+  "url": "https://www.epicurious.com/expert-advice/how-to-dice-an-onion-article",
+  "group": "food"
+ },
+ {
+  "title": "Sri Lankan chicken curry recipe | Food blog",
+  "url": "https://www.lankanflavours.example/chicken-curry-recipe",
+  "group": "food"
+ },
+ {
+  "title": "Cast iron skillet care: seasoning and cleaning - The Kitchn",
+  "url": "https://www.thekitchn.com/how-to-season-cast-iron-skillet-23088",
+  "group": "food"
+ },
+ {
+  "title": "Receta de paella valenciana auténtica | Directo al Paladar",
+  "url": "https://www.directoalpaladar.com/recetas-de-arroces/paella-valenciana-receta",
+  "group": "food"
+ },
+ {
+  "title": "Meal prep for the week: 5 lunch bowls under 500 calories - Pinch of Yum",
+  "url": "https://pinchofyum.com/five-lunch-bowls",
+  "group": "food"
+ },
+ {
+  "title": "Homemade croissants: laminated dough guide",
+  "url": "https://www.thefreshloaf.com/node/68412/homemade-croissant-laminated-dough",
+  "group": "food"
+ },
+ {
+  "title": "Wine pairing guide: what to drink with spicy food | Food & Wine",
+  "url": "https://www.foodandwine.com/wine/wine-pairing-spicy-food",
+  "group": "food"
+ },
+ {
+  "title": "Rice cooker cheesecake? Test kitchen results",
+  "url": "https://www.justonecookbook.com/rice-cooker-cheesecake/",
+  "group": "food"
+ },
+ {
+  "title": "2026 Toyota GR Corolla review: still the best hot hatch? - YouTube",
+  "url": "https://www.youtube.com/watch?v=cr1Gr7Tt4Yy",
+  "group": "cars"
+ },
+ {
+  "title": "How to change brake pads on a Honda Civic - YouTube",
+  "url": "https://www.youtube.com/watch?v=cr2Bp3Hh9Ii",
+  "group": "cars"
+ },
+ {
+  "title": "Tesla Model Y Juniper long-term review after 20,000 km - YouTube",
+  "url": "https://www.youtube.com/watch?v=cr3Ty8Mm1Jj",
+  "group": "cars"
+ },
+ {
+  "title": "Cold start of a 1999 Nissan Skyline R34 GT-R - YouTube",
+  "url": "https://www.youtube.com/shorts/cr4Sk2Rr6Gg",
+  "group": "cars"
+ },
+ {
+  "title": "Why your engine is burning oil (and how to fix it) - YouTube",
+  "url": "https://youtu.be/cr5Eo5Nn0Ff",
+  "group": "cars"
+ },
+ {
+  "title": "Honda CB500X vs Yamaha Tenere 700 - adventure bike comparison - YouTube",
+  "url": "https://www.youtube.com/watch?v=cr6Mt0Bb7Kk",
+  "group": "cars"
+ },
+ {
+  "title": "Edmunds - 2026 Mazda MX-5 Miata Review, Pricing, and Specs",
+  "url": "https://www.edmunds.com/mazda/mx-5-miata/2026/review/",
+  "group": "cars"
+ },
+ {
+  "title": "Car and Driver: The Best Used Cars Under $15,000",
+  "url": "https://www.caranddriver.com/features/g12345/best-used-cars-under-15000/",
+  "group": "cars"
+ },
+ {
+  "title": "Autotrader - Used 2019 Subaru WRX STI for sale near Denver",
+  "url": "https://www.autotrader.com/cars-for-sale/used-cars/subaru/wrx-sti/denver-co",
+  "group": "cars"
+ },
+ {
+  "title": "CarGurus - 2021 Ford Mustang GT Premium, 28,400 miles",
+  "url": "https://www.cargurus.com/Cars/link/2021-ford-mustang-gt-premium-d3345123",
+  "group": "cars"
+ },
+ {
+  "title": "Toyota Dealer - New 2026 Camry Hybrid SE in stock | Smith Toyota",
+  "url": "https://www.smithtoyota.example/new-inventory/2026-camry-hybrid-se",
+  "group": "cars"
+ },
+ {
+  "title": "Bring a Trailer - 1991 BMW E30 M3 auction",
+  "url": "https://bringatrailer.com/listing/1991-bmw-m3-98123/",
+  "group": "cars"
+ },
+ {
+  "title": "r/MechanicAdvice - Check engine light P0420, cheap fix?",
+  "url": "https://www.reddit.com/r/MechanicAdvice/comments/1f8d2ew/check_engine_light_p0420_cheap_fix/",
+  "group": "cars"
+ },
+ {
+  "title": "r/cars - What is the most reliable daily driver in 2026?",
+  "url": "https://www.reddit.com/r/cars/comments/1ghj4mn/what_is_the_most_reliable_daily_driver_in_2026/",
+  "group": "cars"
+ },
+ {
+  "title": "Bimmerpost - E90 335i HPFP failure symptoms",
+  "url": "https://www.bimmerpost.com/forums/showthread.php?t=1234567",
+  "group": "cars"
+ },
+ {
+  "title": "Miata.net forum - Coilover recommendations for track day",
+  "url": "https://forum.miata.net/vb/showthread.php?t=687322",
+  "group": "cars"
+ },
+ {
+  "title": "Top Gear - Porsche 911 GT3 RS review",
+  "url": "https://www.topgear.com/car-reviews/porsche/911-gt3-rs",
+  "group": "cars"
+ },
+ {
+  "title": "Motor1 - Rivian R2 first drive: the affordable adventure EV",
+  "url": "https://www.motor1.com/reviews/rivian-r2-first-drive/",
+  "group": "cars"
+ },
+ {
+  "title": "Electrek - Charging network comparison: Tesla Supercharger vs Ionity",
+  "url": "https://electrek.co/2026/10/21/supercharger-vs-ionity-charging-comparison/",
+  "group": "cars"
+ },
+ {
+  "title": "How to bleed brakes alone | Haynes manual guide",
+  "url": "https://www.haynes.com/en-us/tips-tutorials/how-to-bleed-brakes",
+  "group": "cars"
+ },
+ {
+  "title": "Cycle World - 2026 Triumph Speed Triple 1200 RS Review",
+  "url": "https://www.cycleworld.com/2026-triumph-speed-triple-1200-rs-review/",
+  "group": "cars"
+ },
+ {
+  "title": "Motorcyclist - Chain and sprocket replacement step by step",
+  "url": "https://www.motorcyclistonline.com/how-to-replace-chain-sprockets/",
+  "group": "cars"
+ },
+ {
+  "title": "Kelley Blue Book - 2020 Honda Accord trade-in value",
+  "url": "https://www.kbb.com/honda/accord/2020/",
+  "group": "cars"
+ },
+ {
+  "title": "The Drive - Best OBD2 scanners for DIY diagnostics",
+  "url": "https://www.thedrive.com/accessories/best-obd2-scanners",
+  "group": "cars"
+ },
+ {
+  "title": "Auto Express: new Skoda Elroq long-term test",
+  "url": "https://www.autoexpress.co.uk/skoda/elroq/long-term-review",
+  "group": "cars"
+ },
+ {
+  "title": "Autoblog: why the manual transmission is not dead yet",
+  "url": "https://www.autoblog.com/2026/09/02/manual-transmission-not-dead/",
+  "group": "cars"
+ },
+ {
+  "title": "Wheel alignment explained: toe, camber and caster | Hagerty",
+  "url": "https://www.hagerty.com/media/maintenance-and-tech/wheel-alignment-explained/",
+  "group": "cars"
+ },
+ {
+  "title": "Volkswagen Golf GTI Mk8 Probleme und Rückrufe | ADAC",
+  "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/vw-golf-gti-probleme/",
+  "group": "cars"
+ },
+ {
+  "title": "Install a laminate floor in a weekend - YouTube",
+  "url": "https://www.youtube.com/watch?v=hm1Lf4Aa9Zz",
+  "group": "home"
+ },
+ {
+  "title": "How to fix a leaking tap washer in 10 minutes - YouTube",
+  "url": "https://www.youtube.com/watch?v=hm2Lt8Bb3Yy",
+  "group": "home"
+ },
+ {
+  "title": "Small apartment balcony garden tour - YouTube",
+  "url": "https://www.youtube.com/watch?v=hm3Bg6Cc7Xx",
+  "group": "home"
+ },
+ {
+  "title": "Repotting a monstera without killing it - YouTube",
+  "url": "https://www.youtube.com/shorts/hm4Rp1Dd5Ww",
+  "group": "home"
+ },
+ {
+  "title": "Painting kitchen cabinets: what I wish I knew - YouTube",
+  "url": "https://www.youtube.com/watch?v=hm5Pk9Ee2Vv",
+  "group": "home"
+ },
+ {
+  "title": "Growing tomatoes in containers - tips for a bigger harvest",
+  "url": "https://www.gardeningknowhow.com/edible/vegetables/tomato/growing-tomatoes-in-containers.htm",
+  "group": "home"
+ },
+ {
+  "title": "r/DIY - Is this crack in my basement wall structural?",
+  "url": "https://www.reddit.com/r/DIY/comments/1gb7n4k/is_this_crack_in_my_basement_wall_structural/",
+  "group": "home"
+ },
+ {
+  "title": "r/gardening - Powdery mildew on squash again, what am I doing wrong?",
+  "url": "https://www.reddit.com/r/gardening/comments/1fx9q2d/powdery_mildew_on_squash_again/",
+  "group": "home"
+ },
+ {
+  "title": "r/malelivingspace - Rate my living room layout",
+  "url": "https://www.reddit.com/r/malelivingspace/comments/1gk4t8p/rate_my_living_room_layout/",
+  "group": "home"
+ },
+ {
+  "title": "The Spruce - How to Remove Mold From Bathroom Grout",
+  "url": "https://www.thespruce.com/remove-mold-from-bathroom-grout-4845345",
+  "group": "home"
+ },
+ {
+  "title": "This Old House: How to Install a Ceiling Fan",
+  "url": "https://www.thisoldhouse.com/lighting/21014994/how-to-install-a-ceiling-fan",
+  "group": "home"
+ },
+ {
+  "title": "Family Handyman - 12 Ways to Declutter a Tiny Kitchen",
+  "url": "https://www.familyhandyman.com/list/declutter-tiny-kitchen/",
+  "group": "home"
+ },
+ {
+  "title": "Houzz - Scandinavian living room ideas and photos",
+  "url": "https://www.houzz.com/photos/scandinavian-living-room-ideas-phbr0-bp~t_717~s_2103",
+  "group": "home"
+ },
+ {
+  "title": "Apartment Therapy: Small Space Bedroom Storage Hacks",
+  "url": "https://www.apartmenttherapy.com/small-bedroom-storage-hacks-37812",
+  "group": "home"
+ },
+ {
+  "title": "Better Homes & Gardens - Best Shade Plants for Under Trees",
+  "url": "https://www.bhg.com/gardening/plant-dictionary/shade-plants-under-trees/",
+  "group": "home"
+ },
+ {
+  "title": "Gardeners' World - When to prune apple trees",
+  "url": "https://www.gardenersworld.com/how-to/grow-plants/how-to-prune-apple-trees/",
+  "group": "home"
+ },
+ {
+  "title": "Pinterest - Boho bedroom decor ideas",
+  "url": "https://www.pinterest.com/ideas/boho-bedroom-decor/922345678901/",
+  "group": "home"
+ },
+ {
+  "title": "Bob Vila - Best Robot Vacuums for Pet Hair? Cleaning tips and picks",
+  "url": "https://www.bobvila.com/articles/cleaning-tips-hardwood-floors/",
+  "group": "home"
+ },
+ {
+  "title": "How to unclog a drain without chemicals | Good Housekeeping",
+  "url": "https://www.goodhousekeeping.com/home/cleaning/a22345/unclog-drain/",
+  "group": "home"
+ },
+ {
+  "title": "Succulent care guide: watering and light | Epic Gardening",
+  "url": "https://www.epicgardening.com/succulent-care/",
+  "group": "home"
+ },
+ {
+  "title": "How to build a raised garden bed from cedar | Lowe's DIY",
+  "url": "https://www.lowes.com/n/how-to/build-raised-garden-bed",
+  "group": "home"
+ },
+ {
+  "title": "Furniture ideas: build a floating shelf with hidden brackets",
+  "url": "https://www.diynetwork.com/how-to/floating-shelf-hidden-brackets",
+  "group": "home"
+ },
+ {
+  "title": "Composting at home: a beginner's guide | The Old Farmer's Almanac",
+  "url": "https://www.almanac.com/composting-home-beginners-guide",
+  "group": "home"
+ },
+ {
+  "title": "Fixing squeaky hardwood floors | Fine Homebuilding",
+  "url": "https://www.finehomebuilding.com/project-guides/flooring/fixing-squeaky-floors",
+  "group": "home"
+ },
+ {
+  "title": "Jardinería: cómo cuidar las suculentas en casa",
+  "url": "https://www.jardineriaon.com/cuidados-de-las-suculentas.html",
+  "group": "home"
+ },
+ {
+  "title": "Wallpaper vs paint: pros and cons for a hallway accent",
+  "url": "https://www.homesandgardens.com/advice/wallpaper-vs-paint-hallway",
+  "group": "home"
+ },
+ {
+  "title": "Spring cleaning checklist: room by room",
+  "url": "https://www.marthastewart.com/spring-cleaning-checklist-7502145",
+  "group": "home"
+ },
+ {
+  "title": "Drought-tolerant garden plants for the Mediterranean climate",
+  "url": "https://www.rhs.org.uk/plants/drought-tolerant-garden-plants",
+  "group": "home"
+ },
+ {
+  "title": "Seed starting calendar for zone 6b",
+  "url": "https://www.johnnyseeds.com/growers-library/seed-starting-schedule-zone-6.html",
+  "group": "home"
+ },
+ {
+  "title": "Fall outfit ideas 2026: 10 looks from one capsule wardrobe - YouTube",
+  "url": "https://www.youtube.com/watch?v=fa1Fo3Aa6Bb",
+  "group": "fashion"
+ },
+ {
+  "title": "My 10-step Korean skincare routine for combination skin - YouTube",
+  "url": "https://www.youtube.com/watch?v=fa2Ks7Cc2Dd",
+  "group": "fashion"
+ },
+ {
+  "title": "Paris Fashion Week SS27: runway highlights - YouTube",
+  "url": "https://www.youtube.com/watch?v=fa3Pf4Ee8Ff",
+  "group": "fashion"
+ },
+ {
+  "title": "How to style wide-leg trousers - YouTube",
+  "url": "https://www.youtube.com/shorts/fa4Ws9Gg1Hh",
+  "group": "fashion"
+ },
+ {
+  "title": "Easy heatless curls overnight - YouTube",
+  "url": "https://www.youtube.com/shorts/fa5Hc5Ii0Jj",
+  "group": "fashion"
+ },
+ {
+  "title": "Vogue - The Biggest Trends From the Fall 2026 Runways",
+  "url": "https://www.vogue.com/fashion-shows/trends-fall-2026",
+  "group": "fashion"
+ },
+ {
+  "title": "Who What Wear: How to wear a trench coat 5 ways",
+  "url": "https://www.whowhatwear.com/how-to-wear-trench-coat",
+  "group": "fashion"
+ },
+ {
+  "title": "Harper's Bazaar - Met Gala 2026 red carpet looks",
+  "url": "https://www.harpersbazaar.com/celebrity/red-carpet-dresses/met-gala-2026",
+  "group": "fashion"
+ },
+ {
+  "title": "r/femalefashionadvice - Best way to tailor a thrifted blazer?",
+  "url": "https://www.reddit.com/r/femalefashionadvice/comments/1fz6b3d/best_way_to_tailor_a_thrifted_blazer/",
+  "group": "fashion"
+ },
+ {
+  "title": "r/SkincareAddiction - Retinol vs bakuchiol, which one worked for you?",
+  "url": "https://www.reddit.com/r/SkincareAddiction/comments/1g3c7fe/retinol_vs_bakuchiol/",
+  "group": "fashion"
+ },
+ {
+  "title": "r/malefashionadvice - Weekly outfit feedback thread",
+  "url": "https://www.reddit.com/r/malefashionadvice/comments/1gm2l9a/weekly_outfit_feedback_thread/",
+  "group": "fashion"
+ },
+ {
+  "title": "Allure - The Best Foundations for Dry Skin, Tested",
+  "url": "https://www.allure.com/gallery/best-foundation-for-dry-skin",
+  "group": "fashion"
+ },
+ {
+  "title": "Byrdie: 20 summer hairstyles for short hair",
+  "url": "https://www.byrdie.com/short-summer-hairstyles",
+  "group": "fashion"
+ },
+ {
+  "title": "Business of Fashion - Luxury demand slows as consumers trade down",
+  "url": "https://www.businessoffashion.com/articles/luxury/luxury-demand-slows/",
+  "group": "fashion"
+ },
+ {
+  "title": "Pattern drafting basics: the bodice block | Fashion-Incubator",
+  "url": "https://fashion-incubator.com/pattern-drafting-bodice-block/",
+  "group": "fashion"
+ },
+ {
+  "title": "Central Saint Martins - BA Fashion Design: portfolio guidelines",
+  "url": "https://www.arts.ac.uk/subjects/fashion-design/undergraduate/ba-fashion-design-central-saint-martins",
+  "group": "fashion"
+ },
+ {
+  "title": "Pinterest - Minimalist wardrobe moodboard",
+  "url": "https://www.pinterest.com/ideas/minimalist-wardrobe/925678901234/",
+  "group": "fashion"
+ },
+ {
+  "title": "Lookbook - Spring/Summer 2026 collection | Everlane",
+  "url": "https://www.everlane.com/collections/ss26-lookbook",
+  "group": "fashion"
+ },
+ {
+  "title": "The Cut - The 12 best sunscreens for your face",
+  "url": "https://www.thecut.com/article/best-face-sunscreen.html",
+  "group": "fashion"
+ },
+ {
+  "title": "Glossier: skincare routine builder",
+  "url": "https://www.glossier.com/pages/skincare-routine-quiz",
+  "group": "fashion"
+ },
+ {
+  "title": "Vogue Paris - Les tendances mode de l'automne",
+  "url": "https://www.vogue.fr/mode/article/tendances-mode-automne-2026",
+  "group": "fashion"
+ },
+ {
+  "title": "Nail art ideas for winter 2026 | Elle",
+  "url": "https://www.elle.com/beauty/nails/g45678/winter-nail-art/",
+  "group": "fashion"
+ },
+ {
+  "title": "How to build a color palette for textile design | Textile Society",
+  "url": "https://www.textilesociety.example/design/color-palette-textile-design",
+  "group": "fashion"
+ },
+ {
+  "title": "Draping on a dress form: a beginner's guide - Threads magazine",
+  "url": "https://www.threadsmagazine.com/techniques/draping-dress-form-beginners",
+  "group": "fashion"
+ },
+ {
+  "title": "Men's grooming: how to choose the right beard trimmer cut",
+  "url": "https://www.gq.com/story/how-to-style-a-beard",
+  "group": "fashion"
+ },
+ {
+  "title": "Sustainable fashion: brands that actually pay garment workers - Good On You",
+  "url": "https://goodonyou.eco/brands-pay-garment-workers/",
+  "group": "fashion"
+ },
+ {
+  "title": "Streetwear drop calendar November | Hypebeast",
+  "url": "https://hypebeast.com/streetwear-drop-calendar-november-2026",
+  "group": "fashion"
+ },
+ {
+  "title": "Hair color trends: copper and auburn shades| L'Oreal Paris",
+  "url": "https://www.lorealparis.com/hair-color-trends-copper-auburn",
+  "group": "fashion"
+ },
+ {
+  "title": "How I trained my puppy to stop biting in 3 days - YouTube",
+  "url": "https://www.youtube.com/watch?v=pt1Pb4Aa7Bb",
+  "group": "pets"
+ },
+ {
+  "title": "Cat zoomies explained by a vet behaviourist - YouTube",
+  "url": "https://www.youtube.com/watch?v=pt2Cz8Cc3Dd",
+  "group": "pets"
+ },
+ {
+  "title": "Adopting a rescue greyhound: first week - YouTube",
+  "url": "https://www.youtube.com/watch?v=pt3Ag2Ee9Ff",
+  "group": "pets"
+ },
+ {
+  "title": "Axolotl tank setup guide - YouTube",
+  "url": "https://youtu.be/pt4At6Gg0Hh",
+  "group": "pets"
+ },
+ {
+  "title": "Wild otters playing in the Scottish highlands - YouTube",
+  "url": "https://www.youtube.com/shorts/pt5Wo1Ii5Jj",
+  "group": "pets"
+ },
+ {
+  "title": "ASPCA - Dog Behavior: Separation Anxiety",
+  "url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/separation-anxiety",
+  "group": "pets"
+ },
+ {
+  "title": "The Humane Society - How to introduce a new cat to your resident cat",
+  "url": "https://www.humanesociety.org/resources/introducing-your-cat-new-cat",
+  "group": "pets"
+ },
+ {
+  "title": "Petfinder - Adoptable dogs near Portland, OR",
+  "url": "https://www.petfinder.com/search/dogs-for-adoption/us/or/portland/",
+  "group": "pets"
+ },
+ {
+  "title": "RSPCA - Rehoming a pet: what to expect",
+  "url": "https://www.rspca.org.uk/adviceandwelfare/pets/rehoming",
+  "group": "pets"
+ },
+ {
+  "title": "r/dogtraining - Leash reactivity: what finally worked for us",
+  "url": "https://www.reddit.com/r/dogtraining/comments/1ft3m7e/leash_reactivity_what_finally_worked_for_us/",
+  "group": "pets"
+ },
+ {
+  "title": "r/cats - Is it normal for my kitten to sleep 18 hours a day?",
+  "url": "https://www.reddit.com/r/cats/comments/1gh2n9c/kitten_sleeps_18_hours/",
+  "group": "pets"
+ },
+ {
+  "title": "r/aquarium - Cycling a 20 gallon tank, ammonia is stuck",
+  "url": "https://www.reddit.com/r/aquarium/comments/1fn5p2s/cycling_a_20_gallon_tank/",
+  "group": "pets"
+ },
+ {
+  "title": "VCA Animal Hospitals - Vomiting in Dogs",
+  "url": "https://vcahospitals.com/know-your-pet/vomiting-in-dogs",
+  "group": "pets"
+ },
+ {
+  "title": "PetMD - How Often Should You Take Your Cat to the Vet?",
+  "url": "https://www.petmd.com/cat/wellness/how-often-take-cat-to-vet",
+  "group": "pets"
+ },
+ {
+  "title": "Cesar's Way - Teaching your dog to heel",
+  "url": "https://www.cesarsway.com/teaching-dog-heel/",
+  "group": "pets"
+ },
+ {
+  "title": "American Kennel Club - Golden Retriever breed information",
+  "url": "https://www.akc.org/dog-breeds/golden-retriever/",
+  "group": "pets"
+ },
+ {
+  "title": "National Geographic - Why elephants never forget: animal facts",
+  "url": "https://www.nationalgeographic.com/animals/mammals/facts/african-elephant",
+  "group": "pets"
+ },
+ {
+  "title": "Audubon - Guide to feeding backyard birds in winter",
+  "url": "https://www.audubon.org/news/how-to-feed-birds-winter",
+  "group": "pets"
+ },
+ {
+  "title": "Vet advice: signs of dental disease in senior dogs - Vetstreet",
+  "url": "https://www.vetstreet.com/dogs/dental-disease-in-senior-dogs",
+  "group": "pets"
+ },
+ {
+  "title": "Reptile care sheet: bearded dragon habitat and diet",
+  "url": "https://www.reptilesmagazine.com/bearded-dragon-care-sheet/",
+  "group": "pets"
+ },
+ {
+  "title": "How to litter train a rabbit | House Rabbit Society",
+  "url": "https://rabbit.org/faq-litter-training/",
+  "group": "pets"
+ },
+ {
+  "title": "Horse hoof care basics for new owners | Horse & Hound",
+  "url": "https://www.horseandhound.co.uk/horse-care/hoof-care-basics",
+  "group": "pets"
+ },
+ {
+  "title": "The Dodo - Rescued baby raccoon learns to climb",
+  "url": "https://www.thedodo.com/rescued-baby-raccoon-climbs",
+  "group": "pets"
+ },
+ {
+  "title": "Is chocolate toxic to dogs? What to do | Blue Cross",
+  "url": "https://www.bluecross.org.uk/advice/dog/is-chocolate-poisonous-to-dogs",
+  "group": "pets"
+ },
+ {
+  "title": "Hunde-Erziehung: Welpen stubenrein bekommen | Zooplus Magazin",
+  "url": "https://www.zooplus.de/magazin/hund/hundeerziehung/welpen-stubenrein",
+  "group": "pets"
+ },
+ {
+  "title": "Pet insurance explained: do you need it for a cat? | The Kennel Club",
+  "url": "https://www.thekennelclub.org.uk/health-and-dog-care/pet-insurance-explained/",
+  "group": "pets"
+ },
+ {
+  "title": "Fascinating facts about octopus intelligence | Sea Life Trust",
+  "url": "https://www.sealifetrust.org/octopus-intelligence-facts",
+  "group": "pets"
+ },
+ {
+  "title": "Tips for adopting a senior cat | Best Friends Animal Society",
+  "url": "https://bestfriends.org/adopt/senior-cats",
+  "group": "pets"
+ },
+ {
+  "title": "Flea and tick prevention calendar for dogs - Merck Vet Manual",
+  "url": "https://www.merckvetmanual.com/dog-owners/fleas-ticks-prevention",
+  "group": "pets"
+ },
+ {
+  "title": "Newborn sleep schedule: weeks 1 to 12 - YouTube",
+  "url": "https://www.youtube.com/watch?v=fm1Ns5Aa8Bb",
+  "group": "family"
+ },
+ {
+  "title": "What I wish I knew before my second baby - YouTube",
+  "url": "https://www.youtube.com/watch?v=fm2Wb3Cc7Dd",
+  "group": "family"
+ },
+ {
+  "title": "Easy sensory play ideas for toddlers at home - YouTube",
+  "url": "https://www.youtube.com/shorts/fm3Sp9Ee1Ff",
+  "group": "family"
+ },
+ {
+  "title": "Baby-led weaning: first foods and safety - YouTube",
+  "url": "https://www.youtube.com/watch?v=fm4Bl2Gg6Hh",
+  "group": "family"
+ },
+ {
+  "title": "How to talk to your child about starting school - YouTube",
+  "url": "https://www.youtube.com/watch?v=fm5Ts4Ii0Jj",
+  "group": "family"
+ },
+ {
+  "title": "What to Expect - Week-by-week pregnancy guide",
+  "url": "https://www.whattoexpect.com/pregnancy/week-by-week/",
+  "group": "family"
+ },
+ {
+  "title": "BabyCenter - How to soothe a colicky baby",
+  "url": "https://www.babycenter.com/baby/crying-and-colic/colic-soothing-tips_8412",
+  "group": "family"
+ },
+ {
+  "title": "Mayo Clinic - Newborn care: a guide for new parents",
+  "url": "https://www.mayoclinic.org/healthy-lifestyle/infant-and-toddler-health/in-depth/newborn-care/art-20045165",
+  "group": "family"
+ },
+ {
+  "title": "r/NewParents - 3 month sleep regression survival thread",
+  "url": "https://www.reddit.com/r/NewParents/comments/1fk8t3q/3_month_sleep_regression_survival_thread/",
+  "group": "family"
+ },
+ {
+  "title": "r/Parenting - Toddler hitting at daycare, how did you handle it?",
+  "url": "https://www.reddit.com/r/Parenting/comments/1gj5x2m/toddler_hitting_at_daycare/",
+  "group": "family"
+ },
+ {
+  "title": "r/beyondthebump - Tips for pumping at work",
+  "url": "https://www.reddit.com/r/beyondthebump/comments/1g9d4rn/tips_for_pumping_at_work/",
+  "group": "family"
+ },
+ {
+  "title": "Scholastic Parents - 10 weekend activities for kids",
+  "url": "https://www.scholastic.com/parents/family-life/creativity-and-critical-thinking/weekend-activities.html",
+  "group": "family"
+ },
+ {
+  "title": "Great Schools - Ratings and reviews for elementary schools near you",
+  "url": "https://www.greatschools.org/california/san-diego/schools/?gradeLevels=e",
+  "group": "family"
+ },
+ {
+  "title": "Common Sense Media - Best apps for preschoolers, a parent's guide",
+  "url": "https://www.commonsensemedia.org/lists/best-apps-for-preschoolers",
+  "group": "family"
+ },
+ {
+  "title": "Parents.com - 50 Baby Name Ideas for 2027",
+  "url": "https://www.parents.com/baby-names/baby-name-ideas-2027/",
+  "group": "family"
+ },
+ {
+  "title": "Healthychildren.org - When can babies start solid foods?",
+  "url": "https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/Starting-Solid-Foods.aspx",
+  "group": "family"
+ },
+ {
+  "title": "Montessori at home: setting up a toddler room - Mama Papa Bubba",
+  "url": "https://www.mamapapabubba.example/montessori-toddler-room",
+  "group": "family"
+ },
+ {
+  "title": "Family planning: when is the best time to try for a second child?",
+  "url": "https://www.todaysparent.com/family/family-planning/second-child-timing/",
+  "group": "family"
+ },
+ {
+  "title": "Choosing a primary school: questions to ask on a visit | Mumsnet",
+  "url": "https://www.mumsnet.com/education/questions-to-ask-primary-school-visit",
+  "group": "family"
+ },
+ {
+  "title": "Mumsnet - Potty training at 2: too early?",
+  "url": "https://www.mumsnet.com/talk/potty_training/5012345-potty-training-at-2-too-early",
+  "group": "family"
+ },
+ {
+  "title": "Crafts for kids: rainy day paper plate animals | Red Ted Art",
+  "url": "https://www.redtedart.com/paper-plate-animals/",
+  "group": "family"
+ },
+ {
+  "title": "Best baby monitors for peace of mind: parents' picks",
+  "url": "https://www.thebump.com/a/best-baby-monitors",
+  "group": "family"
+ },
+ {
+  "title": "Car seat safety: when to switch to a forward-facing seat | Safe Kids",
+  "url": "https://www.safekids.org/car-seat-guide",
+  "group": "family"
+ },
+ {
+  "title": "Stages of labour and a birth plan template - NHS Start for Life",
+  "url": "https://www.nhs.uk/start-for-life/pregnancy/birth-plan/",
+  "group": "family"
+ },
+ {
+  "title": "Eltern.de - Beikost einführen: der Zeitplan fürs erste Jahr",
+  "url": "https://www.eltern.de/babyernaehrung/beikost-einfuehren.html",
+  "group": "family"
+ },
+ {
+  "title": "Teen screen time rules that actually work - Child Mind Institute",
+  "url": "https://childmind.org/article/screen-time-rules-teens/",
+  "group": "family"
+ },
+ {
+  "title": "Kids birthday party ideas at home on a budget",
+  "url": "https://www.happinessishomemade.net/budget-kids-birthday-party-ideas/",
+  "group": "family"
+ },
+ {
+  "title": "Parent-teacher conference: what to ask and how to prepare",
+  "url": "https://www.edutopia.org/article/parent-teacher-conference-prep",
+  "group": "family"
+ },
+ {
+  "title": "How to answer \"tell me about yourself\" in an interview - YouTube",
+  "url": "https://www.youtube.com/watch?v=jb1Ty4Aa9Bb",
+  "group": "jobs"
+ },
+ {
+  "title": "Software engineer resume that got me 5 offers - YouTube",
+  "url": "https://www.youtube.com/watch?v=jb2Re7Cc3Dd",
+  "group": "jobs"
+ },
+ {
+  "title": "Negotiating salary after the offer: scripts that work - YouTube",
+  "url": "https://www.youtube.com/watch?v=jb3Sn1Ee5Ff",
+  "group": "jobs"
+ },
+ {
+  "title": "LinkedIn - Senior Backend Engineer (Go) | Stripe",
+  "url": "https://www.linkedin.com/jobs/view/3912345678/",
+  "group": "jobs"
+ },
+ {
+  "title": "LinkedIn Jobs - 25 Product Manager jobs in London",
+  "url": "https://www.linkedin.com/jobs/product-manager-jobs-london/",
+  "group": "jobs"
+ },
+ {
+  "title": "Indeed - Registered Nurse jobs in Austin, TX",
+  "url": "https://www.indeed.com/q-registered-nurse-l-austin,-tx-jobs.html",
+  "group": "jobs"
+ },
+ {
+  "title": "Glassdoor: Software Engineer salaries in Berlin",
+  "url": "https://www.glassdoor.com/Salaries/berlin-software-engineer-salary-SRCH_IL.0,6_IM1022_KO7,24.htm",
+  "group": "jobs"
+ },
+ {
+  "title": "Glassdoor - Interview questions at Shopify",
+  "url": "https://www.glassdoor.com/Interview/Shopify-Interview-Questions-E675933.htm",
+  "group": "jobs"
+ },
+ {
+  "title": "Frontend Developer (React) - Remote | We Work Remotely",
+  "url": "https://weworkremotely.com/remote-jobs/acme-frontend-developer-react",
+  "group": "jobs"
+ },
+ {
+  "title": "Data Scientist, Growth - Spotify Careers",
+  "url": "https://www.lifeatspotify.com/jobs/data-scientist-growth",
+  "group": "jobs"
+ },
+ {
+  "title": "Indeed Career Guide - How to write a cover letter",
+  "url": "https://www.indeed.com/career-advice/resumes-cover-letters/how-to-write-a-cover-letter",
+  "group": "jobs"
+ },
+ {
+  "title": "Resume.io - Free resume templates",
+  "url": "https://resume.io/resume-templates",
+  "group": "jobs"
+ },
+ {
+  "title": "Zety - Resume builder: Online CV maker",
+  "url": "https://zety.com/resume-builder",
+  "group": "jobs"
+ },
+ {
+  "title": "Novoresume - 25 CV mistakes to avoid",
+  "url": "https://novoresume.com/career-blog/cv-mistakes",
+  "group": "jobs"
+ },
+ {
+  "title": "r/cscareerquestions - Daily Chat Thread - November 2026",
+  "url": "https://www.reddit.com/r/cscareerquestions/comments/1gp4q8d/daily_chat_thread_november_2026/",
+  "group": "jobs"
+ },
+ {
+  "title": "r/jobs - Got ghosted after the final round. Is that normal?",
+  "url": "https://www.reddit.com/r/jobs/comments/1gl9r3t/ghosted_after_final_round/",
+  "group": "jobs"
+ },
+ {
+  "title": "Levels.fyi - Staff Engineer compensation at Google",
+  "url": "https://www.levels.fyi/companies/google/salaries/software-engineer/levels/l6",
+  "group": "jobs"
+ },
+ {
+  "title": "Wellfound - Startup jobs: early-stage engineering roles",
+  "url": "https://wellfound.com/jobs",
+  "group": "jobs"
+ },
+ {
+  "title": "Handshake - Entry-level analyst openings for the class of 2027",
+  "url": "https://app.joinhandshake.com/stu/jobs",
+  "group": "jobs"
+ },
+ {
+  "title": "My application status - Workday: Application received for Operations Analyst",
+  "url": "https://acme.wd5.myworkdayjobs.com/en-US/careers/job/Operations-Analyst_R-10234",
+  "group": "jobs"
+ },
+ {
+  "title": "Greenhouse - Apply: Design Researcher at Airbnb",
+  "url": "https://boards.greenhouse.io/airbnb/jobs/6012345",
+  "group": "jobs"
+ },
+ {
+  "title": "Career change at 35: how to pivot into UX | The Muse",
+  "url": "https://www.themuse.com/advice/career-change-at-35-ux",
+  "group": "jobs"
+ },
+ {
+  "title": "STAR method: structure behavioural interview answers | Harvard Business Review",
+  "url": "https://hbr.org/2023/03/star-method-behavioral-interviews",
+  "group": "jobs"
+ },
+ {
+  "title": "Jobs.ac.uk - Postdoctoral Research Associate in Materials Science",
+  "url": "https://www.jobs.ac.uk/job/DKE123/postdoctoral-research-associate-materials-science",
+  "group": "jobs"
+ },
+ {
+  "title": "NHS Jobs - Band 5 Staff Nurse, Respiratory Ward",
+  "url": "https://www.jobs.nhs.uk/candidate/jobadvert/C9301-26-0456",
+  "group": "jobs"
+ },
+ {
+  "title": "Stellenangebote: Softwareentwickler (m/w/d) in München | StepStone",
+  "url": "https://www.stepstone.de/jobs/softwareentwickler-muenchen",
+  "group": "jobs"
+ },
+ {
+  "title": "Reference letter template for former employees",
+  "url": "https://www.betterteam.com/reference-letter-template",
+  "group": "jobs"
+ },
+ {
+  "title": "Typical entry-level salary by profession 2026 | Payscale",
+  "url": "https://www.payscale.com/research/US/Job=Entry_Level_Analyst/Salary",
+  "group": "jobs"
+ },
+ {
+  "title": "Networking on LinkedIn: connection request examples that get accepted",
+  "url": "https://www.careercontessa.com/linkedin-networking-messages/",
+  "group": "jobs"
+ },
+ {
+  "title": "The Name of the Wind by Patrick Rothfuss | Goodreads",
+  "url": "https://www.goodreads.com/book/show/186074.The_Name_of_the_Wind",
+  "group": "books"
+ },
+ {
+  "title": "Goodreads - Want to Read (47 books)",
+  "url": "https://www.goodreads.com/review/list/118345678?shelf=to-read",
+  "group": "books"
+ },
+ {
+  "title": "Project Hyperion: spoiler-free review of Dan Simmons' novel - YouTube",
+  "url": "https://www.youtube.com/watch?v=bk1Ph3Aa6Bb",
+  "group": "books"
+ },
+ {
+  "title": "My November reading wrap up: 9 books in a month - YouTube",
+  "url": "https://www.youtube.com/watch?v=bk2Rw8Cc2Dd",
+  "group": "books"
+ },
+ {
+  "title": "Why you should read Dostoevsky first - YouTube",
+  "url": "https://www.youtube.com/watch?v=bk3Wd5Ee9Ff",
+  "group": "books"
+ },
+ {
+  "title": "Book haul and TBR for the winter - YouTube",
+  "url": "https://www.youtube.com/shorts/bk4Bh1Gg4Hh",
+  "group": "books"
+ },
+ {
+  "title": "The Guardian - Books of the year 2026: our critics pick",
+  "url": "https://www.theguardian.com/books/2026/nov/16/best-books-of-2026",
+  "group": "books"
+ },
+ {
+  "title": "NPR Books - 'The Safekeep' is a sly historical thriller",
+  "url": "https://www.npr.org/2026/10/05/books-safekeep-review",
+  "group": "books"
+ },
+ {
+  "title": "Project Gutenberg - Pride and Prejudice by Jane Austen",
+  "url": "https://www.gutenberg.org/ebooks/1342",
+  "group": "books"
+ },
+ {
+  "title": "StoryGraph - Your reading stats for 2026",
+  "url": "https://app.thestorygraph.com/year_in_books/2026",
+  "group": "books"
+ },
+ {
+  "title": "Kindle Store: The Left Hand of Darkness (Ursula K. Le Guin)",
+  "url": "https://www.amazon.com/Left-Hand-Darkness-Ursula-Guin-ebook/dp/B003ASTGBM",
+  "group": "books"
+ },
+ {
+  "title": "Brandon Sanderson - Official author website",
+  "url": "https://www.brandonsanderson.com/",
+  "group": "books"
+ },
+ {
+  "title": "r/books - What's a book that completely changed how you think?",
+  "url": "https://www.reddit.com/r/books/comments/1g8d3tn/what_book_changed_how_you_think/",
+  "group": "books"
+ },
+ {
+  "title": "r/suggestmeabook - Cozy mystery with a bookshop setting",
+  "url": "https://www.reddit.com/r/suggestmeabook/comments/1gm9a5k/cozy_mystery_bookshop_setting/",
+  "group": "books"
+ },
+ {
+  "title": "Literary Hub - The Hidden Politics of Orwell's 1984",
+  "url": "https://lithub.com/the-hidden-politics-of-orwells-1984/",
+  "group": "books"
+ },
+ {
+  "title": "Open Library - Borrow: Dune by Frank Herbert",
+  "url": "https://openlibrary.org/works/OL893415W/Dune",
+  "group": "books"
+ },
+ {
+  "title": "LibraryThing - Members' top-rated Russian literature",
+  "url": "https://www.librarything.com/tag/russian+literature",
+  "group": "books"
+ },
+ {
+  "title": "Book Riot: 25 Must-Read Novels in Translation",
+  "url": "https://bookriot.com/novels-in-translation/",
+  "group": "books"
+ },
+ {
+  "title": "The Booker Prizes - 2026 shortlist announced",
+  "url": "https://thebookerprizes.com/the-booker-library/2026-shortlist",
+  "group": "books"
+ },
+ {
+  "title": "LibGen-free alternative: Standard Ebooks - Moby-Dick, or the Whale",
+  "url": "https://standardebooks.org/ebooks/herman-melville/moby-dick",
+  "group": "books"
+ },
+ {
+  "title": "Audible - Project Hail Mary audiobook sample",
+  "url": "https://www.audible.com/pd/Project-Hail-Mary-Audiobook/B08G9PRS1K",
+  "group": "books"
+ },
+ {
+  "title": "Poetry Foundation - Ode to a Nightingale by John Keats",
+  "url": "https://www.poetryfoundation.org/poems/44479/ode-to-a-nightingale",
+  "group": "books"
+ },
+ {
+  "title": "Reading challenge 2027: how to read 52 books | Reading Rainbow Club",
+  "url": "https://www.readingclub.example/52-book-challenge",
+  "group": "books"
+ },
+ {
+  "title": "Haruki Murakami: where to start | Penguin Books",
+  "url": "https://www.penguin.co.uk/articles/2019/murakami-where-to-start",
+  "group": "books"
+ },
+ {
+  "title": "Author interview: Colson Whitehead on writing historical fiction | Paris Review",
+  "url": "https://www.theparisreview.org/interviews/colson-whitehead",
+  "group": "books"
+ },
+ {
+  "title": "Lectura: Cien años de soledad, reseña y resumen | Lecturalia",
+  "url": "https://www.lecturalia.com/libro/cien-anos-de-soledad",
+  "group": "books"
+ },
+ {
+  "title": "Epub vs MOBI: which ebook format should you choose?",
+  "url": "https://www.makeuseof.com/epub-vs-mobi-ebook-formats/",
+  "group": "books"
+ },
+ {
+  "title": "Barnes & Noble - Best Sellers: Fiction",
+  "url": "https://www.barnesandnoble.com/b/books/fiction/_/N-29Z8q8",
+  "group": "books"
+ },
+ {
+  "title": "Booktok favourites you should actually read | Waterstones blog",
+  "url": "https://www.waterstones.com/blog/booktok-favourites",
+  "group": "books"
+ },
+ {
+  "title": "Street photography tips: shooting at golden hour - YouTube",
+  "url": "https://www.youtube.com/watch?v=ph1Sp2Aa5Bb",
+  "group": "photo"
+ },
+ {
+  "title": "Sony A7 IV vs Canon R6 II - which should you buy? - YouTube",
+  "url": "https://www.youtube.com/watch?v=ph2Sc6Cc1Dd",
+  "group": "photo"
+ },
+ {
+  "title": "Lightroom masking: sky and subject selection in seconds - YouTube",
+  "url": "https://www.youtube.com/watch?v=ph3Lm9Ee4Ff",
+  "group": "photo"
+ },
+ {
+  "title": "Astrophotography with a 50mm lens and a star tracker - YouTube",
+  "url": "https://youtu.be/ph4As3Gg7Hh",
+  "group": "photo"
+ },
+ {
+  "title": "DPReview - Fujifilm X-T50 in-depth review",
+  "url": "https://www.dpreview.com/reviews/fujifilm-x-t50-review",
+  "group": "photo"
+ },
+ {
+  "title": "Photography Life - Understanding the exposure triangle",
+  "url": "https://photographylife.com/understanding-exposure",
+  "group": "photo"
+ },
+ {
+  "title": "Lightroom Classic: how to use the Tone Curve | Adobe",
+  "url": "https://helpx.adobe.com/lightroom-classic/help/tone-curve.html",
+  "group": "photo"
+ },
+ {
+  "title": "Petapixel - Nikon Z6III firmware update adds new AF modes",
+  "url": "https://petapixel.com/2026/10/14/nikon-z6iii-firmware-update-new-af-modes/",
+  "group": "photo"
+ },
+ {
+  "title": "Digital Photography School - 10 Portrait Posing Tips",
+  "url": "https://digital-photography-school.com/portrait-posing-tips/",
+  "group": "photo"
+ },
+ {
+  "title": "500px - Landscape photography popular this week",
+  "url": "https://500px.com/popular",
+  "group": "photo"
+ },
+ {
+  "title": "Flickr - Photos tagged macro, interesting",
+  "url": "https://www.flickr.com/photos/tags/macro/interesting/",
+  "group": "photo"
+ },
+ {
+  "title": "Unsplash - Free mountain photos",
+  "url": "https://unsplash.com/s/photos/mountain",
+  "group": "photo"
+ },
+ {
+  "title": "r/photography - Beginner here: how do I shoot in low light without a tripod?",
+  "url": "https://www.reddit.com/r/photography/comments/1gk6x3n/low_light_without_a_tripod/",
+  "group": "photo"
+ },
+ {
+  "title": "r/analog - First roll of Portra 400, thoughts?",
+  "url": "https://www.reddit.com/r/analog/comments/1gn3t8k/first_roll_of_portra_400/",
+  "group": "photo"
+ },
+ {
+  "title": "Fstoppers - How to light a product shot with one speedlight",
+  "url": "https://fstoppers.com/lighting/how-light-product-shot-one-speedlight-123456",
+  "group": "photo"
+ },
+ {
+  "title": "The Phoblographer - Sigma 35mm f/1.4 Art Lens review",
+  "url": "https://www.thephoblographer.com/2026/09/18/sigma-35mm-art-review/",
+  "group": "photo"
+ },
+ {
+  "title": "Lens Rentals blog - Which prime lenses are sharpest in 2026?",
+  "url": "https://www.lensrentals.com/blog/2026/08/sharpest-prime-lenses/",
+  "group": "photo"
+ },
+ {
+  "title": "Capture One - Color grading tutorial for wedding photographers",
+  "url": "https://support.captureone.com/hc/en-us/articles/color-grading-wedding",
+  "group": "photo"
+ },
+ {
+  "title": "Wedding photography pricing guide: what to charge | Format Magazine",
+  "url": "https://format.com/magazine/resources/photography/wedding-photography-pricing",
+  "group": "photo"
+ },
+ {
+  "title": "My portfolio - Elena Marchetti Photography",
+  "url": "https://elenamarchetti.example/portfolio",
+  "group": "photo"
+ },
+ {
+  "title": "How to shoot the Milky Way: settings and planning - Photopills",
+  "url": "https://www.photopills.com/articles/how-to-photograph-milky-way",
+  "group": "photo"
+ },
+ {
+  "title": "Focus stacking in Photoshop for macro photography | Photoshop Essentials",
+  "url": "https://www.photoshopessentials.com/photo-editing/focus-stacking/",
+  "group": "photo"
+ },
+ {
+  "title": "Camera Labs: Canon EOS R5 Mark II review",
+  "url": "https://www.cameralabs.com/canon-eos-r5-mark-ii-review/",
+  "group": "photo"
+ },
+ {
+  "title": "Cameras: Best mirrorless cameras for beginners in 2026 | Tom's Guide",
+  "url": "https://www.tomsguide.com/best-picks/best-mirrorless-cameras",
+  "group": "photo"
+ },
+ {
+  "title": "Fotografía de retrato: iluminación con luz natural | Xataka Foto",
+  "url": "https://www.xatakafoto.com/tutoriales/retrato-luz-natural",
+  "group": "photo"
+ },
+ {
+  "title": "Understanding histograms in digital photography | Cambridge in Colour",
+  "url": "https://www.cambridgeincolour.com/tutorials/histograms1.htm",
+  "group": "photo"
+ },
+ {
+  "title": "Black and white conversion in Lightroom: a complete workflow",
+  "url": "https://www.lightroomqueen.com/black-and-white-conversion-lightroom",
+  "group": "photo"
+ },
+ {
+  "title": "Photographers Directory - Find a local photographer",
+  "url": "https://www.photographers.example/directory",
+  "group": "photo"
+ },
+ {
+  "title": "Frieren: Beyond Journey's End season 2 trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=an1Fr8Aa3Bb",
+  "group": "anime"
+ },
+ {
+  "title": "Top 10 anime openings of 2026 ranked - YouTube",
+  "url": "https://www.youtube.com/watch?v=an2To4Cc9Dd",
+  "group": "anime"
+ },
+ {
+  "title": "Jujutsu Kaisen manga ending explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=an3Jk1Ee6Ff",
+  "group": "anime"
+ },
+ {
+  "title": "One Piece episode 1130 reaction and review - YouTube",
+  "url": "https://www.youtube.com/watch?v=an4Op7Gg2Hh",
+  "group": "anime"
+ },
+ {
+  "title": "Crunchyroll - Watch Dandadan Season 2 Episode 5",
+  "url": "https://www.crunchyroll.com/watch/GRQ8P3N06/dandadan-s2-e5",
+  "group": "anime"
+ },
+ {
+  "title": "Crunchyroll: Anime release calendar - Fall 2026",
+  "url": "https://www.crunchyroll.com/simulcastcalendar",
+  "group": "anime"
+ },
+ {
+  "title": "MyAnimeList - Frieren: Beyond Journey's End",
+  "url": "https://myanimelist.net/anime/52991/Sousou_no_Frieren",
+  "group": "anime"
+ },
+ {
+  "title": "AniList - Top 100 anime of all time",
+  "url": "https://anilist.co/search/anime?sort=SCORE_DESC",
+  "group": "anime"
+ },
+ {
+  "title": "Anime News Network - Chainsaw Man movie sequel gets 2027 release window",
+  "url": "https://www.animenewsnetwork.com/news/2026-10-22/chainsaw-man-sequel-2027/.221345",
+  "group": "anime"
+ },
+ {
+  "title": "MANGA Plus by SHUEISHA - Chapter 1089 One Piece",
+  "url": "https://mangaplus.shueisha.co.jp/viewer/1022345",
+  "group": "anime"
+ },
+ {
+  "title": "VIZ - Read Spy x Family, Chapter 112",
+  "url": "https://www.viz.com/shonenjump/chapters/spy-x-family",
+  "group": "anime"
+ },
+ {
+  "title": "Webtoon - Tower of God, Season 3 Episode 120",
+  "url": "https://www.webtoons.com/en/fantasy/tower-of-god/season-3-ep-120/viewer?title_no=95&episode_no=700",
+  "group": "anime"
+ },
+ {
+  "title": "Webtoon - Lore Olympus: Episode 250",
+  "url": "https://www.webtoons.com/en/romance/lore-olympus/episode-250/viewer?title_no=1320&episode_no=250",
+  "group": "anime"
+ },
+ {
+  "title": "r/anime - Weekly Episode Discussion: Solo Leveling S3 Ep 6",
+  "url": "https://www.reddit.com/r/anime/comments/1gp7m3k/solo_leveling_s3_ep_6_discussion/",
+  "group": "anime"
+ },
+ {
+  "title": "r/manga - Chapter discussion: Chainsaw Man 220",
+  "url": "https://www.reddit.com/r/manga/comments/1gq2d9f/chainsaw_man_chapter_220/",
+  "group": "anime"
+ },
+ {
+  "title": "Anime-Planet - Studio Ghibli-style anime recommendations",
+  "url": "https://www.anime-planet.com/anime/recommendations/ghibli-style",
+  "group": "anime"
+ },
+ {
+  "title": "Crunchyroll News - Attack on Titan author unveils new project",
+  "url": "https://www.crunchyroll.com/news/latest/2026/9/30/aot-author-new-project",
+  "group": "anime"
+ },
+ {
+  "title": "Comic Book Resources - The 10 best Marvel comics runs of the 2020s",
+  "url": "https://www.cbr.com/best-marvel-comics-runs-2020s/",
+  "group": "anime"
+ },
+ {
+  "title": "DC Universe Infinite - Batman: The Long Halloween (comic)",
+  "url": "https://www.dcuniverseinfinite.com/comics/batman-the-long-halloween",
+  "group": "anime"
+ },
+ {
+  "title": "Tokyo Otaku Mode - Demon Slayer figure preorder and anime merch",
+  "url": "https://otakumode.com/demon-slayer-nezuko-figure",
+  "group": "anime"
+ },
+ {
+  "title": "Hidive - Watch Sailor Moon Cosmos",
+  "url": "https://www.hidive.com/season/sailor-moon-cosmos",
+  "group": "anime"
+ },
+ {
+  "title": "Kodansha - Vinland Saga manga volume 27",
+  "url": "https://kodansha.us/series/vinland-saga/",
+  "group": "anime"
+ },
+ {
+  "title": "Manga Updates - Berserk: latest release",
+  "url": "https://www.mangaupdates.com/series/berserk",
+  "group": "anime"
+ },
+ {
+  "title": "Anime Corner - Spring 2027 anime preview: everything we know",
+  "url": "https://animecorner.me/spring-2027-anime-preview/",
+  "group": "anime"
+ },
+ {
+  "title": "Cómo ver anime online legalmente | Hobby Consolas",
+  "url": "https://www.hobbyconsolas.com/guias/como-ver-anime-online-legalmente",
+  "group": "anime"
+ },
+ {
+  "title": "Comic-Con 2026: biggest anime and manga announcements",
+  "url": "https://www.polygon.com/anime/comic-con-2026-anime-manga-announcements",
+  "group": "anime"
+ },
+ {
+  "title": "Blue Lock: Season 3 release date and cast | Anime Trending",
+  "url": "https://www.animetrending.com/blue-lock-season-3-release-date",
+  "group": "anime"
+ },
+ {
+  "title": "鬼滅の刃 アニメ公式サイト",
+  "url": "https://kimetsu.com/anime/",
+  "group": "anime"
+ },
+ {
+  "title": "Horimiya reread: what the manga adds - YouTube",
+  "url": "https://www.youtube.com/shorts/an5Hr4Ii8Jj",
+  "group": "anime"
+ },
+ {
+  "title": "Zillow - 3 bed, 2 bath house for sale in Raleigh, NC",
+  "url": "https://www.zillow.com/homedetails/412-Maple-Ridge-Dr-Raleigh-NC-27609/6543210_zpid/",
+  "group": "realestate"
+ },
+ {
+  "title": "Rightmove - 2 bedroom flats to rent in Manchester",
+  "url": "https://www.rightmove.co.uk/property-to-rent/Manchester/2-bedroom-flats.html",
+  "group": "realestate"
+ },
+ {
+  "title": "Realtor.com - Homes for sale in Austin, TX",
+  "url": "https://www.realtor.com/realestateandhomes-search/Austin_TX",
+  "group": "realestate"
+ },
+ {
+  "title": "Redfin: Houses for sale in Seattle with a garage",
+  "url": "https://www.redfin.com/city/16163/WA/Seattle/filter/property-type=house,min-garage=1",
+  "group": "realestate"
+ },
+ {
+  "title": "Zoopla - Property prices in Bristol: house price index",
+  "url": "https://www.zoopla.co.uk/house-prices/bristol/",
+  "group": "realestate"
+ },
+ {
+  "title": "Domain.com.au - Apartments for sale in Melbourne CBD",
+  "url": "https://www.domain.com.au/sale/melbourne-vic-3000/apartment/",
+  "group": "realestate"
+ },
+ {
+  "title": "Idealista - Pisos en alquiler en Valencia",
+  "url": "https://www.idealista.com/alquiler-viviendas/valencia-valencia/",
+  "group": "realestate"
+ },
+ {
+  "title": "ImmoScout24 - Eigentumswohnung kaufen in Hamburg",
+  "url": "https://www.immobilienscout24.de/Suche/de/hamburg/hamburg/wohnung-kaufen",
+  "group": "realestate"
+ },
+ {
+  "title": "Apartments.com - 1 bedroom apartments for rent under $1,800 in Denver",
+  "url": "https://www.apartments.com/denver-co/1-bedrooms-under-1800/",
+  "group": "realestate"
+ },
+ {
+  "title": "Trulia - Open houses this weekend near you",
+  "url": "https://www.trulia.com/open-houses/",
+  "group": "realestate"
+ },
+ {
+  "title": "Bankrate - Current mortgage rates for buying a home today",
+  "url": "https://www.bankrate.com/mortgages/mortgage-rates/",
+  "group": "realestate"
+ },
+ {
+  "title": "NerdWallet - How much house can I afford? Home affordability calculator",
+  "url": "https://www.nerdwallet.com/mortgages/how-much-house-can-i-afford",
+  "group": "realestate"
+ },
+ {
+  "title": "r/FirstTimeHomeBuyer - Is it a bad idea to waive the inspection?",
+  "url": "https://www.reddit.com/r/FirstTimeHomeBuyer/comments/1gk2p7s/waive_the_inspection/",
+  "group": "realestate"
+ },
+ {
+  "title": "r/RealEstate - Seller refusing repairs after inspection, what now?",
+  "url": "https://www.reddit.com/r/RealEstate/comments/1gl5d3q/seller_refusing_repairs/",
+  "group": "realestate"
+ },
+ {
+  "title": "r/UKPersonalFinance - First time buyer: Lifetime ISA and mortgage in principle",
+  "url": "https://www.reddit.com/r/UKPersonalFinance/comments/1g6w4rt/lisa_mortgage_in_principle/",
+  "group": "realestate"
+ },
+ {
+  "title": "Redfin: Housing market update, pending sales fall 4% in October",
+  "url": "https://www.redfin.com/news/housing-market-update-october-2026/",
+  "group": "realestate"
+ },
+ {
+  "title": "Zillow Research - Home values forecast: where prices will rise next year",
+  "url": "https://www.zillow.com/research/home-value-forecast-2026-34567/",
+  "group": "realestate"
+ },
+ {
+  "title": "Realtor.com - 15-year vs 30-year mortgage: which is better for a first home?",
+  "url": "https://www.realtor.com/advice/finance/15-year-vs-30-year-mortgage/",
+  "group": "realestate"
+ },
+ {
+  "title": "Closing costs explained for homebuyers | Rocket Mortgage",
+  "url": "https://www.rocketmortgage.com/learn/closing-costs",
+  "group": "realestate"
+ },
+ {
+  "title": "Property listing: Charming 4-bedroom townhouse, Oak Park, IL - Compass",
+  "url": "https://www.compass.com/listing/812-lake-st-oak-park-il-60304/1345678/",
+  "group": "realestate"
+ },
+ {
+  "title": "PropertyGuru - Condo for sale in Singapore, District 9",
+  "url": "https://www.propertyguru.com.sg/listing/for-sale-orchard-condo-24123456",
+  "group": "realestate"
+ },
+ {
+  "title": "Funda - Huurwoningen in Amsterdam",
+  "url": "https://www.funda.nl/huur/amsterdam/",
+  "group": "realestate"
+ },
+ {
+  "title": "SeLoger - Appartement à vendre Paris 11e, 3 pièces",
+  "url": "https://www.seloger.com/annonces/achat/appartement/paris-11eme-75/",
+  "group": "realestate"
+ },
+ {
+  "title": "Rent vs buy calculator | The New York Times",
+  "url": "https://www.nytimes.com/interactive/2026/upshot/buy-rent-calculator.html",
+  "group": "realestate"
+ },
+ {
+  "title": "Tenant rights: what to do if your landlord won't return the deposit",
+  "url": "https://www.shelter.org.uk/housing_advice/private_renting/deposit_return",
+  "group": "realestate"
+ },
+ {
+  "title": "Land for sale: 5 acres with well, Hill Country | LandWatch",
+  "url": "https://www.landwatch.com/texas-land-for-sale/hill-country-5-acres",
+  "group": "realestate"
+ },
+ {
+  "title": "Zameen.com - Houses for sale in Lahore, DHA Phase 6",
+  "url": "https://www.zameen.com/Homes/Lahore_DHA_Defence-9-1.html",
+  "group": "realestate"
+ },
+ {
+  "title": "Walkthrough: modern 3 bed home tour and price in Dallas - YouTube",
+  "url": "https://www.youtube.com/watch?v=re1Wt5Aa0Bb",
+  "group": "realestate"
+ },
+ {
+  "title": "Housing market crash or soft landing? Realtor explains 2027 - YouTube",
+  "url": "https://www.youtube.com/watch?v=re2Hm9Cc4Dd",
+  "group": "realestate"
+ },
+ {
+  "title": "Dune: Part Three | Official Trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=mv1Dn3Aa7Bb",
+  "group": "movies"
+ },
+ {
+  "title": "Oppenheimer (2023) - IMDb",
+  "url": "https://www.imdb.com/title/tt15398776/",
+  "group": "movies"
+ },
+ {
+  "title": "Rotten Tomatoes - The Brutalist: reviews and Tomatometer",
+  "url": "https://www.rottentomatoes.com/m/the_brutalist",
+  "group": "movies"
+ },
+ {
+  "title": "Fandango - Showtimes for Avengers: Doomsday near you",
+  "url": "https://www.fandango.com/avengers-doomsday-2026-240123/movie-overview",
+  "group": "movies"
+ },
+ {
+  "title": "Letterboxd - Past Lives (2023) reviews",
+  "url": "https://letterboxd.com/film/past-lives/",
+  "group": "movies"
+ },
+ {
+  "title": "Netflix - Watch KPop Demon Hunters",
+  "url": "https://www.netflix.com/title/81582891",
+  "group": "movies"
+ },
+ {
+  "title": "Roger Ebert - Anora movie review & film summary (2024)",
+  "url": "https://www.rogerebert.com/reviews/anora-movie-review-2024",
+  "group": "movies"
+ },
+ {
+  "title": "Spider-Verse 3 first teaser breakdown - YouTube",
+  "url": "https://www.youtube.com/watch?v=mv2Sv6Cc1Dd",
+  "group": "movies"
+ },
+ {
+  "title": "Best Picture nominees 2027: predictions | Variety",
+  "url": "https://variety.com/2026/film/awards/best-picture-oscar-predictions-1236123456/",
+  "group": "movies"
+ },
+ {
+  "title": "r/movies - Official Discussion: Sinners [SPOILERS]",
+  "url": "https://www.reddit.com/r/movies/comments/1gm4c7e/official_discussion_sinners_spoilers/",
+  "group": "movies"
+ },
+ {
+  "title": "Zootopia 2: Disney animated sequel streaming page",
+  "url": "https://www.disneyplus.com/movies/zootopia-2/4aBcDeFgHiJk",
+  "group": "movies"
+ },
+ {
+  "title": "Mission: Impossible - Final Reckoning, all-time box office",
+  "url": "https://www.boxofficemojo.com/title/tt9603208/",
+  "group": "movies"
+ },
+ {
+  "title": "Film Comment: Why 35mm is still the best way to see a film",
+  "url": "https://www.filmcomment.com/blog/why-35mm-best-way-to-see-film/",
+  "group": "movies"
+ },
+ {
+  "title": "Cinema des Lumières: les meilleurs films de 2026",
+  "url": "https://www.allocine.fr/film/meilleurs/",
+  "group": "movies"
+ },
+ {
+  "title": "Interstellar ending explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=mv3Ie9Ee5Ff",
+  "group": "movies"
+ },
+ {
+  "title": "Squid Game Season 3 | Ending Explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=tv1Sg4Aa8Bb",
+  "group": "tv"
+ },
+ {
+  "title": "Severance - Apple TV+ Season 2 episode guide",
+  "url": "https://tv.apple.com/us/show/severance/umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
+  "group": "tv"
+ },
+ {
+  "title": "Breaking Bad - Season 5 Episode 14 \"Ozymandias\" - IMDb",
+  "url": "https://www.imdb.com/title/tt2301451/",
+  "group": "tv"
+ },
+ {
+  "title": "Hulu - Watch The Bear, Season 4",
+  "url": "https://www.hulu.com/series/the-bear-d3e1fb54-1234-4567-89ab-cdef01234567",
+  "group": "tv"
+ },
+ {
+  "title": "Crash Landing on You: where to watch the K-drama | Viki",
+  "url": "https://www.viki.com/tv/36880c-crash-landing-on-you",
+  "group": "tv"
+ },
+ {
+  "title": "MyDramaList - When Life Gives You Tangerines",
+  "url": "https://mydramalist.com/762345-when-life-gives-you-tangerines",
+  "group": "tv"
+ },
+ {
+  "title": "The Last of Us season 2 finale recap | Vulture",
+  "url": "https://www.vulture.com/article/last-of-us-season-2-finale-recap.html",
+  "group": "tv"
+ },
+ {
+  "title": "r/television - Episode Discussion: Andor Season 2, Episode 7",
+  "url": "https://www.reddit.com/r/television/comments/1gp1v8m/andor_s2e7_discussion/",
+  "group": "tv"
+ },
+ {
+  "title": "HBO Max - House of the Dragon season 3 trailer - YouTube",
+  "url": "https://www.youtube.com/watch?v=tv2Hd7Cc2Dd",
+  "group": "tv"
+ },
+ {
+  "title": "TV Guide - What's on tonight: Sunday primetime",
+  "url": "https://www.tvguide.com/listings/",
+  "group": "tv"
+ },
+ {
+  "title": "Rotten Tomatoes - Adolescence: Season 1 reviews",
+  "url": "https://www.rottentomatoes.com/tv/adolescence/s01",
+  "group": "tv"
+ },
+ {
+  "title": "Friends reunion clip: the one with the unagi - YouTube",
+  "url": "https://www.youtube.com/watch?v=tv3Fr0Ee6Ff",
+  "group": "tv"
+ },
+ {
+  "title": "Netflix: Wednesday, Season 2 Episode 4",
+  "url": "https://www.netflix.com/watch/81234567",
+  "group": "tv"
+ },
+ {
+  "title": "Doctor Who series 15: episode guide and cast | Radio Times",
+  "url": "https://www.radiotimes.com/tv/sci-fi/doctor-who-series-15-episode-guide/",
+  "group": "tv"
+ },
+ {
+  "title": "I spent 24 hours in a haunted forest - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd1Hf5Aa9Bb",
+  "group": "videos"
+ },
+ {
+  "title": "Day in my life as a college student in Toronto - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd2Dl2Cc6Dd",
+  "group": "videos"
+ },
+ {
+  "title": "Try not to laugh challenge: impossible edition - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd3Tn8Ee3Ff",
+  "group": "videos"
+ },
+ {
+  "title": "Funniest fails of the month compilation #47 - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd4Ff1Gg7Hh",
+  "group": "videos"
+ },
+ {
+  "title": "Shorts that will make your day better - YouTube",
+  "url": "https://www.youtube.com/shorts/vd5Sh4Ii0Jj",
+  "group": "videos"
+ },
+ {
+  "title": "Reacting to my old videos from 2016 - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd6Ro7Kk2Ll",
+  "group": "videos"
+ },
+ {
+  "title": "MrBeast - YouTube",
+  "url": "https://www.youtube.com/@MrBeast",
+  "group": "videos"
+ },
+ {
+  "title": "Home - YouTube",
+  "url": "https://www.youtube.com/",
+  "group": "videos"
+ },
+ {
+  "title": "Veritasium - YouTube",
+  "url": "https://www.youtube.com/@veritasium/videos",
+  "group": "videos"
+ },
+ {
+  "title": "Prank on my roommate goes wrong - YouTube",
+  "url": "https://www.youtube.com/shorts/vd7Pr9Mm5Nn",
+  "group": "videos"
+ },
+ {
+  "title": "Weekend vlog: slow morning, coffee, and a long walk - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd8Wv3Oo1Pp",
+  "group": "videos"
+ },
+ {
+  "title": "Subscriptions - YouTube",
+  "url": "https://www.youtube.com/feed/subscriptions",
+  "group": "videos"
+ },
+ {
+  "title": "We tried every drive-thru in town - YouTube",
+  "url": "https://www.youtube.com/watch?v=vd9Dt6Qq8Rr",
+  "group": "videos"
+ },
+ {
+  "title": "Vimeo - Staff pick: \"The Last Hour\" short film",
+  "url": "https://vimeo.com/892345671",
+  "group": "videos"
+ },
+ {
+  "title": "Twitch - Just Chatting, top streams",
+  "url": "https://www.twitch.tv/directory/category/just-chatting",
+  "group": "videos"
+ },
+ {
+  "title": "LangGraph tutorial: build a multi-agent workflow - YouTube",
+  "url": "https://www.youtube.com/watch?v=ai1Lg4Aa2Bb",
+  "group": "ai"
+ },
+ {
+  "title": "Claude Code: the complete guide to agentic coding - YouTube",
+  "url": "https://www.youtube.com/watch?v=ai2Cc8Cc5Dd",
+  "group": "ai"
+ },
+ {
+  "title": "What are transformers? Attention explained simply - YouTube",
+  "url": "https://www.youtube.com/watch?v=ai3Wt3Ee7Ff",
+  "group": "ai"
+ },
+ {
+  "title": "Fine-tuning Llama 3 with LoRA on a single GPU - YouTube",
+  "url": "https://www.youtube.com/watch?v=ai4Ft9Gg1Hh",
+  "group": "ai"
+ },
+ {
+  "title": "Hugging Face - meta-llama/Llama-3.3-70B-Instruct",
+  "url": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+  "group": "ai"
+ },
+ {
+  "title": "Anthropic - Building effective agents",
+  "url": "https://www.anthropic.com/engineering/building-effective-agents",
+  "group": "ai"
+ },
+ {
+  "title": "OpenAI Platform - Function calling guide",
+  "url": "https://platform.openai.com/docs/guides/function-calling",
+  "group": "ai"
+ },
+ {
+  "title": "arXiv:2606.01882 Scaling laws for mixture-of-experts language models",
+  "url": "https://arxiv.org/abs/2606.01882",
+  "group": "ai"
+ },
+ {
+  "title": "LangChain - Introduction to retrieval augmented generation",
+  "url": "https://python.langchain.com/docs/tutorials/rag/",
+  "group": "ai"
+ },
+ {
+  "title": "r/LocalLLaMA - Qwen3 32B quantized, tokens per second on a 3090",
+  "url": "https://www.reddit.com/r/LocalLLaMA/comments/1gq5e3d/qwen3_32b_quantized_tokens_per_second/",
+  "group": "ai"
+ },
+ {
+  "title": "Papers with Code - State of the art in image generation",
+  "url": "https://paperswithcode.com/task/image-generation",
+  "group": "ai"
+ },
+ {
+  "title": "Prompt engineering guide: chain-of-thought prompting",
+  "url": "https://www.promptingguide.ai/techniques/cot",
+  "group": "ai"
+ },
+ {
+  "title": "Ollama - Run large language models locally",
+  "url": "https://ollama.com/library/mistral",
+  "group": "ai"
+ },
+ {
+  "title": "Model Context Protocol - Introduction",
+  "url": "https://modelcontextprotocol.io/introduction",
+  "group": "ai"
+ },
+ {
+  "title": "Weights & Biases - Tracking LLM experiments",
+  "url": "https://wandb.ai/site/articles/tracking-llm-experiments",
+  "group": "ai"
+ },
+ {
+  "title": "Ben's Bites: This week in AI - agents everywhere",
+  "url": "https://www.bensbites.com/p/this-week-in-ai-agents-everywhere",
+  "group": "ai"
+ },
+ {
+  "title": "Sebastian Raschka - Build a large language model from scratch",
+  "url": "https://magazine.sebastianraschka.com/p/building-llms-from-scratch",
+  "group": "ai"
+ },
+ {
+  "title": "Midjourney - Explore: community showcase",
+  "url": "https://www.midjourney.com/explore",
+  "group": "ai"
+ },
+ {
+  "title": "Introduction to neural networks with PyTorch | Fast.ai",
+  "url": "https://course.fast.ai/Lessons/lesson1.html",
+  "group": "ai"
+ },
+ {
+  "title": "Rust ownership and borrowing explained - YouTube",
+  "url": "https://www.youtube.com/watch?v=pg1Ro6Aa4Bb",
+  "group": "programming"
+ },
+ {
+  "title": "Next.js 15 server actions crash course - YouTube",
+  "url": "https://www.youtube.com/watch?v=pg2Nx2Cc8Dd",
+  "group": "programming"
+ },
+ {
+  "title": "GitHub - tokio-rs/tokio: A runtime for writing reliable asynchronous applications",
+  "url": "https://github.com/tokio-rs/tokio",
+  "group": "programming"
+ },
+ {
+  "title": "Stack Overflow - How do I undo the most recent local commits in Git?",
+  "url": "https://stackoverflow.com/questions/927358/how-do-i-undo-the-most-recent-local-commits-in-git",
+  "group": "programming"
+ },
+ {
+  "title": "Pull request #4412: Fix race condition in cache invalidation | acme/api",
+  "url": "https://github.com/acme/api/pull/4412",
+  "group": "programming"
+ },
+ {
+  "title": "Python 3.14 release notes - what's new",
+  "url": "https://docs.python.org/3/whatsnew/3.14.html",
+  "group": "programming"
+ },
+ {
+  "title": "TypeScript: generics with constraints - Handbook",
+  "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+  "group": "programming"
+ },
+ {
+  "title": "Docker Compose networking explained - DEV Community",
+  "url": "https://dev.to/devops/docker-compose-networking-explained-3k2a",
+  "group": "programming"
+ },
+ {
+  "title": "r/programming - Why we moved from microservices back to a monolith",
+  "url": "https://www.reddit.com/r/programming/comments/1gn6w2k/moved_from_microservices_back_to_monolith/",
+  "group": "programming"
+ },
+ {
+  "title": "Hacker News - Show HN: A tiny SQLite-backed job queue",
+  "url": "https://news.ycombinator.com/item?id=41234567",
+  "group": "programming"
+ },
+ {
+  "title": "LeetCode - 146. LRU Cache",
+  "url": "https://leetcode.com/problems/lru-cache/",
+  "group": "programming"
+ },
+ {
+  "title": "Vercel Dashboard - project deployments",
+  "url": "https://vercel.com/acme/web-app/deployments",
+  "group": "programming"
+ },
+ {
+  "title": "VS Code Marketplace - ESLint extension",
+  "url": "https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint",
+  "group": "programming"
+ },
+ {
+  "title": "Postgres performance: understanding EXPLAIN ANALYZE | Crunchy Data Blog",
+  "url": "https://www.crunchydata.com/blog/explain-analyze-postgres",
+  "group": "programming"
+ },
+ {
+  "title": "Rustlings - exercises for learning Rust",
+  "url": "https://github.com/rust-lang/rustlings",
+  "group": "programming"
+ },
+ {
+  "title": "Go by Example: Goroutines",
+  "url": "https://gobyexample.com/goroutines",
+  "group": "programming"
+ },
+ {
+  "title": "npm - zod: TypeScript-first schema validation",
+  "url": "https://www.npmjs.com/package/zod",
+  "group": "programming"
+ },
+ {
+  "title": "Regex101: build, test, and debug regular expressions",
+  "url": "https://regex101.com/",
+  "group": "programming"
+ },
+ {
+  "title": "Figma - Design system v3 (Draft)",
+  "url": "https://www.figma.com/design/aBcDeFgHiJkLmN/Design-system-v3",
+  "group": "design"
+ },
+ {
+  "title": "Refactoring UI: the principles of visual hierarchy - YouTube",
+  "url": "https://www.youtube.com/watch?v=dg1Ru5Aa3Bb",
+  "group": "design"
+ },
+ {
+  "title": "Google Fonts - Inter",
+  "url": "https://fonts.google.com/specimen/Inter",
+  "group": "design"
+ },
+ {
+  "title": "Dribbble - Popular dashboard UI designs",
+  "url": "https://dribbble.com/search/dashboard-ui",
+  "group": "design"
+ },
+ {
+  "title": "Nielsen Norman Group - 10 Usability Heuristics for User Interface Design",
+  "url": "https://www.nngroup.com/articles/ten-usability-heuristics/",
+  "group": "design"
+ },
+ {
+  "title": "Behance - Brand identity for a coffee roaster",
+  "url": "https://www.behance.net/gallery/187654321/Brand-identity-coffee-roaster",
+  "group": "design"
+ },
+ {
+  "title": "Coolors - Generate color palettes",
+  "url": "https://coolors.co/palettes/trending",
+  "group": "design"
+ },
+ {
+  "title": "Smashing Magazine - Accessible design tokens for modern UIs",
+  "url": "https://www.smashingmagazine.com/2026/06/accessible-design-tokens/",
+  "group": "design"
+ },
+ {
+  "title": "Canva - Instagram post templates",
+  "url": "https://www.canva.com/templates/EAFHk-instagram-post/",
+  "group": "design"
+ },
+ {
+  "title": "Material Design 3 - Navigation bar guidelines",
+  "url": "https://m3.material.io/components/navigation-bar/overview",
+  "group": "design"
+ },
+ {
+  "title": "Awwwards - Site of the Day: studio portfolio",
+  "url": "https://www.awwwards.com/sites/studio-portfolio-2026",
+  "group": "design"
+ },
+ {
+  "title": "Typewolf - Best free fonts for 2026",
+  "url": "https://www.typewolf.com/best-free-fonts",
+  "group": "design"
+ },
+ {
+  "title": "Adobe Illustrator: Pen tool basics",
+  "url": "https://helpx.adobe.com/illustrator/using/drawing-pen-tool.html",
+  "group": "design"
+ },
+ {
+  "title": "Logo design process from sketch to vector - YouTube",
+  "url": "https://www.youtube.com/watch?v=dg2Ld8Cc6Dd",
+  "group": "design"
+ },
+ {
+  "title": "Spline - 3D design tool for the web",
+  "url": "https://spline.design/",
+  "group": "design"
+ },
+ {
+  "title": "Mobbin - iOS onboarding flow screens",
+  "url": "https://mobbin.com/browse/ios/apps",
+  "group": "design"
+ },
+ {
+  "title": "Amazon.com: Anker 737 Power Bank (PowerCore 24K)",
+  "url": "https://www.amazon.com/dp/B09VPHVT2Z",
+  "group": "shopping"
+ },
+ {
+  "title": "Amazon.com Shopping Cart (3 items)",
+  "url": "https://www.amazon.com/gp/cart/view.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Sony WH-1000XM6 Wireless Headphones | Best Buy",
+  "url": "https://www.bestbuy.com/site/sony-wh1000xm6/6590123.p",
+  "group": "shopping"
+ },
+ {
+  "title": "Apple - Buy iPhone 17 Pro",
+  "url": "https://www.apple.com/shop/buy-iphone/iphone-17-pro",
+  "group": "shopping"
+ },
+ {
+  "title": "eBay - Vintage Seiko 5 automatic watch",
+  "url": "https://www.ebay.com/itm/334455667788",
+  "group": "shopping"
+ },
+ {
+  "title": "Etsy - Handmade ceramic mug set of 4",
+  "url": "https://www.etsy.com/listing/1234567890/handmade-ceramic-mug-set",
+  "group": "shopping"
+ },
+ {
+  "title": "Black Friday 2026 deals: best TV, laptop and headphone discounts - Wirecutter",
+  "url": "https://www.nytimes.com/wirecutter/deals/black-friday/",
+  "group": "shopping"
+ },
+ {
+  "title": "Nike - Air Zoom Pegasus 41 men's running shoes",
+  "url": "https://www.nike.com/t/pegasus-41-mens-road-running-shoes/FD2722-001",
+  "group": "shopping"
+ },
+ {
+  "title": "IKEA - KALLAX shelf unit, white, 77x147 cm",
+  "url": "https://www.ikea.com/us/en/p/kallax-shelf-unit-white-80275887/",
+  "group": "shopping"
+ },
+ {
+  "title": "Raspberry Pi 5 8GB - Buy from Adafruit",
+  "url": "https://www.adafruit.com/product/5813",
+  "group": "shopping"
+ },
+ {
+  "title": "Mouser Electronics - STM32F411CEU6 microcontroller",
+  "url": "https://www.mouser.com/ProductDetail/STMicroelectronics/STM32F411CEU6",
+  "group": "shopping"
+ },
+ {
+  "title": "Checkout - Shipping address | Walmart",
+  "url": "https://www.walmart.com/checkout/#/fulfillment",
+  "group": "shopping"
+ },
+ {
+  "title": "Canon EOS R6 Mark II Body - B&H Photo",
+  "url": "https://www.bhphotovideo.com/c/product/1724567-REG/canon_eos_r6_mark_ii.html",
+  "group": "shopping"
+ },
+ {
+  "title": "Pedigree Adult Dry Dog Food, 30 lb bag | Chewy",
+  "url": "https://www.chewy.com/pedigree-adult-complete-nutrition/dp/12345",
+  "group": "shopping"
+ },
+ {
+  "title": "OEM Brake Pad Set for 2018 Honda Civic | RockAuto",
+  "url": "https://www.rockauto.com/en/catalog/honda,2018,civic,1.5l+l4",
+  "group": "shopping"
+ },
+ {
+  "title": "Slickdeals - Samsung 55\" OLED TV drops to $799",
+  "url": "https://slickdeals.net/f/18123456-samsung-55-oled-tv",
+  "group": "shopping"
+ },
+ {
+  "title": "Zalando - Herren Sneaker online kaufen",
+  "url": "https://www.zalando.de/herren-sneaker/",
+  "group": "shopping"
+ },
+ {
+  "title": "Best laptops under $1000 | Reddit r/BuyItForLife",
+  "url": "https://www.reddit.com/r/BuyItForLife/comments/1gn1c2e/best_laptops_under_1000/",
+  "group": "shopping"
+ },
+ {
+  "title": "Logitech MX Master 3S mouse - unboxing review - YouTube",
+  "url": "https://www.youtube.com/watch?v=sh1Mx4Aa6Bb",
+  "group": "shopping"
+ },
+ {
+  "title": "BBC News - Live: Ceasefire talks resume in Geneva",
+  "url": "https://www.bbc.com/news/live/world-65432109",
+  "group": "news"
+ },
+ {
+  "title": "Reuters - Central banks hold rates as inflation cools",
+  "url": "https://www.reuters.com/markets/rates-bonds/central-banks-hold-rates-inflation-cools-2026-11-12/",
+  "group": "news"
+ },
+ {
+  "title": "The New York Times - Today's front page",
+  "url": "https://www.nytimes.com/section/todayspaper",
+  "group": "news"
+ },
+ {
+  "title": "The Guardian - Climate summit ends with new pledges",
+  "url": "https://www.theguardian.com/environment/2026/nov/14/climate-summit-ends-new-pledges",
+  "group": "news"
+ },
+ {
+  "title": "Al Jazeera - Latest news: Middle East and world headlines",
+  "url": "https://www.aljazeera.com/news/",
+  "group": "news"
+ },
+ {
+  "title": "CNN - Wildfire evacuations expand across northern California",
+  "url": "https://www.cnn.com/2026/11/17/us/california-wildfire-evacuations/index.html",
+  "group": "news"
+ },
+ {
+  "title": "Associated Press - Election results: what we know",
+  "url": "https://apnews.com/article/election-results-2026-aa1234bb5678",
+  "group": "news"
+ },
+ {
+  "title": "Hacker News",
+  "url": "https://news.ycombinator.com/",
+  "group": "news"
+ },
+ {
+  "title": "Daily Mirror: Storm warning issued for the weekend",
+  "url": "https://www.mirror.co.uk/news/uk-news/storm-warning-weekend-3012345",
+  "group": "news"
+ },
+ {
+  "title": "Le Monde - A la une",
+  "url": "https://www.lemonde.fr/",
+  "group": "news"
+ },
+ {
+  "title": "Der Spiegel - Wirtschaft: Inflation sinkt weiter",
+  "url": "https://www.spiegel.de/wirtschaft/inflation-sinkt-weiter-a-1234.html",
+  "group": "news"
+ },
+ {
+  "title": "Washington Post - Senate passes budget bill after overnight session",
+  "url": "https://www.washingtonpost.com/politics/2026/11/16/senate-passes-budget-bill/",
+  "group": "news"
+ },
+ {
+  "title": "NHK World - Japan news in English",
+  "url": "https://www3.nhk.or.jp/nhkworld/en/news/",
+  "group": "news"
+ },
+ {
+  "title": "Politico - Playbook: the week ahead in Washington",
+  "url": "https://www.politico.com/newsletters/playbook/2026/11/17/week-ahead",
+  "group": "news"
+ },
+ {
+  "title": "The Hindu - Monsoon session: key bills tabled",
+  "url": "https://www.thehindu.com/news/national/monsoon-session-key-bills/article67890123.ece",
+  "group": "news"
+ },
+ {
+  "title": "Breaking news: major outage hits cloud provider - YouTube",
+  "url": "https://www.youtube.com/watch?v=nw1Bo2Aa8Bb",
+  "group": "news"
+ },
+ {
+  "title": "Facebook - Home",
+  "url": "https://www.facebook.com/",
+  "group": "social"
+ },
+ {
+  "title": "Instagram - Direct messages",
+  "url": "https://www.instagram.com/direct/inbox/",
+  "group": "social"
+ },
+ {
+  "title": "X (formerly Twitter) - Home / X",
+  "url": "https://x.com/home",
+  "group": "social"
+ },
+ {
+  "title": "Reddit - Dive into anything",
+  "url": "https://www.reddit.com/",
+  "group": "social"
+ },
+ {
+  "title": "LinkedIn - My Network",
+  "url": "https://www.linkedin.com/mynetworkinvitation-manager/",
+  "group": "social"
+ },
+ {
+  "title": "Discord - Friends",
+  "url": "https://discord.com/channels/@me",
+  "group": "social"
+ },
+ {
+  "title": "Threads - Feed",
+  "url": "https://www.threads.net/",
+  "group": "social"
+ },
+ {
+  "title": "Bluesky - Discover",
+  "url": "https://bsky.app/discover",
+  "group": "social"
+ },
+ {
+  "title": "Mastodon - Local timeline",
+  "url": "https://mastodon.social/public/local",
+  "group": "social"
+ },
+ {
+  "title": "WhatsApp Web",
+  "url": "https://web.whatsapp.com/",
+  "group": "social"
+ },
+ {
+  "title": "Telegram Web - Chats",
+  "url": "https://web.telegram.org/a/",
+  "group": "social"
+ },
+ {
+  "title": "Snapchat - Memories",
+  "url": "https://www.snapchat.com/memories",
+  "group": "social"
+ },
+ {
+  "title": "Pinterest - Today's ideas for you",
+  "url": "https://www.pinterest.com/",
+  "group": "social"
+ },
+ {
+  "title": "Tumblr - Dashboard",
+  "url": "https://www.tumblr.com/dashboard",
+  "group": "social"
+ },
+ {
+  "title": "Quora - Top stories for you",
+  "url": "https://www.quora.com/",
+  "group": "social"
+ },
+ {
+  "title": "Taylor Swift - The Fate of Ophelia (Official Music Video) - YouTube",
+  "url": "https://www.youtube.com/watch?v=ms1Ts7Aa2Bb",
+  "group": "music"
+ },
+ {
+  "title": "Spotify - Your Daily Mix 3",
+  "url": "https://open.spotify.com/playlist/37i9dQZF1E39abcDEFgh",
+  "group": "music"
+ },
+ {
+  "title": "Bad Bunny - DtMF (Official Video) - YouTube",
+  "url": "https://www.youtube.com/watch?v=ms2Bb3Cc9Dd",
+  "group": "music"
+ },
+ {
+  "title": "Radiohead - OK Computer album review | Pitchfork",
+  "url": "https://pitchfork.com/reviews/albums/radiohead-ok-computer/",
+  "group": "music"
+ },
+ {
+  "title": "Bandcamp - New and notable electronic releases",
+  "url": "https://bandcamp.com/tag/electronic?tab=all_releases",
+  "group": "music"
+ },
+ {
+  "title": "lofi hip hop radio - beats to relax/study to - YouTube",
+  "url": "https://www.youtube.com/watch?v=ms3Lf5Ee1Ff",
+  "group": "music"
+ },
+ {
+  "title": "Apple Music - Kendrick Lamar: Essentials",
+  "url": "https://music.apple.com/us/playlist/kendrick-lamar-essentials/pl.abc123",
+  "group": "music"
+ },
+ {
+  "title": "Genius - Lyrics meaning: Fleetwood Mac - Dreams",
+  "url": "https://genius.com/Fleetwood-mac-dreams-lyrics",
+  "group": "music"
+ },
+ {
+  "title": "SoundCloud - Jungle DJ mixes for the weekend",
+  "url": "https://soundcloud.com/discover/sets/charts-top:all-music",
+  "group": "music"
+ },
+ {
+  "title": "Ultimate Guitar - Wonderwall chords by Oasis",
+  "url": "https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-39080",
+  "group": "music"
+ },
+ {
+  "title": "Last.fm - Daft Punk: listening stats",
+  "url": "https://www.last.fm/music/Daft+Punk",
+  "group": "music"
+ },
+ {
+  "title": "Rate Your Music - Best albums of 2026",
+  "url": "https://rateyourmusic.com/charts/top/album/2026/",
+  "group": "music"
+ },
+ {
+  "title": "Songkick - Concerts near you this weekend",
+  "url": "https://www.songkick.com/metro-areas/24426-uk-london",
+  "group": "music"
+ },
+ {
+  "title": "Beethoven: Symphony No. 7, 2nd movement - YouTube",
+  "url": "https://www.youtube.com/watch?v=ms4Bs8Gg4Hh",
+  "group": "music"
+ },
+ {
+  "title": "Tidal - Dua Lipa: New album",
+  "url": "https://tidal.com/browse/album/345678901",
+  "group": "music"
+ },
+ {
+  "title": "Coursera - Machine Learning Specialization | DeepLearning.AI",
+  "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+  "group": "learning"
+ },
+ {
+  "title": "Khan Academy - Calculus 1: Limits and continuity",
+  "url": "https://www.khanacademy.org/math/calculus-1/cs1-limits-and-continuity",
+  "group": "learning"
+ },
+ {
+  "title": "edX - CS50's Introduction to Computer Science",
+  "url": "https://www.edx.org/cs50",
+  "group": "learning"
+ },
+ {
+  "title": "MIT OpenCourseWare - Linear Algebra, Spring 2026 lecture 12",
+  "url": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2026/resources/lecture-12/",
+  "group": "learning"
+ },
+ {
+  "title": "Duolingo - Spanish Unit 4, Lesson 3",
+  "url": "https://www.duolingo.com/lesson",
+  "group": "learning"
+ },
+ {
+  "title": "Udemy - The Complete Python Bootcamp: From Zero to Hero",
+  "url": "https://www.udemy.com/course/complete-python-bootcamp/",
+  "group": "learning"
+ },
+ {
+  "title": "Linear algebra full course for beginners - YouTube",
+  "url": "https://www.youtube.com/watch?v=ln1La3Aa9Bb",
+  "group": "learning"
+ },
+ {
+  "title": "Brilliant - Probability: daily problem",
+  "url": "https://brilliant.org/courses/probability/",
+  "group": "learning"
+ },
+ {
+  "title": "Udacity - Product Management Nanodegree (career course)",
+  "url": "https://www.udacity.com/course/product-manager-nanodegree--nd036",
+  "group": "learning"
+ },
+ {
+  "title": "Quizlet - Organic Chemistry flashcards",
+  "url": "https://quizlet.com/123456789/organic-chemistry-flashcards/",
+  "group": "learning"
+ },
+ {
+  "title": "Google Career Certificates - Data Analytics",
+  "url": "https://grow.google/certificates/data-analytics/",
+  "group": "learning"
+ },
+ {
+  "title": "FutureLearn - Introduction to Statistics for Data Science",
+  "url": "https://www.futurelearn.com/courses/introduction-to-statistics",
+  "group": "learning"
+ },
+ {
+  "title": "Canvas - ECON 201 Assignments",
+  "url": "https://university.instructure.com/courses/45678/assignments",
+  "group": "learning"
+ },
+ {
+  "title": "Pluralsight - Skill IQ assessments",
+  "url": "https://app.pluralsight.com/skills",
+  "group": "learning"
+ },
+ {
+  "title": "Learn Italian from scratch in 30 days - YouTube",
+  "url": "https://www.youtube.com/watch?v=ln2Li6Cc2Dd",
+  "group": "learning"
+ },
+ {
+  "title": "MDN Web Docs - Array.prototype.map()",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map",
+  "group": "docs"
+ },
+ {
+  "title": "Kubernetes Documentation - Pods",
+  "url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+  "group": "docs"
+ },
+ {
+  "title": "Man page: tar(1) - Linux manual",
+  "url": "https://man7.org/linux/man-pages/man1/tar.1.html",
+  "group": "docs"
+ },
+ {
+  "title": "Wikipedia - Byzantine Empire",
+  "url": "https://en.wikipedia.org/wiki/Byzantine_Empire",
+  "group": "docs"
+ },
+ {
+  "title": "Stripe API Reference - Create a PaymentIntent",
+  "url": "https://docs.stripe.com/api/payment_intents/create",
+  "group": "docs"
+ },
+ {
+  "title": "AWS Docs - Amazon S3 bucket policies",
+  "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-policies.html",
+  "group": "docs"
+ },
+ {
+  "title": "Confluence - Engineering handbook / Onboarding checklist",
+  "url": "https://acme.atlassian.net/wiki/spaces/ENG/pages/12345/Onboarding+checklist",
+  "group": "docs"
+ },
+ {
+  "title": "Read the Docs - Sphinx documentation",
+  "url": "https://www.sphinx-doc.org/en/master/",
+  "group": "docs"
+ },
+ {
+  "title": "Rust std::collections::HashMap - documentation",
+  "url": "https://doc.rust-lang.org/std/collections/struct.HashMap.html",
+  "group": "docs"
+ },
+ {
+  "title": "Tailwind CSS Docs - Flexbox",
+  "url": "https://tailwindcss.com/docs/flex",
+  "group": "docs"
+ },
+ {
+  "title": "Terraform Registry - aws_instance resource",
+  "url": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance",
+  "group": "docs"
+ },
+ {
+  "title": "Microsoft Learn - What is Azure Functions?",
+  "url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-overview",
+  "group": "docs"
+ },
+ {
+  "title": "Notion - Team wiki: Company policies",
+  "url": "https://www.notion.so/acme/Company-policies-8a7b6c5d4e3f",
+  "group": "docs"
+ },
+ {
+  "title": "iPhone User Guide - Apple Support",
+  "url": "https://support.apple.com/guide/iphone/welcome/ios",
+  "group": "docs"
+ },
+ {
+  "title": "Chrome Extensions API reference - tabs",
+  "url": "https://developer.chrome.com/docs/extensions/reference/api/tabs",
+  "group": "docs"
+ },
+ {
+  "title": "Gmail - Inbox (14)",
+  "url": "https://mail.google.com/mail/u/0/#inbox",
+  "group": "work"
+ },
+ {
+  "title": "Google Calendar - Week of Nov 17, 2026",
+  "url": "https://calendar.google.com/calendar/u/0/r/week",
+  "group": "work"
+ },
+ {
+  "title": "Google Sheets - Q4 budget tracker",
+  "url": "https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit",
+  "group": "work"
+ },
+ {
+  "title": "Google Docs - Meeting notes: Product sync",
+  "url": "https://docs.google.com/document/d/1ZyXwVuTsRqPoNmLkJiHgFeDcBa/edit",
+  "group": "work"
+ },
+ {
+  "title": "Slack | #general | Acme Workspace",
+  "url": "https://app.slack.com/client/T01ABCDEF/C01GENERAL",
+  "group": "work"
+ },
+ {
+  "title": "Jira - ACME-2231: Update onboarding flow",
+  "url": "https://acme.atlassian.net/browse/ACME-2231",
+  "group": "work"
+ },
+ {
+  "title": "Asana - Marketing launch plan",
+  "url": "https://app.asana.com/0/1201234567890/board",
+  "group": "work"
+ },
+ {
+  "title": "Zoom - Join meeting: Weekly standup",
+  "url": "https://acme.zoom.us/j/98765432101",
+  "group": "work"
+ },
+ {
+  "title": "Microsoft Teams - Chat | Design review",
+  "url": "https://teams.microsoft.com/v2/",
+  "group": "work"
+ },
+ {
+  "title": "Trello - Sprint board",
+  "url": "https://trello.com/b/aBcDeFgH/sprint-board",
+  "group": "work"
+ },
+ {
+  "title": "Outlook - Mail | Calendar",
+  "url": "https://outlook.office.com/mail/",
+  "group": "work"
+ },
+ {
+  "title": "Airtable - Customer interviews base",
+  "url": "https://airtable.com/appAbCdEfGhIjKl/tblXyZ/viwAbC",
+  "group": "work"
+ },
+ {
+  "title": "Linear - My issues",
+  "url": "https://linear.app/acme/my-issues",
+  "group": "work"
+ },
+ {
+  "title": "Dropbox - Shared files: contracts",
+  "url": "https://www.dropbox.com/home/Shared/contracts",
+  "group": "work"
+ },
+ {
+  "title": "Calendly - Schedule a 30 minute call",
+  "url": "https://calendly.com/acme-sales/30min",
+  "group": "work"
+ },
+ {
+  "title": "Skyscanner - Flights from London to Tokyo, Dec 12",
+  "url": "https://www.skyscanner.net/transport/flights/lond/tyoa/261212/",
+  "group": "travel"
+ },
+ {
+  "title": "Booking.com - Hotels in Lisbon: 4-star, free cancellation",
+  "url": "https://www.booking.com/searchresults.html?ss=Lisbon",
+  "group": "travel"
+ },
+ {
+  "title": "Google Maps - Directions to Sagrada Familia",
+  "url": "https://www.google.com/maps/dir/Barcelona/Sagrada+Familia",
+  "group": "travel"
+ },
+ {
+  "title": "Airbnb - Cozy cabin near Lake Tahoe",
+  "url": "https://www.airbnb.com/rooms/12345678",
+  "group": "travel"
+ },
+ {
+  "title": "Lonely Planet - Vietnam travel guide",
+  "url": "https://www.lonelyplanet.com/vietnam",
+  "group": "travel"
+ },
+ {
+  "title": "Trainline - London to Edinburgh, tickets",
+  "url": "https://www.thetrainline.com/book/results",
+  "group": "travel"
+ },
+ {
+  "title": "Kayak - Cheap flights to Bali",
+  "url": "https://www.kayak.com/flights/NYC-DPS",
+  "group": "travel"
+ },
+ {
+  "title": "Tripadvisor - Things to do in Kyoto",
+  "url": "https://www.tripadvisor.com/Attractions-g298564-Activities-Kyoto_Kyoto_Prefecture_Kinki.html",
+  "group": "travel"
+ },
+ {
+  "title": "Rick Steves - Italy in 10 days itinerary",
+  "url": "https://www.ricksteves.com/europe/italy/itinerary",
+  "group": "travel"
+ },
+ {
+  "title": "Japan in 14 days itinerary: first-timer guide - YouTube",
+  "url": "https://www.youtube.com/watch?v=tr1Jp4Aa7Bb",
+  "group": "travel"
+ },
+ {
+  "title": "Emirates - Manage booking: ABC123",
+  "url": "https://www.emirates.com/us/english/manage-booking/",
+  "group": "travel"
+ },
+ {
+  "title": "Visit Iceland - Ring Road road trip guide",
+  "url": "https://www.visiticeland.com/article/ring-road-guide",
+  "group": "travel"
+ },
+ {
+  "title": "Schengen visa requirements for UK citizens | Gov.uk",
+  "url": "https://www.gov.uk/guidance/travel-to-the-eu",
+  "group": "travel"
+ },
+ {
+  "title": "Rome2Rio - How to get from Paris to Amsterdam",
+  "url": "https://www.rome2rio.com/s/Paris/Amsterdam",
+  "group": "travel"
+ },
+ {
+  "title": "Yahoo Finance - S&P 500 (^GSPC) stock price and chart",
+  "url": "https://finance.yahoo.com/quote/%5EGSPC/",
+  "group": "finance"
+ },
+ {
+  "title": "Chase - Account summary",
+  "url": "https://secure.chase.com/web/auth/dashboard",
+  "group": "finance"
+ },
+ {
+  "title": "Robinhood - Portfolio overview",
+  "url": "https://robinhood.com/us/en/portfolio/",
+  "group": "finance"
+ },
+ {
+  "title": "Investopedia - What is an index fund?",
+  "url": "https://www.investopedia.com/terms/i/indexfund.asp",
+  "group": "finance"
+ },
+ {
+  "title": "YNAB - Budget: November 2026",
+  "url": "https://app.ynab.com/budget",
+  "group": "finance"
+ },
+ {
+  "title": "Bloomberg Markets - Treasury yields climb as jobs data surprise",
+  "url": "https://www.bloomberg.com/news/articles/2026-11-07/treasury-yields-climb-jobs-data",
+  "group": "finance"
+ },
+ {
+  "title": "CoinMarketCap - Bitcoin price today",
+  "url": "https://coinmarketcap.com/currencies/bitcoin/",
+  "group": "finance"
+ },
+ {
+  "title": "Vanguard - VTI: Total Stock Market ETF",
+  "url": "https://investor.vanguard.com/investment-products/etfs/profile/vti",
+  "group": "finance"
+ },
+ {
+  "title": "How the stock market works for complete beginners - YouTube",
+  "url": "https://www.youtube.com/watch?v=fi1Sm6Aa1Bb",
+  "group": "finance"
+ },
+ {
+  "title": "TurboTax - Start your 2026 return",
+  "url": "https://turbotax.intuit.com/tax-tools/",
+  "group": "finance"
+ },
+ {
+  "title": "Mortgage rates today and how the Fed moves bond markets | MarketWatch",
+  "url": "https://www.marketwatch.com/story/mortgage-rates-fed-bond-markets-2026",
+  "group": "finance"
+ },
+ {
+  "title": "r/personalfinance - How to build an emergency fund on a tight budget",
+  "url": "https://www.reddit.com/r/personalfinance/comments/1gj8n4t/emergency_fund_tight_budget/",
+  "group": "finance"
+ },
+ {
+  "title": "Wise - Send money abroad: GBP to EUR rate",
+  "url": "https://wise.com/gb/currency-converter/gbp-to-eur-rate",
+  "group": "finance"
+ },
+ {
+  "title": "Morningstar - Best dividend stocks for 2027",
+  "url": "https://www.morningstar.com/stocks/best-dividend-stocks",
+  "group": "finance"
+ },
+ {
+  "title": "Mayo Clinic - Type 2 diabetes: symptoms and causes",
+  "url": "https://www.mayoclinic.org/diseases-conditions/type-2-diabetes/symptoms-causes/syc-20351193",
+  "group": "health"
+ },
+ {
+  "title": "NHS - Back pain: self-help and treatment",
+  "url": "https://www.nhs.uk/conditions/back-pain/",
+  "group": "health"
+ },
+ {
+  "title": "30 minute full body strength workout, no equipment - YouTube",
+  "url": "https://www.youtube.com/watch?v=he1Fb3Aa5Bb",
+  "group": "health"
+ },
+ {
+  "title": "Healthline - Mediterranean diet: a beginner's guide and meal plan",
+  "url": "https://www.healthline.com/nutrition/mediterranean-diet-meal-plan",
+  "group": "health"
+ },
+ {
+  "title": "WebMD - Symptoms of vitamin D deficiency",
+  "url": "https://www.webmd.com/diet/vitamin-d-deficiency-symptoms",
+  "group": "health"
+ },
+ {
+  "title": "MyFitnessPal - Food diary: today",
+  "url": "https://www.myfitnesspal.com/food/diary",
+  "group": "health"
+ },
+ {
+  "title": "Strava - Morning run, 8.2 km",
+  "url": "https://www.strava.com/activities/12345678901",
+  "group": "health"
+ },
+ {
+  "title": "Headspace - Guided meditation for sleep",
+  "url": "https://www.headspace.com/meditation/sleep",
+  "group": "health"
+ },
+ {
+  "title": "How much protein do you really need? Dietitian explains - YouTube",
+  "url": "https://www.youtube.com/watch?v=he2Pr7Cc9Dd",
+  "group": "health"
+ },
+ {
+  "title": "Cleveland Clinic - High blood pressure: what the numbers mean",
+  "url": "https://my.clevelandclinic.org/health/diseases/4314-hypertension-high-blood-pressure",
+  "group": "health"
+ },
+ {
+  "title": "Examine.com - Creatine: benefits and dosage",
+  "url": "https://examine.com/supplements/creatine/",
+  "group": "health"
+ },
+ {
+  "title": "Book an appointment - My Health Portal",
+  "url": "https://myhealth.example/appointments/new",
+  "group": "health"
+ },
+ {
+  "title": "r/loseit - 20 kg down: what actually worked for me",
+  "url": "https://www.reddit.com/r/loseit/comments/1g4m8xr/20kg_down_what_worked/",
+  "group": "health"
+ },
+ {
+  "title": "Physiotherapy exercises for knee pain | Versus Arthritis",
+  "url": "https://www.versusarthritis.org/about-arthritis/exercising-with-arthritis/knee-exercises",
+  "group": "health"
+ },
+ {
+  "title": "Elden Ring Nightreign - Boss guide and walkthrough | IGN",
+  "url": "https://www.ign.com/wikis/elden-ring-nightreign/boss-guide",
+  "group": "games"
+ },
+ {
+  "title": "Steam - Hades II",
+  "url": "https://store.steampowered.com/app/1145350/Hades_II/",
+  "group": "games"
+ },
+ {
+  "title": "Baldur's Gate 3 full playthrough part 12 - YouTube",
+  "url": "https://www.youtube.com/watch?v=gm1Bg2Aa4Bb",
+  "group": "games"
+ },
+ {
+  "title": "Epic Games Store - Free games this week",
+  "url": "https://store.epicgames.com/en-US/free-games",
+  "group": "games"
+ },
+ {
+  "title": "Twitch - xQc playing Counter-Strike 2 live",
+  "url": "https://www.twitch.tv/xqc",
+  "group": "games"
+ },
+ {
+  "title": "Minecraft Wiki - Redstone circuits",
+  "url": "https://minecraft.wiki/w/Redstone_circuits",
+  "group": "games"
+ },
+ {
+  "title": "r/Games - Nintendo Switch 2 sales top 20 million",
+  "url": "https://www.reddit.com/r/Games/comments/1gq4c6d/switch_2_sales_top_20_million/",
+  "group": "games"
+ },
+ {
+  "title": "Zelda: Tears of the Kingdom - all shrine locations map",
+  "url": "https://www.zeldadungeon.net/tears-of-the-kingdom-shrine-map/",
+  "group": "games"
+ },
+ {
+  "title": "GameSpot - Review: Hollow Knight Silksong",
+  "url": "https://www.gamespot.com/reviews/hollow-knight-silksong-review/1900-6418123/",
+  "group": "games"
+ },
+ {
+  "title": "Speedrun.com - Celeste any% leaderboards",
+  "url": "https://www.speedrun.com/celeste",
+  "group": "games"
+ },
+ {
+  "title": "Valorant - best agent for ranked, tier list - YouTube",
+  "url": "https://www.youtube.com/shorts/gm2Vt7Cc6Dd",
+  "group": "games"
+ },
+ {
+  "title": "GOG - Cyberpunk 2077: Ultimate Edition",
+  "url": "https://www.gog.com/en/game/cyberpunk_2077_ultimate_edition",
+  "group": "games"
+ },
+ {
+  "title": "Chess.com - Play online: daily puzzle",
+  "url": "https://www.chess.com/puzzles/rated",
+  "group": "games"
+ },
+ {
+  "title": "PlayStation Store - Astro Bot",
+  "url": "https://store.playstation.com/en-us/concept/10010123",
+  "group": "games"
+ },
+ {
+  "title": "Pokemon Showdown - battle lobby",
+  "url": "https://play.pokemonshowdown.com/",
+  "group": "games"
+ },
+ {
+  "title": "Sign in - Google Accounts",
+  "url": "https://accounts.google.com/signin/v2/identifier",
+  "group": "other"
+ },
+ {
+  "title": "Log in to your account | Microsoft",
+  "url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+  "group": "other"
+ },
+ {
+  "title": "Apple ID - Sign In",
+  "url": "https://appleid.apple.com/sign-in",
+  "group": "other"
+ },
+ {
+  "title": "New Tab",
+  "url": "chrome://newtab/",
+  "group": "other"
+ },
+ {
+  "title": "Extensions - Chrome Web Store",
+  "url": "https://chromewebstore.google.com/category/extensions",
+  "group": "other"
+ },
+ {
+  "title": "Settings - Passwords",
+  "url": "chrome://settings/passwords",
+  "group": "other"
+ },
+ {
+  "title": "about:blank",
+  "url": "about:blank",
+  "group": "other"
+ },
+ {
+  "title": "Downloads",
+  "url": "chrome://downloads/",
+  "group": "other"
+ },
+ {
+  "title": "History",
+  "url": "chrome://history/",
+  "group": "other"
+ },
+ {
+  "title": "Login | GitHub",
+  "url": "https://github.com/login",
+  "group": "other"
+ },
+ {
+  "title": "Sign in to Netflix",
+  "url": "https://www.netflix.com/login",
+  "group": "other"
+ },
+ {
+  "title": "Verify it's you - two-factor authentication",
+  "url": "https://auth.example.com/2fa/verify",
+  "group": "other"
+ },
+ {
+  "title": "Weather in Seattle - 10 day forecast",
+  "url": "https://weather.com/weather/tenday/l/Seattle+WA",
+  "group": "other"
+ },
+ {
+  "title": "Google Translate",
+  "url": "https://translate.google.com/",
+  "group": "other"
+ },
+ {
+  "title": "Currency converter - USD to EUR",
+  "url": "https://www.xe.com/currencyconverter/convert/?From=USD&To=EUR",
+  "group": "other"
+ },
+ {
+  "title": "Speedtest by Ookla - Global broadband speed test",
+  "url": "https://www.speedtest.net/",
+  "group": "other"
+ },
+ {
+  "title": "Time and Date - World clock",
+  "url": "https://www.timeanddate.com/worldclock/",
+  "group": "other"
+ },
+ {
+  "title": "Password reset - Dropbox",
+  "url": "https://www.dropbox.com/forgot",
+  "group": "other"
+ },
+ {
+  "title": "Terms of Service | Acme Cloud",
+  "url": "https://www.acmecloud.example/legal/terms",
+  "group": "other"
+ },
+ {
+  "title": "Google Search - best time to visit patagonia",
+  "url": "https://www.google.com/search?q=best+time+to+visit+patagonia",
+  "group": "other"
+ },
+ {
+  "title": "PDF viewer - invoice_1042.pdf",
+  "url": "file:///Users/me/Downloads/invoice_1042.pdf",
+  "group": "other"
+ },
+ {
+  "title": "Cookie preferences",
+  "url": "https://www.acmecloud.example/privacy/cookie-preferences",
+  "group": "other"
+ },
+ {
+  "title": "Wikipedia - Random article",
+  "url": "https://en.wikipedia.org/wiki/Special:Random",
+  "group": "other"
+ },
+ {
+  "title": "Sign up | Pinterest",
+  "url": "https://www.pinterest.com/signup/",
+  "group": "other"
+ },
+ {
+  "title": "Flight status board - Lisbon airport",
+  "url": "https://www.ana.pt/en/lis/flight-information/departures",
+  "group": "other"
+ },
+ {
+  "title": "QR code generator - free",
+  "url": "https://www.qr-code-generator.com/",
+  "group": "other"
+ },
+ {
+  "title": "Bit.ly - Link shortener dashboard",
+  "url": "https://app.bitly.com/",
+  "group": "other"
+ },
+ {
+  "title": "Online stopwatch and timer",
+  "url": "https://www.online-stopwatch.com/",
+  "group": "other"
+ },
+ {
+  "title": "Unit converter: inches to millimetres",
+  "url": "https://www.unitconverters.net/length/inches-to-millimeters.htm",
+  "group": "other"
+ },
+ {
+  "title": "Page not found - 404",
+  "url": "https://www.randomsite.example/oldpage",
+  "group": "other"
+ },
+ {
+  "title": "Print preview",
+  "url": "about:print",
+  "group": "other"
+ },
+ {
+  "title": "Dictionary - serendipity | Merriam-Webster",
+  "url": "https://www.merriam-webster.com/dictionary/serendipity",
+  "group": "other"
+ }
+]

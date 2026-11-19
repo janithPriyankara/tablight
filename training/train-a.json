@@ -52,7 +52,7 @@
  {
   "title": "Veterinary clinic opening hours - VCA Animal Hospitals",
   "url": "https://vcahospitals.com/find-a-hospital",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Mobbin - UI & UX design inspiration",
@@ -62,7 +62,7 @@
  {
   "title": "ESPN: NBA Scores",
   "url": "https://www.espn.com/nba/scoreboard",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Building effective agents - Anthropic Engineering",
@@ -97,7 +97,7 @@
  {
   "title": "Veritasium: The Strange Physics of Spinning Tops - YouTube",
   "url": "https://www.youtube.com/watch?v=Mn7Bv5Cx3Za",
-  "group": "videos"
+  "group": "science"
  },
  {
   "title": "Wednesday Season 2 Episode 3 review - IGN",
@@ -122,7 +122,7 @@
  {
   "title": "Lawn care calendar by season - Scotts",
   "url": "https://scotts.com/en-us/lawn-care-calendar.html",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Can You Beat Me At This? Epic Challenge - YouTube",
@@ -317,7 +317,7 @@
  {
   "title": "How to fix a leaky faucet - The Home Depot",
   "url": "https://www.homedepot.com/c/ah/how-to-fix-a-leaky-faucet/9ba683603be9fa5395fab901c1234567",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Kubernetes Documentation | Concepts - Pods",
@@ -337,7 +337,7 @@
  {
   "title": "Attack on Titan - Watch on Crunchyroll",
   "url": "https://www.crunchyroll.com/series/GR751KNZY/attack-on-titan",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "facebook/react: The library for web and native user interfaces",
@@ -347,7 +347,7 @@
  {
   "title": "UFC 320 results - Sherdog",
   "url": "https://www.sherdog.com/events/UFC-320-100123",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Replicate - Run AI with an API",
@@ -372,7 +372,7 @@
  {
   "title": "Organic Chemistry - Reaction Mechanisms Explained - YouTube",
   "url": "https://www.youtube.com/watch?v=Zm4Xk8Sa1Pw",
-  "group": "learning"
+  "group": "science"
  },
  {
   "title": "Google search: how to quantize llama model to 4 bit",
@@ -382,7 +382,7 @@
  {
   "title": "What to Expect: Baby sleep schedule by month",
   "url": "https://www.whattoexpect.com/first-year/baby-sleep-schedule/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "HM Revenue & Customs: Self Assessment",
@@ -442,7 +442,7 @@
  {
   "title": "Parents.com: Toddler activities at home",
   "url": "https://www.parents.com/toddlers-preschoolers/activities/indoor/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Expedia: Vacation Packages",
@@ -452,7 +452,7 @@
  {
   "title": "Mumsnet: Best school uniforms",
   "url": "https://www.mumsnet.com/talk/primary/1234567-best-school-uniforms",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "(3) Feed | LinkedIn",
@@ -492,7 +492,7 @@
  {
   "title": "Best Banana Bread Recipe - Allrecipes",
   "url": "https://www.allrecipes.com/recipe/20144/banana-banana-bread/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Day in the Life of a Tokyo Street Food Vendor - YouTube",
@@ -517,7 +517,7 @@
  {
   "title": "Kurzgesagt - What If We Detonated Every Nuclear Bomb at Once? - YouTube",
   "url": "https://www.youtube.com/watch?v=Qw2Er4Ty6Ui",
-  "group": "videos"
+  "group": "science"
  },
  {
   "title": "ggml-org/llama.cpp: LLM inference in C/C++",
@@ -527,7 +527,7 @@
  {
   "title": "Forbes Home: Best vacuum cleaners",
   "url": "https://www.forbes.com/home-improvement/appliances/best-vacuum-cleaners/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "IRS: Tax Withholding Estimator",
@@ -547,7 +547,7 @@
  {
   "title": "Zillow: 3 bed houses for sale in Austin, TX",
   "url": "https://www.zillow.com/austin-tx/houses/3-_beds/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "PlayStation Store - God of War",
@@ -602,7 +602,7 @@
  {
   "title": "Ikman.lk - Cars for sale in Colombo",
   "url": "https://ikman.lk/en/ads/sri-lanka/cars",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "rust-lang/rust: Empowering everyone to build reliable and efficient software",
@@ -662,7 +662,7 @@
  {
   "title": "Premier League Table | BBC Sport",
   "url": "https://www.bbc.com/sport/football/premier-league/table",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Zootopia 2 - Disney+",
@@ -737,7 +737,7 @@
  {
   "title": "This Old House: How to paint kitchen cabinets",
   "url": "https://www.thisoldhouse.com/kitchens/21015111/how-to-paint-kitchen-cabinets",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Library Catalog - Seattle Public Library",
@@ -852,7 +852,7 @@
  {
   "title": "How to Change a Flat Tire - YouTube",
   "url": "https://www.youtube.com/watch?v=joCHBNSJ6VI",
-  "group": "videos"
+  "group": "cars"
  },
  {
   "title": "Coolors - The super fast color palettes generator",
@@ -882,7 +882,7 @@
  {
   "title": "Easy Chicken Biryani Recipe - Swasthi's Recipes",
   "url": "https://www.indianhealthyrecipes.com/chicken-biryani-recipe/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Joker: Folie à Deux - Movie Reviews | Metacritic",
@@ -902,7 +902,7 @@
  {
   "title": "Best tires for Honda Civic - Tire Rack",
   "url": "https://www.tirerack.com/tires/tires.jsp?make=Honda&model=Civic",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Stack Overflow Developer Survey community - Reddit",
@@ -927,7 +927,7 @@
  {
   "title": "Google search: how to remove red wine stain from carpet",
   "url": "https://www.google.com/search?q=how+to+remove+red+wine+stain+from+carpet",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Anthropic raises new funding round at record valuation - TechCrunch",
@@ -957,7 +957,7 @@
  {
   "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle - Crunchyroll",
   "url": "https://www.crunchyroll.com/series/GY5P48XEY/demon-slayer-kimetsu-no-yaiba",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "OpenAI Platform - API Reference",
@@ -1072,7 +1072,7 @@
  {
   "title": "Reddit - r/DIY: Built a floating shelf",
   "url": "https://www.reddit.com/r/DIY/comments/1m4n5o6/built_a_floating_shelf_from_reclaimed_oak/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Threads",
@@ -1102,7 +1102,7 @@
  {
   "title": "Rightmove: Flats to rent in Manchester",
   "url": "https://www.rightmove.co.uk/property-to-rent/Manchester.html",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Pink Floyd - Wish You Were Here (Official Audio) - YouTube",
@@ -1197,7 +1197,7 @@
  {
   "title": "Lanka Property Web - Houses for sale in Kandy",
   "url": "https://www.lankapropertyweb.com/sale/index.php?district=Kandy",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Coursera | Financial Markets by Yale",
@@ -1232,7 +1232,7 @@
  {
   "title": "Jujutsu Kaisen Season 3 Episode 5 - Crunchyroll",
   "url": "https://www.crunchyroll.com/watch/GKEHK1ZDE/the-culling-game",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "fix: race condition in worker pool · Issue #4821 · tokio-rs/tokio",
@@ -1342,7 +1342,7 @@
  {
   "title": "How to grow tomatoes in containers - Gardener's Supply",
   "url": "https://www.gardeners.com/how-to/growing-tomatoes-in-containers/8575.html",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Adopt a Dog - Petfinder",
@@ -1357,7 +1357,7 @@
  {
   "title": "Lowe's - Deck stain buying guide",
   "url": "https://www.lowes.com/n/buying-guide/deck-stain-buying-guide",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "I Built a Treehouse in 48 Hours - YouTube",
@@ -1417,7 +1417,7 @@
  {
   "title": "Used cars for sale - AutoTrader",
   "url": "https://www.autotrader.com/cars-for-sale/all-cars",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "ComfyUI workflow for Flux - YouTube",
@@ -1522,7 +1522,7 @@
  {
   "title": "Cricinfo: India vs Sri Lanka live score",
   "url": "https://www.espncricinfo.com/series/india-tour-of-sri-lanka-2026/live-cricket-score",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Trello | Hiring pipeline",
@@ -1587,7 +1587,7 @@
  {
   "title": "How to build a raised garden bed - Family Handyman",
   "url": "https://www.familyhandyman.com/project/how-to-build-a-raised-garden-bed/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Flipkart: Redmi Note 15 Pro",
@@ -1622,12 +1622,12 @@
  {
   "title": "Crockpot chili recipe - YouTube",
   "url": "https://www.youtube.com/watch?v=Mn3Bv5Cx7Zq",
-  "group": "videos"
+  "group": "food"
  },
  {
   "title": "Serious Eats: The Food Lab's Perfect Burger",
   "url": "https://www.seriouseats.com/the-best-slow-cooked-bolognese-sauce-recipe",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Introduction to Psychology | Open Yale Courses",
@@ -1712,7 +1712,7 @@
  {
   "title": "Home mortgage rates today - Bankrate",
   "url": "https://www.bankrate.com/mortgages/mortgage-rates/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Janith Priyankara | LinkedIn",
@@ -1792,7 +1792,7 @@
  {
   "title": "2024 Toyota Corolla Cross Review - Edmunds",
   "url": "https://www.edmunds.com/toyota/corolla-cross/2024/review/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "TikTok - Make Your Day",
@@ -1807,7 +1807,7 @@
  {
   "title": "Is it safe to feed my cat tuna? - Chewy",
   "url": "https://www.chewy.com/education/cat/cat-nutrition/can-cats-eat-tuna",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "iPhone 17 Pro - Buy - Apple",
@@ -1822,7 +1822,7 @@
  {
   "title": "Best dog food for puppies - American Kennel Club",
   "url": "https://www.akc.org/expert-advice/nutrition/best-puppy-foods/",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "MyFitnessPal: Food Diary",
@@ -1912,7 +1912,7 @@
  {
   "title": "Formula 1 Standings 2026 - Formula1.com",
   "url": "https://www.formula1.com/en/results/2026/drivers",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Backpacking Europe itinerary 3 weeks - Nomadic Matt",
@@ -1932,7 +1932,7 @@
  {
   "title": "Realtor.com: Open houses this weekend",
   "url": "https://www.realtor.com/open-houses/Denver_CO",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "AliExpress - ESP32-S3 Dev Board",
@@ -2097,7 +2097,7 @@
  {
   "title": "Budget Bytes: Easy Vegetable Curry",
   "url": "https://www.budgetbytes.com/easy-vegetable-curry/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Procreate Handbook - Brushes",
@@ -2112,7 +2112,7 @@
  {
   "title": "Orchid care for beginners - The Spruce",
   "url": "https://www.thespruce.com/orchid-care-for-beginners-1902747",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Instagram",
@@ -2167,7 +2167,7 @@
  {
   "title": "Sourdough starter guide - King Arthur Baking",
   "url": "https://www.kingarthurbaking.com/blog/2018/02/sourdough-starter",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "LeetCode - Two Sum",
@@ -2177,7 +2177,7 @@
  {
   "title": "Tesla Model 3 - Tesla",
   "url": "https://www.tesla.com/model3",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Apple's new M5 Mac lineup reviewed - Wired",
@@ -2192,7 +2192,7 @@
  {
   "title": "MLB Standings - Baseball Reference",
   "url": "https://www.baseball-reference.com/leagues/majors/2026-standings.shtml",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Stable Diffusion 3.5 prompts - Civitai",
@@ -2227,7 +2227,7 @@
  {
   "title": "Vet-approved homemade dog treats - Hill's Pet",
   "url": "https://www.hillspet.com/dog-care/nutrition-feeding/homemade-dog-treats",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Bitbucket - pull requests",
@@ -2282,7 +2282,7 @@
  {
   "title": "NYT Cooking: Sheet-Pan Chicken Thighs",
   "url": "https://cooking.nytimes.com/recipes/1019876-sheet-pan-chicken-thighs",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Avengers: Doomsday - Official Teaser Trailer - YouTube",
@@ -2322,7 +2322,7 @@
  {
   "title": "NFL Scores & Schedule - CBS Sports",
   "url": "https://www.cbssports.com/nfl/schedule/",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Arcane Season 2 Act 3 - Netflix",
@@ -2342,7 +2342,7 @@
  {
   "title": "Pregnancy week by week - BabyCenter",
   "url": "https://www.babycenter.com/pregnancy/week-by-week",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Skyscanner: London to New York",

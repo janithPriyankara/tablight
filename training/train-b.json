@@ -2,12 +2,12 @@
  {
   "title": "Chicken Tikka Masala Recipe - BBC Good Food",
   "url": "https://www.bbc.co.uk/food/recipes/easy_chicken_tikka_masala",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Easy Banana Bread Recipe | Allrecipes",
   "url": "https://www.allrecipes.com/recipe/20144/banana-banana-bread/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Hamilton, ON 14-Day Weather Forecast - The Weather Network",
@@ -42,92 +42,92 @@
  {
   "title": "Houses for sale in Leeds - Rightmove",
   "url": "https://www.rightmove.co.uk/property-for-sale/Leeds.html",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "3 Bedroom Flats for Rent in Mumbai - MagicBricks",
   "url": "https://www.magicbricks.com/flats-for-rent-in-mumbai-pppfr",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Homes for Sale in Austin, TX | Zillow",
   "url": "https://www.zillow.com/austin-tx/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Domain.com.au - Property for sale in Brisbane",
   "url": "https://www.domain.com.au/sale/brisbane-qld/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "ESPN - Premier League Scoreboard",
   "url": "https://www.espn.com/soccer/scoreboard/_/league/eng.1",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Cricinfo - India vs Australia Live Score",
   "url": "https://www.espncricinfo.com/live-cricket-score",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "NBA Standings 2026-27 | NBA.com",
   "url": "https://www.nba.com/standings",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "IPL Points Table - Cricbuzz",
   "url": "https://www.cricbuzz.com/cricket-series/9237/indian-premier-league-2026/points-table",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Lakers vs Celtics Box Score - Basketball Reference",
   "url": "https://www.basketball-reference.com/boxscores/202611140BOS.html",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "How to Train a Puppy to Sit - The Spruce Pets",
   "url": "https://www.thesprucepets.com/how-to-train-your-dog-to-sit-1117333",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Best Dog Food for Labradors | Chewy",
   "url": "https://www.chewy.com/b/dog-food-288",
-  "group": "other"
+  "group": "shopping"
  },
  {
   "title": "Cat Vomiting: When to Call the Vet - PetMD",
   "url": "https://www.petmd.com/cat/symptoms/cat-vomiting",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "When to Plant Tomatoes - Gardeners' World",
   "url": "https://www.gardenersworld.com/how-to/grow-plants/how-to-grow-tomatoes/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "How to Fix a Leaky Faucet - The Home Depot",
   "url": "https://www.homedepot.com/c/ah/how-to-fix-a-leaky-faucet/9ba683603be9fa5395fab90a5fe7c2d",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "DIY Floating Shelves Tutorial | Family Handyman",
   "url": "https://www.familyhandyman.com/project/how-to-build-floating-shelves/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "2026 Toyota Corolla Review - Edmunds",
   "url": "https://www.edmunds.com/toyota/corolla/2026/review/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Used Cars for Sale - AutoTrader UK",
   "url": "https://www.autotrader.co.uk/car-search?postcode=M11AE",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "ikman.lk - Cars for sale in Sri Lanka",
   "url": "https://ikman.lk/en/ads/sri-lanka/cars",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Best Car Insurance Quotes - Compare.com",
@@ -137,22 +137,22 @@
  {
   "title": "Kelley Blue Book - Car Values",
   "url": "https://www.kbb.com/whats-my-car-worth/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Toddler Sleep Regression: What to Expect | What to Expect",
   "url": "https://www.whattoexpect.com/toddler/sleep/toddler-sleep-regression/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Baby Names 2026 - Nameberry",
   "url": "https://nameberry.com/popular-baby-names",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "School Holidays and Term Dates - Hertfordshire County Council",
   "url": "https://www.hertfordshire.gov.uk/services/schools-and-education/school-term-dates/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Plumber near me - Checkatrade",
@@ -242,127 +242,127 @@
  {
   "title": "Sourdough Starter Guide - King Arthur Baking",
   "url": "https://www.kingarthurbaking.com/recipes/beginners-sourdough-starter-recipe",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Dal Makhani Recipe | Hebbar's Kitchen",
   "url": "https://hebbarskitchen.com/dal-makhani-recipe/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Sri Lankan Chicken Curry - Serious Eats",
   "url": "https://www.seriouseats.com/sri-lankan-chicken-curry",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Pavlova Recipe - Taste.com.au",
   "url": "https://www.taste.com.au/recipes/pavlova/ee1d1e0c-6d1a-4a3d-9a6c-0d2b8dd5cbd3",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Nigella's Chocolate Cake | Nigella Lawson",
   "url": "https://www.nigella.com/recipes/chocolate-fudge-cake",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Butter Chicken Recipe - Swasthi's Recipes",
   "url": "https://www.indianhealthyrecipes.com/butter-chicken/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Meal Prep Ideas for the Week - Budget Bytes",
   "url": "https://www.budgetbytes.com/category/recipes/meal-prep/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Tim Hortons Menu",
   "url": "https://www.timhortons.ca/menu",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Order Pizza Online | Domino's Pizza",
   "url": "https://www.dominos.com/en/pages/order/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Uber Eats: Food Delivery and More",
   "url": "https://www.ubereats.com/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Menulog - Takeaway Delivery",
   "url": "https://www.menulog.com.au/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Zomato - Restaurants in Bangalore",
   "url": "https://www.zomato.com/bangalore/restaurants",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Swiggy: Food Delivery",
   "url": "https://www.swiggy.com/restaurants",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Chelsea Fixtures and Results 2026/27 - BBC Sport",
   "url": "https://www.bbc.co.uk/sport/football/teams/chelsea/scores-fixtures",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Formula 1 Race Results - Formula1.com",
   "url": "https://www.formula1.com/en/results/2026/races",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Wimbledon Order of Play",
   "url": "https://www.wimbledon.com/en_GB/scores/schedule/index.html",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "NFL Scores - CBS Sports",
   "url": "https://www.cbssports.com/nfl/scoreboard/",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Rugby World Cup Fixtures - rugby.com.au",
   "url": "https://www.rugby.com.au/",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Kidspot - Parenting advice",
   "url": "https://www.kidspot.com.au/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Mumsnet Talk",
   "url": "https://www.mumsnet.com/talk",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Orchids Care Guide - Better Homes & Gardens",
   "url": "https://www.bhg.com/gardening/houseplants/orchids/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Adopt a Pet | Petfinder",
   "url": "https://www.petfinder.com/search/dogs-for-adoption/us/ca/san-francisco/",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Vets near me - Pets at Home",
   "url": "https://www.petsathome.com/vets",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Kitchen Renovation Cost Guide 2026 - HomeAdvisor",
   "url": "https://www.homeadvisor.com/cost/kitchens/remodel-a-kitchen/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Paint Colour Ideas - Dulux",
   "url": "https://www.dulux.co.uk/en/colour-ideas",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Gumtree - Free classifieds",
@@ -387,12 +387,12 @@
  {
   "title": "Lanka Property Web",
   "url": "https://www.lankapropertyweb.com/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Hot Cross Buns Recipe | Woolworths",
   "url": "https://www.woolworths.com.au/shop/recipes/hot-cross-buns",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Funeral Notices - Legacy.com",
@@ -417,7 +417,7 @@
  {
   "title": "FRIENDLY VETS - BOOK ONLINE",
   "url": "https://www.friendlyvets.example.com.au/book",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "NHS Jobs Pensions Calculator",
@@ -452,7 +452,7 @@
  {
   "title": "Tyre Pressure Guide - Kwik Fit",
   "url": "https://www.kwik-fit.com/tyre-pressure",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Sinhala New Year Traditions",
@@ -472,12 +472,12 @@
  {
   "title": "Search results - Pinterest recipe boards",
   "url": "https://www.pinterest.com/search/pins/?q=dinner%20ideas",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Yoga Retreat Pet Sitter Booking",
   "url": "https://www.rover.com/s/Seattle--WA--USA",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "BBC Weather - Edinburgh",
@@ -1212,7 +1212,7 @@
  {
   "title": "Pregnancy Week by Week - BabyCenter",
   "url": "https://www.babycenter.com/pregnancy/week-by-week",
-  "group": "health"
+  "group": "family"
  },
  {
   "title": "NHS inform - Flu",
@@ -1367,7 +1367,7 @@
  {
   "title": "Mortgage Calculator - Bankrate",
   "url": "https://www.bankrate.com/mortgages/mortgage-calculator/",
-  "group": "finance"
+  "group": "realestate"
  },
  {
   "title": "Binance - Buy Crypto",
@@ -1377,7 +1377,7 @@
  {
   "title": "Compare Home Loans - Canstar",
   "url": "https://www.canstar.com.au/home-loans/",
-  "group": "finance"
+  "group": "realestate"
  },
  {
   "title": "Coursera | Online Courses From Top Universities",
@@ -1502,7 +1502,7 @@
  {
   "title": "Google Scholar - climate adaptation citations",
   "url": "https://scholar.google.com/scholar?q=climate+adaptation+coastal+cities",
-  "group": "learning"
+  "group": "science"
  },
  {
   "title": "JSTOR - Journal Articles",
@@ -1522,7 +1522,7 @@
  {
   "title": "Photography Basics for Beginners - Digital Photography School",
   "url": "https://digital-photography-school.com/photography-basics/",
-  "group": "learning"
+  "group": "photo"
  },
  {
   "title": "Past Papers - A/L Sri Lanka",
@@ -1807,7 +1807,7 @@
  {
   "title": "Goodreads - My Books",
   "url": "https://www.goodreads.com/review/list",
-  "group": "social"
+  "group": "books"
  },
  {
   "title": "Strava Club Feed",

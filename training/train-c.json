@@ -1427,7 +1427,7 @@
  {
   "title": "Live Stream: Bald Eagle Nest Cam",
   "url": "https://www.youtube.com/watch?v=Ea9gL3nCm6S",
-  "group": "videos"
+  "group": "pets"
  },
  {
   "title": "(7) Dude Perfect - All Sports Golf Battle 3 - YouTube",
@@ -1787,17 +1787,17 @@
  {
   "title": "Crunchyroll - Frieren: Beyond Journey's End Episode 12",
   "url": "https://www.crunchyroll.com/watch/GJWU2VKK3/a-real-hero",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "葬送のフリーレン 第2期 | アニメ公式サイト",
   "url": "https://frieren-anime.jp/",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "Solo Leveling - MyAnimeList.net",
   "url": "https://myanimelist.net/anime/52299/Ore_dake_Level_Up_na_Ken",
-  "group": "tv"
+  "group": "anime"
  },
  {
   "title": "La casa de papel | Sitio oficial de Netflix",
@@ -2282,7 +2282,7 @@
  {
   "title": "The Map of Physics - YouTube",
   "url": "https://www.youtube.com/watch?v=ZihywtixUYo",
-  "group": "learning"
+  "group": "science"
  },
  {
   "title": "TED: The power of vulnerability | Brené Brown",
@@ -3077,7 +3077,7 @@
  {
   "title": "Mortgage calculator | Rocket Mortgage",
   "url": "https://www.rocketmortgage.com/calculators/mortgage-calculator",
-  "group": "finance"
+  "group": "realestate"
  },
  {
   "title": "American Express - Statements & Activity",
@@ -3342,82 +3342,82 @@
  {
   "title": "Easy Chicken Tikka Masala Recipe - Cafe Delites",
   "url": "https://cafedelites.com/chicken-tikka-masala/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Best Banana Bread Recipe - Allrecipes",
   "url": "https://www.allrecipes.com/recipe/20144/banana-banana-bread/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "BBC Good Food - Easy lasagne",
   "url": "https://www.bbcgoodfood.com/recipes/easy-lasagne",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Sri Lankan chicken curry - Hungry Lankan",
   "url": "https://www.hungrylankan.com/recipes/sri-lankan-chicken-curry/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Dal Makhani Recipe - Hebbars Kitchen",
   "url": "https://hebbarskitchen.com/dal-makhani-recipe-restaurant-style/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Perfect Sourdough Bread - The Perfect Loaf",
   "url": "https://www.theperfectloaf.com/beginners-sourdough-bread/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "NYT Cooking - Marcella Hazan's Tomato Sauce",
   "url": "https://cooking.nytimes.com/recipes/1015178-marcella-hazans-tomato-sauce",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "How To Make Perfect Ramen at Home - YouTube",
   "url": "https://www.youtube.com/watch?v=Rm2hP4cK8eJ",
-  "group": "videos"
+  "group": "food"
  },
  {
   "title": "(5) Gordon Ramsay's perfect scrambled eggs - YouTube",
   "url": "https://www.youtube.com/watch?v=PUP7U5vTMM0",
-  "group": "videos"
+  "group": "food"
  },
  {
   "title": "Tortilla de patatas: receta tradicional | Directo al Paladar",
   "url": "https://www.directoalpaladar.com/recetas-de-huevos/tortilla-de-patatas-receta-tradicional",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Kaiserschmarrn Rezept | Chefkoch",
   "url": "https://www.chefkoch.de/rezepte/1028261208004498/Kaiserschmarrn.html",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Recette de la blanquette de veau | Marmiton",
   "url": "https://www.marmiton.org/recettes/recette_blanquette-de-veau_18898.aspx",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "肉じゃがのレシピ・作り方 - クックパッド",
   "url": "https://cookpad.com/jp/recipes/18493721",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "पनीर बटर मसाला रेसिपी - NDTV Food",
   "url": "https://food.ndtv.com/recipe-paneer-butter-masala-hindi-952187",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "(2) What's your go-to weeknight dinner? : r/Cooking",
   "url": "https://www.reddit.com/r/Cooking/comments/1gy4m9k/whats_your_goto_weeknight_dinner/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Serious Eats - The Food Lab's Complete Guide to Sous Vide Steak",
   "url": "https://www.seriouseats.com/food-lab-complete-guide-to-sous-vide-steak",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Weather - BBC Weather London",
@@ -3457,167 +3457,167 @@
  {
   "title": "BBC Sport - Premier League Football Scores & Fixtures",
   "url": "https://www.bbc.co.uk/sport/football/premier-league/scores-fixtures",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Arsenal 2-1 Chelsea: Live score & updates - BBC Sport",
   "url": "https://www.bbc.co.uk/sport/football/live/c9w2k4p1xr3t",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "ESPN - NBA Scoreboard",
   "url": "https://www.espn.com/nba/scoreboard",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "ESPNcricinfo - India vs Australia, 3rd Test Live Score",
   "url": "https://www.espncricinfo.com/series/india-in-australia-2024-25-1426547/australia-vs-india-3rd-test-1426557/live-cricket-score",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Cricbuzz - Live Cricket Scores",
   "url": "https://www.cricbuzz.com/cricket-match/live-scores",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Formula 1 - Las Vegas Grand Prix 2025 - Race Results",
   "url": "https://www.formula1.com/en/results/2025/races/1270/las-vegas/race-result",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "(8) Post Match Thread: Liverpool 3-0 Real Madrid : r/soccer",
   "url": "https://www.reddit.com/r/soccer/comments/1h0k2pm/post_match_thread_liverpool_30_real_madrid/",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Highlights: Real Madrid vs Barcelona | LaLiga 2025/26 - YouTube",
   "url": "https://www.youtube.com/watch?v=Rb5mH3lLg8C",
-  "group": "videos"
+  "group": "sports"
  },
  {
   "title": "NFL Fantasy Football - My Team",
   "url": "https://fantasy.nfl.com/league/1234567/team/3",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Wimbledon 2025 - Draws",
   "url": "https://www.wimbledon.com/en_GB/draws/index.html",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "AFL Ladder 2025 - AFL.com.au",
   "url": "https://www.afl.com.au/ladder",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Marca - Resultados de fútbol en directo",
   "url": "https://www.marca.com/futbol/resultados.html",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Kicker - Bundesliga Tabelle",
   "url": "https://www.kicker.de/bundesliga/tabelle",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "Results | Bushy parkrun",
   "url": "https://www.parkrun.org.uk/bushy/results/latestresults/",
-  "group": "other"
+  "group": "sports"
  },
  {
   "title": "How to fix a leaking kitchen tap - Wickes",
   "url": "https://www.wickes.co.uk/how-to-guides/plumbing/fix-leaking-tap",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "This Old House - How to Patch Drywall",
   "url": "https://www.thisoldhouse.com/walls/21016474/how-to-patch-drywall",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "(3) How to Lay Laminate Flooring for Beginners - YouTube",
   "url": "https://www.youtube.com/watch?v=Lf6nY2bDk3Q",
-  "group": "videos"
+  "group": "home"
  },
  {
   "title": "RHS - How to grow tomatoes",
   "url": "https://www.rhs.org.uk/vegetables/tomatoes/grow-your-own",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "(4) Why are my monstera leaves turning yellow? : r/houseplants",
   "url": "https://www.reddit.com/r/houseplants/comments/1gw5k3q/why_are_my_monstera_leaves_turning_yellow/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Gardeners' World - What to do in the garden in November",
   "url": "https://www.gardenersworld.com/gardening-guides/what-to-do-in-the-garden-in-november/",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Houzz - Small bathroom design ideas",
   "url": "https://www.houzz.com/photos/small-bathroom-ideas-phbr1-bp~t_712~a_34-14",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Apartment Therapy - 25 small living room ideas",
   "url": "https://www.apartmenttherapy.com/small-living-room-ideas-36764573",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Mumsnet Talk - AIBU to not want a big christening?",
   "url": "https://www.mumsnet.com/talk/am_i_being_unreasonable/5201837-aibu-to-not-want-a-big-christening",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "BabyCenter - Your 9-month-old's development",
   "url": "https://www.babycenter.com/baby/baby-development/your-9-month-old_1144",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "What to Expect - Toddler sleep regression",
   "url": "https://www.whattoexpect.com/toddler/sleep/toddler-sleep-regression/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "(6) How do you get a toddler to eat vegetables? : r/Parenting",
   "url": "https://www.reddit.com/r/Parenting/comments/1gt8m4p/how_do_you_get_a_toddler_to_eat_vegetables/",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "School term dates 2025 to 2026 - Surrey County Council",
   "url": "https://www.surreycc.gov.uk/schools-and-learning/schools/term-dates",
-  "group": "other"
+  "group": "family"
  },
  {
   "title": "Petfinder - Adopt a dog near you",
   "url": "https://www.petfinder.com/search/dogs-for-adoption/us/ny/brooklyn/",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "American Kennel Club - Golden Retriever breed info",
   "url": "https://www.akc.org/dog-breeds/golden-retriever/",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "(9) My cat knocks everything off the table : r/cats",
   "url": "https://www.reddit.com/r/cats/comments/1gv3k9q/my_cat_knocks_everything_off_the_table/",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Rover - Dog sitters near you",
   "url": "https://www.rover.com/search/?service_type=dog-boarding",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Can dogs eat grapes? - PDSA",
   "url": "https://www.pdsa.org.uk/pet-help-and-advice/pet-health-hub/conditions/grape-and-raisin-poisoning-in-dogs",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Puppy training: crate training in 7 days - YouTube",
   "url": "https://www.youtube.com/watch?v=Pt9gS1cTr4R",
-  "group": "videos"
+  "group": "pets"
  },
  {
   "title": "GOV.UK - Renew your passport",
@@ -3717,102 +3717,102 @@
  {
   "title": "Zillow - 3 bd, 2 ba home for sale in Austin, TX",
   "url": "https://www.zillow.com/homedetails/1204-Elm-St-Austin-TX-78702/29483712_zpid/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Rightmove - 2 bedroom flat to rent in Clapham",
   "url": "https://www.rightmove.co.uk/properties/154839271#/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Zoopla - House prices in Bristol",
   "url": "https://www.zoopla.co.uk/house-prices/bristol/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Domain - Apartments for rent in Surry Hills, NSW",
   "url": "https://www.domain.com.au/rent/surry-hills-nsw-2010/apartment/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "realestate.com.au - Sold properties in Fitzroy",
   "url": "https://www.realestate.com.au/sold/in-fitzroy,+vic+3065/list-1",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "MagicBricks - 2 BHK flats for sale in Pune",
   "url": "https://www.magicbricks.com/2-bhk-flats-for-sale-in-pune-pppfs",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Immobilienscout24 - Wohnung mieten in München",
   "url": "https://www.immobilienscout24.de/Suche/de/bayern/muenchen/wohnung-mieten",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Idealista - Pisos en alquiler en Madrid",
   "url": "https://www.idealista.com/alquiler-viviendas/madrid-madrid/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Redfin - Open houses near Seattle",
   "url": "https://www.redfin.com/city/16163/WA/Seattle/open-houses",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "(5) Is it a bad time to buy a house? : r/RealEstate",
   "url": "https://www.reddit.com/r/RealEstate/comments/1gr2k8m/is_it_a_bad_time_to_buy_a_house/",
-  "group": "other"
+  "group": "realestate"
  },
  {
   "title": "Toyota RAV4 Hybrid 2026 - Specs & Features",
   "url": "https://www.toyota.com/rav4hybrid/features/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Car and Driver - 2026 Honda Civic Review",
   "url": "https://www.caranddriver.com/honda/civic-2026",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Top Gear - Best electric cars 2025",
   "url": "https://www.topgear.com/car-news/electric/best-electric-cars",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "AutoTrader UK - Used Volkswagen Golf",
   "url": "https://www.autotrader.co.uk/car-search?make=Volkswagen&model=Golf",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "CarDekho - Tata Nexon EV price in Delhi",
   "url": "https://www.cardekho.com/tata/nexon-ev/price-in-new-delhi",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Kelley Blue Book - What's my car worth?",
   "url": "https://www.kbb.com/whats-my-car-worth/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "(3) Check engine light after oil change - normal? : r/MechanicAdvice",
   "url": "https://www.reddit.com/r/MechanicAdvice/comments/1gq9n2k/check_engine_light_after_oil_change_normal/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "How to change a car battery - ChrisFix - YouTube",
   "url": "https://www.youtube.com/watch?v=Cb4rT9xFx2B",
-  "group": "videos"
+  "group": "cars"
  },
  {
   "title": "ADAC - Autotest: Skoda Octavia Combi",
   "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/skoda/octavia/",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "PlugShare - EV charging map",
   "url": "https://www.plugshare.com/map",
-  "group": "other"
+  "group": "cars"
  },
  {
   "title": "Ravelry: Easy cable knit beanie pattern",
@@ -3827,7 +3827,7 @@
  {
   "title": "Instructables - DIY wooden bookshelf",
   "url": "https://www.instructables.com/DIY-Wooden-Bookshelf-Simple/",
-  "group": "other"
+  "group": "hardware"
  },
  {
   "title": "Lego Ideas - Product ideas",
@@ -3837,42 +3837,42 @@
  {
   "title": "Thingiverse - Articulated dragon",
   "url": "https://www.thingiverse.com/thing:4823910",
-  "group": "other"
+  "group": "hardware"
  },
  {
   "title": "Printables - Cable organizer clip",
   "url": "https://www.printables.com/model/482910-cable-organizer-clip",
-  "group": "other"
+  "group": "hardware"
  },
  {
   "title": "(7) How I shoot street photography with a 35mm lens - YouTube",
   "url": "https://www.youtube.com/watch?v=Sp8fN3gHm2X",
-  "group": "videos"
+  "group": "photo"
  },
  {
   "title": "DPReview - Fujifilm X100VI review",
   "url": "https://www.dpreview.com/reviews/fujifilm-x100vi-review",
-  "group": "other"
+  "group": "photo"
  },
  {
   "title": "Goodreads - Currently reading",
   "url": "https://www.goodreads.com/review/list/98273645?shelf=currently-reading",
-  "group": "other"
+  "group": "books"
  },
  {
   "title": "Fourth Wing by Rebecca Yarros | Goodreads",
   "url": "https://www.goodreads.com/book/show/61431922-fourth-wing",
-  "group": "other"
+  "group": "books"
  },
  {
   "title": "StoryGraph - Reading challenge",
   "url": "https://app.thestorygraph.com/reading_challenges/2025",
-  "group": "other"
+  "group": "books"
  },
  {
   "title": "Project Gutenberg - Pride and Prejudice",
   "url": "https://www.gutenberg.org/ebooks/1342",
-  "group": "other"
+  "group": "books"
  },
  {
   "title": "Bible Gateway - John 3:16 (NIV)",
@@ -3952,7 +3952,7 @@
  {
   "title": "Axolotl - Wikipedia",
   "url": "https://en.wikipedia.org/wiki/Axolotl",
-  "group": "other"
+  "group": "pets"
  },
  {
   "title": "Liste der Burgen in Bayern – Wikipedia",
@@ -3972,42 +3972,42 @@
  {
   "title": "Yelp - Best pizza near me in Brooklyn",
   "url": "https://www.yelp.com/search?find_desc=pizza&find_loc=Brooklyn%2C+NY",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Checkatrade - Electricians in Leeds",
   "url": "https://www.checkatrade.com/Search/Electrician/in/Leeds",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Angi - Find top-rated plumbers",
   "url": "https://www.angi.com/companylist/plumbing.htm",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "Urban Company - Home cleaning services in Mumbai",
   "url": "https://www.urbancompany.com/mumbai-cleaning",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "TaskRabbit - Furniture assembly",
   "url": "https://www.taskrabbit.com/services/furniture-assembly",
-  "group": "other"
+  "group": "home"
  },
  {
   "title": "OpenTable - Dinner reservations tonight",
   "url": "https://www.opentable.com/s?dateTime=2025-11-16T19%3A00&covers=2",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Deliveroo - Restaurants near you",
   "url": "https://deliveroo.co.uk/restaurants/london/clapham",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "PickMe Food",
   "url": "https://food.pickme.lk/",
-  "group": "other"
+  "group": "food"
  },
  {
   "title": "Royal Mail - Find a post office",
@@ -4047,7 +4047,7 @@
  {
   "title": "Astronomy Picture of the Day",
   "url": "https://apod.nasa.gov/apod/astropix.html",
-  "group": "other"
+  "group": "science"
  },
  {
   "title": "https://www.ikea.com/gb/en/assembly_instructions/malm-chest-of-6-drawers__AA-2398381-2.pdf",

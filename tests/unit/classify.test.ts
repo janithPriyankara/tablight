@@ -110,8 +110,8 @@ describe('classify', () => {
   });
 });
 describe('bundled head', () => {
-  it('matches the starter groups and its own dimension', () => {
-    expect(HEAD.labels).toEqual(INSTALLED.map((g) => g.id));
+  it('knows every seed group, installed and on-demand, and its own dimension', () => {
+    expect(HEAD.labels).toEqual(STARTER_GROUPS.map((g) => g.id));
     expect(HEAD.W).toHaveLength(HEAD.labels.length);
     for (const row of HEAD.W) expect(row).toHaveLength(HEAD.dim);
     expect(HEAD.b).toHaveLength(HEAD.labels.length);
