@@ -24,6 +24,8 @@ export interface SimOpts {
   userShare?: number;
   /** Each seed is one replay (a different share placed by the user); counts are summed over them. */
   seeds?: number[];
+  /** Called for every tab the pipeline placed (including `other` rows), with the group it chose (null: Unsorted). */
+  record?: (row: SessionRow, groupId: string | null) => void;
 }
 /** The default share of each person's tabs the user places by hand. */
 export const USER_SHARE = 0.3;
@@ -120,6 +122,7 @@ export async function loadSessionSim(): Promise<{
           if (groupId !== null && by !== null && !GUESSES.has(by) && groupId !== VIDEOS_GROUP_ID && groupId !== OTHER_GROUP_ID) {
             pool.unshift({ vec: v, groupId, normUrl });
           }
+          opts.record?.(r, groupId);
           if (r.group === OTHER_GROUP_ID) {
             out.others++;
             if (groupId !== null) out.otherAssigned++;
