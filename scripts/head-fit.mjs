@@ -253,5 +253,7 @@ export function fitHead({
 
   // Final head: same L2, trained on the whole pool (every row, calibration rows included).
   const final = train(all(), chosen.l2);
-  return { chosen, cv, similarity, similarityCount: nearest.length, final, valIdx, trainIdx, scored };
+  // oof: the out-of-fold blended scores behind cv.threshold (pool index → per-label scores), for the scored rows
+  // the rule leaves to the head (scripts/tune-youtube-bar.mjs reads them).
+  return { chosen, cv, similarity, similarityCount: nearest.length, final, valIdx, trainIdx, scored, oof: oof.cache };
 }
