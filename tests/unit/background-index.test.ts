@@ -76,6 +76,19 @@ describe('background index', () => {
     expect(suggest).toHaveBeenCalledTimes(1);
     mock.uninstall();
   });
+  it('a trained group that arrived without a centroid gets its seed centroid once the pipeline embeds', async () => {
+    const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/5/y', title: 'Y question' }] }] });
+    const bg = await import('../../src/background/index');
+    const { whenTabIndexIdle } = await import('../../src/background/tab-index');
+    const db = await bg.getDb();
+    await db.groups.put({ id: 'food', name: 'Food & cooking', color: '#00a4c9', icon: 'x', builtIn: true, exemplars: [], centroid: null, createdAt: 1 });
+    mock.fireInstalled('update');
+    await vi.waitFor(async () => {
+      await whenTabIndexIdle();
+      expect((await db.groups.get('food'))!.centroid).not.toBeNull();
+    });
+    mock.uninstall();
+  });
   it('a fresh install marks the interests step fresh before the dashboard opens', async () => {
     const mock = installChromeMock({ windows: [] });
     const bg = await import('../../src/background/index');

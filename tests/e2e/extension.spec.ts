@@ -16,6 +16,10 @@ import { captureNetwork, type NetworkCapture } from './fixtures/cdp-network';
 import { DIST, assertBuilt, escapeRe, launchExtension, navButton, rpc, state } from './fixtures/launch';
 import { PAGES, startPageServer, type PageServer } from './fixtures/server';
 import { MODEL_ID } from '../../scripts/model-manifest.mjs';
+import { GROW_MIN, REMOVED_TRAINED_KEY } from '../../src/background/grow';
+import { TRAINED_IDS } from '../../src/classify/assign';
+import { VIDEOS_GROUP_ID } from '../../src/classify/pick';
+import { STARTER_GROUPS } from '../../src/classify/seeds';
 
 assertBuilt();
 /** Generous: the first model load in a fresh profile, and 50+ tabs loading at once. */
@@ -95,17 +99,47 @@ async function openWindows(page: Page, windows: string[][]): Promise<void> {
 
 const onServer = (i: Item) => i.url.startsWith(server.origin);
 
-/** Waits until every test tab is loaded, indexed under its real title, and classified (queue empty). */
+/**
+ * Whether a trained group is still to grow (grow.ts, after the queue empties): GROW_MIN auto tabs in Unsorted or
+ * Videos want it, and no group has its id or name, and the user did not remove it.
+ */
+function growPending(s: DashboardState, removed: string[]): boolean {
+  const ids = new Set(s.groups.map((g) => g.id));
+  const names = new Set(s.groups.filter((g) => !g.suggested).map((g) => g.name.toLowerCase()));
+  const wanting = new Map<string, number>();
+  for (const i of s.items) {
+    if (i.groupSource !== 'auto' || !i.classifiable || (i.groupId !== null && i.groupId !== VIDEOS_GROUP_ID)) continue;
+    if (i.want !== undefined && TRAINED_IDS.has(i.want)) wanting.set(i.want, (wanting.get(i.want) ?? 0) + 1);
+  }
+  return [...wanting].some(([id, n]) => {
+    const name = STARTER_GROUPS.find((g) => g.id === id)?.name.toLowerCase() ?? '';
+    return n >= GROW_MIN && !ids.has(id) && !names.has(name) && !removed.includes(id);
+  });
+}
+/** Where every item is and which groups exist: equal across two polls once nothing moves any more. */
+const placement = (s: DashboardState) =>
+  JSON.stringify([s.groups.map((g) => g.id).sort(), s.items.map((i) => `${i.id}:${i.groupId}:${i.state}`).sort()]);
+/**
+ * Waits until every test tab is loaded, indexed under its real title, and classified (queue empty), and the
+ * groups that grow once the queue empties have grown: none is pending and placement held still across two polls.
+ */
 async function waitSettled(page: Page, tabs: number): Promise<DashboardState> {
   await expect.poll(async () => {
     const t = await serverTabs(page);
     return t.length === tabs && t.every((x) => x.status === 'complete' && x.title && !x.title.startsWith('http'));
   }, { timeout: SETTLE_MS, intervals: [250] }).toBe(true);
   let last: DashboardState | undefined;
+  let prev = '';
   await expect.poll(async () => {
     last = await state(page);
     const mine = last.items.filter((i) => onServer(i) && i.state !== 'stashed');
-    return last.modelReady && last.queued === 0 && mine.length === tabs && mine.every((i) => i.embKey !== undefined && !i.title.startsWith('http'));
+    const classified = last.modelReady && last.queued === 0 && mine.length === tabs &&
+      mine.every((i) => i.embKey !== undefined && !i.title.startsWith('http'));
+    const removed = await page.evaluate(async (k) => ((await chrome.storage.local.get(k))[k] ?? []) as string[], REMOVED_TRAINED_KEY);
+    const now = placement(last);
+    const still = now === prev;
+    prev = now;
+    return classified && !growPending(last, removed) && still;
   }, { timeout: SETTLE_MS, intervals: [250] }).toBe(true);
   return last!;
 }

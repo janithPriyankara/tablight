@@ -11,7 +11,7 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
-import { growGroups } from './grow';
+import { fillTrainedCentroids, growGroups } from './grow';
 import { applyInterests } from './interests';
 import { findSuspicious } from './suspicious';
 import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
@@ -116,6 +116,9 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
     await backfill(db, false);
     const written = await processQueue(db);
     if (written > 0) {
+      // The model just embedded, so it is warm: trained groups made while it was cold (a sync pull or an import
+      // right after launch) get their seed centroid now. Never throws.
+      await fillTrainedCentroids(db, embed);
       // Trained groups that tabs now need appear on the fly; a failure here never stops the pipeline.
       const grown = await growGroups(db, embed).catch((e: unknown) => {
         console.error('growing groups failed', e);

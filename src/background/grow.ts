@@ -106,16 +106,32 @@ export async function growGroups(
 }
 
 /**
+ * How long a sync pull or an import waits for the seeds of a trained group to embed. On a just-launched profile the
+ * offscreen model loads cold; past this the group is made without a centroid (fillTrainedCentroids adds it later).
+ */
+export const SEED_EMBED_TIMEOUT_MS = 3000;
+/** `p`, or a rejection once `ms` have passed (the work itself goes on; its result is dropped). */
+function within<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timed out')), ms);
+  });
+  return Promise.race([p, late]).finally(() => clearTimeout(timer));
+}
+/**
  * The trained groups that groups arriving by name (sync, backup) should become: for each name that matches a seed
  * group's name (case-insensitive) while no group has that name or that id, the group built from its seeds
  * (keyed by the lower-cased name). The seeds are embedded here, so call it before opening a transaction. When
- * embedding fails (or there is no `embedFn`) the group is still built, with no centroid; it never blocks the caller.
+ * embedding fails or takes longer than `timeoutMs` (or there is no `embedFn`) the group is still built, with no
+ * centroid, and the rest are built without trying again; it never blocks the caller for long.
  */
 export async function trainedGroupsForNames(
   db: Db,
   names: string[],
   embedFn?: (t: string[]) => Promise<Float32Array[]>,
+  timeoutMs = SEED_EMBED_TIMEOUT_MS,
 ): Promise<Map<string, Group>> {
+  let model = embedFn;
   const out = new Map<string, Group>();
   const groups = (await db.groups.all()).filter((g) => !g.suggested);
   const haveName = new Set(groups.map((g) => g.name.toLowerCase()));
@@ -126,13 +142,48 @@ export async function trainedGroupsForNames(
     if (id === null || out.has(key) || haveName.has(key) || haveId.has(id)) continue;
     let g: Group;
     try {
-      if (!embedFn) throw new Error('no embedder');
-      g = await buildTrainedGroup(id, embedFn);
+      if (!model) throw new Error('no embedder');
+      g = await within(buildTrainedGroup(id, model), timeoutMs);
     } catch {
+      model = undefined; // cold or failing: the other names don't wait for it again
       const seed = STARTER_GROUPS.find((x) => x.id === id)!;
       g = { id, name: seed.name, color: seed.color, icon: seed.icon, builtIn: true, exemplars: [], centroid: null, createdAt: Date.now() };
     }
     out.set(key, g);
   }
   return out;
+}
+
+/**
+ * Gives each trained group that has no centroid (made while the model was cold, see trainedGroupsForNames) the
+ * centroid of its seeds. Only the centroid is written, and only while it is still null; a group whose seeds fail
+ * to embed waits for a later pass. Never throws. Returns how many groups got one.
+ */
+export async function fillTrainedCentroids(
+  db: Db,
+  embedFn: (t: string[]) => Promise<Float32Array[]>,
+): Promise<number> {
+  try {
+    const todo = (await db.groups.all()).filter((g) => TRAINED_IDS.has(g.id) && g.centroid === null && !g.suggested);
+    if (!todo.length) return 0;
+    const built = new Map<string, number[]>();
+    for (const g of todo) {
+      const c = (await buildTrainedGroup(g.id, embedFn).catch(() => null))?.centroid;
+      if (c) built.set(g.id, c);
+    }
+    if (!built.size) return 0;
+    return await db.tx(['groups'], async (s) => {
+      let n = 0;
+      for (const [id, centroid] of built) {
+        const cur = await s.groups.get(id);
+        if (!cur || cur.centroid !== null) continue; // gone, or given one meanwhile
+        await s.groups.put({ ...cur, centroid });
+        n++;
+      }
+      return n;
+    });
+  } catch (e) {
+    console.error('filling trained centroids failed', e);
+    return 0;
+  }
 }
