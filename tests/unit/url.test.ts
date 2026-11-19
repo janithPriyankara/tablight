@@ -122,6 +122,18 @@ describe('embedText', () => {
     expect(embedText({ title: 'Agents', url: 'https://www.youtube.com/@agents' }))
       .toBe('Agents — YouTube video @agents');
   });
+  it('reads a messy YouTube title: no counter, hashtags as words, no generic tags', () => {
+    expect(embedText({ title: '(1157) He saved her #cdrama #shorts - YouTube', url: 'https://www.youtube.com/watch?v=1' }))
+      .toBe('He saved her cdrama');
+    expect(embedText({ title: '32 tricks #ClaudeCode #AI #viral #fyp', url: 'https://www.youtube.com/shorts/abc' }))
+      .toBe('32 tricks Claude Code AI');
+    expect(embedText({ title: 'Joe Rogan Experience #2301 - YouTube', url: 'https://youtu.be/xyz' }))
+      .toBe('Joe Rogan Experience #2301');
+    expect(embedText({ title: '#shorts #viral', url: 'https://www.youtube.com/shorts/abc' })).toBe('#shorts #viral');
+  });
+  it('leaves hashtags alone on other pages', () => {
+    expect(embedText({ title: 'Tips #shorts #cdrama', url: 'https://example.com/' })).toBe('Tips #shorts #cdrama — example.com');
+  });
   it('appends meaningful path words (spec 7.3.1)', () => {
     expect(embedText({ title: 'Overview', url: 'https://docs.claude.com/en/docs/agent-sdk/overview' }))
       .toBe('Overview — docs.claude.com docs agent sdk overview');

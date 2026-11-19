@@ -205,9 +205,30 @@ export function isYouTubeVideo(url: string): boolean {
   const host = bareHost(u);
   return (host === 'youtube.com' || host === 'youtu.be') && kindOf(url) === 'watch';
 }
-/** Title and address only. A YouTube video is read by its title alone: the source word would pull every video together. */
+/** Hashtags that say how a video is posted or promoted, not what it is about. */
+const GENERIC_TAGS = new Set([
+  'shorts', 'short', 'ytshorts', 'youtubeshorts', 'shortsfeed', 'shortvideo', 'shortsvideo', 'youtube', 'viral',
+  'viralvideo', 'viralshorts', 'fyp', 'foryou', 'foryoupage', 'trending', 'trend', 'explore', 'subscribe', 'reels',
+  'tiktok', 'video', 'new', 'live',
+]);
+/**
+ * A YouTube title as words: "#cdrama" reads as "cdrama", "#ClaudeCode" as "Claude Code", and generic tags
+ * (#shorts, #viral) go. Numbered hashtags ("Podcast #142") stay as they are. A title of generic tags alone is kept.
+ */
+function youTubeWords(title: string): string {
+  const out = title
+    .replace(/(^|\s)#(\p{L}[\p{L}\p{N}_]*)/gu, (_, pre: string, tag: string) =>
+      GENERIC_TAGS.has(tag.toLowerCase()) ? pre : `${pre}${tag.replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2').replace(/_/g, ' ')}`)
+    .replace(/\s+/g, ' ')
+    .trim();
+  return out || title;
+}
+/**
+ * Title and address only. A YouTube video is read by its title alone (the source word would pull every video
+ * together), with its hashtags as words.
+ */
 export function embedText(item: Pick<Item, 'title' | 'url'>): string {
-  if (isYouTubeVideo(item.url)) return cleanTitle(item.title, item.url);
+  if (isYouTubeVideo(item.url)) return youTubeWords(cleanTitle(item.title, item.url));
   const words = pathWords(item.url);
   return `${cleanTitle(item.title, item.url)} — ${readableSource(item.url)}${words ? ` ${words}` : ''}`;
 }

@@ -508,7 +508,7 @@ describe('embedding key', () => {
     const { cleanTitle } = await import('../../src/shared/url');
     const item = { url: 'https://example.com/a', normUrl: 'example.com/a', title: 'A page' };
     const old = await sha1hex(`${EMBED_MODEL}\n${item.normUrl}\n${cleanTitle(item.title, item.url)}`);
-    expect(EMBED_INPUT_VERSION).toBe(2);
+    expect(EMBED_INPUT_VERSION).toBe(3);
     expect(await embeddingKey(item)).not.toBe(old);
   });
 });
