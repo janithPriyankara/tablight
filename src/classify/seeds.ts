@@ -7,10 +7,15 @@
 export interface StarterGroup {
   id: string;
   name: string;
-  /** Hues spaced evenly round the wheel (OKLCH L 0.60, C 0.12), so every group stays distinguishable. */
+  /** Hues spaced evenly round the wheel (OKLCH L 0.60, C 0.12), so every group stays distinguishable. The on-demand groups fill the gaps between them (L 0.55-0.65, C 0.09-0.15). */
   color: string;
   icon: string;
   seeds: string[];
+  /**
+   * Not created at install: the group appears later, when the user picks it in the interests step or when two
+   * tabs need it. Its seeds still give it a centroid (buildTrainedGroup); the trained head decides assignment.
+   */
+  onDemand?: boolean;
 }
 
 export const STARTER_GROUPS: StarterGroup[] = [
@@ -259,4 +264,186 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
   { id: 'other', name: 'Other', color: '#6f6e77', icon: '📁', seeds: [] },
+  {
+    id: 'hardware', name: 'Hardware & making', color: '#00aba3', icon: '🛠️', onDemand: true,
+    seeds: [
+      'machining, lathes, milling and CNC machines',
+      '3D printing, filament, slicers and print settings',
+      'woodworking, joinery and workshop tools',
+      'electronics projects, circuits and soldering',
+      'microcontrollers, single-board computers and sensors',
+      'PCB design, schematics and circuit boards',
+      'robotics builds, motors, servos and drones',
+      'maker projects, prototyping and fabrication',
+    ],
+  },
+  {
+    id: 'science', name: 'Science & engineering', color: '#238735', icon: '🔬', onDemand: true,
+    seeds: [
+      'science explainers and discoveries',
+      'physics, quantum mechanics and relativity',
+      'chemistry, reactions and materials',
+      'biology, genetics and evolution',
+      'astronomy, space exploration, planets and rockets',
+      'research news and scientific papers',
+      'engineering explainers, structures and energy',
+      'mathematics, experiments and lab work',
+    ],
+  },
+  {
+    id: 'sports', name: 'Sports', color: '#47a753', icon: '⚽', onDemand: true,
+    seeds: [
+      'sports news, scores and results',
+      'match fixtures, standings and league tables',
+      'football, basketball, baseball and cricket',
+      'tennis, golf, motorsport and athletics',
+      'teams, players, transfers and coaches',
+      'match highlights and game recaps',
+      'fantasy sports, drafts and betting odds',
+      'tournaments, championships and the Olympics',
+    ],
+  },
+  {
+    id: 'food', name: 'Food & cooking', color: '#00a4c9', icon: '🍳', onDemand: true,
+    seeds: [
+      'recipes, ingredients and cooking methods',
+      'baking, bread, cakes and desserts',
+      'restaurant reviews, menus and reservations',
+      'food delivery and takeaway menus',
+      'cooking videos and kitchen techniques',
+      'meal prep, dinner ideas and weeknight meals',
+      'food blogs, cuisines and street food',
+      'coffee, cocktails, wine and drinks',
+    ],
+  },
+  {
+    id: 'cars', name: 'Cars & vehicles', color: '#b84930', icon: '🚗', onDemand: true,
+    seeds: [
+      'car reviews, test drives and comparisons',
+      'used cars for sale, listings and dealers',
+      'car repair, maintenance and servicing',
+      'engines, tires, brakes and spare parts',
+      'electric vehicles, charging and batteries',
+      'motorbikes, scooters and riding gear',
+      'car forums, tuning and modifications',
+      'trucks, SUVs, sedans and new model launches',
+    ],
+  },
+  {
+    id: 'home', name: 'Home & garden', color: '#db684e', icon: '🏡', onDemand: true,
+    seeds: [
+      'home repair, plumbing and DIY projects',
+      'interior decorating and room makeovers',
+      'furniture, shelving and storage ideas',
+      'gardening, vegetable beds and landscaping',
+      'houseplants, watering and plant care',
+      'cleaning tips, laundry and organising',
+      'kitchen and bathroom renovation',
+      'tools, paint, flooring and home improvement',
+    ],
+  },
+  {
+    id: 'fashion', name: 'Fashion & beauty', color: '#a375d9', icon: '👗', onDemand: true,
+    seeds: [
+      'clothing style, outfits and trends',
+      'fashion news, runway shows and lookbooks',
+      'skincare routines and moisturisers',
+      'makeup tutorials, lipstick and foundation',
+      'hair care, haircuts and hairstyles',
+      'shoes, handbags, jewellery and accessories',
+      'wardrobe basics, capsule wardrobe and styling tips',
+      'perfume, nails and grooming',
+    ],
+  },
+  {
+    id: 'pets', name: 'Pets & animals', color: '#518fe9', icon: '🐾', onDemand: true,
+    seeds: [
+      'pet care, feeding and grooming',
+      'dog training, breeds and behaviour',
+      'cat care, kittens and litter',
+      'pet adoption, shelters and rescue',
+      'vet advice, vaccines and pet health',
+      'aquariums, birds, rabbits and small pets',
+      'wildlife, wild animals and nature facts',
+      'horses, farm animals and animal welfare',
+    ],
+  },
+  {
+    id: 'family', name: 'Parenting & family', color: '#9d4da0', icon: '👶', onDemand: true,
+    seeds: [
+      'parenting advice and raising children',
+      'pregnancy, birth and newborn care',
+      'baby sleep, feeding and development',
+      'toddler and kids activities and crafts',
+      'schools, homework and education for children',
+      'teenagers, discipline and family life',
+      'family planning, adoption and fertility',
+      'family trips, birthday parties and games for kids',
+    ],
+  },
+  {
+    id: 'jobs', name: 'Jobs & careers', color: '#d1649c', icon: '💼', onDemand: true,
+    seeds: [
+      'job listings, openings and vacancies',
+      'job applications, cover letters and resumes',
+      'interview questions and interview preparation',
+      'salary ranges, pay and benefits',
+      'career advice, promotions and career change',
+      'remote jobs, freelance work and hiring',
+      'recruiters, networking and professional profiles',
+      'internships, graduate jobs and workplace skills',
+    ],
+  },
+  {
+    id: 'books', name: 'Books & reading', color: '#677a3d', icon: '📖', onDemand: true,
+    seeds: [
+      'book reviews and recommendations',
+      'reading lists, bestsellers and new releases',
+      'novels, fiction and fantasy books',
+      'non-fiction, memoirs and biographies',
+      'authors, publishers and literary prizes',
+      'ebooks, audiobooks and e-readers',
+      'poetry, classics and literature analysis',
+      'book clubs, reading challenges and shelves',
+    ],
+  },
+  {
+    id: 'photo', name: 'Photography', color: '#6363c6', icon: '📷', onDemand: true,
+    seeds: [
+      'photography techniques, composition and lighting',
+      'camera and lens reviews',
+      'photo editing, retouching and presets',
+      'portrait, landscape and street photography',
+      'aperture, shutter speed and ISO',
+      'photo portfolios and galleries',
+      'mirrorless and DSLR camera comparisons',
+      'drone, film and wildlife photography',
+    ],
+  },
+  {
+    id: 'anime', name: 'Anime & comics', color: '#16827d', icon: '🎌', onDemand: true,
+    seeds: [
+      'anime news, reviews and recommendations',
+      'manga chapters and manga releases',
+      'comic books, graphic novels and superheroes',
+      'webtoons and web comics',
+      'anime episodes, seasons and simulcasts',
+      'shonen, isekai and slice of life series',
+      'manga artists, light novels and studios',
+      'cosplay, conventions and fan art',
+    ],
+  },
+  {
+    id: 'realestate', name: 'Real estate', color: '#8888c4', icon: '🏠', onDemand: true,
+    seeds: [
+      'houses and apartments for sale',
+      'property listings, rentals and lettings',
+      'buying a home, mortgages and down payments',
+      'renting, landlords and tenants',
+      'real estate agents, open houses and viewings',
+      'housing market news and property prices',
+      'land, plots and new developments',
+      'home valuation, inspections and closing costs',
+    ],
+  },
 ];

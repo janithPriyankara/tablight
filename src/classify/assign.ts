@@ -1,6 +1,6 @@
 import type { Group } from '../shared/types';
 import { cosine, mean, normalize } from '../shared/vec';
-import { STARTER_GROUPS } from './seeds';
+import { STARTER_GROUPS, type StarterGroup } from './seeds';
 
 export const MAX_EXEMPLARS = 50;
 /** Never assigned automatically: only the user puts tabs in "Other". */
@@ -145,24 +145,45 @@ export function learn(group: Group, vec: number[]): Group {
   return { ...group, exemplars, centroid: centroidOf(exemplars) };
 }
 
-/**
- * Builds the built-in groups. Seeds are embedded once (one call) only to give each group an
- * initial centroid for clustering, naming and search; they are not exemplars and do not drive
- * assignment (the head does). `exemplars` holds user-learned vectors only.
- */
-export async function buildStarterGroups(
+/** The ids of the on-demand groups (seeds flagged `onDemand`): created only when picked or needed, never at install. */
+export const TRAINED_IDS: ReadonlySet<string> = new Set(STARTER_GROUPS.filter((g) => g.onDemand).map((g) => g.id));
+/** Embeds the seeds of `seeds` once (one call) and builds each group with a centroid from its own seed vectors. */
+async function buildGroups(
+  seeds: StarterGroup[],
   embedFn: (t: string[]) => Promise<Float32Array[]>,
 ): Promise<Group[]> {
-  const texts = STARTER_GROUPS.flatMap((g) => g.seeds);
+  const texts = seeds.flatMap((g) => g.seeds);
   const vecs = texts.length ? await embedFn(texts) : [];
   if (vecs.length !== texts.length) throw new Error('embedFn returned the wrong number of vectors');
   const now = Date.now();
   let i = 0;
-  return STARTER_GROUPS.map((g) => {
+  return seeds.map((g) => {
     const seedVecs = g.seeds.map(() => Array.from(vecs[i++]!));
     return {
       id: g.id, name: g.name, color: g.color, icon: g.icon, builtIn: true,
       exemplars: [], centroid: centroidOf(seedVecs), createdAt: now,
     };
   });
+}
+/**
+ * Builds the groups created at install (every seed not flagged `onDemand`). Seeds are embedded once (one call)
+ * only to give each group an initial centroid for clustering, naming and search; they are not exemplars and do
+ * not drive assignment (the head does). `exemplars` holds user-learned vectors only.
+ */
+export function buildStarterGroups(
+  embedFn: (t: string[]) => Promise<Float32Array[]>,
+): Promise<Group[]> {
+  return buildGroups(STARTER_GROUPS.filter((g) => !g.onDemand), embedFn);
+}
+/**
+ * Builds one group from its seeds, the same way as the starter groups: an on-demand group when it is picked, or
+ * an installed group the user deleted and wants back. Throws on an id that is not a seed group.
+ */
+export async function buildTrainedGroup(
+  id: string,
+  embedFn: (t: string[]) => Promise<Float32Array[]>,
+): Promise<Group> {
+  const seed = STARTER_GROUPS.find((g) => g.id === id);
+  if (!seed) throw new Error(`unknown group id: ${id}`);
+  return (await buildGroups([seed], embedFn))[0]!;
 }

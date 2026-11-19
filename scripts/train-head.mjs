@@ -46,7 +46,8 @@ const load = async (p) => (await runnerImport(join(root, p))).module;
 const { embedText } = await load('src/shared/url.ts');
 const { ruleGroup } = await load('src/classify/rules.ts');
 const { STARTER_GROUPS } = await load('src/classify/seeds.ts');
-const LABELS = STARTER_GROUPS.map((g) => g.id);
+// Installed groups only until the on-demand groups have training data.
+const LABELS = STARTER_GROUPS.filter((g) => !g.onDemand).map((g) => g.id);
 const OTHER = LABELS.indexOf('other');
 
 // ---------- data ----------

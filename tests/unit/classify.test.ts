@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { STARTER_GROUPS } from '../../src/classify/seeds';
 import { ruleGroup } from '../../src/classify/rules';
-import { buildStarterGroups, classify, learn, type Head } from '../../src/classify/assign';
+import { buildStarterGroups, buildTrainedGroup, TRAINED_IDS, classify, learn, type Head } from '../../src/classify/assign';
 import { HEAD } from '../../src/classify/head';
 import { nameCluster, suggestGroups } from '../../src/classify/cluster';
 import type { Group } from '../../src/shared/types';
@@ -24,9 +24,15 @@ function group(id: string, exemplars: number[][]): Group {
   };
 }
 
+const NEW_IDS = [
+  'hardware', 'science', 'sports', 'food', 'cars', 'home', 'fashion', 'pets', 'family', 'jobs', 'books', 'photo',
+  'anime', 'realestate',
+];
+const INSTALLED = STARTER_GROUPS.filter((g) => !g.onDemand);
+const fakeEmbed = async (texts: string[]) => texts.map((_, i) => Float32Array.from(vec(i % DIM)));
 describe('seeds', () => {
   it('has the 18 starter groups with seeds, colors and icons', () => {
-    expect(STARTER_GROUPS.map((g) => g.id)).toEqual([
+    expect(INSTALLED.map((g) => g.id)).toEqual([
       'movies', 'tv', 'videos', 'ai', 'programming', 'design', 'shopping', 'news', 'social', 'music',
       'learning', 'docs', 'work', 'travel', 'finance', 'health', 'games', 'other',
     ]);
@@ -40,6 +46,22 @@ describe('seeds', () => {
       }
     }
     expect(new Set(STARTER_GROUPS.map((g) => g.color)).size).toBe(STARTER_GROUPS.length);
+  });
+  it('has the 14 on-demand groups, each with a name, icon and 6-9 seeds', () => {
+    expect(STARTER_GROUPS.filter((g) => g.onDemand).map((g) => g.id)).toEqual(NEW_IDS);
+    expect([...TRAINED_IDS].sort()).toEqual([...NEW_IDS].sort());
+    for (const g of STARTER_GROUPS.filter((x) => x.onDemand)) {
+      expect(g.name).not.toBe('');
+      expect(g.icon).not.toBe('');
+      expect(g.seeds.length).toBeGreaterThanOrEqual(6);
+      expect(g.seeds.length).toBeLessThanOrEqual(9);
+    }
+    expect(STARTER_GROUPS.find((g) => g.id === 'hardware')!.name).toBe('Hardware & making');
+    expect(STARTER_GROUPS.find((g) => g.id === 'realestate')!.name).toBe('Real estate');
+  });
+  it('never names brands or sites in a seed', () => {
+    const banned = /\b(youtube|google|amazon|ebay|netflix|spotify|reddit|twitter|facebook|instagram|tiktok|pinterest|etsy|zillow|rightmove|linkedin|indeed|glassdoor|goodreads|crunchyroll|espn|nikon|canon|sony|arduino|esp32|raspberry|lightroom|photoshop|ikea|tesla|toyota|\.com|http|www)\b/i;
+    for (const g of STARTER_GROUPS) for (const t of g.seeds) expect(t, `${g.id}: ${t}`).not.toMatch(banned);
   });
 });
 
@@ -89,7 +111,7 @@ describe('classify', () => {
 });
 describe('bundled head', () => {
   it('matches the starter groups and its own dimension', () => {
-    expect(HEAD.labels).toEqual(STARTER_GROUPS.map((g) => g.id));
+    expect(HEAD.labels).toEqual(INSTALLED.map((g) => g.id));
     expect(HEAD.W).toHaveLength(HEAD.labels.length);
     for (const row of HEAD.W) expect(row).toHaveLength(HEAD.dim);
     expect(HEAD.b).toHaveLength(HEAD.labels.length);
@@ -126,8 +148,9 @@ describe('buildStarterGroups', () => {
       calls.push(texts);
       return texts.map((_, i) => Float32Array.from(vec(i % DIM)));
     });
-    expect(groups.map((g) => g.id)).toEqual(STARTER_GROUPS.map((g) => g.id));
-    const total = STARTER_GROUPS.reduce((s, g) => s + g.seeds.length, 0);
+    expect(groups.map((g) => g.id)).toEqual(INSTALLED.map((g) => g.id));
+    for (const id of NEW_IDS) expect(groups.map((g) => g.id)).not.toContain(id);
+    const total = INSTALLED.reduce((s, g) => s + g.seeds.length, 0);
     expect(calls.flat()).toHaveLength(total);
     for (const g of groups) {
       const seeds = STARTER_GROUPS.find((s) => s.id === g.id)!.seeds;
@@ -138,6 +161,25 @@ describe('buildStarterGroups', () => {
   });
 });
 
+describe('buildTrainedGroup', () => {
+  it('builds one on-demand group with a centroid and no exemplars', async () => {
+    const calls: string[][] = [];
+    const g = await buildTrainedGroup('hardware', async (t) => { calls.push(t); return fakeEmbed(t); });
+    expect(g).toMatchObject({ id: 'hardware', name: 'Hardware & making', builtIn: true, exemplars: [] });
+    expect(g.centroid).toHaveLength(DIM);
+    const seeds = STARTER_GROUPS.find((s) => s.id === 'hardware')!.seeds;
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual(seeds);
+  });
+  it('also rebuilds an installed group, so a deleted one can come back', async () => {
+    const g = await buildTrainedGroup('movies', fakeEmbed);
+    expect(g).toMatchObject({ id: 'movies', name: 'Movies', builtIn: true });
+    expect(g.centroid).not.toBeNull();
+  });
+  it('throws on an unknown id', async () => {
+    await expect(buildTrainedGroup('nope', fakeEmbed)).rejects.toThrow(/unknown group/);
+  });
+});
 describe('suggestGroups', () => {
   const items: { id: string; title: string; domain: string; vec: number[] }[] = [];
   for (const [c, axis] of [[0, 0], [1, 5], [2, 10]] as const) {
