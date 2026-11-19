@@ -80,10 +80,13 @@ function useInterests(groups: GroupSummary[], lockExisting: boolean) {
 }
 type InterestsState = ReturnType<typeof useInterests>;
 
-/** The topic chips and "Add your own". */
-function InterestsChoices({ s, busy }: { s: InterestsState; busy: boolean }) {
+/** What a locked chip means, said once under the chips (and read with each locked chip). */
+export const LOCKED_NOTE = 'Groups you already have are checked and stay as they are.';
+/** The topic chips and "Add your own". They only change the picker's own state, so a running action leaves them on. */
+function InterestsChoices({ s }: { s: InterestsState }) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const noteId = useId();
   const fieldId = useId();
   const helpId = useId();
   const errorId = useId();
@@ -101,8 +104,8 @@ function InterestsChoices({ s, busy }: { s: InterestsState; busy: boolean }) {
             return (
               <li key={c.id}>
                 <button
-                  type="button" class="interest-chip" aria-pressed={locked || s.picked.has(c.id)} disabled={locked || busy}
-                  title={locked ? 'You already have this group' : undefined} onClick={() => s.toggle(c.id)}
+                  type="button" class="interest-chip" aria-pressed={locked || s.picked.has(c.id)} disabled={locked}
+                  aria-describedby={locked ? noteId : undefined} onClick={() => s.toggle(c.id)}
                 >
                   <GroupDot color={COLOR.get(c.id) ?? ''} />
                   {c.name}
@@ -116,7 +119,7 @@ function InterestsChoices({ s, busy }: { s: InterestsState; busy: boolean }) {
               <span class="interest-chip is-custom">
                 {name}
                 <button
-                  type="button" class="interest-chip-x" aria-label={`Remove ${name}`} title="Remove" disabled={busy}
+                  type="button" class="interest-chip-x" aria-label={`Remove ${name}`} title="Remove"
                   onClick={() => s.remove(name)}
                 >
                   <CloseIcon size={12} />
@@ -125,12 +128,13 @@ function InterestsChoices({ s, busy }: { s: InterestsState; busy: boolean }) {
             </li>
           ))}
         </ul>
+        {s.locked.size > 0 && <p class="interest-help interest-locked" id={noteId}>{LOCKED_NOTE}</p>}
       </div>
       <div class="interest-add">
         <label class="interest-add-label" for={fieldId}>Add your own</label>
         <div class="interest-add-row">
           <input
-            id={fieldId} class="field field-sm" value={draft} spellcheck={false} autocomplete="off" disabled={busy}
+            id={fieldId} class="field field-sm" value={draft} spellcheck={false} autocomplete="off"
             placeholder="A topic, e.g. Woodworking" aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${helpId} ${errorId}` : helpId}
             onInput={(e) => {
@@ -143,7 +147,7 @@ function InterestsChoices({ s, busy }: { s: InterestsState; busy: boolean }) {
               add();
             }}
           />
-          <button type="button" class="btn btn-sm" disabled={busy} onClick={add}><PlusIcon />Add</button>
+          <button type="button" class="btn btn-sm" onClick={add}><PlusIcon />Add</button>
         </div>
         <p class="interest-help" id={helpId}>{CUSTOM_HELP}</p>
         {error && <p class="interest-error" id={errorId} role="alert">{error}</p>}
@@ -171,7 +175,7 @@ export function InterestsCard(props: InterestsCardProps & { title: string; intro
       <div class="card-text">
         <h2 id={titleId} class="card-title">{props.title}</h2>
         <p class="interests-intro">{props.intro}</p>
-        <InterestsChoices s={s} busy={props.busy} />
+        <InterestsChoices s={s} />
         <div class="card-actions">
           <button
             type="button" class="btn btn-sm btn-primary" disabled={props.busy || !s.canContinue}
@@ -202,7 +206,7 @@ export function InterestsDialog(props: { groups: GroupSummary[]; busy: boolean; 
       }
     >
       <p>What do you browse most? Tablight adds a group for each topic you pick. Groups you already have stay as they are.</p>
-      <InterestsChoices s={s} busy={props.busy} />
+      <InterestsChoices s={s} />
     </Modal>
   );
 }

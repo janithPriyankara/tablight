@@ -1201,6 +1201,128 @@ describe('dashboard', () => {
       expect(sent('interests')).toEqual([]);
     });
 
+    /**
+     * Does what a browser does and jsdom doesn't: an element that turns inert loses focus (before effects run).
+     * Returns the undo.
+     */
+    function blurInsideInert(): () => void {
+      // Synchronous, as in a browser: the blur happens while the render commits, before any effect runs.
+      const set = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (this: Element, name: string, value: string) {
+        set.call(this, name, value);
+        if (name === 'inert' && document.activeElement !== document.body && this.contains(document.activeElement)) {
+          (document.activeElement as HTMLElement).blur();
+        }
+      };
+      return () => {
+        Element.prototype.setAttribute = set;
+      };
+    }
+    async function openFromSettings(): Promise<{ choose: HTMLElement; dialog: HTMLElement }> {
+      history.replaceState(null, '', '/dashboard.html#view=settings');
+      render(<Dashboard />);
+      const choose = within(await screen.findByRole('group', { name: 'Choose your interests' })).getByRole('button', { name: 'Choose…' });
+      choose.focus(); // a click focuses the button in a browser
+      fireEvent.click(choose);
+      return { choose, dialog: await screen.findByRole('dialog', { name: 'Choose your interests' }) };
+    }
+
+    it('Settings: Esc and Cancel return focus to "Choose…" (the page behind turned inert meanwhile)', async () => {
+      const undo = blurInsideInert();
+      try {
+        serveLive(state());
+        const opened = await openFromSettings();
+        const choose = opened.choose;
+        let dialog = opened.dialog;
+        expect(dialog.contains(document.activeElement)).toBe(true);
+        fireEvent.keyDown(dialog, { key: 'Escape' });
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        await waitFor(() => expect(document.activeElement).toBe(choose));
+        choose.focus();
+        fireEvent.click(choose);
+        dialog = await screen.findByRole('dialog', { name: 'Choose your interests' });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        await waitFor(() => expect(document.activeElement).toBe(choose));
+      } finally {
+        undo();
+      }
+    });
+
+    it('Settings: after Continue, focus returns to "Choose…"', async () => {
+      const undo = blurInsideInert();
+      try {
+        serveLive(state());
+        const { choose, dialog } = await openFromSettings();
+        fireEvent.click(chip(dialog, 'Movies'));
+        const cont = within(dialog).getByRole('button', { name: 'Continue' });
+        cont.focus();
+        fireEvent.click(cont);
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        await screen.findByText('Added 2 groups');
+        await waitFor(() => expect(document.activeElement).toBe(choose));
+      } finally {
+        undo();
+      }
+    });
+
+    it('focus after the step: the welcome card\'s heading in onboarding, the All tabs heading after the one-time card', async () => {
+      for (const [settings, action] of [[FRESH, 'Skip'], [FRESH, 'Continue']] as const) {
+        serveLive(state({ settings }));
+        render(<Dashboard />);
+        const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+        fireEvent.click(chip(region, 'Movies'));
+        const b = within(region).getByRole('button', { name: action });
+        b.focus();
+        fireEvent.click(b);
+        const h = await screen.findByRole('heading', { name: 'Welcome to Tablight' });
+        await waitFor(() => expect(document.activeElement, action).toBe(h));
+        cleanup();
+      }
+      for (const action of ['Skip', 'Continue']) {
+        serveLive(state({ settings: UPGRADED }));
+        render(<Dashboard />);
+        const card = await screen.findByRole('region', { name: 'New: choose your interests' });
+        fireEvent.click(chip(card, 'Movies'));
+        const b = within(card).getByRole('button', { name: action });
+        b.focus();
+        fireEvent.click(b);
+        await waitFor(() => expect(screen.queryByRole('region', { name: 'New: choose your interests' })).toBeNull());
+        const h1 = screen.getByRole('heading', { level: 1, name: 'All tabs' });
+        await waitFor(() => expect(document.activeElement, action).toBe(h1));
+        cleanup();
+      }
+    });
+
+    it('while Continue runs only the actions wait: chips and "Add your own" stay usable', async () => {
+      let finish: (v: unknown) => void = () => undefined;
+      serve(state({ settings: FRESH }), (req) => (req.t === 'interests' ? new Promise((r) => (finish = r)) : undefined));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      fireEvent.click(chip(region, 'Movies'));
+      fireEvent.click(within(region).getByRole('button', { name: 'Continue' }));
+      await waitFor(() => expect((within(region).getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(true));
+      expect((within(region).getByRole('button', { name: 'Skip' }) as HTMLButtonElement).disabled).toBe(true);
+      for (const b of chips(region)) expect((b as HTMLButtonElement).disabled).toBe(false);
+      expect((within(region).getByRole('textbox', { name: 'Add your own' }) as HTMLInputElement).disabled).toBe(false);
+      expect((within(region).getByRole('button', { name: 'Add' }) as HTMLButtonElement).disabled).toBe(false);
+      finish({ created: [], removed: [] });
+    });
+
+    it('locked chips say why, in a visible line each of them points to; a fresh install has none', async () => {
+      serveLive(state({ settings: UPGRADED }));
+      render(<Dashboard />);
+      const card = await screen.findByRole('region', { name: 'New: choose your interests' });
+      const note = within(card).getByText('Groups you already have are checked and stay as they are.');
+      expect(chip(card, 'Programming').getAttribute('aria-describedby')).toBe(note.id);
+      expect(chip(card, 'Movies').getAttribute('aria-describedby')).toBeNull();
+      cleanup();
+      serveLive(state({ settings: FRESH }));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      expect(within(region).queryByText(/Groups you already have are checked/)).toBeNull();
+    });
+
     it('after Continue, a group page whose group is gone goes to All tabs', async () => {
       let s = state({ settings: FRESH });
       serve(() => s, (req) => {

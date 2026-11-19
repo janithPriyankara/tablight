@@ -30,7 +30,7 @@ function Welcome(props: { busy: boolean; onAutoSleep: () => void; onDone: () => 
     <section class="card onboarding" aria-labelledby="onboarding-h">
       <LogoMark size={28} />
       <div class="card-text">
-        <h2 id="onboarding-h" class="card-title">Welcome to Tablight</h2>
+        <h2 id="onboarding-h" class="card-title" tabIndex={-1}>Welcome to Tablight</h2>
         <ul class="onboarding-points">
           <li>Tablight sees only each tab’s title and address. It cannot see your passwords, cookies, what you type or what is on a page.</li>
           <li>Grouping runs on your computer. No servers, no analytics.</li>

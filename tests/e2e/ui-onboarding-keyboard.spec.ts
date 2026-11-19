@@ -118,6 +118,7 @@ test('O-06..O-08 interests step: chips by keyboard, Add your own, Continue creat
     await expect(toast()).toContainText('Added 2 groups');
     await expect(interests()).toHaveCount(0);
     await expect(welcome()).toBeVisible();
+    await expect(welcome().getByRole('heading', { name: 'Welcome to Tablight' })).toBeFocused(); // not lost to the page
     const s = await h.state();
     expect(s.settings.interestsAnswered).toBe(true);
     const ids = s.groups.map((g) => g.id);
@@ -144,12 +145,20 @@ test('O-06..O-08 interests step: chips by keyboard, Add your own, Continue creat
     expect(await unnamed(page()), 'the one-time card').toEqual([]);
     await once.getByRole('button', { name: 'Skip' }).click();
     await expect(once).toHaveCount(0);
+    await expect(heading()).toBeFocused();
     await page().reload();
     await expect(heading()).toHaveText('All tabs');
     await expect(once).toHaveCount(0);
     await navButton(page(), 'Settings').click();
-    await page().getByRole('group', { name: 'Choose your interests' }).getByRole('button', { name: 'Choose…' }).click();
+    const choose = page().getByRole('group', { name: 'Choose your interests' }).getByRole('button', { name: 'Choose…' });
     const d = page().getByRole('dialog', { name: 'Choose your interests' });
+    // Esc returns focus to "Choose…" (the page behind was inert while the dialog was open).
+    await choose.click();
+    await expect(d).toBeVisible();
+    await page().keyboard.press('Escape');
+    await expect(d).toHaveCount(0);
+    await expect(choose).toBeFocused();
+    await choose.click();
     await expect(chip(d, 'Movies')).toBeDisabled();
     await expect(chip(d, 'Movies')).toHaveAttribute('aria-pressed', 'true');
     expect(await unnamed(page()), 'the Settings dialog').toEqual([]);
@@ -157,6 +166,7 @@ test('O-06..O-08 interests step: chips by keyboard, Add your own, Continue creat
     await d.getByRole('button', { name: 'Continue' }).click();
     await expect(d).toHaveCount(0);
     await expect(toast()).toContainText('Added 1 group');
+    await expect(choose).toBeFocused();
     await expect(navButton(page(), 'Sports')).toBeVisible();
     expect((await h.state()).groups.map((g) => g.id)).toContain('news'); // only adds
   });

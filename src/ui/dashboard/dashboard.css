@@ -365,6 +365,14 @@ body.dashboard-page > #app {
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
+.interest-locked {
+  margin-top: var(--space-2);
+}
+/* Headings that take focus after the interests step (tabindex -1): a focus target, not a control. */
+.view-title:focus-visible,
+.card-title:focus-visible {
+  box-shadow: none;
+}
 .interest-error {
   color: var(--danger);
   font-size: var(--text-sm);

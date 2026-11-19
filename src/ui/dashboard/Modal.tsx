@@ -20,8 +20,10 @@ export function Modal(props: {
   const titleId = useId();
   const close = useRef(onClose);
   close.current = onClose;
+  // Read while rendering, before this render commits: the page behind turns inert with it, and the browser then
+  // blurs the control that opened the dialog, so an effect would only find <body>.
+  const [before] = useState(() => document.activeElement as HTMLElement | null);
   useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
     const box = ref.current;
     const first = box?.querySelector<HTMLElement>('[data-autofocus]') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? box)?.focus();

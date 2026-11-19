@@ -188,13 +188,37 @@ export function Dashboard() {
       await refresh();
     }
   };
+  /**
+   * The control that opened a dialog shown outside an action. The page behind turns inert as the dialog opens, and the
+   * browser blurs that control before the dialog can note it; and after an action run from the dialog, the opener
+   * above is a button that went with it. Either way focus returns here.
+   */
+  const dialogOpener = useRef<HTMLElement | null>(null);
+  const openDialog = (d: Dialog) => {
+    const active = document.activeElement;
+    dialogOpener.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    setDialog(d);
+  };
   useEffect(() => {
     if (busy || dialog) return;
-    const el = opener.current;
+    const el = opener.current?.isConnected ? opener.current : dialogOpener.current;
     opener.current = null;
+    dialogOpener.current = null;
     const lost = !document.activeElement || document.activeElement === document.body;
     if (el?.isConnected && lost) el.focus();
   }, [busy, dialog]);
+  /**
+   * Where focus goes once the interests step's card has made way (its buttons are gone): the welcome card that follows
+   * it in onboarding, or the All tabs heading after the one-time card.
+   */
+  const focusAfterInterests = useRef<'welcome' | 'title' | null>(null);
+  const interestsAnswered = settings?.interestsAnswered;
+  useEffect(() => {
+    const to = focusAfterInterests.current;
+    if (!to || !interestsAnswered || busy) return;
+    focusAfterInterests.current = null;
+    document.getElementById(to === 'welcome' ? 'onboarding-h' : 'view-title')?.focus();
+  }, [interestsAnswered, busy]);
   const confirm = (opts: ConfirmOptions) =>
     new Promise<boolean>((resolve) => setDialog({ kind: 'confirm', opts, resolve }));
   const askName = (title: string, confirmLabel: string, initial?: string) =>
@@ -442,9 +466,11 @@ export function Dashboard() {
    * Continue on the interests step: creates the picked groups. A group page whose group is gone afterwards (removed
    * as unpicked on a fresh install, or adopted under a choice's id) would say "Group not found": All tabs instead.
    */
-  const answerInterests = (a: InterestsAnswer) =>
+  const answerInterests = (a: InterestsAnswer, then?: 'welcome' | 'title') =>
     act(async () => {
       const r = await send<{ created: string[]; removed: string[] }>({ t: 'interests', picked: a.picked, custom: a.custom });
+      // From the Settings dialog, focus returns to "Choose…" (dialogOpener) once it is enabled again.
+      if (then) focusAfterInterests.current = then;
       setDialog(null);
       notify(r.created.length ? `Added ${plural(r.created.length, 'group')}` : 'No new groups needed: you have them all');
       const v = parseHash(location.hash);
@@ -453,7 +479,11 @@ export function Dashboard() {
       if (!now.groups.some((g) => g.id === v.id)) go({ kind: 'all' });
     });
   /** Skip: the step is answered, nothing else changes. */
-  const skipInterests = () => act(() => save({ interestsAnswered: true }));
+  const skipInterests = (then: 'welcome' | 'title') =>
+    act(async () => {
+      await save({ interestsAnswered: true });
+      focusAfterInterests.current = then;
+    });
   const acceptSuggestion = (id: string) => act(() => send({ t: 'acceptSuggestion', id }));
   const dismissSuggestion = (id: string) => act(() => send({ t: 'dismissSuggestion', id }));
 
@@ -605,8 +635,8 @@ export function Dashboard() {
             <Onboarding
               busy={busy}
               interests={settings.interestsAnswered ? undefined : {
-                groups, busy, lockExisting: !settings.interestsFresh, onContinue: (a) => void answerInterests(a),
-                onSkip: () => void skipInterests(),
+                groups, busy, lockExisting: !settings.interestsFresh, onContinue: (a) => void answerInterests(a, 'welcome'),
+                onSkip: () => void skipInterests('welcome'),
               }}
               onAutoSleep={() => void act(async () => {
                 await save({ autoSleepMinutes: 60, onboarded: true });
@@ -620,7 +650,7 @@ export function Dashboard() {
           <div class="view-head">
             <div class="view-title-row">
               {currentGroup && !searching && <GroupDot color={currentGroup.color} />}
-              <h1 class="view-title">{title}</h1>
+              <h1 class="view-title" id="view-title" tabIndex={-1}>{title}</h1>
               {currentGroup?.suggested && !searching && <span class="status-pill">Suggested</span>}
             </div>
             {subtitle && (
@@ -665,7 +695,7 @@ export function Dashboard() {
                   <button type="button" class="icon-btn" disabled={busy} aria-label="Rename group" title="Rename" onClick={() => void renameGroup(currentGroup)}>
                     <PencilIcon />
                   </button>
-                  <button type="button" class="icon-btn" disabled={busy} aria-label="Merge group" title="Merge into…" onClick={() => setDialog({ kind: 'merge', from: currentGroup })}>
+                  <button type="button" class="icon-btn" disabled={busy} aria-label="Merge group" title="Merge into…" onClick={() => openDialog({ kind: 'merge', from: currentGroup })}>
                     <MergeIcon />
                   </button>
                   {currentGroup.id !== OTHER_GROUP_ID && (
@@ -715,7 +745,8 @@ export function Dashboard() {
             <InterestsCard
               title="New: choose your interests"
               intro="What do you browse most? Tablight adds a group for each topic you pick. Groups you already have stay as they are."
-              groups={groups} busy={busy} lockExisting onContinue={(a) => void answerInterests(a)} onSkip={() => void skipInterests()}
+              groups={groups} busy={busy} lockExisting onContinue={(a) => void answerInterests(a, 'title')}
+              onSkip={() => void skipInterests('title')}
             />
           )}
           {!searching && view.kind === 'all' && state?.lastSession && !lastSessionHidden && (
@@ -770,7 +801,7 @@ export function Dashboard() {
               settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)}
               onDeleteAll={() => void deleteAllData()}
               onTour={startTour}
-              onInterests={() => setDialog({ kind: 'interests' })}
+              onInterests={() => openDialog({ kind: 'interests' })}
               tab={settingsTab}
               onTab={(t) => {
                 setSettingsTab(t);
