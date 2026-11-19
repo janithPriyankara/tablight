@@ -231,6 +231,15 @@ describe('regroup', () => {
       expect((await db.items.get(i.id))!.groupId).toBeNull();
       expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
     });
+    it('a tab placed by its neighbours moves to the head’s group once the head is sure, and says so', async () => {
+      await db.groups.put(group('programming'));
+      await db.groups.put(group('hardware'));
+      const sure = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+      const i = await addItem({ groupId: 'programming', placedBy: 'neighbour' });
+      await db.embeddings.put(await embeddingKey(i), sure);
+      expect(await regroupApply(db)).toBe(1);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'hardware', placedBy: 'head' });
+    });
     it('a user move removes the record of how a tab was placed', async () => {
       await db.groups.put(group('programming'));
       await db.groups.put(group('games'));

@@ -444,9 +444,16 @@ async function drain(db: Db, embedFn: EmbedFn): Promise<number> {
   }
 }
 
+/** The neighbour pool, read from the database at most once, on first use. */
+function lazyPool(db: Db): () => Promise<PoolTab[]> {
+  let pool: Promise<PoolTab[]> | undefined;
+  return () => (pool ??= (async () => neighbourPool(db, await db.items.all(), await db.groups.all()))());
+}
 async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+  // One pool per batch, shared by the per-item retries below (a batch's own placements join the next batch's pool).
+  const pool = lazyPool(db);
   try {
-    return await processBatch(db, ids, embedFn);
+    return await processBatch(db, ids, embedFn, pool);
   } catch (e) {
     const attempts = Math.max(0, ...(await db.queue.fail(ids)));
     if (attempts < MAX_ATTEMPTS) throw e;
@@ -456,7 +463,7 @@ async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promis
     let lastError: unknown = e;
     for (const id of ids) {
       try {
-        written += await processBatch(db, [id], embedFn);
+        written += await processBatch(db, [id], embedFn, pool);
       } catch (err) {
         failed.push(id);
         lastError = err;
@@ -489,13 +496,6 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
   });
 }
 
-/**
- * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
- * (trained head + user-taught exemplars) > null. `groups` must exclude suggested groups.
- */
-export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
-  return autoPick(item, vec, groups).groupId;
-}
 /**
  * The automatic pipeline's decision: the group, the trained topic wanted when its group is missing, and what
  * decided. `pool` (neighbourPool) must not hold the item itself.
@@ -534,7 +534,7 @@ export function withoutPlacedBy(i: Item): Item {
   void _p;
   return rest;
 }
-async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () => Promise<PoolTab[]>): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
   const drop = ids.filter((id, k) => !read[k]?.classifiable);
   const todo = read.filter((i): i is Item => !!i?.classifiable);
@@ -550,9 +550,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
     else missing.set(key, embedText(todo[k]!));
   }
   // The neighbour step's pool, read before the transaction (vector reads are not part of it).
-  const pool = todo.some((i) => i.groupSource !== 'user')
-    ? await neighbourPool(db, await db.items.all(), await db.groups.all())
-    : [];
+  const pool = todo.some((i) => i.groupSource !== 'user') ? await poolOf() : [];
   const fresh = new Map<string, Float32Array>();
   if (missing.size) {
     const out = await embedFn([...missing.values()]);

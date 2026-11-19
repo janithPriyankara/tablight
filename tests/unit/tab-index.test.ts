@@ -585,7 +585,11 @@ describe('queue failures (review 1.4)', () => {
     });
     await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
     await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
+    const reads = vi.spyOn(db.items, 'all');
     await expect(processQueue(db, fakeEmbed)).resolves.toBe(40); // 39 classified + the poison item
+    // The neighbour pool is read once per batch (two batches), not again for each item retried alone.
+    expect(reads).toHaveBeenCalledTimes(2);
+    reads.mockRestore();
     expect(await db.queue.size()).toBe(0);
     const items = await db.items.all();
     expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(39);

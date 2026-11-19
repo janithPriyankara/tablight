@@ -5,6 +5,7 @@ import { isSafeToOpen, isWebUrl } from '../shared/url';
 import type { Db, StoreApis } from './db';
 import { findDuplicates } from './duplicates';
 import { wasSynced } from './sync';
+import { withoutPlacedBy } from './tab-index';
 import { nextStamp } from '../shared/stamp';
 export const AUTO_SLEEP_ALARM = 'auto-sleep';
 export const UNDO_MS = 10_000;
@@ -97,7 +98,12 @@ async function adopt(db: Db, item: Item, tab: chrome.tabs.Tab): Promise<void> {
     if (existing) {
       // A reconcile got there first: it only knows the auto classification, so restore the group.
       if (existing.groupSource === 'auto' && existing.normUrl === item.normUrl && item.groupId !== null) {
-        await s.items.put({ ...existing, groupId: item.groupId, groupSource: item.groupSource });
+        // The record of how the tab was placed goes with the group it gets back (none for a user's choice).
+        const { placedBy } = item;
+        await s.items.put({
+          ...withoutPlacedBy(existing), groupId: item.groupId, groupSource: item.groupSource,
+          ...(item.groupSource === 'auto' && placedBy !== undefined ? { placedBy } : {}),
+        });
       }
       return;
     }
