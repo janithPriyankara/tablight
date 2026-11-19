@@ -43,9 +43,12 @@ describe('pickGroup', () => {
   it('keeps the usual threshold for a normal page', () => {
     expect(pickGroup(PAGE, vec(0), [group('hardware'), group('videos')], MID)).toEqual({ groupId: null, want: null });
   });
-  it('parks a mid-confidence YouTube topic with no group in Videos and wants it', () => {
-    expect(pickGroup(YT, vec(0), [group('videos')], MID)).toEqual({ groupId: 'videos', want: 'hardware' });
-    expect(pickGroup(YT, vec(0), [], MID)).toEqual({ groupId: null, want: 'hardware' });
+  it('parks a mid-confidence YouTube topic with no group in Videos without wanting it', () => {
+    expect(pickGroup(YT, vec(0), [group('videos')], MID)).toEqual({ groupId: 'videos', want: null });
+    expect(pickGroup(YT, vec(0), [], MID)).toEqual({ groupId: null, want: null });
+  });
+  it('wants the topic of a YouTube video only at head.threshold or above', () => {
+    expect(pickGroup(YT, vec(0), [group('videos')], head)).toEqual({ groupId: 'videos', want: 'hardware' });
   });
   it('parks a YouTube video below the YouTube bar in Videos with nothing wanted', () => {
     expect(pickGroup(YT, vec(0), [group('hardware'), group('videos')], LOW)).toEqual({ groupId: 'videos', want: null });

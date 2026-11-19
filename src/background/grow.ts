@@ -6,8 +6,8 @@ import { nextStamp } from '../shared/stamp';
 import type { Group, Item } from '../shared/types';
 import type { Db } from './db';
 
-/** A trained group is created on the fly once this many auto-placed tabs want it. */
-export const GROW_MIN = 2;
+/** A trained group is created on the fly once this many auto-placed tabs want it (two alike tabs are a coincidence). */
+export const GROW_MIN = 3;
 /** chrome.storage.local: ids of trained on-demand groups the user deleted (string[]); never re-created on the fly. */
 export const REMOVED_TRAINED_KEY = 'removedTrainedGroups';
 

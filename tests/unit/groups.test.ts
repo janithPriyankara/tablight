@@ -184,19 +184,21 @@ describe('regroup', () => {
       expect(after.want).toBe('hardware');
       expect(after.updatedAt).toBe(v.updatedAt); // local only: no sync stamp
     });
-    it('re-grouping creates the group two tabs want and moves them in', async () => {
+    it('re-grouping creates the group three tabs want and moves them in', async () => {
       await db.groups.put(group('videos'));
       const a = await video('a', { groupId: 'videos' });
       const b = await video('b', { groupId: null });
+      const c = await video('c', { groupId: null });
       const embed = async (t: string[]) => t.map(() => hardware);
-      expect(await regroupApply(db, embed)).toBe(2);
+      expect(await regroupApply(db, embed)).toBe(3);
       expect((await db.groups.get('hardware'))?.name).toBe('Hardware & making');
-      for (const id of [a.id, b.id]) expect((await db.items.get(id))!.groupId).toBe('hardware');
+      for (const id of [a.id, b.id, c.id]) expect((await db.items.get(id))!.groupId).toBe('hardware');
     });
     it('a user-placed tab never counts or moves', async () => {
       await db.groups.put(group('videos'));
       await db.groups.put(group('mine', { builtIn: false }));
       await video('a', { groupId: 'videos' });
+      await video('c', { groupId: 'videos' });
       const u = await video('b', { groupId: 'mine', groupSource: 'user' });
       await regroupApply(db, async (t) => t.map(() => hardware));
       expect(await db.groups.get('hardware')).toBeUndefined();

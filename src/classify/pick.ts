@@ -16,7 +16,8 @@ export const YOUTUBE_THRESHOLD = 0.26;
  * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
  * (trained head + user-taught exemplars) > for a YouTube video, the head's top topic at the lower
  * YOUTUBE_THRESHOLD, else Videos (when it exists) > null.
- * `want` is the head's topic when no group exists for it yet (at `threshold`, or at the YouTube bar for a video).
+ * `want` is the head's topic when no group exists for it yet and the head is that sure of it (`threshold`, for
+ * pages and videos alike): the lower YouTube bar only places a video into a group that already exists.
  * `groups` must exclude suggested groups.
  */
 export function pickGroup(
@@ -35,6 +36,7 @@ export function pickGroup(
   const top = headTop(vec, head);
   const label = top?.label !== undefined && top.label !== OTHER_GROUP_ID && top.score >= bar ? top.label : null;
   if (label !== null && groups.some((g) => g.id === label)) return { groupId: label, want: null };
-  if (video && groups.some((g) => g.id === VIDEOS_GROUP_ID)) return { groupId: VIDEOS_GROUP_ID, want: label };
-  return { groupId: null, want: label };
+  const wanted = label !== null && top !== null && top.score >= head.threshold ? label : null;
+  if (video && groups.some((g) => g.id === VIDEOS_GROUP_ID)) return { groupId: VIDEOS_GROUP_ID, want: wanted };
+  return { groupId: null, want: wanted };
 }
