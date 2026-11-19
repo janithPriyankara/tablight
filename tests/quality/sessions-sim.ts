@@ -26,6 +26,11 @@ export interface SimOpts {
   seeds?: number[];
   /** Called for every tab the pipeline placed (including `other` rows), with the group it chose (null: Unsorted). */
   record?: (row: SessionRow, groupId: string | null) => void;
+  /**
+   * Every person has every group (installed plus all on-demand groups), not only the on-demand groups their own
+   * rows are labelled with, so a tab can land in any label's group (default false: the quality sets' design).
+   */
+  allGroups?: boolean;
 }
 /** The default share of each person's tabs the user places by hand. */
 export const USER_SHARE = 0.3;
@@ -60,7 +65,8 @@ export const score = (r: SimResult): number => r.right - 2 * (r.wrong + r.otherA
  * Loads the real model and head once. `simulate` then replays each person's rows in order: a seeded `userShare` of
  * tabs are placed by the user in their true group (which teaches that group, as a drag does: moveItems → learn);
  * the rest go through pickGroup with the pool so far. Each person has the installed groups plus every on-demand
- * group their rows are labelled with (so their on-demand topics can be reached, as after the interests step).
+ * group their rows are labelled with (so their on-demand topics can be reached, as after the interests step), or,
+ * with `allGroups`, every group.
  */
 export async function loadSessionSim(): Promise<{
   head: QualityHead;
@@ -100,6 +106,7 @@ export async function loadSessionSim(): Promise<{
   async function simulate(rows: SessionRow[], opts: SimOpts): Promise<SimResult> {
     const vecs = await vectors(rows);
     const share = opts.userShare ?? USER_SHARE;
+    const everyGroup = opts.allGroups ? [...starter, ...trained.values()] : null;
     let cache = baseCache.get(rows);
     if (!cache) baseCache.set(rows, (cache = new Map()));
     const out: SimResult = { right: 0, wrong: 0, unsorted: 0, total: 0, others: 0, otherAssigned: 0 };
@@ -108,7 +115,7 @@ export async function loadSessionSim(): Promise<{
       for (const person of people) {
         const mine = rows.flatMap((r, k) => (r.person === person ? [{ r, v: vecs[k]!, k }] : []));
         const needed = new Set(mine.map(({ r }) => r.group).filter((g) => TRAINED_IDS.has(g)));
-        let groups: Group[] = [...starter, ...[...needed].map((id) => trained.get(id)!)];
+        let groups: Group[] = everyGroup ?? [...starter, ...[...needed].map((id) => trained.get(id)!)];
         const pool: Neighbour[] = []; // newest first, as neighbourPool orders it
         const rand = rng(seed, person);
         for (const { r, v, k } of mine) {
@@ -118,7 +125,7 @@ export async function loadSessionSim(): Promise<{
             if (r.group !== VIDEOS_GROUP_ID && r.group !== OTHER_GROUP_ID) pool.unshift({ vec: v, groupId: r.group, normUrl });
             continue;
           }
-          const { groupId, by } = pick(`${share}:${seed}:${k}`, cache, r, v, groups, pool, opts.neighbours);
+          const { groupId, by } = pick(`${share}:${seed}:${k}${everyGroup ? ':all' : ''}`, cache, r, v, groups, pool, opts.neighbours);
           if (groupId !== null && by !== null && !GUESSES.has(by) && groupId !== VIDEOS_GROUP_ID && groupId !== OTHER_GROUP_ID) {
             pool.unshift({ vec: v, groupId, normUrl });
           }
