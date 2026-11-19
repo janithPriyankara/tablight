@@ -1,5 +1,5 @@
 // Replays imagined people's browsing sessions through the product pipeline, to tune and gate the neighbour step.
-import { buildStarterGroups, buildTrainedGroup, learn, OTHER_GROUP_ID, TRAINED_IDS } from '../../src/classify/assign';
+import { buildStarterGroups, buildTrainedGroup, headTop, learn, OTHER_GROUP_ID, TRAINED_IDS } from '../../src/classify/assign';
 import { neighbourGroup, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type NeighbourOpts, type PlacedBy } from '../../src/classify/pick';
 import { embedText, normalizeUrl } from '../../src/shared/url';
 import type { Group } from '../../src/shared/types';
@@ -51,7 +51,8 @@ function rng(seed: number, person: string): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-export const score = (r: SimResult): number => r.right - 2 * r.wrong;
+/** right − 2 × (wrong + `other` tabs put in a group): an `other` tab pulled into a group costs like a wrong group. */
+export const score = (r: SimResult): number => r.right - 2 * (r.wrong + r.otherAssigned);
 
 /**
  * Loads the real model and head once. `simulate` then replays each person's rows in order: a seeded `userShare` of
@@ -76,6 +77,8 @@ export async function loadSessionSim(): Promise<{
   // pickGroup without a pool depends only on the row and the groups, which the user's placements (fixed per seed
   // and share) decide: the sweep computes it once per share, seed and row, not once per setting.
   const baseCache = new WeakMap<SessionRow[], Map<string, ReturnType<typeof pickGroup>>>();
+  /** Whether the head's top label for a vector is `other` (depends on the vector alone). */
+  const readsOther = new WeakMap<Float32Array, boolean>();
   function pick(
     key: string, cache: Map<string, ReturnType<typeof pickGroup>>, row: SessionRow, vec: Float32Array, groups: Group[],
     pool: Neighbour[], opts: SimOpts['neighbours'],
@@ -83,8 +86,12 @@ export async function loadSessionSim(): Promise<{
     if (opts === 'shipped') return pickGroup(row, vec, groups, head, pool);
     let base = cache.get(key);
     if (!base) cache.set(key, (base = pickGroup(row, vec, groups, head)));
-    // The neighbour step runs exactly where pickGroup runs it: after rule, exemplar and head found nothing.
+    // The neighbour step runs exactly where and when pickGroup runs it: after rule, exemplar and head found nothing,
+    // and never for a tab the head reads as `other`.
     if (opts === null || (base.by !== null && base.by !== 'youtube' && base.by !== 'videos')) return base;
+    let other = readsOther.get(vec);
+    if (other === undefined) readsOther.set(vec, (other = headTop(vec, head)?.label === OTHER_GROUP_ID));
+    if (other) return base;
     const near = neighbourGroup(vec, pool, groups, opts);
     return near === null ? base : { groupId: near, want: null, by: 'neighbour' as const };
   }
