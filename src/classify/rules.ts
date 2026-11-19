@@ -80,6 +80,23 @@ function shopping(host: string, path: string): string | null {
 }
 
 /**
+ * Drama streaming sites and drama-tagged YouTube videos. The embedding model has no world knowledge of
+ * dramas (titles are bare character or show names), so these are decided by host and hashtag instead.
+ * Mirrors rotate TLDs and digits, hence the patterns. A "full movie" / "the movie" title makes it a film.
+ */
+const DRAMA_HOSTS = [
+  /^kisskh\.[a-z]+$/, /^dramacool\d*\.[a-z]+$/, /^asianc\d*\.[a-z]+$/,
+  /^(?:viki|wetv|iq|mydramalist)\.(?:com|vip)$/,
+];
+const DRAMA_TAG = /#(?:k|c|j|thai|tw|asian)?drama(?:edit|s|clips?)?\b/i;
+function drama(host: string, path: string, title: string): string | null {
+  if (DRAMA_HOSTS.some((re) => re.test(host))) {
+    return /\b(?:full\s+movie|the\s+movie)\b/i.test(title) ? 'movies' : 'tv';
+  }
+  const video = host === 'youtu.be' || (host === 'youtube.com' && /^\/(?:watch|shorts\/)/.test(path));
+  return video && DRAMA_TAG.test(title) ? 'tv' : null;
+}
+/**
  * Single-purpose services: every page on these hosts belongs to one group.
  * A leading dot also matches subdomains (per-team tenants such as acme.slack.com).
  * Topic-neutral hosts are deliberately absent and left to the model: general storage and notes
@@ -132,5 +149,5 @@ export function ruleGroup(url: string, title: string): string | null {
   const t = title ?? '';
   if (host === 'imdb.com') return imdb(path, t);
   if (host === 'store.steampowered.com' && path.startsWith('/app/')) return 'games';
-  return streaming(host, path, t) ?? music(host, path) ?? shopping(host, path) ?? byHost(host, path);
+  return streaming(host, path, t) ?? music(host, path) ?? shopping(host, path) ?? drama(host, path, t) ?? byHost(host, path);
 }
