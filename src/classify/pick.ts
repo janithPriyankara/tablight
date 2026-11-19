@@ -9,8 +9,10 @@ export const VIDEOS_GROUP_ID = 'videos';
  * The lower bar a YouTube video's top topic must reach (head.threshold for pages). A video's title is short and
  * often messy ("#cdrama #shorts", clickbait, "Talk — Speaker (Conf)"), so its topic scores lower than a page's,
  * and without a topic it would only be parked in Videos. Chosen on tests/quality/youtube-topics.json with the head
- * trained 2026-11-19 (pool 5002): the highest bar of the plateau where right − 2 × wrong peaks (81/90 topic videos
- * in their group, 58/59 no-topic in Videos, 1 wrong, the same as any bar down to 0; 78/90 at 0.36).
+ * retrained 2026-11-19 (pool 6202, with the messy-title set, so Videos means a video with no subject): the highest bar
+ * of the plateau where right − 2 × wrong peaks (84/90 topic videos in their group, 59/59 no-topic in Videos, 0 wrong,
+ * the same at every bar down to 0 and up to 0.27; 83/90 at 0.28). 0.26, not 0.27: on youtube-messy.json and the
+ * tuning sessions 0.27 scored one video lower (83/159 right, 72 parked vs 71) and 15 points lower.
  * youtube-messy.json is the honest score. Re-measure it when the head is retrained.
  */
 export const YOUTUBE_THRESHOLD = 0.26;
