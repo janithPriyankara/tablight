@@ -82,16 +82,21 @@ function shopping(host: string, path: string): string | null {
 /**
  * Drama streaming sites and drama-tagged YouTube videos. The embedding model has no world knowledge of
  * dramas (titles are bare character or show names), so these are decided by host and hashtag instead.
- * Mirrors rotate TLDs and digits, hence the patterns. A "full movie" / "the movie" title makes it a film.
+ * Mirrors rotate TLDs and digits, hence the patterns; each host also matches its subdomains (en.mydramalist.com)
+ * but only as a whole label, so a short host such as iq or wetv never matches inside another host.
+ * On these hosts a title with the word "movie" (Full Movie, The Movie) makes it a film, any other page a TV series.
+ * A video's hashtag must name a drama kind (#kdrama, #koreandrama, #cdrama_edit); a bare #drama is common on
+ * gossip and commentary videos and does not count.
  */
+const SUB = '(?:[a-z0-9-]+\\.)*';
 const DRAMA_HOSTS = [
-  /^kisskh\.[a-z]+$/, /^dramacool\d*\.[a-z]+$/, /^asianc\d*\.[a-z]+$/,
-  /^(?:viki|wetv|iq|mydramalist)\.(?:com|vip)$/,
+  new RegExp(`^${SUB}kisskh\\.[a-z]+$`), new RegExp(`^${SUB}dramacool\\d*\\.[a-z]+$`), new RegExp(`^${SUB}asianc\\d*\\.[a-z]+$`),
+  new RegExp(`^${SUB}(?:viki|wetv|iq|mydramalist)\\.(?:com|vip)$`),
 ];
-const DRAMA_TAG = /#(?:k|c|j|thai|tw|asian)?drama(?:edit|s|clips?)?\b/i;
+const DRAMA_TAG = /#(?:k|c|j|thai|tw|asian|korean|chinese|japanese)drama(?:_?(?:edits?|s|clips?))?\b/i;
 function drama(host: string, path: string, title: string): string | null {
   if (DRAMA_HOSTS.some((re) => re.test(host))) {
-    return /\b(?:full\s+movie|the\s+movie)\b/i.test(title) ? 'movies' : 'tv';
+    return /\bmovie\b/i.test(title) ? 'movies' : 'tv';
   }
   const video = host === 'youtu.be' || (host === 'youtube.com' && /^\/(?:watch|shorts\/)/.test(path));
   return video && DRAMA_TAG.test(title) ? 'tv' : null;
