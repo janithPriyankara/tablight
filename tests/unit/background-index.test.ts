@@ -223,7 +223,8 @@ describe('background index', () => {
       'v1:0': JSON.stringify([[stashed.id, stashed.normUrl, stashed.title, '', stashed.stashedAt, stashed.updatedAt + 100000]]),
       'v1:meta': { chunks: 1, updatedAt: 1 },
     });
-    await vi.waitFor(async () => expect((await db.items.get(stashed.id))!.updatedAt).toBe(stashed.updatedAt + 100000), { timeout: 4000 });
+    // A pull waits PULL_DEBOUNCE_MS (1 s) before applying; 10 s leaves room for a slow CI host (build 24 needed > 4 s).
+    await vi.waitFor(async () => expect((await db.items.get(stashed.id))!.updatedAt).toBe(stashed.updatedAt + 100000), { timeout: 10_000 });
     expect((await db.items.get(stashed.id))!.embKey).toBe(stashed.embKey);
     // 3. an imported item with a group (never queued by import) gets its key through the backfill.
     const json = JSON.stringify({
@@ -236,7 +237,7 @@ describe('background index', () => {
     });
     expect(await search('unrelated')).toContain('Imported trip');
     mock.uninstall();
-  });
+  }, 20_000); // the sync step alone may take most of 10 s on a slow CI host
   it('state RPC returns totals, group counts without vectors, the active duplicate and statuses', async () => {
     const mock = installChromeMock({
       windows: [
