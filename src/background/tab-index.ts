@@ -493,7 +493,11 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
  * (trained head + user-taught exemplars) > null. `groups` must exclude suggested groups.
  */
 export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
-  return pickGroup(item, vec, groups, HEAD).groupId;
+  return autoPick(item, vec, groups).groupId;
+}
+/** The automatic pipeline's decision: the group, and the trained topic wanted when its group is missing. */
+export function autoPick(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): { groupId: string | null; want: string | null } {
+  return pickGroup(item, vec, groups, HEAD);
 }
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));

@@ -4,8 +4,8 @@ import { embedText } from '../shared/url';
 import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
-import { autoGroup, cachedVectors, fingerprintOf, recordDismissed } from './tab-index';
-import { recordRemovedTrained } from './grow';
+import { autoPick, cachedVectors, fingerprintOf, recordDismissed } from './tab-index';
+import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
 
@@ -225,7 +225,7 @@ export async function dismissSuggestion(db: Db, id: string): Promise<void> {
 
 // ───────────────────────────── regroup ─────────────────────────────
 
-interface Move { itemId: string; from: string | null; to: string | null }
+interface Move { itemId: string; from: string | null; to: string | null; want: string | null }
 
 /** What the automatic pipeline would now do with each auto item that has a cached vector. */
 async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; items: Item[] }> {
@@ -240,8 +240,9 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
   for (const i of candidates) {
     const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
-    const to = autoGroup(i, v, regular);
-    if (to !== i.groupId) moves.push({ itemId: i.id, from: i.groupId, to });
+    const { groupId: to, want } = autoPick(i, v, regular);
+    // A changed group, or only a changed wanted topic (local, so grown groups can appear for older tabs too).
+    if (to !== i.groupId || want !== (i.want ?? null)) moves.push({ itemId: i.id, from: i.groupId, to, want });
   }
   return { moves, groups, items };
 }
@@ -253,6 +254,7 @@ export async function regroupPreview(db: Db): Promise<{ groupId: string | null; 
   for (const i of items) before.set(i.groupId, (before.get(i.groupId) ?? 0) + 1);
   const after = new Map(before);
   for (const m of moves) {
+    if (m.to === m.from) continue; // only the wanted topic changes
     after.set(m.from, (after.get(m.from) ?? 0) - 1);
     after.set(m.to, (after.get(m.to) ?? 0) + 1);
   }
@@ -262,23 +264,40 @@ export async function regroupPreview(db: Db): Promise<{ groupId: string | null; 
     .filter((r) => r.before !== r.after);
 }
 
-/** Applies the regroup to auto items only; returns how many items changed group. */
-export async function regroupApply(db: Db): Promise<number> {
-  const { moves } = await planRegroup(db);
-  if (!moves.length) return 0;
-  return db.tx(['items', 'groups'], async (s) => {
-    const known = new Set((await s.groups.all()).map((g) => g.id));
-    let n = 0;
-    for (const m of moves) {
-      const cur = await s.items.get(m.itemId);
-      // Skip anything the user or another pass touched since the plan was made.
-      if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
-      if (m.to !== null && !known.has(m.to)) continue;
-      await s.items.put({ ...cur, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });
-      n++;
-    }
-    return n;
-  });
+/**
+ * Applies the regroup to auto items only and records each tab's wanted topic (local, no sync stamp). With `embedFn`
+ * it then creates the trained groups that tabs now need (growGroups), as the automatic pipeline does. Returns how
+ * many items changed group, including those moved into a grown group.
+ */
+export async function regroupApply(db: Db, embedFn?: (t: string[]) => Promise<Float32Array[]>): Promise<number> {
+  const { moves, items: before } = await planRegroup(db);
+  let n = 0;
+  if (moves.length) {
+    n = await db.tx(['items', 'groups'], async (s) => {
+      const known = new Set((await s.groups.all()).map((g) => g.id));
+      let changed = 0;
+      for (const m of moves) {
+        const cur = await s.items.get(m.itemId);
+        // Skip anything the user or another pass touched since the plan was made.
+        if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
+        if (m.to !== null && !known.has(m.to)) continue;
+        const { want: _oldWant, ...rest } = cur;
+        void _oldWant;
+        const next: Item = { ...rest, ...(m.want !== null ? { want: m.want } : {}) };
+        if (m.to === m.from) {
+          await s.items.put(next); // only the wanted topic: local, no updatedAt bump
+          continue;
+        }
+        await s.items.put({ ...next, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });
+        changed++;
+      }
+      return changed;
+    });
+  }
+  if (!embedFn || !(await growGroups(db, embedFn)).length) return n;
+  // Tabs that went to a grown group (some may have moved twice): count each tab whose group changed once.
+  const was = new Map(before.map((i) => [i.id, i.groupId]));
+  return (await db.items.all()).filter((i) => was.has(i.id) && was.get(i.id) !== i.groupId).length;
 }
 
 // ───────────────────────────── native tab groups ─────────────────────────────

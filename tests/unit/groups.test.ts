@@ -8,7 +8,8 @@ import {
 import {
   MAX_DISMISSED, embeddingKey, loadDismissed, maybeSuggest, processQueue, reconcile, recordDismissed,
 } from '../../src/background/tab-index';
-import { cosine } from '../../src/shared/vec';
+import { cosine, normalize } from '../../src/shared/vec';
+import { HEAD } from '../../src/classify/head';
 import type { Group, Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 const DIM = 384;
@@ -166,6 +167,41 @@ describe('regroup', () => {
     expect((await db.items.get(user.id))).toMatchObject({ groupId: 'taught', groupSource: 'user' });
     expect((await db.items.get(noVec.id))!.groupId).toBeNull(); // no cached vector: unchanged
     expect(await regroupApply(db)).toBe(0);
+  });
+  describe('topics that have no group yet', () => {
+    // A vector the bundled head reads as Hardware & making, an on-demand group that is not installed.
+    const hardware = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+    const video = async (k: string, over: Partial<Item> = {}) => {
+      const i = await addItem({ url: `https://www.youtube.com/watch?v=${k.padEnd(11, 'x')}`, title: `Lathe ${k}`, ...over });
+      await db.embeddings.put(await embeddingKey(i), hardware);
+      return i;
+    };
+    it('re-grouping records the topic a tab wants, without counting it as a change', async () => {
+      await db.groups.put(group('videos'));
+      const v = await video('a', { groupId: 'videos' });
+      expect(await regroupApply(db)).toBe(0); // it stays in Videos
+      const after = (await db.items.get(v.id))!;
+      expect(after.want).toBe('hardware');
+      expect(after.updatedAt).toBe(v.updatedAt); // local only: no sync stamp
+    });
+    it('re-grouping creates the group two tabs want and moves them in', async () => {
+      await db.groups.put(group('videos'));
+      const a = await video('a', { groupId: 'videos' });
+      const b = await video('b', { groupId: null });
+      const embed = async (t: string[]) => t.map(() => hardware);
+      expect(await regroupApply(db, embed)).toBe(2);
+      expect((await db.groups.get('hardware'))?.name).toBe('Hardware & making');
+      for (const id of [a.id, b.id]) expect((await db.items.get(id))!.groupId).toBe('hardware');
+    });
+    it('a user-placed tab never counts or moves', async () => {
+      await db.groups.put(group('videos'));
+      await db.groups.put(group('mine', { builtIn: false }));
+      await video('a', { groupId: 'videos' });
+      const u = await video('b', { groupId: 'mine', groupSource: 'user' });
+      await regroupApply(db, async (t) => t.map(() => hardware));
+      expect(await db.groups.get('hardware')).toBeUndefined();
+      expect((await db.items.get(u.id))!.groupId).toBe('mine');
+    });
   });
   it('leaves items in pending suggestions alone', async () => {
     await db.groups.put(group('tv'));

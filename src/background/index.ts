@@ -437,7 +437,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     }
     case 'search': return search(db, req);
     case 'state': return dashboardState(db);
-    case 'regroupApply': out = await regroupApply(db); break;
+    case 'regroupApply': out = await regroupApply(db, embed); break; // embed: groups tabs now need can appear
     case 'keepTab': {
       const item = await db.items.get(parseId(req.id));
       if (!item || item.tabId === undefined) throw new Error('tab not found');
