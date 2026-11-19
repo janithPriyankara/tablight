@@ -29,6 +29,7 @@ export type Req =
   | { t: 'settings'; patch: Partial<Settings> }
   | { t: 'export' }
   | { t: 'deleteAllData' } // Settings: wipe everything this extension stored, then re-seed
+  | { t: 'interests'; picked: string[]; custom: string[] } // the interests step's Continue: creates the picked groups
   | { t: 'import'; json: string };
 export type ReqType = Req['t'];
 export type Target = 'background' | 'offscreen';
@@ -36,6 +37,7 @@ const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'keepTab', 'settings', 'export', 'deleteAllData', 'import',
+  'interests',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

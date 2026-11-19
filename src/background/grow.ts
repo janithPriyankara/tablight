@@ -28,6 +28,12 @@ export async function recordRemovedTrained(id: string): Promise<void> {
   await chrome.storage.local.set({ [REMOVED_TRAINED_KEY]: [...cur, id] });
 }
 
+/** Forgets that the user removed these trained groups (they picked them again in the interests step). */
+export async function forgetRemovedTrained(ids: string[]): Promise<void> {
+  const cur = await loadRemovedTrained();
+  const next = cur.filter((id) => !ids.includes(id));
+  if (next.length !== cur.length) await chrome.storage.local.set({ [REMOVED_TRAINED_KEY]: next });
+}
 /** The lower-cased name a trained group is created with. */
 function trainedName(id: string): string {
   return (STARTER_GROUPS.find((g) => g.id === id)?.name ?? '').toLowerCase();

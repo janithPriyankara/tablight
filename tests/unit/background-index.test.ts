@@ -339,10 +339,10 @@ describe('background index', () => {
     const ia = (await db.items.all()).find((i) => i.url === 'https://a.example/');
     const st = (await bg.handleRequest({ t: 'stash', ids: [ia!.id] })) as { token: string };
     await bg.handleRequest({ t: 'snapshotNow' });
-    await db.settings.set({ onboarded: true, syncEnabled: false, theme: 'dark' });
+    await db.settings.set({ onboarded: true, syncEnabled: false, theme: 'dark', interestsAnswered: true });
     await db.tombstones.put({ id: 'gone', deletedAt: 1 });
     await chrome.storage.sync.set({ 'v1:meta': { x: 1 }, 'v1:0': 'chunk', 'other-ext-key': 1 });
-    await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], removedTrainedGroups: ['hardware'], foreign: 1 });
+    await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], removedTrainedGroups: ['hardware'], interests: { picked: ['ai'], custom: [] }, foreign: 1 });
     // Session records: suspicious-tab clues, the user's Keep choices, badge mode, mirrored groups, startup verdict.
     const tabB = mock.tabs()[0]!.id!; // the tab still open (a.example was stashed)
     await chrome.storage.session.set({
@@ -363,7 +363,7 @@ describe('background index', () => {
     expect(await db.stashBackups.all()).toEqual([]);
     expect(await db.items.byState('stashed')).toEqual([]);
     const settings = await db.settings.get();
-    expect(settings).toMatchObject({ onboarded: false, theme: 'system', syncEnabled: false }); // the sync choice is kept
+    expect(settings).toMatchObject({ onboarded: false, interestsAnswered: false, theme: 'system', syncEnabled: false }); // the sync choice is kept
     expect(Object.keys(await chrome.storage.sync.get(null))).toEqual(['other-ext-key']);
     // Only a fresh "sync is off" status is written back (the old one, and every other key of ours, is gone).
     const local = await chrome.storage.local.get(null);

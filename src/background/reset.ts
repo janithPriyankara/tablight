@@ -7,6 +7,7 @@ import { clearTabContext } from './tab-context';
 import { clearBadgeState } from './duplicates';
 import { MIRRORED_KEY } from './groups';
 import { REMOVED_TRAINED_KEY } from './grow';
+import { INTERESTS_KEY } from './interests';
 import { LAST_SESSION_KEY } from '../shared/types';
 /**
  * Deletes all extension data: every IndexedDB store (tab index, groups, stash, snapshots, embeddings,
@@ -25,7 +26,7 @@ export async function deleteAllData(db: Db): Promise<void> {
   await clearSyncData(async () => {
     await db.clearAll();
     await db.settings.set({ syncEnabled: false });
-    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY]);
+    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY]);
   });
   await clearTabContext();
   await clearBadgeState();

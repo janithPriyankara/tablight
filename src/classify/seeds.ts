@@ -447,3 +447,10 @@ export const STARTER_GROUPS: StarterGroup[] = [
     ],
   },
 ];
+/**
+ * What the interests step offers, in seeds order: the installed groups and the on-demand ones. Never `other` (it
+ * has no seeds, so no centroid, and only the user puts tabs in it).
+ */
+export const INTEREST_CHOICES: { id: string; name: string }[] = STARTER_GROUPS
+  .filter((g) => g.id !== 'other')
+  .map(({ id, name }) => ({ id, name }));

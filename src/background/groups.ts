@@ -103,6 +103,13 @@ function assertFreeName(all: Group[], name: string, self?: string): void {
     throw new Error(`A group called “${name}” already exists`);
   }
 }
+/** A new, empty user group named `name` (already parsed); `count` is how many groups exist (picks the colour). */
+export function newUserGroup(name: string, count: number): Group {
+  return {
+    id: `g-${crypto.randomUUID()}`, name, color: USER_COLORS[count % USER_COLORS.length]!,
+    icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: Date.now(),
+  };
+}
 export async function createGroup(db: Db, name: string, ids: string[]): Promise<Group> {
   const clean = parseName(name);
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
@@ -112,10 +119,7 @@ export async function createGroup(db: Db, name: string, ids: string[]): Promise<
   return db.tx(['items', 'groups'], async (s) => {
     const all = await s.groups.all();
     assertFreeName(all, clean);
-    const base: Group = {
-      id: `g-${crypto.randomUUID()}`, name: clean, color: USER_COLORS[all.length % USER_COLORS.length]!,
-      icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: Date.now(),
-    };
+    const base = newUserGroup(clean, all.length);
     const group = withExemplars(base, items.flatMap((i) => (vecs.has(i.id) ? [{ vec: vecs.get(i.id)!, text: embedText(i) }] : [])));
     await s.groups.put(group);
     for (const snap of items) {
@@ -315,7 +319,7 @@ export function nearestChromeColor(hex: string): ChromeColor {
 
 /** chrome.storage.session: native tab group id → our group id, for native groups this extension made. */
 export const MIRRORED_KEY = 'mirroredGroups';
-async function loadMirrored(): Promise<Map<number, string>> {
+export async function loadMirrored(): Promise<Map<number, string>> {
   try {
     const raw = (await chrome.storage.session.get(MIRRORED_KEY))[MIRRORED_KEY] as unknown;
     if (raw && typeof raw === 'object') {

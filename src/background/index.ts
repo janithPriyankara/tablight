@@ -12,6 +12,7 @@ import {
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { growGroups } from './grow';
+import { applyInterests } from './interests';
 import { findSuspicious } from './suspicious';
 import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
@@ -293,10 +294,11 @@ async function mirrorAll(db: Db): Promise<void> {
 /** RPCs that can change the stash or the group names its records carry: each schedules a sync push. */
 const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'stashWindow', 'stashDelete', 'open',
-  'undo', 'sessionAction', 'regroupApply',
+  'undo', 'sessionAction', 'regroupApply', 'interests',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
   'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens', 'suspiciousTabs',
+  'interestsAnswered',
 ]);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 /**
@@ -327,6 +329,7 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
         out.toolbarOpens = val;
         break;
       case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups': case 'suspiciousTabs':
+      case 'interestsAnswered':
         if (!isBool(val)) throw new Error(`${key} must be true or false`);
         out[key as 'syncEnabled'] = val;
         break;
@@ -438,6 +441,12 @@ export async function handleRequest(req: Req): Promise<unknown> {
       await flushTabEvents(); // re-index the open tabs (nothing was closed)
       break;
     }
+    case 'interests': {
+      // The first answer on a new install may also remove the installed groups nobody picked; later answers only add.
+      const s = await db.settings.get();
+      out = await applyInterests(db, embed, { picked: req.picked, custom: req.custom }, !s.onboarded && !s.interestsAnswered);
+      break;
+    }
     case 'import': {
       if (typeof req.json !== 'string') throw new Error('invalid import');
       const parsed = parseImport(req.json);
@@ -450,7 +459,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
   }
   notifyChanged();
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
-  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete') void kickClassification(db);
+  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete' || req.t === 'interests') void kickClassification(db);
   await mirrorAll(db);
   return out;
 }

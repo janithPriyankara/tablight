@@ -66,6 +66,11 @@ export interface Settings {
   toolbarOpens: 'popup' | 'sidepanel';
   /** Flag open tabs that look like ad or scam pop-ups (the toolbar badge shows '!'). */
   suspiciousTabs: boolean;
+  /**
+   * The interests step was answered (Continue or Skip). False on a fresh install, after "Delete all data", and for
+   * installs from before the step (their stored settings lack the key), so the one-time card shows once.
+   */
+  interestsAnswered: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -77,6 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoCreateGroups: false,
   toolbarOpens: 'popup',
   suspiciousTabs: true,
+  interestsAnswered: false,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.
