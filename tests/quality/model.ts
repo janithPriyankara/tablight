@@ -1,5 +1,7 @@
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { env, pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
+import type { Head } from '../../src/classify/assign';
 import { EMBED_MODEL, EMBED_POOLING } from '../../src/classify/model';
 export interface EmbedderOpts {
   model?: string;
@@ -23,4 +25,14 @@ export async function loadEmbedder(opts: EmbedderOpts = {}): Promise<(texts: str
     }
     return out;
   };
+}
+export type QualityHead = Head & { pooling?: 'mean' | 'cls'; val?: { acc: number; otherAssigned: number } };
+/** The trained head (HEAD_PATH lets model experiments run without touching the bundled file). */
+export async function loadHead(): Promise<QualityHead> {
+  return JSON.parse(await readFile(process.env.HEAD_PATH ?? resolve(import.meta.dirname, '../../src/classify/head.json'), 'utf8'));
+}
+/** The head and the embedder it was trained with (MODEL_PATH points at another model directory). */
+export async function loadProductModel(): Promise<{ head: QualityHead; embed: (texts: string[]) => Promise<Float32Array[]> }> {
+  const head = await loadHead();
+  return { head, embed: await loadEmbedder({ model: head.model, pooling: head.pooling, path: process.env.MODEL_PATH }) };
 }

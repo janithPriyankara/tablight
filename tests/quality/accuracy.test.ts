@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import fixture from './fixture.json';
 import holdout from './holdout.json';
@@ -10,8 +8,8 @@ import youtubeMessy from './youtube-messy.json';
 import trainA from '../../training/train-a.json';
 import trainB from '../../training/train-b.json';
 import trainC from '../../training/train-c.json';
-import { loadEmbedder } from './model';
-import { buildStarterGroups, buildTrainedGroup, classify, TRAINED_IDS, type Head } from '../../src/classify/assign';
+import { loadProductModel, type QualityHead } from './model';
+import { buildStarterGroups, buildTrainedGroup, classify, TRAINED_IDS } from '../../src/classify/assign';
 import { pickGroup } from '../../src/classify/pick';
 import { ruleGroup } from '../../src/classify/rules';
 import { embedText } from '../../src/shared/url';
@@ -22,15 +20,15 @@ const blind = holdout as Row[];
 const blind2 = holdout2 as Row[];
 const blind3 = holdout3 as Row[];
 // HEAD_PATH / MODEL_PATH let model experiments run without touching the bundled files.
-const headPath = process.env.HEAD_PATH ?? resolve(import.meta.dirname, '../../src/classify/head.json');
-let head: Head & { pooling?: 'mean' | 'cls'; val?: { acc: number; otherAssigned: number } };
+let head: QualityHead;
 /** The caller pipeline with the installed (starter) groups, or with `all` groups (starter plus every on-demand one). */
 let run: (rows: Row[], set?: 'installed' | 'all') => Promise<(string | null)[]>;
 /** The product pipeline with the installed (starter) groups: pickGroup, which adds the Videos fallback. */
 let runProduct: (rows: Row[], set?: 'installed' | 'all') => Promise<(string | null)[]>;
 beforeAll(async () => {
-  head = JSON.parse(await readFile(headPath, 'utf8'));
-  const embed = await loadEmbedder({ model: head.model, pooling: head.pooling, path: process.env.MODEL_PATH });
+  const model = await loadProductModel();
+  head = model.head;
+  const embed = model.embed;
   const groups: Group[] = await buildStarterGroups(embed);
   const allGroups: Group[] = [...groups, ...(await Promise.all([...TRAINED_IDS].map((id) => buildTrainedGroup(id, embed))))];
   // Caller pipeline: (user group) > ruleGroup > classify > Unsorted (null).
