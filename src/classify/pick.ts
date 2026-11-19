@@ -22,31 +22,27 @@ export interface Neighbour {
 }
 /**
  * The neighbour step: an unsure tab goes where its closest grouped tabs are. Of the NEIGHBOUR_K pool tabs closest
- * to it at cosine ≥ NEIGHBOUR_SIMILARITY (one vote per page), a group with at least NEIGHBOUR_MIN votes and
- * strictly more than any other wins.
- * Chosen on training/sessions-tune.json (tests/quality/neighbours.test.ts) by the sum, over two scenarios, of
- * right − 2 × (wrong + `other` tabs put in a group). The scenarios are a profile filled by automatic placements alone
- * and one where the user placed 30% of tabs by hand (teaching their groups, as a drag does), 5 replays each. The
- * grid was similarity 0.50–0.80 × min {2, 3} × k {5, 10}, with the head trained 2026-11-19 and the step never run
- * for a tab the head reads as `other`. 0.52 / 2 / 10 scores 1003:
- * - automatic only: 570 (1400 right, 400 wrong, 205 Unsorted of 2005; `other` 15/65);
- * - 30% by hand: 433 (1013, 277, 129 of 1419; `other` 13/54).
- * Without neighbours the sum is 819 (475 and 344). From 0.70 up the step never fires. tests/quality/sessions.json
- * is the blind gate.
+ * to it at cosine ≥ head.similarity (one vote per page), a group with at least NEIGHBOUR_MIN votes and strictly
+ * more than any other wins. It never runs for a tab the head reads as `other`.
+ * The bar is head.similarity, the cosine scripts/train-head.mjs validates for the learned-exemplar override: a single
+ * nearest pool item at that cosine is in the right group at least 95% of the time (0.71 as shipped). Two agreeing
+ * tabs at that bar are stronger evidence still. The bar was not tuned on the synthetic sessions: lower bars chosen
+ * there did not hold up blind (tests/quality/README.md). On those sessions the step rarely fires at this bar, but
+ * real profiles repeat pages and sites far more, and that is where it helps. tests/quality/neighbours.test.ts checks
+ * it does no harm.
  */
-export const NEIGHBOUR_SIMILARITY = 0.52;
 export const NEIGHBOUR_MIN = 2;
 export const NEIGHBOUR_K = 10;
 /** The pool holds at most this many tabs (most recently active first): 100 picks against it stay well under 1.5 s. */
 export const NEIGHBOUR_POOL_MAX = 2000;
 export interface NeighbourOpts { similarity: number; min: number; k: number }
-const SHIPPED: NeighbourOpts = { similarity: NEIGHBOUR_SIMILARITY, min: NEIGHBOUR_MIN, k: NEIGHBOUR_K };
 /**
  * The group the closest pool tabs agree on, or null. Tabs in a group missing from `groups` (or in Other / Videos)
- * and vectors of another length are skipped. `opts` exists for tuning (tests/quality/sessions-sim.ts).
+ * and vectors of another length are skipped. pickGroup passes head.similarity, NEIGHBOUR_MIN and NEIGHBOUR_K; other
+ * values are for the diagnostic sweep (tests/quality/sessions-sim.ts).
  */
 export function neighbourGroup(
-  vec: ArrayLike<number>, pool: Neighbour[], groups: Group[], opts: NeighbourOpts = SHIPPED,
+  vec: ArrayLike<number>, pool: Neighbour[], groups: Group[], opts: NeighbourOpts,
 ): string | null {
   const known = new Set(groups.map((g) => g.id));
   // The closest tab of each page, at or above the similarity bar.
@@ -96,7 +92,9 @@ export function pickGroup(
   if (picked.groupId !== null) return { groupId: picked.groupId, want: null, by: picked.by ?? 'head' };
   const top = headTop(vec, head);
   // A tab the head reads as `other` is never pulled into a group by its neighbours: only the user files those.
-  const near = pool.length && top?.label !== OTHER_GROUP_ID ? neighbourGroup(vec, pool, groups) : null;
+  const near = pool.length && top?.label !== OTHER_GROUP_ID
+    ? neighbourGroup(vec, pool, groups, { similarity: head.similarity, min: NEIGHBOUR_MIN, k: NEIGHBOUR_K })
+    : null;
   if (near !== null) return { groupId: near, want: null, by: 'neighbour' };
   const video = isYouTubeVideo(item.url);
   const bar = video ? Math.min(YOUTUBE_THRESHOLD, head.threshold) : head.threshold;

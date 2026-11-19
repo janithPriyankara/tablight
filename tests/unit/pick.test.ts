@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { headTop, type Head } from '../../src/classify/assign';
 import bundled from '../../src/classify/head.json';
-import { NEIGHBOUR_POOL_MAX, NEIGHBOUR_SIMILARITY, pickGroup, YOUTUBE_THRESHOLD, type Neighbour } from '../../src/classify/pick';
+import { NEIGHBOUR_POOL_MAX, pickGroup, YOUTUBE_THRESHOLD, type Neighbour } from '../../src/classify/pick';
 import type { Group } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
 const DIM = 16;
@@ -77,7 +77,8 @@ describe('pickGroup neighbours', () => {
     v[j] = Math.sqrt(1 - c * c);
     return v;
   };
-  const C = Math.max(0.9, NEIGHBOUR_SIMILARITY);
+  // Close: just above the head's similarity bar (0.9 for `head`), where neighbours count.
+  const C = head.similarity + 0.05;
   let k = 0;
   const tab = (groupId: string, j: number, over: Partial<Neighbour> = {}): Neighbour =>
     ({ vec: near(C, j), groupId, normUrl: `https://n${k++}.example.com/`, ...over });
@@ -86,11 +87,15 @@ describe('pickGroup neighbours', () => {
     expect(pickGroup(PAGE, UNSURE, groups, head, [tab('hardware', 1), tab('hardware', 2)]))
       .toEqual({ groupId: 'hardware', want: null, by: 'neighbour' });
   });
+  it("uses the head's similarity as the bar", () => {
+    const strict: Head = { ...head, similarity: C + 0.01 };
+    expect(pickGroup(PAGE, UNSURE, groups, strict, [tab('hardware', 1), tab('hardware', 2)]).by).toBeNull();
+  });
   it('needs more than one close tab', () => {
     expect(pickGroup(PAGE, UNSURE, groups, head, [tab('hardware', 1)])).toEqual({ groupId: null, want: null, by: null });
   });
   it('ignores tabs that are not close', () => {
-    const far = (j: number): Neighbour => ({ ...tab('hardware', j), vec: near(NEIGHBOUR_SIMILARITY - 0.05, j) });
+    const far = (j: number): Neighbour => ({ ...tab('hardware', j), vec: near(head.similarity - 0.01, j) });
     expect(pickGroup(PAGE, UNSURE, groups, head, [far(1), far(2), far(3)]).by).toBeNull();
   });
   it('places nothing on a tie', () => {
