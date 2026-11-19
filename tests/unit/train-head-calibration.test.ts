@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain .mjs build script helper
 import { calibrationIndices, rowKey } from '../../scripts/calibration.mjs';
+// @ts-expect-error plain .mjs build script helper
+import { fitHead, mulberry32 } from '../../scripts/head-fit.mjs';
 const pool = [
   { title: 'A', url: 'https://a.test/' },
   { title: 'B', url: 'https://b.test/' },
@@ -18,5 +20,44 @@ describe('calibrationIndices', () => {
   });
   it('is empty without keys: no row outside the file can reach threshold or similarity selection', () => {
     expect(calibrationIndices(pool, [])).toEqual([]);
+  });
+});
+// fitHead is train-head.mjs's selection and training step; here it runs on small synthetic vectors.
+const LABELS = ['a', 'b', 'other'];
+/** 90 unit vectors in 3 dims, 30 per label, each a noisy copy of its label's axis. */
+function synth() {
+  const rand = mulberry32(7);
+  const X: number[][] = [];
+  const Y: number[] = [];
+  for (let i = 0; i < 90; i++) {
+    const y = i % 3;
+    const v = [0, 1, 2].map((d) => (d === y ? 1 : 0) + (rand() - 0.5) * 0.8);
+    const norm = Math.hypot(...v);
+    X.push(v.map((x) => x / norm));
+    Y.push(y);
+  }
+  return { X, Y, rule: X.map(() => null), labels: LABELS, epochs: 40, log: () => {} };
+}
+describe('fitHead with calibration rows (train-head CALIBRATION)', () => {
+  const calIdx = Array.from({ length: 24 }, (_, k) => k * 3 + (k % 3)); // 24 rows, 8 per label
+  it('validates, thresholds and picks the similarity on the calibration rows only', () => {
+    const r = fitHead({ ...synth(), calIdx });
+    expect(r.valIdx).toEqual(calIdx);
+    expect(r.scored).toEqual(calIdx);
+    expect(r.trainIdx).toEqual(Array.from({ length: 90 }, (_, i) => i).filter((i) => !calIdx.includes(i)));
+    expect(r.chosen.count).toBe(calIdx.length); // L2 choice scored on calibration rows
+    expect(r.cv.count).toBe(calIdx.length); // out-of-fold threshold scored on calibration rows
+    expect(r.similarityCount).toBe(calIdx.length); // override similarity queried with calibration rows
+    expect(r.final.W).toHaveLength(LABELS.length); // final head still trains on the whole pool
+  });
+  it('without calibration, uses a 15% split and out-of-fold scores over the whole pool', () => {
+    const r = fitHead({ ...synth(), calIdx: null });
+    expect(r.valIdx).toHaveLength(15); // round(30 × 0.15) = 5 per label
+    expect(r.chosen.count).toBe(15);
+    expect(r.cv.count).toBe(90);
+    expect(r.similarityCount).toBe(15);
+  });
+  it('fails loudly on an empty calibration set', () => {
+    expect(() => fitHead({ ...synth(), calIdx: [] })).toThrow(/no calibration row/);
   });
 });
