@@ -241,7 +241,7 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
   for (const i of candidates) {
     const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
-    const { groupId: to, want, by } = autoPick(i, v, regular, pool.filter((p) => p.id !== i.id));
+    const { groupId: to, want, by } = autoPick(i, v, regular, pool, i.id);
     // A changed group, or only a changed wanted topic or placement record (local, so grown groups can appear for
     // older tabs too, and a tab now placed by its neighbours stops counting as one).
     if (to !== i.groupId || want !== (i.want ?? null) || by !== (i.placedBy ?? null)) {

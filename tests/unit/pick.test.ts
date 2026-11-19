@@ -83,6 +83,11 @@ describe('pickGroup neighbours', () => {
   const tab = (groupId: string, j: number, over: Partial<Neighbour> = {}): Neighbour =>
     ({ vec: near(C, j), groupId, normUrl: `https://n${k++}.example.com/`, ...over });
   const groups = [group('hardware'), group('programming'), group('videos')];
+  it('leaves the pool entry with skipId out', () => {
+    const pool = [tab('hardware', 1, { id: 'self' }), tab('hardware', 2, { id: 'other' })];
+    expect(pickGroup(PAGE, UNSURE, groups, head, pool, 'self').by).toBeNull();
+    expect(pickGroup(PAGE, UNSURE, groups, head, pool).by).toBe('neighbour');
+  });
   it('follows two close tabs that agree', () => {
     expect(pickGroup(PAGE, UNSURE, groups, head, [tab('hardware', 1), tab('hardware', 2)]))
       .toEqual({ groupId: 'hardware', want: null, by: 'neighbour' });

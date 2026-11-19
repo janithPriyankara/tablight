@@ -9,6 +9,7 @@ import {
   BACKOFF_MINUTES,
   embeddingKey,
   flushTabEvents,
+  lazyPool,
   flushIfPending,
   PENDING_KEY,
   maybeSuggest,
@@ -503,6 +504,22 @@ describe('neighbour step', () => {
     const ids = (await neighbourPool(db, await db.items.all(), await db.groups.all())).map((p) => p.id).sort();
     expect(ids).toEqual(['exemplar', 'head', 'old', 'rule', 'user']);
   });
+  it('the pool leaves out YouTube videos with no placedBy but keeps other legacy items', async () => {
+    await db.groups.put(group('programming'));
+    const base = {
+      domain: 'x', state: 'open' as const, groupId: 'programming', groupSource: 'auto' as const, kind: 'read' as const,
+      createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    };
+    const urls: Record<string, string> = {
+      watch: 'https://www.youtube.com/watch?v=aaa', short: 'https://www.youtube.com/shorts/bbb', be: 'https://youtu.be/ccc',
+      page: 'https://example.com/page',
+    };
+    const items: Item[] = Object.entries(urls).map(([id, url]) => ({ ...base, id, url, normUrl: url, title: id }));
+    items.push({ ...base, id: 'ytHead', url: 'https://www.youtube.com/watch?v=ddd', normUrl: 'https://www.youtube.com/watch?v=ddd', title: 'ytHead', placedBy: 'head' });
+    for (const it of items) await db.embeddings.put(await embeddingKey(it), unsure);
+    const ids = (await neighbourPool(db, items, await db.groups.all())).map((p) => p.id).sort();
+    expect(ids).toEqual(['page', 'ytHead']);
+  });
   it(`keeps the ${NEIGHBOUR_POOL_MAX} most recently active tabs`, async () => {
     await db.groups.put(group('programming'));
     const items: Item[] = Array.from({ length: NEIGHBOUR_POOL_MAX + 2 }, (_, k) => ({
@@ -616,6 +633,35 @@ describe('queue failures (review 1.4)', () => {
     expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(39);
     expect(items.find((i) => i.title === 'Q 5')!.groupId).toBeNull();
     expect(mock.alarms()).toEqual([]);
+  });
+  it('a given-up auto item loses its placedBy', async () => {
+    await setup(40);
+    const poison = (await db.items.all()).find((i) => i.title === 'Q 5')!;
+    await db.items.put({ ...poison, groupId: 'programming', groupSource: 'auto', placedBy: 'head' });
+    fakeEmbed.mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.startsWith('Q 5 '))) throw new Error('bad input');
+      return texts.map(vecFor);
+    });
+    for (let k = 0; k < 2; k++) await expect(processQueue(db, fakeEmbed)).rejects.toThrow();
+    await processQueue(db, fakeEmbed);
+    const gone = (await db.items.get(poison.id))!;
+    expect(gone.groupId).toBeNull();
+    expect(gone.embGaveUpAt).toBeTypeOf('number');
+    expect(gone.placedBy).toBeUndefined();
+  });
+  it('lazyPool reads once, and a failed read is not cached', async () => {
+    await db.groups.put(group('programming'));
+    const spy = vi.spyOn(db.items, 'all');
+    const pool = lazyPool(db);
+    await pool();
+    await pool();
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+    const retry = lazyPool(db);
+    const fail = vi.spyOn(db.items, 'all').mockRejectedValueOnce(new Error('idb down'));
+    await expect(retry()).rejects.toThrow('idb down');
+    await expect(retry()).resolves.toEqual([]);
+    fail.mockRestore();
   });
   it('a given-up item is stamped, not re-queued by backfill within 24 h, and success clears the stamp', async () => {
     await setup(40);

@@ -5,7 +5,7 @@ import { NEIGHBOUR_POOL_MAX, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type Pl
 import { OTHER_GROUP_ID } from '../classify/assign';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
-import { cleanTitle, domainOf, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
+import { cleanTitle, domainOf, embedText, isWebUrl, isYouTubeVideo, kindOf, normalizeUrl } from '../shared/url';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
@@ -444,10 +444,13 @@ async function drain(db: Db, embedFn: EmbedFn): Promise<number> {
   }
 }
 
-/** The neighbour pool, read from the database at most once, on first use. */
-function lazyPool(db: Db): () => Promise<PoolTab[]> {
+/** The neighbour pool, read from the database at most once, on first use. A failed read is not kept: the next call re-reads. */
+export function lazyPool(db: Db): () => Promise<PoolTab[]> {
   let pool: Promise<PoolTab[]> | undefined;
-  return () => (pool ??= (async () => neighbourPool(db, await db.items.all(), await db.groups.all()))());
+  return () => (pool ??= (async () => neighbourPool(db, await db.items.all(), await db.groups.all()))().catch((e: unknown) => {
+    pool = undefined;
+    throw e;
+  }));
 }
 async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
   // One pool per batch, shared by the per-item retries below (a batch's own placements join the next batch's pool).
@@ -487,7 +490,7 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
       const cur = await s.items.get(id);
       if (!cur) continue;
       if (cur.groupSource === 'auto') {
-        await s.items.put({ ...cur, groupId: null, embGaveUpAt: now, updatedAt: cur.groupId === null ? cur.updatedAt : nextStamp(cur.updatedAt) });
+        await s.items.put({ ...withoutPlacedBy(cur), groupId: null, embGaveUpAt: now, updatedAt: cur.groupId === null ? cur.updatedAt : nextStamp(cur.updatedAt) });
         n++;
       } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
@@ -498,12 +501,12 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
 
 /**
  * The automatic pipeline's decision: the group, the trained topic wanted when its group is missing, and what
- * decided. `pool` (neighbourPool) must not hold the item itself.
+ * decided. `skipId` is the item's own id: its entry in `pool` (neighbourPool) is left out.
  */
 export function autoPick(
-  item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[], pool?: Neighbour[],
+  item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[], pool?: Neighbour[], skipId?: string,
 ): { groupId: string | null; want: string | null; by: PlacedBy | null } {
-  return pickGroup(item, vec, groups, HEAD, pool);
+  return pickGroup(item, vec, groups, HEAD, pool, skipId);
 }
 /** A pool tab with the id of its item, so a caller can leave the item it is picking for out. */
 export interface PoolTab extends Neighbour { id: string }
@@ -512,14 +515,14 @@ const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'you
 /**
  * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
  * than Videos and Other, placed by the user or by a rule, an exemplar or the head (a missing `placedBy`, from
- * older data, counts), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
+ * older data, counts, except for a YouTube video: those were placed at the low video bar), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
  * (items without one are left out).
  */
 export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Promise<PoolTab[]> {
   const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID).map((g) => g.id));
   const eligible = items
     .filter((i) => i.groupId !== null && ok.has(i.groupId))
-    .filter((i) => i.groupSource === 'user' || i.placedBy === undefined || !NOT_EVIDENCE.has(i.placedBy))
+    .filter((i) => i.groupSource === 'user' || (i.placedBy === undefined ? !isYouTubeVideo(i.url) : !NOT_EVIDENCE.has(i.placedBy)))
     .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
     .slice(0, NEIGHBOUR_POOL_MAX);
   const vecs = await cachedVectors(db, eligible);
@@ -582,7 +585,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
       let want: string | null = null;
       let by: PlacedBy | null = null;
       if (cur.groupSource !== 'user') {
-        ({ groupId, want, by } = autoPick(cur, vec, groups, live.filter((p) => p.id !== cur.id)));
+        ({ groupId, want, by } = autoPick(cur, vec, groups, live, cur.id));
       }
       // A success lifts any earlier give-up stamp; want and placedBy are rewritten below.
       const { embGaveUpAt: _cleared, want: _oldWant, placedBy: _oldBy, ...rest } = cur;

@@ -19,6 +19,8 @@ export const VIDEOS_GROUP_ID = 'videos';
 export const YOUTUBE_THRESHOLD = 0.26;
 /** One of the owner's grouped tabs that an unsure tab may follow (tab-index neighbourPool builds the pool). */
 export interface Neighbour {
+  /** The item's id, so a caller can leave the tab it is picking for out (NeighbourOpts.skipId). */
+  id?: string;
   vec: ArrayLike<number>;
   groupId: string;
   normUrl: string;
@@ -38,7 +40,7 @@ export const NEIGHBOUR_MIN = 2;
 export const NEIGHBOUR_K = 10;
 /** The pool holds at most this many tabs (most recently active first): 100 picks against it stay well under 1.5 s. */
 export const NEIGHBOUR_POOL_MAX = 2000;
-export interface NeighbourOpts { similarity: number; min: number; k: number }
+export interface NeighbourOpts { similarity: number; min: number; k: number; skipId?: string }
 /**
  * The group the closest pool tabs agree on, or null. Tabs in a group missing from `groups` (or in Other / Videos)
  * and vectors of another length are skipped. pickGroup passes head.similarity, NEIGHBOUR_MIN and NEIGHBOUR_K; other
@@ -51,6 +53,7 @@ export function neighbourGroup(
   // The closest tab of each page, at or above the similarity bar.
   const best = new Map<string, { s: number; groupId: string }>();
   for (const n of pool) {
+    if (opts.skipId !== undefined && n.id === opts.skipId) continue;
     if (n.vec.length !== vec.length || !known.has(n.groupId)) continue;
     if (n.groupId === OTHER_GROUP_ID || n.groupId === VIDEOS_GROUP_ID) continue;
     const s = cosine(vec, n.vec);
@@ -78,7 +81,7 @@ export function neighbourGroup(
  * else Videos (when it exists) > null. `by` says which.
  * `want` is the head's topic when no group exists for it yet and the head is that sure of it (`threshold`, for
  * pages and videos alike): the lower YouTube bar only places a video into a group that already exists.
- * `groups` must exclude suggested groups; `pool` must exclude the item itself.
+ * `groups` must exclude suggested groups; `skipId` is the item's own id, left out of `pool`.
  */
 export function pickGroup(
   item: Pick<Item, 'url' | 'title'>,
@@ -86,6 +89,7 @@ export function pickGroup(
   groups: Group[],
   head: Head,
   pool: Neighbour[] = [],
+  skipId?: string,
 ): { groupId: string | null; want: string | null; by: PlacedBy | null } {
   // A rule, an exemplar, the head or neighbours decided: nothing is wanted. `want` is only for tabs left Unsorted
   // or parked in Videos.
@@ -96,7 +100,7 @@ export function pickGroup(
   const top = headTop(vec, head);
   // A tab the head reads as `other` is never pulled into a group by its neighbours: only the user files those.
   const near = pool.length && top?.label !== OTHER_GROUP_ID
-    ? neighbourGroup(vec, pool, groups, { similarity: head.similarity, min: NEIGHBOUR_MIN, k: NEIGHBOUR_K })
+    ? neighbourGroup(vec, pool, groups, { similarity: head.similarity, min: NEIGHBOUR_MIN, k: NEIGHBOUR_K, skipId })
     : null;
   if (near !== null) return { groupId: near, want: null, by: 'neighbour' };
   const video = isYouTubeVideo(item.url);
