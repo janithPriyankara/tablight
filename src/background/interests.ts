@@ -30,7 +30,7 @@ export interface InterestsRequest { picked: string[]; custom: string[] }
  * - `fresh` (first answer on a new install): each installed group not picked is removed when the user hasn't
  *   touched it: no user-placed tab in it (in any state), its seed name, not mirrored as a native tab group, and
  *   nothing taught to it (no exemplars or lessons). Its tabs go back to Unsorted. Otherwise nothing is removed.
- * - Every auto-placed classifiable tab (outside pending suggestions) is queued for classification, so the new
+ * - Every auto-placed classifiable open or sleeping tab (outside pending suggestions; not stashed items) is queued for classification, so the new
  *   groups fill at once; user-placed tabs stay. The caller kicks classification.
  * - `interestsAnswered` becomes true and the answer is stored under INTERESTS_KEY.
  * Returns the ids of the groups created and removed.
@@ -112,6 +112,7 @@ export async function applyInterests(
     const suggested = new Set(all.filter((g) => g.suggested).map((g) => g.id));
     for (const i of await s.items.all()) {
       if (!i.classifiable || i.groupSource !== 'auto') continue;
+      if (i.state === 'stashed') continue; // tabs only: re-queueing a stash would re-embed and re-sync all of it
       if (i.groupId !== null && suggested.has(i.groupId)) continue; // a pending suggestion stays as it is
       await s.queue.add(i.id);
     }

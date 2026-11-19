@@ -120,7 +120,7 @@ describe('applyInterests', () => {
     expect(await db.items.get(userTv.id)).toMatchObject({ groupId: 'tv', groupSource: 'user' });
     const q = await queued();
     expect(q).toContain(autoNews.id);
-    expect(q).toContain(stashedNews.id);
+    expect(q).not.toContain(stashedNews.id); // stashed items are not tabs: they are not re-embedded or re-synced
     expect(q).not.toContain(userTv.id);
   });
 
@@ -131,16 +131,19 @@ describe('applyInterests', () => {
     expect(await db.groups.get('news')).toBeDefined();
   });
 
-  it('re-queues every auto-placed tab afterwards; user-placed and suggested ones stay put', async () => {
+  it('re-queues every auto-placed open or sleeping tab afterwards; user-placed, suggested and stashed ones stay put', async () => {
     await db.groups.put(userGroup('suggested-1', 'Maybe', { suggested: true }));
     const unsorted = await addItem();
     const auto = await addItem({ groupId: 'news' });
+    const sleeping = await addItem({ groupId: 'news', state: 'sleeping' });
+    const stashed = await addItem({ groupId: 'news', state: 'stashed' });
     const user = await addItem({ groupId: 'news', groupSource: 'user' });
     const sugg = await addItem({ groupId: 'suggested-1' });
     const unclassifiable = await addItem({ classifiable: false });
     await applyInterests(db, fakeEmbed, { picked: ['sports'], custom: [] }, false);
     const q = await queued();
-    expect(q).toEqual([unsorted.id, auto.id].sort());
+    expect(q).toEqual([unsorted.id, auto.id, sleeping.id].sort());
+    expect(q).not.toContain(stashed.id);
     expect(q).not.toContain(user.id);
     expect(q).not.toContain(sugg.id);
     expect(q).not.toContain(unclassifiable.id);
