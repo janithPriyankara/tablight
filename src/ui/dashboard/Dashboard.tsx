@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { SuspiciousTab } from '../../shared/clues';
 import { send } from '../../shared/rpc';
-import { LAST_SESSION_KEY, type GroupSummary, type Item, type Settings as SettingsT } from '../../shared/types';
+import { LAST_SESSION_KEY, type DashboardState, type GroupSummary, type Item, type Settings as SettingsT } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
 import { displayTitle, plural } from '../common/format';
 import {
@@ -18,6 +18,7 @@ import { CLOSE_ALL_BODY, SUSPICIOUS_INTRO, SuspiciousRows, closeAllTitle } from 
 import { GroupList, ViewSelect } from './GroupList';
 import { ItemGrid, type RowAction, type SelectMode } from './ItemGrid';
 import { ConfirmDialog, type ConfirmOptions, Modal, NameDialog } from './Modal';
+import { InterestsCard, InterestsDialog, type InterestsAnswer } from './Interests';
 import { Onboarding } from './Onboarding';
 import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions } from './Sessions';
 import { Settings } from './Settings';
@@ -41,7 +42,8 @@ type Dialog =
   | { kind: 'confirm'; opts: ConfirmOptions; resolve: (ok: boolean) => void }
   | { kind: 'name'; title: string; initial?: string; confirmLabel: string; resolve: (name: string | null) => void }
   | { kind: 'merge'; from: GroupSummary }
-  | { kind: 'regroup'; rows: RegroupRow[] };
+  | { kind: 'regroup'; rows: RegroupRow[] }
+  | { kind: 'interests' };
 
 const hasTab = (i: Item) => i.state !== 'stashed' && i.tabId !== undefined;
 /** An empty id set that keeps its identity across renders. */
@@ -435,6 +437,23 @@ export function Dashboard() {
       await send({ t: 'groupDelete', id: g.id });
       go({ kind: 'all' });
     });
+  // ── interests ──
+  /**
+   * Continue on the interests step: creates the picked groups. A group page whose group is gone afterwards (removed
+   * as unpicked on a fresh install, or adopted under a choice's id) would say "Group not found": All tabs instead.
+   */
+  const answerInterests = (a: InterestsAnswer) =>
+    act(async () => {
+      const r = await send<{ created: string[]; removed: string[] }>({ t: 'interests', picked: a.picked, custom: a.custom });
+      setDialog(null);
+      notify(r.created.length ? `Added ${plural(r.created.length, 'group')}` : 'No new groups needed: you have them all');
+      const v = parseHash(location.hash);
+      if (v.kind !== 'group') return;
+      const now = await send<DashboardState>({ t: 'state' });
+      if (!now.groups.some((g) => g.id === v.id)) go({ kind: 'all' });
+    });
+  /** Skip: the step is answered, nothing else changes. */
+  const skipInterests = () => act(() => save({ interestsAnswered: true }));
   const acceptSuggestion = (id: string) => act(() => send({ t: 'acceptSuggestion', id }));
   const dismissSuggestion = (id: string) => act(() => send({ t: 'dismissSuggestion', id }));
 
@@ -585,6 +604,10 @@ export function Dashboard() {
           {settings && !settings.onboarded && !onSettings && (
             <Onboarding
               busy={busy}
+              interests={settings.interestsAnswered ? undefined : {
+                groups, busy, lockExisting: !settings.interestsFresh, onContinue: (a) => void answerInterests(a),
+                onSkip: () => void skipInterests(),
+              }}
               onAutoSleep={() => void act(async () => {
                 await save({ autoSleepMinutes: 60, onboarded: true });
                 notify('Auto-pause is on: tabs unused for an hour will pause');
@@ -688,6 +711,13 @@ export function Dashboard() {
             </div>
           )}
 
+          {settings && settings.onboarded && !settings.interestsAnswered && !searching && view.kind === 'all' && (
+            <InterestsCard
+              title="New: choose your interests"
+              intro="What do you browse most? Tablight adds a group for each topic you pick. Groups you already have stay as they are."
+              groups={groups} busy={busy} lockExisting onContinue={(a) => void answerInterests(a)} onSkip={() => void skipInterests()}
+            />
+          )}
           {!searching && view.kind === 'all' && state?.lastSession && !lastSessionHidden && (
             <LastSessionCard session={state.lastSession} busy={busy} onAction={sessionAction} onDismiss={dismissLastSession} />
           )}
@@ -740,6 +770,7 @@ export function Dashboard() {
               settings={settings} syncStatus={state.syncStatus} busy={busy} save={save} act={act} notify={(m) => notify(m)}
               onDeleteAll={() => void deleteAllData()}
               onTour={startTour}
+              onInterests={() => setDialog({ kind: 'interests' })}
               tab={settingsTab}
               onTab={(t) => {
                 setSettingsTab(t);
@@ -778,6 +809,9 @@ export function Dashboard() {
             });
           }}
         />
+      )}
+      {dialog?.kind === 'interests' && (
+        <InterestsDialog groups={groups} busy={busy} onContinue={(a) => void answerInterests(a)} onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'regroup' && (
         <RegroupDialog rows={dialog.rows} groups={groupMap} onClose={() => setDialog(null)} onApply={applyRegroup} />

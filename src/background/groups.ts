@@ -7,9 +7,10 @@ import type { Db } from './db';
 import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
 import { recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
+import { parseName } from '../shared/names';
 
 export const MAX_IDS = 5000;
-export const MAX_NAME = 60;
+export { MAX_NAME, parseName } from '../shared/names';
 export const USER_COLORS = ['#00959c', '#57914a', '#bb6546', '#7377c6', '#a067ac', '#009775', '#a57710', '#4284c5'];
 
 // ───────────────────────────── validation (shared with the rpc layer) ─────────────────────────────
@@ -20,13 +21,6 @@ export function parseIds(v: unknown): string[] {
     throw new Error(`ids must be an array of at most ${MAX_IDS} strings`);
   }
   return v as string[];
-}
-
-/** A non-empty string of at most MAX_NAME characters after trimming; returns the trimmed name. */
-export function parseName(v: unknown): string {
-  const name = typeof v === 'string' ? v.trim() : '';
-  if (!name || name.length > MAX_NAME) throw new Error(`name must be 1-${MAX_NAME} characters`);
-  return name;
 }
 
 export function parseId(v: unknown): string {

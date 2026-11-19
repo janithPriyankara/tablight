@@ -72,12 +72,14 @@ export interface SettingsProps {
   onDeleteAll: () => void;
   /** Starts the guided tour. */
   onTour?: () => void;
+  /** Opens the interests step (General → "Choose your interests"). */
+  onInterests?: () => void;
   /** The open tab (from the hash) and the switch to another one. */
   tab: SettingsTab;
   onTab: (tab: SettingsTab) => void;
 }
 
-export function Settings({ settings, syncStatus, busy, save, act, notify, onDeleteAll, onTour, tab, onTab }: SettingsProps) {
+export function Settings({ settings, syncStatus, busy, save, act, notify, onDeleteAll, onTour, onInterests, tab, onTab }: SettingsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   /** Set by a keyboard switch: the newly selected tab takes focus once it renders. */
   const focusTab = useRef(false);
@@ -172,6 +174,14 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                 >
                   {sw('set-autogroup', settings.autoCreateGroups, saveOn('autoCreateGroups'))}
                 </SettingRow>
+                {onInterests && (
+                  <SettingRow
+                    id="set-interests" name="Choose your interests" group
+                    help="Pick the topics you browse most and Tablight adds a group for each. Groups you already have stay as they are."
+                  >
+                    <button type="button" class="btn btn-sm" disabled={busy} onClick={onInterests}>Choose…</button>
+                  </SettingRow>
+                )}
               </Section>
               <Section id="memory" title="Tabs and memory">
                 <SettingRow

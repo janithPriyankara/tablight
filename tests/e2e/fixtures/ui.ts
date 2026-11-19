@@ -6,7 +6,8 @@
  * reset(): only the dashboard tab is left open, "Delete all data" wipes everything the extension stored (stash,
  * user groups, sessions, settings, dismissed suggestions, pending undos, the synced copy) and re-seeds the starter
  * groups, the pages' localStorage (hints, side panel sections) is cleared, then the given settings are applied
- * (onboarded on by default, so the welcome card is only there in the tests that ask for it).
+ * (onboarded on and the interests step answered by default, so the interests step, the one-time interests card and
+ * the welcome card are only there in the tests that ask for them).
  */
 import { expect, type BrowserContext, type Page, type Worker } from '@playwright/test';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -95,7 +96,7 @@ export class Harness {
       localStorage.clear();
       await chrome.storage.session.remove('lastSession');
     });
-    await rpc(this.dash, { t: 'settings', patch: { onboarded: true, ...settings } });
+    await rpc(this.dash, { t: 'settings', patch: { onboarded: true, interestsAnswered: true, ...settings } });
     await expect.poll(async () => {
       const s = await state(this.dash);
       return s.groups.length > 0 && s.items.length === 0 && s.queued === 0;

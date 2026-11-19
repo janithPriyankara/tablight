@@ -1,8 +1,9 @@
 /**
- * First run (welcome card), the guided tour, keyboard use and basic accessibility, end to end, in the BUILT
+ * First run (the interests step, then the welcome card), the interests card for existing users, the guided tour, keyboard use and basic accessibility, end to end, in the BUILT
  * extension (dist/). Run `npm run build` first. IDs (O-…, T-…, K-…, A-…) are rows of docs/testing/ui-test-cases.md.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { INTEREST_CHOICES } from '../../src/classify/seeds';
 import { TOUR_STEPS } from '../../src/ui/dashboard/Tour';
 import { navButton, rpc } from './fixtures/launch';
 import { PAGES } from './fixtures/server';
@@ -10,15 +11,15 @@ import { Harness } from './fixtures/ui';
 
 let h: Harness;
 /** What the fresh install did on its own, before any test ran. */
-let installTab: { opened: boolean; welcome: boolean } = { opened: false, welcome: false };
+let installTab: { opened: boolean; interests: boolean } = { opened: false, interests: false };
 // Every test resets its own state (beforeEach), so a failure does not skip the tests after it.
 test.use({ actionTimeout: 20_000 });
 test.beforeAll(async () => {
   h = await Harness.start();
-  // Before any reset: the tab the install opened, and its welcome card.
+  // Before any reset: the tab the install opened, and its first screen (the interests step).
   installTab = {
     opened: h.installTabOpened,
-    welcome: await h.dash.getByRole('region', { name: 'Welcome to Tablight' }).waitFor({ timeout: 30_000 }).then(() => true, () => false),
+    interests: await h.dash.getByRole('region', { name: 'What do you browse most?' }).waitFor({ timeout: 30_000 }).then(() => true, () => false),
   };
 });
 test.afterAll(async () => {
@@ -34,12 +35,15 @@ const heading = () => page().getByRole('heading', { level: 1 });
 const toast = () => page().locator('.toast');
 const welcome = () => page().getByRole('region', { name: 'Welcome to Tablight' });
 const card = () => page().locator('.tour-card');
+const interests = () => page().getByRole('region', { name: 'What do you browse most?' });
+const chip = (scope: ReturnType<Page['locator']>, name: string) => scope.getByRole('button', { name, exact: true });
+const focusedText = () => page().evaluate(() => document.activeElement?.textContent ?? '');
 
 // ── onboarding ──────────────────────────────────────────────────────────────────────────────────────────
 
-test('O-01..O-04 first run: the install opens the dashboard with the welcome card; Take the tour, Auto-pause, Got it', async () => {
-  await test.step('O-01 a fresh install opens the dashboard by itself, with the welcome card', async () => {
-    expect(installTab).toEqual({ opened: true, welcome: true });
+test('O-01..O-04 first run: the install opens the dashboard with the interests step; Take the tour, Auto-pause, Got it', async () => {
+  await test.step('O-01 a fresh install opens the dashboard by itself, with the interests step first', async () => {
+    expect(installTab).toEqual({ opened: true, interests: true });
   });
   // O-01 only reads what the install did; the reset before this test (onboarded: false) still holds.
   await test.step('O-02..O-04 welcome card: “Take the tour”, “Auto-pause … 1 hour”, then the privacy points and “Got it” for good', async () => {
@@ -81,6 +85,82 @@ test('O-01..O-04 first run: the install opens the dashboard with the welcome car
   });
 });
 
+test('O-06..O-08 interests step: chips by keyboard, Add your own, Continue creates groups; Skip; the one-time card and Settings', async () => {
+  await test.step('O-06 fresh install: Tab moves between the chips and Space toggles; Add your own; Continue creates the picks, then the welcome card', async () => {
+    await h.reset({ onboarded: false, interestsAnswered: false });
+    await expect(interests()).toBeVisible();
+    await expect(welcome()).toHaveCount(0);
+    const topics = interests().getByRole('group', { name: 'Topics' }).getByRole('button');
+    await expect(topics).toHaveCount(INTEREST_CHOICES.length);
+    await expect(interests().locator('[aria-pressed="true"]')).toHaveCount(0);
+    await chip(interests(), 'Movies').focus();
+    await page().keyboard.press('Tab');
+    expect(await focusedText()).toBe('TV Series');
+    await page().keyboard.press('Space');
+    await expect(chip(interests(), 'TV Series')).toHaveAttribute('aria-pressed', 'true');
+    await page().keyboard.press('Space');
+    await expect(chip(interests(), 'TV Series')).toHaveAttribute('aria-pressed', 'false');
+    await page().keyboard.press('Shift+Tab');
+    expect(await focusedText()).toBe('Movies');
+    await page().keyboard.press('Space');
+    await expect(chip(interests(), 'Movies')).toHaveAttribute('aria-pressed', 'true');
+    await chip(interests(), 'Sports').click();
+    const field = interests().getByRole('textbox', { name: 'Add your own' });
+    await expect(interests().getByText('Learns from tabs you move into it.')).toBeVisible();
+    await field.fill('x'.repeat(61));
+    await field.press('Enter');
+    await expect(interests().getByRole('alert')).toHaveText('Name must be 1-60 characters');
+    await field.fill('Woodworking');
+    await field.press('Enter');
+    await expect(interests().getByRole('button', { name: 'Remove Woodworking' })).toBeVisible();
+    await interests().getByRole('button', { name: 'Continue' }).click();
+    // Movies was installed already: Sports and Woodworking are new.
+    await expect(toast()).toContainText('Added 2 groups');
+    await expect(interests()).toHaveCount(0);
+    await expect(welcome()).toBeVisible();
+    const s = await h.state();
+    expect(s.settings.interestsAnswered).toBe(true);
+    const ids = s.groups.map((g) => g.id);
+    expect(ids).toEqual(expect.arrayContaining(['movies', 'sports', 'other']));
+    expect(ids).not.toContain('news'); // an installed group nobody picked (and nobody touched) goes
+    expect(s.groups.map((g) => g.name)).toContain('Woodworking');
+    await expect(navButton(page(), 'Woodworking')).toBeVisible();
+  });
+  await test.step('O-07 Skip keeps every group and moves on to the welcome card', async () => {
+    await h.reset({ onboarded: false, interestsAnswered: false });
+    const before = (await h.state()).groups.map((g) => g.id).sort();
+    await interests().getByRole('button', { name: 'Skip' }).click();
+    await expect(welcome()).toBeVisible();
+    await expect.poll(async () => (await h.state()).settings.interestsAnswered).toBe(true);
+    expect((await h.state()).groups.map((g) => g.id).sort()).toEqual(before);
+  });
+  await test.step('O-08 existing users: a one-time card on All tabs that only adds; Skip hides it for good; Settings → “Choose your interests”', async () => {
+    await h.reset({ interestsAnswered: false });
+    const once = page().getByRole('region', { name: 'New: choose your interests' });
+    await expect(once).toBeVisible();
+    await expect(welcome()).toHaveCount(0);
+    await expect(chip(once, 'Programming')).toHaveAttribute('aria-pressed', 'true');
+    await expect(chip(once, 'Programming')).toBeDisabled();
+    expect(await unnamed(page()), 'the one-time card').toEqual([]);
+    await once.getByRole('button', { name: 'Skip' }).click();
+    await expect(once).toHaveCount(0);
+    await page().reload();
+    await expect(heading()).toHaveText('All tabs');
+    await expect(once).toHaveCount(0);
+    await navButton(page(), 'Settings').click();
+    await page().getByRole('group', { name: 'Choose your interests' }).getByRole('button', { name: 'Choose…' }).click();
+    const d = page().getByRole('dialog', { name: 'Choose your interests' });
+    await expect(chip(d, 'Movies')).toBeDisabled();
+    await expect(chip(d, 'Movies')).toHaveAttribute('aria-pressed', 'true');
+    expect(await unnamed(page()), 'the Settings dialog').toEqual([]);
+    await chip(d, 'Sports').click();
+    await d.getByRole('button', { name: 'Continue' }).click();
+    await expect(d).toHaveCount(0);
+    await expect(toast()).toContainText('Added 1 group');
+    await expect(navButton(page(), 'Sports')).toBeVisible();
+    expect((await h.state()).groups.map((g) => g.id)).toContain('news'); // only adds
+  });
+});
 // ── guided tour ─────────────────────────────────────────────────────────────────────────────────────────
 
 test('T-01..T-04 guided tour: every step, keys and focus trap, from Settings, in a narrow window', async () => {

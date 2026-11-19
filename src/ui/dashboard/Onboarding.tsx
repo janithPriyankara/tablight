@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { LogoMark, PauseIcon } from '../common/icons';
+import { InterestsCard, type InterestsCardProps } from './Interests';
 /** True once the browser says the toolbar icon is not pinned (unknown where the API is missing: no hint). */
 function useUnpinned(): boolean {
   const [unpinned, setUnpinned] = useState(false);
@@ -9,8 +10,21 @@ function useUnpinned(): boolean {
   }, []);
   return unpinned;
 }
-/** First run (settings.onboarded false): privacy in three lines, and an offer to turn on auto-sleep. */
-export function Onboarding(props: { busy: boolean; onAutoSleep: () => void; onDone: () => void; onTour?: () => void }) {
+/**
+ * First run (settings.onboarded false). Its first screen is the interests step, while that is unanswered
+ * (`interests` given); then privacy in three lines, and an offer to turn on auto-sleep.
+ */
+export function Onboarding(props: {
+  busy: boolean; onAutoSleep: () => void; onDone: () => void; onTour?: () => void; interests?: InterestsCardProps;
+}) {
+  return props.interests ? (
+    <InterestsCard
+      {...props.interests} icon={<LogoMark size={28} />} title="What do you browse most?"
+      intro="Pick your topics and Tablight makes a group for each. Skip to start with the usual groups."
+    />
+  ) : <Welcome {...props} />;
+}
+function Welcome(props: { busy: boolean; onAutoSleep: () => void; onDone: () => void; onTour?: () => void }) {
   const unpinned = useUnpinned();
   return (
     <section class="card onboarding" aria-labelledby="onboarding-h">

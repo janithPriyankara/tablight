@@ -273,6 +273,102 @@ body.dashboard-page > #app {
   color: var(--text-muted);
   list-style: disc;
 }
+/* Interests step: topic chips (toggle buttons) and "Add your own" */
+.interests-intro {
+  color: var(--text-muted);
+}
+.interests {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.interest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+.interest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+.interest-chip:hover:not(:disabled) {
+  background: var(--surface-1);
+}
+.interest-chip[aria-pressed='true'],
+.interest-chip.is-custom {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+.interest-check {
+  margin-right: -2px;
+}
+.interest-chip[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.interest-chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.interest-chip.is-custom {
+  padding-right: 2px;
+  cursor: default;
+}
+.interest-chip-x {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.interest-chip-x:hover {
+  background: var(--surface-2);
+}
+.interest-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.interest-add-label {
+  color: var(--text);
+  font-weight: 500;
+}
+.interest-add-row {
+  display: flex;
+  gap: var(--space-2);
+  max-width: 420px;
+}
+.interest-add-row .field {
+  flex: 1;
+  min-width: 0;
+}
+.interest-help {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.interest-error {
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
 .last-session {
   align-items: center;
   border-color: var(--warn-border);

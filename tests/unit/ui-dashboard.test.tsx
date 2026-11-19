@@ -7,8 +7,11 @@ vi.mock('../../src/shared/rpc', () => ({ send: vi.fn() }));
 const { send } = await import('../../src/shared/rpc');
 const { Dashboard } = await import('../../src/ui/dashboard/Dashboard');
 const { parseHash, viewHash } = await import('../../src/ui/dashboard/views');
+const { INTEREST_CHOICES } = await import('../../src/classify/seeds');
 const sendMock = vi.mocked(send);
 
+/** Settings once the interests step was answered (the default for every test but the interests step's own). */
+const ANSWERED = { ...DEFAULT_SETTINGS, interestsAnswered: true };
 const XSS = '<img src=x onerror=alert(1)>';
 function item(id: string, p: Partial<Item> = {}): Item {
   const url = p.url ?? `https://example.com/${id}`;
@@ -28,7 +31,7 @@ function state(p: Partial<DashboardState> = {}): DashboardState {
     dupCount: 0, windows: 2, sleeping: 0, suspicious: [],
     syncStatus: { ok: true, synced: 412, localOnly: 37, lastSyncAt: Date.now() },
     modelReady: true, queued: 0,
-    settings: { ...DEFAULT_SETTINGS, onboarded: true },
+    settings: { ...ANSWERED, onboarded: true },
     ...p,
   };
 }
@@ -371,7 +374,7 @@ describe('dashboard', () => {
     expect(screen.getByText('Rust two')).toBeTruthy();
   });
   it('guided tour: offered on first run, steps through the real screen, Esc ends it and marks onboarding done', async () => {
-    serve(state({ settings: DEFAULT_SETTINGS }), (req) => (req.t === 'settings' ? { ...DEFAULT_SETTINGS, ...(req.patch as object) } : undefined));
+    serve(state({ settings: ANSWERED }), (req) => (req.t === 'settings' ? { ...ANSWERED, ...(req.patch as object) } : undefined));
     render(<Dashboard />);
     fireEvent.click(await screen.findByRole('button', { name: 'Take the tour' }));
     const dialog = await screen.findByRole('dialog', { name: 'Welcome to Tablight' });
@@ -469,7 +472,7 @@ describe('dashboard', () => {
 
   it('settings: sync status line, theme, and mirroring asks for the permission before enabling', async () => {
     location.hash = '#view=settings';
-    let settings = { ...DEFAULT_SETTINGS, onboarded: true };
+    let settings = { ...ANSWERED, onboarded: true };
     serve(() => state({ settings }), (req) => {
       if (req.t === 'settings') settings = { ...settings, ...(req.patch as object) };
       return settings;
@@ -518,7 +521,7 @@ describe('dashboard', () => {
   it('onboarding asks to pin the extension only while it is not on the toolbar', async () => {
     const getUserSettings = vi.fn(async () => ({ isOnToolbar: false }));
     (chrome as unknown as { action: unknown }).action = { getUserSettings };
-    serve(state({ settings: DEFAULT_SETTINGS }));
+    serve(state({ settings: ANSWERED }));
     render(<Dashboard />);
     await screen.findByText(/Pin Tablight/);
     cleanup();
@@ -531,8 +534,8 @@ describe('dashboard', () => {
 
   it('first run shows onboarding; model-not-ready shows the grouping banner; the last session card', async () => {
     const snap = { id: 'snap1', takenAt: Date.now() - 3_600_000, windows: [{ tabs: [{ url: 'https://a.example/', title: 'A' }, { url: 'https://b.example/', title: 'B' }] }] };
-    serve(state({ settings: DEFAULT_SETTINGS, modelReady: false, lastSession: snap }), (req) =>
-      (req.t === 'settings' ? { ...DEFAULT_SETTINGS, ...(req.patch as object) } : req.t === 'sessionAction' ? {} : undefined));
+    serve(state({ settings: ANSWERED, modelReady: false, lastSession: snap }), (req) =>
+      (req.t === 'settings' ? { ...ANSWERED, ...(req.patch as object) } : req.t === 'sessionAction' ? {} : undefined));
     render(<Dashboard />);
     await screen.findByText('Grouping your tabs…');
     expect(screen.getByText(/Nothing leaves your device/)).toBeTruthy();
@@ -599,7 +602,7 @@ describe('dashboard', () => {
     expect(screen.getByRole('button', { name: 'Accept group' })).toBeTruthy();
   });
   it('in-app privacy text names the one exception: browser-account sync of stashed tabs', async () => {
-    serve(state({ settings: DEFAULT_SETTINGS }));
+    serve(state({ settings: ANSWERED }));
     render(<Dashboard />);
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tablight' });
     expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later and the examples you teach your groups/);
@@ -630,7 +633,7 @@ describe('dashboard', () => {
   });
   it('a settings overlay is cleared per key, only once the state reflects it', async () => {
     location.hash = '#view=settings&tab=sync';
-    let settings = { ...DEFAULT_SETTINGS, onboarded: true };
+    let settings = { ...ANSWERED, onboarded: true };
     let releaseSync!: () => void;
     serve(() => state({ settings }), async (req) => {
       const patch = req.patch as Record<string, unknown>;
@@ -697,7 +700,7 @@ describe('dashboard', () => {
     expect(importNotice({ added: 0, skipped: 0, grouped: 3 })).toBe('Imported 0 tabs · 3 open tabs moved to their group');
   });
   it('settings: four tabs; General first; switching writes the hash; arrows move between tabs; no welcome card or list buttons', async () => {
-    serve(state({ settings: { ...DEFAULT_SETTINGS, onboarded: false } }));
+    serve(state({ settings: { ...ANSWERED, onboarded: false } }));
     history.replaceState(null, '', '/dashboard.html#view=settings');
     render(<Dashboard />);
     const tablist = await screen.findByRole('tablist', { name: 'Settings sections' });
@@ -947,7 +950,7 @@ describe('dashboard', () => {
     });
     it('Settings: the "Point out suspicious tabs" switch saves the setting', async () => {
       location.hash = '#view=settings';
-      let settings = { ...DEFAULT_SETTINGS, onboarded: true };
+      let settings = { ...ANSWERED, onboarded: true };
       serve(() => state({ settings }), (req) => {
         if (req.t === 'settings') settings = { ...settings, ...(req.patch as object) };
         return settings;
@@ -1017,6 +1020,203 @@ describe('dashboard', () => {
       render(<Dashboard />);
       await ready();
       await screen.findByText('New group: Hardware & making · 1 tab');
+    });
+  });
+
+  describe('the interests step', () => {
+    const FRESH = { ...DEFAULT_SETTINGS, interestsFresh: true };
+    const UPGRADED = { ...DEFAULT_SETTINGS, onboarded: true };
+    const chips = (within_: HTMLElement) => within(within(within_).getByRole('group', { name: 'Topics' })).getAllByRole('button');
+    const chip = (within_: HTMLElement, name: string) => within(within_).getByRole('button', { name });
+    const idOf = (name: string) => INTEREST_CHOICES.find((c) => c.name === name)!.id;
+    /** Serves `s`; a settings patch or an interests answer is applied to it, as the background would. */
+    function serveLive(s: DashboardState): void {
+      serve(() => s, (req) => {
+        if (req.t === 'settings') s = { ...s, settings: { ...s.settings, ...(req.patch as object) } };
+        if (req.t === 'interests') s = { ...s, settings: { ...s.settings, interestsAnswered: true, interestsFresh: false } };
+        if (req.t === 'settings') return s.settings;
+        if (req.t === 'interests') return { created: ['movies', 'u1'], removed: ['videos'] };
+        return undefined;
+      });
+    }
+
+    it('a fresh install sees it first: toggle chips for every choice, none pressed; Continue sends the picks, then the welcome card', async () => {
+      serveLive(state({ settings: FRESH }));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      expect(screen.queryByRole('region', { name: 'Welcome to Tablight' })).toBeNull();
+      const all = chips(region);
+      expect(all.map((b) => b.textContent)).toEqual(INTEREST_CHOICES.map((c) => c.name));
+      // Real toggle buttons, in the tab order, none pressed or locked (even the groups a new install has).
+      for (const b of all) {
+        expect(b.tagName).toBe('BUTTON');
+        expect(b.getAttribute('aria-pressed')).toBe('false');
+        expect((b as HTMLButtonElement).disabled).toBe(false);
+        expect(b.getAttribute('tabindex')).toBeNull();
+      }
+      const cont = within(region).getByRole('button', { name: 'Continue' }) as HTMLButtonElement;
+      expect(cont.disabled).toBe(true); // nothing picked: Skip is the way out
+      fireEvent.click(chip(region, 'Sports'));
+      fireEvent.click(chip(region, 'Movies'));
+      fireEvent.click(chip(region, 'Programming'));
+      fireEvent.click(chip(region, 'Programming')); // toggled off again
+      expect(chip(region, 'Movies').getAttribute('aria-pressed')).toBe('true');
+      expect(chip(region, 'Programming').getAttribute('aria-pressed')).toBe('false');
+      fireEvent.input(within(region).getByRole('textbox', { name: 'Add your own' }), { target: { value: '  Woodworking ' } });
+      fireEvent.click(within(region).getByRole('button', { name: 'Add' }));
+      await within(region).findByRole('button', { name: 'Remove Woodworking' });
+      expect(cont.disabled).toBe(false);
+      fireEvent.click(cont);
+      // Seeds order, not click order.
+      await waitFor(() => expect(sent('interests')).toEqual([{ t: 'interests', picked: [idOf('Movies'), idOf('Sports')], custom: ['Woodworking'] }]));
+      expect(sent('settings')).toEqual([]);
+      await screen.findByText('Added 2 groups');
+      // The rest of onboarding follows, unchanged.
+      await screen.findByRole('region', { name: 'Welcome to Tablight' });
+      expect(screen.queryByRole('region', { name: 'What do you browse most?' })).toBeNull();
+    });
+
+    it('Skip saves interestsAnswered: true and sends nothing else', async () => {
+      serveLive(state({ settings: FRESH }));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      fireEvent.click(chip(region, 'Movies')); // a pick left unsent
+      fireEvent.click(within(region).getByRole('button', { name: 'Skip' }));
+      await waitFor(() => expect(sent('settings')).toEqual([{ t: 'settings', patch: { interestsAnswered: true } }]));
+      await screen.findByRole('region', { name: 'Welcome to Tablight' });
+      expect(sent('interests')).toEqual([]);
+      expect(sendMock.mock.calls.map(([r]) => (r as Req).t).filter((t) => t !== 'state')).toEqual(['settings']);
+    });
+
+    it('"Add your own" explains itself, refuses empty and too-long names with the group-name rule, and its chips can be removed', async () => {
+      serveLive(state({ settings: FRESH }));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      const field = within(region).getByRole('textbox', { name: 'Add your own' });
+      expect(field.getAttribute('aria-describedby')).toBeTruthy();
+      expect(document.getElementById(field.getAttribute('aria-describedby')!.split(' ')[0]!)!.textContent).toBe('Learns from tabs you move into it.');
+      const add = within(region).getByRole('button', { name: 'Add' });
+      fireEvent.input(field, { target: { value: '   ' } });
+      fireEvent.click(add);
+      expect((await within(region).findByRole('alert')).textContent).toBe('Name must be 1-60 characters');
+      expect(field.getAttribute('aria-invalid')).toBe('true');
+      fireEvent.input(field, { target: { value: 'x'.repeat(61) } });
+      fireEvent.keyDown(field, { key: 'Enter' });
+      expect(within(region).getByRole('alert').textContent).toBe('Name must be 1-60 characters');
+      expect(within(region).queryByRole('button', { name: /^Remove/ })).toBeNull();
+      // Typing again clears the message; Enter adds.
+      fireEvent.input(field, { target: { value: 'Knitting' } });
+      expect(within(region).queryByRole('alert')).toBeNull();
+      fireEvent.keyDown(field, { key: 'Enter' });
+      await within(region).findByRole('button', { name: 'Remove Knitting' });
+      expect((field as HTMLInputElement).value).toBe('');
+      // The same name again (any case) is not added twice.
+      fireEvent.input(field, { target: { value: 'knitting' } });
+      fireEvent.keyDown(field, { key: 'Enter' });
+      expect(within(region).getAllByRole('button', { name: /^Remove/ })).toHaveLength(1);
+      // A choice's name presses that choice instead of adding a second one.
+      fireEvent.input(field, { target: { value: 'sports' } });
+      fireEvent.keyDown(field, { key: 'Enter' });
+      expect(chip(region, 'Sports').getAttribute('aria-pressed')).toBe('true');
+      expect(within(region).getAllByRole('button', { name: /^Remove/ })).toHaveLength(1);
+      // Removing the custom chip leaves only the choice.
+      fireEvent.click(within(region).getByRole('button', { name: 'Remove Knitting' }));
+      expect(within(region).queryByRole('button', { name: /^Remove/ })).toBeNull();
+      fireEvent.click(within(region).getByRole('button', { name: 'Continue' }));
+      await waitFor(() => expect(sent('interests')).toEqual([{ t: 'interests', picked: [idOf('Sports')], custom: [] }]));
+    });
+
+    it('existing users: a one-time card on All tabs only (never with the welcome card); Skip hides it for good', async () => {
+      serveLive(state({ settings: UPGRADED }));
+      render(<Dashboard />);
+      const card = await screen.findByRole('region', { name: 'New: choose your interests' });
+      expect(screen.queryByRole('region', { name: 'Welcome to Tablight' })).toBeNull();
+      expect(screen.queryByRole('region', { name: 'What do you browse most?' })).toBeNull();
+      // It only adds groups: the ones the user has are pressed and can't be unselected.
+      expect(chip(card, 'Programming').getAttribute('aria-pressed')).toBe('true');
+      expect((chip(card, 'Programming') as HTMLButtonElement).disabled).toBe(true);
+      expect(chip(card, 'Movies').getAttribute('aria-pressed')).toBe('false');
+      // Not on another view.
+      act(() => {
+        location.hash = '#view=stashed';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+      await screen.findByRole('heading', { level: 1, name: 'Saved for later' });
+      expect(screen.queryByRole('region', { name: 'New: choose your interests' })).toBeNull();
+      act(() => {
+        location.hash = '#view=all';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+      const again = await screen.findByRole('region', { name: 'New: choose your interests' });
+      fireEvent.click(within(again).getByRole('button', { name: 'Skip' }));
+      await waitFor(() => expect(sent('settings')).toEqual([{ t: 'settings', patch: { interestsAnswered: true } }]));
+      await waitFor(() => expect(screen.queryByRole('region', { name: 'New: choose your interests' })).toBeNull());
+      expect(sent('interests')).toEqual([]);
+    });
+
+    it('a not-onboarded upgrade sees the step first, with its groups locked; a fresh one never sees the one-time card', async () => {
+      serveLive(state({ settings: DEFAULT_SETTINGS }));
+      render(<Dashboard />);
+      const region = await screen.findByRole('region', { name: 'What do you browse most?' });
+      expect((chip(region, 'Programming') as HTMLButtonElement).disabled).toBe(true);
+      expect(screen.queryByRole('region', { name: 'New: choose your interests' })).toBeNull();
+    });
+
+    it('Settings → General → "Choose your interests" opens the step: existing groups pressed and locked (a renamed one by its name), Continue adds', async () => {
+      const groups = [
+        group('programming', 'Programming', 3), group('videos', 'Videos', 1, { watchCount: 1 }),
+        group('news', 'sports', 0), // a built-in group the user renamed to a choice's name
+        group('u9', 'Pending', 2, { suggested: true, builtIn: false }), // a suggestion is not a group yet
+      ];
+      serveLive(state({ groups }));
+      history.replaceState(null, '', '/dashboard.html#view=settings');
+      render(<Dashboard />);
+      const row = await screen.findByRole('group', { name: 'Choose your interests' });
+      fireEvent.click(within(row).getByRole('button', { name: 'Choose…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Choose your interests' });
+      expect(within(dialog).getByText(/What do you browse most\?/)).toBeTruthy();
+      // News is held under its own id although renamed; Sports by the renamed group's name.
+      for (const name of ['Programming', 'YouTube / Videos', 'News', 'Sports']) {
+        expect(chip(dialog, name).getAttribute('aria-pressed'), name).toBe('true');
+        expect((chip(dialog, name) as HTMLButtonElement).disabled, name).toBe(true);
+      }
+      expect(chip(dialog, 'Movies').getAttribute('aria-pressed')).toBe('false');
+      fireEvent.click(chip(dialog, 'Movies'));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Continue' }));
+      // The groups the user has by id travel along (picked, so nothing could drop them); renamed ones don't.
+      await waitFor(() => expect(sent('interests')).toEqual([{ t: 'interests', picked: ['movies', 'videos', 'programming', 'news'], custom: [] }]));
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(sent('settings')).toEqual([]);
+    });
+
+    it('Settings: Cancel closes the step and sends nothing', async () => {
+      serveLive(state());
+      history.replaceState(null, '', '/dashboard.html#view=settings');
+      render(<Dashboard />);
+      fireEvent.click(within(await screen.findByRole('group', { name: 'Choose your interests' })).getByRole('button', { name: 'Choose…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Choose your interests' });
+      fireEvent.click(chip(dialog, 'Movies'));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(sent('interests')).toEqual([]);
+    });
+
+    it('after Continue, a group page whose group is gone goes to All tabs', async () => {
+      let s = state({ settings: FRESH });
+      serve(() => s, (req) => {
+        if (req.t !== 'interests') return undefined;
+        // A fresh install's first answer removes the untouched groups nobody picked.
+        s = { ...s, groups: s.groups.filter((g) => g.id !== 'videos'), settings: { ...s.settings, interestsAnswered: true } };
+        return { created: ['movies'], removed: ['videos'] };
+      });
+      history.replaceState(null, '', '/dashboard.html#group=videos');
+      render(<Dashboard />);
+      await screen.findByRole('heading', { level: 1, name: 'Videos' });
+      const region = screen.getByRole('region', { name: 'What do you browse most?' });
+      fireEvent.click(chip(region, 'Movies'));
+      fireEvent.click(within(region).getByRole('button', { name: 'Continue' }));
+      await screen.findByRole('heading', { level: 1, name: 'All tabs' });
+      expect(location.hash).toBe('#view=all');
     });
   });
 });

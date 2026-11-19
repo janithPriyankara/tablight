@@ -28,7 +28,11 @@ export async function startPreview(page: 'popup' | 'dashboard' | 'sidepanel'): P
     return true;
   };
   await import('../../background/index');
-  control.fireInstalled('install');
+  // ?user=existing: an install updated from a version before the interests step (onboarded, step unanswered), so
+  // All tabs shows the one-time "New: choose your interests" card. Otherwise a fresh install (its first screen).
+  const existing = new URLSearchParams(location.search).get('user') === 'existing';
+  control.fireInstalled(existing ? 'update' : 'install');
+  if (existing) await c.runtime.sendMessage({ t: 'settings', patch: { onboarded: true }, target: 'background' });
   // A few tabs opened in the background after start-up, so the preview shows never-opened ("New") tabs.
   setTimeout(() => {
     const w = control.windowIds()[1] ?? control.windowIds()[0]!;

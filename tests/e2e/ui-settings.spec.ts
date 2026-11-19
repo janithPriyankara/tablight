@@ -319,7 +319,9 @@ test('S-40 Delete all data: Cancel keeps everything; confirm wipes it, sync goes
   await page().getByRole('tab', { name: 'Sync & backup' }).click();
   await expect(sw(/Sync saved tabs/)).not.toBeChecked();
   await navButton(page(), 'All tabs').click();
-  await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toBeVisible();
+  // As on a new install, the interests step comes first.
+  await expect(page().getByRole('region', { name: 'What do you browse most?' })).toBeVisible();
+  await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toHaveCount(0);
   await expect(navButton(page(), 'Reading pile')).toHaveCount(0);
   expect(await savedCount()).toBe(0);
   expect(await serverUrls()).toEqual([h.url(a.slug), h.url(b.slug)].sort());
@@ -332,7 +334,9 @@ test('S-40 Delete all data: Cancel keeps everything; confirm wipes it, sync goes
   await navButton(page(), 'All tabs').click();
   await page().getByRole('list', { name: 'All tabs' }).getByRole('listitem').filter({ hasText: b.title }).getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(toast()).toContainText(HINTS.pause);
-  // Onboarding can be finished again.
+  // Onboarding can be finished again: Skip the interests step, then the welcome card.
+  await page().getByRole('region', { name: 'What do you browse most?' }).getByRole('button', { name: 'Skip' }).click();
+  await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toBeVisible();
   await page().getByRole('button', { name: 'Got it' }).click();
   await expect(page().getByRole('region', { name: 'Welcome to Tablight' })).toHaveCount(0);
 });
