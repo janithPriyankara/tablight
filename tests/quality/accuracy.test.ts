@@ -4,11 +4,13 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import fixture from './fixture.json';
 import holdout from './holdout.json';
 import holdout2 from './holdout2.json';
+import youtubeTopics from './youtube-topics.json';
 import trainA from '../../training/train-a.json';
 import trainB from '../../training/train-b.json';
 import trainC from '../../training/train-c.json';
 import { loadEmbedder } from './model';
 import { buildStarterGroups, classify, type Head } from '../../src/classify/assign';
+import { pickGroup } from '../../src/classify/pick';
 import { ruleGroup } from '../../src/classify/rules';
 import { embedText } from '../../src/shared/url';
 import type { Group } from '../../src/shared/types';
@@ -20,6 +22,8 @@ const blind2 = holdout2 as Row[];
 const headPath = process.env.HEAD_PATH ?? resolve(import.meta.dirname, '../../src/classify/head.json');
 let head: Head & { pooling?: 'mean' | 'cls'; val?: { acc: number; otherAssigned: number } };
 let run: (rows: Row[]) => Promise<(string | null)[]>;
+/** The product pipeline with the installed (starter) groups: pickGroup, which adds the Videos fallback. */
+let runProduct: (rows: Row[]) => Promise<(string | null)[]>;
 beforeAll(async () => {
   head = JSON.parse(await readFile(headPath, 'utf8'));
   const embed = await loadEmbedder({ model: head.model, pooling: head.pooling, path: process.env.MODEL_PATH });
@@ -28,6 +32,10 @@ beforeAll(async () => {
   run = async (rows) => {
     const vecs = await embed(rows.map((r) => embedText(r)));
     return rows.map((r, i) => ruleGroup(r.url, r.title) ?? classify(vecs[i]!, groups, head).groupId);
+  };
+  runProduct = async (rows) => {
+    const vecs = await embed(rows.map((r) => embedText(r)));
+    return rows.map((r, i) => pickGroup(r, vecs[i]!, groups, head).groupId);
   };
 }, 300_000);
 describe('classifier accuracy', () => {
@@ -95,4 +103,30 @@ describe('classifier accuracy', () => {
     expect(m.acc).toBeGreaterThanOrEqual(0.82);
     expect(m.otherRate).toBeLessThanOrEqual(0.35);
   }, 120_000); // Runs inference over both the full and decontaminated holdout.
+  // youtube-topics.json: synthetic YouTube videos written blind from training/LABELING.md, never trained on.
+  // A video about a subject belongs in that subject's group; one with no clear subject belongs in `videos`.
+  // TOPIC_MIN is the rate measured on the first run after the YouTube re-labelling retrain (2026-11-19): 81/90.
+  it('youtube topic first: ≥ 90% of topic videos in their topic group, ≥ 70% of no-topic videos in Videos', async () => {
+    const TOPIC_MIN = 0.9;
+    const rows = youtubeTopics as Row[];
+    const predicted = await runProduct(rows);
+    let topic = 0, topicHit = 0, topicVideos = 0, plain = 0, plainHit = 0;
+    rows.forEach((r, i) => {
+      if (r.group === 'videos') {
+        plain++;
+        if (predicted[i] === 'videos') plainHit++;
+      } else {
+        topic++;
+        if (predicted[i] === r.group) topicHit++;
+        else if (predicted[i] === 'videos') topicVideos++;
+      }
+    });
+    const pct = (a: number, b: number) => `${((a / b) * 100).toFixed(1)}%`;
+    console.log(
+      `YOUTUBE topic videos in their topic group ${pct(topicHit, topic)} (${topicHit}/${topic}, ${topicVideos} parked in videos); ` +
+        `no-topic videos in videos ${pct(plainHit, plain)} (${plainHit}/${plain})`,
+    );
+    expect(topicHit / topic).toBeGreaterThanOrEqual(TOPIC_MIN);
+    expect(plainHit / plain).toBeGreaterThanOrEqual(0.7);
+  }, 120_000);
 });
