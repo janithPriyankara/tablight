@@ -192,7 +192,8 @@ describe('regroup', () => {
       const embed = async (t: string[]) => t.map(() => hardware);
       expect(await regroupApply(db, embed)).toBe(3);
       expect((await db.groups.get('hardware'))?.name).toBe('Hardware & making');
-      for (const id of [a.id, b.id, c.id]) expect((await db.items.get(id))!.groupId).toBe('hardware');
+      // The head was sure of the topic: they count as neighbours for later tabs.
+      for (const id of [a.id, b.id, c.id]) expect(await db.items.get(id)).toMatchObject({ groupId: 'hardware', placedBy: 'head' });
     });
     it('a user-placed tab never counts or moves', async () => {
       await db.groups.put(group('videos'));
@@ -203,6 +204,39 @@ describe('regroup', () => {
       await regroupApply(db, async (t) => t.map(() => hardware));
       expect(await db.groups.get('hardware')).toBeUndefined();
       expect((await db.items.get(u.id))!.groupId).toBe('mine');
+    });
+  });
+  describe('neighbours', () => {
+    // The bundled head reads this vector as `other`: unsure, so only neighbours can place it.
+    const unsure = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+    const at = async (over: Partial<Item>) => {
+      const i = await addItem(over);
+      await db.embeddings.put(await embeddingKey(i), unsure);
+      return i;
+    };
+    it('an unsure tab follows two tabs the user placed, recorded locally', async () => {
+      await db.groups.put(group('programming'));
+      await at({ groupId: 'programming', groupSource: 'user' });
+      await at({ groupId: 'programming', groupSource: 'user' });
+      const i = await at({ groupId: null });
+      expect(await regroupApply(db)).toBe(1);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'programming', placedBy: 'neighbour' });
+    });
+    it('a re-picked tab is not its own neighbour', async () => {
+      await db.groups.put(group('programming'));
+      await at({ groupId: 'programming', groupSource: 'user' });
+      // With itself as a second vote it would stay; alone with one neighbour it goes back to Unsorted.
+      const i = await at({ groupId: 'programming', placedBy: 'head' });
+      expect(await regroupApply(db)).toBe(1);
+      expect((await db.items.get(i.id))!.groupId).toBeNull();
+      expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
+    });
+    it('a user move removes the record of how a tab was placed', async () => {
+      await db.groups.put(group('programming'));
+      await db.groups.put(group('games'));
+      const i = await at({ groupId: 'programming', placedBy: 'neighbour' });
+      await moveItems(db, [i.id], 'games');
+      expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
     });
   });
   it('leaves items in pending suggestions alone', async () => {

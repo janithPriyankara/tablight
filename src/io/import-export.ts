@@ -11,7 +11,7 @@ import { USER_COLORS, parseName } from '../background/groups';
 import { forgetRemovedTrained, trainedGroupsForNames } from '../background/grow';
 import { restashTime, stashRecord } from '../background/memory';
 import { MAX_SNAPSHOTS, fingerprint } from '../background/snapshots';
-import { domainOf } from '../background/tab-index';
+import { domainOf, withoutPlacedBy } from '../background/tab-index';
 export const FORMAT = 'tab-organizer';
 export const VERSION = 1;
 export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
@@ -254,7 +254,7 @@ export async function applyImport(
         const name = tabGroup.get(cur.normUrl);
         const gid = name ? byName.get(name.toLowerCase())?.id : undefined;
         if (gid === undefined || gid === cur.groupId) continue;
-        await s.items.put({ ...cur, groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now) });
+        await s.items.put({ ...withoutPlacedBy(cur), groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now) });
         await s.queue.remove([cur.id]);
         grouped++;
       }

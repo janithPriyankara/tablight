@@ -9,6 +9,8 @@ export const OTHER_GROUP_ID = 'other';
 export interface Assignment {
   groupId: string | null;
   score: number;
+  /** What decided, when a group was picked: a user-taught exemplar or the head. */
+  by?: 'exemplar' | 'head';
 }
 
 /**
@@ -124,15 +126,16 @@ export function classify(
       if (s > near.score) near = { groupId: g.id, score: s };
     }
   }
-  if (near.groupId !== null && near.score >= similarity) return near;
+  if (near.groupId !== null && near.score >= similarity) return { ...near, by: 'exemplar' };
 
   const top = headTop(vec, head);
   if (!top) return { groupId: null, score: 0 };
   const { label, score } = top;
-  const ok =
-    label !== undefined && label !== OTHER_GROUP_ID && score >= (opts.threshold ?? head.threshold) &&
-    groups.some((g) => g.id === label);
-  return { groupId: ok ? label : null, score };
+  if (
+    label === undefined || label === OTHER_GROUP_ID || score < (opts.threshold ?? head.threshold) ||
+    !groups.some((g) => g.id === label)
+  ) return { groupId: null, score };
+  return { groupId: label, score, by: 'head' };
 }
 
 function centroidOf(exemplars: number[][]): number[] | null {

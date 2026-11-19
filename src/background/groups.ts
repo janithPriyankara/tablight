@@ -1,10 +1,10 @@
 import { MAX_EXEMPLARS, OTHER_GROUP_ID, learn } from '../classify/assign';
-import type { Group, Item } from '../shared/types';
+import type { Group, Item, PlacedBy } from '../shared/types';
 import { embedText } from '../shared/url';
 import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
-import { autoPick, cachedVectors, fingerprintOf, recordDismissed } from './tab-index';
+import { autoPick, cachedVectors, fingerprintOf, neighbourPool, recordDismissed, withoutPlacedBy } from './tab-index';
 import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
@@ -77,7 +77,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string): Promise
       const cur = await s.items.get(snap.id);
       if (!cur) continue;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
-      await s.items.put({ ...cur, groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+      await s.items.put({ ...withoutPlacedBy(cur), groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
       const v = vecs.get(cur.id);
       if (v && !already) taught.push({ vec: v, text: embedText(cur) });
     }
@@ -114,7 +114,7 @@ export async function createGroup(db: Db, name: string, ids: string[]): Promise<
     await s.groups.put(group);
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
-      if (cur) await s.items.put({ ...cur, groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+      if (cur) await s.items.put({ ...withoutPlacedBy(cur), groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
     }
     return group;
   });
@@ -145,7 +145,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
     for (const i of await s.items.all()) {
       // A merge is the user's decision for every item in it: auto-sorting must not pull them back out
       // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
-      if (i.groupId === from) await s.items.put({ ...i, groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
+      if (i.groupId === from) await s.items.put({ ...withoutPlacedBy(i), groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
     }
     await s.groups.delete(from);
   });
@@ -195,7 +195,7 @@ export async function acceptSuggestion(db: Db, id: string): Promise<void> {
     for (const m of members) {
       const i = await s.items.get(m.id);
       if (!i || i.groupId !== id) continue;
-      await s.items.put({ ...i, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
+      await s.items.put({ ...withoutPlacedBy(i), groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
       const v = vecs.get(i.id);
       if (v) taught.push({ vec: v, text: embedText(i) });
     }
@@ -225,7 +225,7 @@ export async function dismissSuggestion(db: Db, id: string): Promise<void> {
 
 // ───────────────────────────── regroup ─────────────────────────────
 
-interface Move { itemId: string; from: string | null; to: string | null; want: string | null }
+interface Move { itemId: string; from: string | null; to: string | null; want: string | null; by: PlacedBy | null }
 
 /** What the automatic pipeline would now do with each auto item that has a cached vector. */
 async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; items: Item[] }> {
@@ -237,12 +237,16 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
     (i) => i.classifiable && i.groupSource === 'auto' && !(i.groupId !== null && suggestedIds.has(i.groupId)), // pending suggestions stay as they are
   );
   const vecs = await cachedVectors(db, candidates);
+  const pool = await neighbourPool(db, items, groups);
   for (const i of candidates) {
     const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
-    const { groupId: to, want } = autoPick(i, v, regular);
-    // A changed group, or only a changed wanted topic (local, so grown groups can appear for older tabs too).
-    if (to !== i.groupId || want !== (i.want ?? null)) moves.push({ itemId: i.id, from: i.groupId, to, want });
+    const { groupId: to, want, by } = autoPick(i, v, regular, pool.filter((p) => p.id !== i.id));
+    // A changed group, or only a changed wanted topic or placement record (local, so grown groups can appear for
+    // older tabs too, and a tab now placed by its neighbours stops counting as one).
+    if (to !== i.groupId || want !== (i.want ?? null) || by !== (i.placedBy ?? null)) {
+      moves.push({ itemId: i.id, from: i.groupId, to, want, by });
+    }
   }
   return { moves, groups, items };
 }
@@ -281,11 +285,12 @@ export async function regroupApply(db: Db, embedFn?: (t: string[]) => Promise<Fl
         // Skip anything the user or another pass touched since the plan was made.
         if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
         if (m.to !== null && !known.has(m.to)) continue;
-        const { want: _oldWant, ...rest } = cur;
+        const { want: _oldWant, placedBy: _oldBy, ...rest } = cur;
         void _oldWant;
-        const next: Item = { ...rest, ...(m.want !== null ? { want: m.want } : {}) };
+        void _oldBy;
+        const next: Item = { ...rest, ...(m.want !== null ? { want: m.want } : {}), ...(m.by !== null ? { placedBy: m.by } : {}) };
         if (m.to === m.from) {
-          await s.items.put(next); // only the wanted topic: local, no updatedAt bump
+          await s.items.put(next); // only the wanted topic or placement record: local, no updatedAt bump
           continue;
         }
         await s.items.put({ ...next, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });

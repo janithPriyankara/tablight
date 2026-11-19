@@ -1,7 +1,8 @@
 import { suggestGroups } from '../classify/cluster';
 import { HEAD } from '../classify/head';
 import { EMBED_MODEL } from '../classify/model';
-import { pickGroup } from '../classify/pick';
+import { NEIGHBOUR_POOL_MAX, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type PlacedBy } from '../classify/pick';
+import { OTHER_GROUP_ID } from '../classify/assign';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
 import { cleanTitle, domainOf, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
@@ -495,9 +496,43 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
 export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
   return autoPick(item, vec, groups).groupId;
 }
-/** The automatic pipeline's decision: the group, and the trained topic wanted when its group is missing. */
-export function autoPick(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): { groupId: string | null; want: string | null } {
-  return pickGroup(item, vec, groups, HEAD);
+/**
+ * The automatic pipeline's decision: the group, the trained topic wanted when its group is missing, and what
+ * decided. `pool` (neighbourPool) must not hold the item itself.
+ */
+export function autoPick(
+  item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[], pool?: Neighbour[],
+): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  return pickGroup(item, vec, groups, HEAD, pool);
+}
+/** A pool tab with the id of its item, so a caller can leave the item it is picking for out. */
+export interface PoolTab extends Neighbour { id: string }
+/** Placements that are themselves guesses: they never count as evidence for the neighbour step. */
+const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
+/**
+ * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
+ * than Videos and Other, placed by the user or by a rule, an exemplar or the head (a missing `placedBy`, from
+ * older data, counts), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
+ * (items without one are left out).
+ */
+export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Promise<PoolTab[]> {
+  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID).map((g) => g.id));
+  const eligible = items
+    .filter((i) => i.groupId !== null && ok.has(i.groupId))
+    .filter((i) => i.groupSource === 'user' || i.placedBy === undefined || !NOT_EVIDENCE.has(i.placedBy))
+    .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
+    .slice(0, NEIGHBOUR_POOL_MAX);
+  const vecs = await cachedVectors(db, eligible);
+  return eligible.flatMap((i) => {
+    const vec = vecs.get(i.id);
+    return vec ? [{ id: i.id, vec, groupId: i.groupId!, normUrl: i.normUrl }] : [];
+  });
+}
+/** The item as the user placed it: how the automatic pipeline once placed it no longer applies. */
+export function withoutPlacedBy(i: Item): Item {
+  const { placedBy: _p, ...rest } = i;
+  void _p;
+  return rest;
 }
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
@@ -514,6 +549,10 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
     if (hit) vecs.set(key, hit);
     else missing.set(key, embedText(todo[k]!));
   }
+  // The neighbour step's pool, read before the transaction (vector reads are not part of it).
+  const pool = todo.some((i) => i.groupSource !== 'user')
+    ? await neighbourPool(db, await db.items.all(), await db.groups.all())
+    : [];
   const fresh = new Map<string, Float32Array>();
   if (missing.size) {
     const out = await embedFn([...missing.values()]);
@@ -524,6 +563,8 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
   return db.tx(['items', 'queue', 'embeddings', 'groups'], async (s) => {
     // Read the groups here so a group deleted meanwhile is never assigned.
     const groups = (await s.groups.all()).filter((g) => !g.suggested);
+    const known = new Set(groups.map((g) => g.id));
+    const live = pool.filter((p) => known.has(p.groupId));
     for (const [key, v] of fresh) {
       await s.embeddings.put(key, v);
       vecs.set(key, v);
@@ -541,16 +582,20 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       const vec = vecs.get(keys[k]!)!;
       let groupId = cur.groupId;
       let want: string | null = null;
+      let by: PlacedBy | null = null;
       if (cur.groupSource !== 'user') {
-        ({ groupId, want } = pickGroup(cur, vec, groups, HEAD));
+        ({ groupId, want, by } = autoPick(cur, vec, groups, live.filter((p) => p.id !== cur.id)));
       }
-      const { embGaveUpAt: _cleared, want: _oldWant, ...rest } = cur; // a success lifts any earlier give-up stamp
+      // A success lifts any earlier give-up stamp; want and placedBy are rewritten below.
+      const { embGaveUpAt: _cleared, want: _oldWant, placedBy: _oldBy, ...rest } = cur;
       void _cleared;
       void _oldWant;
+      void _oldBy;
       // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
       // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
       const updatedAt = groupId === cur.groupId ? cur.updatedAt : nextStamp(cur.updatedAt);
-      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}) }); // want: local-only, no updatedAt bump
+      // want and placedBy: local-only, no updatedAt bump.
+      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}), ...(by !== null ? { placedBy: by } : {}) });
       done.push(snap.id);
       written++;
     }

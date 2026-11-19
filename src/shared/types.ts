@@ -1,6 +1,8 @@
 import type { SuspiciousTab } from './clues';
 export type ItemState = 'open' | 'sleeping' | 'stashed';
 export type Kind = 'watch' | 'read' | 'other';
+/** How the automatic pipeline placed a tab (classify/pick.ts). */
+export type PlacedBy = 'rule' | 'exemplar' | 'head' | 'neighbour' | 'youtube' | 'videos';
 export interface Item {
   id: string;
   url: string;
@@ -24,6 +26,12 @@ export interface Item {
   embGaveUpAt?: number;
   /** Local only (never synced or exported, no updatedAt bump): the topic the classifier wanted but no group existed for. */
   want?: string;
+  /**
+   * Local only (never synced or exported, no updatedAt bump): how the automatic pipeline placed the tab, written with
+   * every automatic pick and removed when the user places it. Tabs placed by a neighbour, the YouTube bar or Videos
+   * never count as neighbours themselves (tab-index neighbourPool), so a guess never feeds more guesses.
+   */
+  placedBy?: PlacedBy;
   /**
    * Local only: false while the tab has never been the active tab since it appeared ("New"); true once it has.
    * Missing (older data, tabs whose past is unknown) counts as opened.

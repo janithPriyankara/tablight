@@ -193,6 +193,8 @@ function itemFrom(r: SyncRecord, cur: Item | undefined, groupId: string | null, 
     lastActiveAt: cur?.lastActiveAt ?? stashedAt, stashedAt, updatedAt, classifiable: cur?.classifiable ?? true,
     // The vector key is content-derived: keep it only while the content is unchanged.
     ...(cur?.embKey !== undefined && cur.normUrl === normUrl && cur.title === title ? { embKey: cur.embKey } : {}),
+    // Local only: how this device placed a tab it still holds automatically in the same group.
+    ...(groupSource === 'auto' && cur?.placedBy !== undefined && cur.groupId === groupId ? { placedBy: cur.placedBy } : {}),
   };
 }
 
