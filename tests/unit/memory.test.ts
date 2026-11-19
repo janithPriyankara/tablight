@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { autoSleep, closeExtras, closeTabs, deleteStashed, openItem, sleepTabs, stash, stashWindow, undo } from '../../src/background/memory';
+import { autoSleep, closeExtras, closeTabs, deleteStashed, openItem, remapUndoGroups, sleepTabs, stash, stashWindow, undo } from '../../src/background/memory';
 import { reconcile } from '../../src/background/tab-index';
 import { SYNCED_IDS_KEY } from '../../src/background/sync';
 import { sha1hex } from '../../src/shared/hash';
@@ -109,6 +109,15 @@ describe('stash', () => {
     expect(all).toHaveLength(2);
     expect(byUrl(all, 'https://a.com/').groupId).toBe('g1');
     expect(await undo(db, token)).toBe(false); // one use
+  });
+  it('undo puts a tab back under its group\'s new id after the group was adopted under a trained id', async () => {
+    const items = await setup([{ url: 'https://a.com/' }]);
+    await db.items.put({ ...items[0]!, groupId: 'g-food', groupSource: 'user' });
+    const { token } = await stash(db, [items[0]!.id]);
+    remapUndoGroups(new Map([['g-food', 'food']]));
+    expect(await undo(db, token)).toBe(true);
+    await reconcile(db, await chrome.tabs.query({}));
+    expect(byUrl(await db.items.all(), 'https://a.com/')).toMatchObject({ groupId: 'food', groupSource: 'user' });
   });
 });
 describe('undo safety', () => {

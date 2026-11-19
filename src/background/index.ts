@@ -355,6 +355,8 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
   if (rest.mirrorTabGroups === true && !(await chrome.permissions.contains({ permissions: ['tabGroups'] }))) {
     throw new Error('tab groups permission not granted');
   }
+  // Any answer to the interests step (Skip sends interestsAnswered: true) ends the fresh-install window.
+  if (rest.interestsAnswered === true) await db.settings.set({ interestsFresh: false });
   if (Object.keys(rest).length) await db.settings.set(rest);
   if (rest.toolbarOpens !== undefined) await applyToolbar(rest.toolbarOpens);
   if (rest.suspiciousTabs !== undefined) await refreshBadge(db).catch((e: unknown) => console.error('badge update failed', e));
@@ -443,8 +445,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     }
     case 'interests': {
       // The first answer on a new install may also remove the installed groups nobody picked; later answers only add.
-      const s = await db.settings.get();
-      out = await applyInterests(db, embed, { picked: req.picked, custom: req.custom }, !s.onboarded && !s.interestsAnswered);
+      out = await applyInterests(db, embed, { picked: req.picked, custom: req.custom }, (await db.settings.get()).interestsFresh);
       break;
     }
     case 'import': {
@@ -606,7 +607,11 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   // A fresh install shows the dashboard (its onboarding) at once instead of nothing.
   if (fresh) openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
   void getDb()
-    .then(ensureStarterGroups)
+    .then(async (db) => {
+      // Only a real install answers the interests step as fresh (an update keeps every group it has).
+      if (fresh) await db.settings.set({ interestsFresh: true });
+      await ensureStarterGroups(db);
+    })
     .catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e))
     .then(() => flushTabEvents())
     .then(async () => {

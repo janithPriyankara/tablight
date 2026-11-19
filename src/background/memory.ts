@@ -40,6 +40,14 @@ function remember(entry: Omit<UndoEntry, 'expires'>): string {
   undos.set(token, { ...entry, expires: now + UNDO_MS });
   return token;
 }
+/** A group changed id (adopted under a trained id): pending undos put their tabs back into it under the new id. */
+export function remapUndoGroups(moved: ReadonlyMap<string, string>): void {
+  const fix = (i: Item): Item => (i.groupId !== null && moved.has(i.groupId) ? { ...i, groupId: moved.get(i.groupId)! } : i);
+  for (const e of undos.values()) {
+    for (const c of e.closed) c.item = fix(c.item);
+    if (e.deleted) e.deleted = e.deleted.map(fix);
+  }
+}
 /** Forgets every pending undo (after Delete all data, nothing may be put back). */
 export function clearUndos(): void {
   undos.clear();

@@ -58,11 +58,13 @@ describe('INTEREST_CHOICES', () => {
 describe('settings', () => {
   it('interestsAnswered defaults to false; an upgrade reads false and keeps onboarded', async () => {
     expect(DEFAULT_SETTINGS.interestsAnswered).toBe(false);
+    expect(DEFAULT_SETTINGS.interestsFresh).toBe(false); // an upgrade's stored settings lack it: not fresh
     await db.settings.set({ onboarded: true });
     // An older install's stored settings lack the key entirely.
     const s = await db.settings.get();
     expect(s.interestsAnswered).toBe(false);
     expect(s.onboarded).toBe(true);
+    expect(s.interestsFresh).toBe(false);
   });
 });
 
@@ -76,6 +78,7 @@ describe('applyInterests', () => {
     expect(await db.groups.get('bogus')).toBeUndefined();
     expect(await loadRemovedTrained()).toEqual(['sports']);
     expect((await db.settings.get()).interestsAnswered).toBe(true);
+    expect((await db.settings.get()).interestsFresh).toBe(false);
     const stored = (await chrome.storage.local.get(INTERESTS_KEY))[INTERESTS_KEY];
     expect(stored).toEqual({ picked: ['hardware', 'movies'], custom: [] });
   });
@@ -207,8 +210,10 @@ describe('applyInterests', () => {
 });
 
 describe('interests rpc', () => {
+  type Out = { ok: true; data: { created: string[]; removed: string[] } };
   afterEach(() => vi.resetModules());
-  it('is wired: validates, applies fresh only before onboarding and the first answer, and queues for classification', async () => {
+  /** The real background over the shared fake IndexedDB, reset to the install set and default settings. */
+  async function background() {
     vi.doMock('../../src/background/embedder', () => ({
       embed: vi.fn(async (texts: string[]) => texts.map(() => new Float32Array(384).fill(0.05))),
       isWarm: vi.fn(() => false),
@@ -219,21 +224,52 @@ describe('interests rpc', () => {
     mock = installChromeMock();
     const bg = await import('../../src/background/index');
     const rdb = await bg.getDb();
+    await new Promise((r) => setTimeout(r, 0));
+    for (const g of await rdb.groups.all()) await rdb.groups.delete(g.id);
     for (const g of await buildStarterGroups(fakeEmbed)) await rdb.groups.put(g);
+    await rdb.settings.set({ ...DEFAULT_SETTINGS });
+    return { bg, rdb };
+  }
+  it('validates the payload', async () => {
+    await background();
     expect(await mock.sendMessage({ t: 'interests', picked: 'x', custom: [] })).toMatchObject({ ok: false });
-    const res = (await mock.sendMessage({ t: 'interests', picked: ['hardware'], custom: [] })) as {
-      ok: true; data: { created: string[]; removed: string[] };
-    };
-    expect(res.ok).toBe(true);
-    expect(res.data.created).toEqual(['hardware']);
-    expect(res.data.removed).toContain('movies'); // not onboarded, first answer: fresh
-    expect((await rdb.settings.get()).interestsAnswered).toBe(true);
-    // Answered once: from now on the step only adds.
-    const again = (await mock.sendMessage({ t: 'interests', picked: ['sports'], custom: [] })) as {
-      ok: true; data: { created: string[]; removed: string[] };
-    };
-    expect(again.data).toEqual({ created: ['sports'], removed: [] });
-    expect(await mock.sendMessage({ t: 'settings', patch: { interestsAnswered: false } })).toMatchObject({ ok: true });
     expect(await mock.sendMessage({ t: 'settings', patch: { interestsAnswered: 'no' } })).toMatchObject({ ok: false });
+    expect(await mock.sendMessage({ t: 'settings', patch: { interestsFresh: true } })).toMatchObject({ ok: false }); // not a user setting
+  });
+  it('an upgraded install that never onboarded is not fresh: Continue only adds', async () => {
+    const { rdb } = await background();
+    mock.fireInstalled('update');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await rdb.settings.get()).toMatchObject({ onboarded: false, interestsAnswered: false, interestsFresh: false });
+    const res = (await mock.sendMessage({ t: 'interests', picked: ['hardware'], custom: [] })) as Out;
+    expect(res.data).toEqual({ created: ['hardware'], removed: [] });
+    expect(await rdb.groups.get('movies')).toBeDefined();
+  });
+  it('a real install is fresh until answered: Continue removes untouched groups, then only adds', async () => {
+    const { rdb } = await background();
+    mock.fireInstalled('install');
+    await vi.waitFor(async () => expect((await rdb.settings.get()).interestsFresh).toBe(true));
+    await rdb.settings.set({ onboarded: true }); // the order of onboarding and Continue no longer matters
+    const res = (await mock.sendMessage({ t: 'interests', picked: ['hardware'], custom: [] })) as Out;
+    expect(res.data.created).toEqual(['hardware']);
+    expect(res.data.removed).toContain('movies');
+    expect(await rdb.settings.get()).toMatchObject({ interestsAnswered: true, interestsFresh: false });
+    const again = (await mock.sendMessage({ t: 'interests', picked: ['sports'], custom: [] })) as Out;
+    expect(again.data).toEqual({ created: ['sports'], removed: [] });
+  });
+  it('Skip (interestsAnswered: true through settings) also ends the fresh window', async () => {
+    const { rdb } = await background();
+    mock.fireInstalled('install');
+    await vi.waitFor(async () => expect((await rdb.settings.get()).interestsFresh).toBe(true));
+    expect(await mock.sendMessage({ t: 'settings', patch: { interestsAnswered: true } })).toMatchObject({ ok: true });
+    expect(await rdb.settings.get()).toMatchObject({ interestsAnswered: true, interestsFresh: false });
+    const res = (await mock.sendMessage({ t: 'interests', picked: [], custom: [] })) as Out;
+    expect(res.data.removed).toEqual([]);
+  });
+  it('"Delete all data" makes the next answer fresh again', async () => {
+    const { bg, rdb } = await background();
+    await rdb.settings.set({ onboarded: true, interestsAnswered: true });
+    await bg.handleRequest({ t: 'deleteAllData' });
+    expect(await rdb.settings.get()).toMatchObject({ onboarded: false, interestsAnswered: false, interestsFresh: true });
   });
 });

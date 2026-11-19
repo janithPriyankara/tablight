@@ -71,6 +71,12 @@ export interface Settings {
    * installs from before the step (their stored settings lack the key), so the one-time card shows once.
    */
   interestsAnswered: boolean;
+  /**
+   * The next interests answer is the first on a new install (set by onInstalled 'install' and "Delete all data";
+   * cleared by any answer, Continue or Skip): only then may it remove untouched installed groups. False by default,
+   * so an install upgraded from an older version (stored settings lack the key) only adds groups. Not a user setting.
+   */
+  interestsFresh: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -83,6 +89,7 @@ export const DEFAULT_SETTINGS: Settings = {
   toolbarOpens: 'popup',
   suspiciousTabs: true,
   interestsAnswered: false,
+  interestsFresh: false,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.

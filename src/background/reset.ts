@@ -25,7 +25,7 @@ export async function deleteAllData(db: Db): Promise<void> {
   clearUndos();
   await clearSyncData(async () => {
     await db.clearAll();
-    await db.settings.set({ syncEnabled: false });
+    await db.settings.set({ syncEnabled: false, interestsFresh: true }); // the interests step shows again, as on install
     await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY]);
   });
   await clearTabContext();
