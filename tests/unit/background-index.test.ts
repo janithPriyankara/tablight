@@ -342,7 +342,7 @@ describe('background index', () => {
     await db.settings.set({ onboarded: true, syncEnabled: false, theme: 'dark' });
     await db.tombstones.put({ id: 'gone', deletedAt: 1 });
     await chrome.storage.sync.set({ 'v1:meta': { x: 1 }, 'v1:0': 'chunk', 'other-ext-key': 1 });
-    await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], foreign: 1 });
+    await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], removedTrainedGroups: ['hardware'], foreign: 1 });
     // Session records: suspicious-tab clues, the user's Keep choices, badge mode, mirrored groups, startup verdict.
     const tabB = mock.tabs()[0]!.id!; // the tab still open (a.example was stashed)
     await chrome.storage.session.set({

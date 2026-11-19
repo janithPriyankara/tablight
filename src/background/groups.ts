@@ -5,6 +5,7 @@ import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { autoGroup, embeddingKey, fingerprintOf, recordDismissed } from './tab-index';
+import { recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 
 export const MAX_IDS = 5000;
@@ -156,7 +157,10 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
   });
 }
 
-/** Deletes a group; its items go back to Unsorted for the next classification. 'other' is permanent. */
+/**
+ * Deletes a group; its items go back to Unsorted for the next classification. 'other' is permanent.
+ * A trained on-demand group is remembered as removed, so it is never re-created on the fly (grow.ts).
+ */
 export async function deleteGroup(db: Db, id: string): Promise<void> {
   if (id === OTHER_GROUP_ID) throw new Error('the Other group cannot be deleted');
   // A deleted group of the user's (or one created automatically) is remembered like a dismissed suggestion,
@@ -166,6 +170,8 @@ export async function deleteGroup(db: Db, id: string): Promise<void> {
     const members = (await db.items.all()).filter((i) => i.groupId === id);
     if (members.length) await recordDismissed(await fingerprintOf(members));
   }
+  // Recorded before the delete, so a growGroups pass running meanwhile cannot bring it back.
+  if (g) await recordRemovedTrained(id);
   await db.tx(['items', 'groups', 'queue'], async (s) => {
     if (!(await s.groups.get(id))) throw new Error('unknown group');
     for (const i of await s.items.all()) {

@@ -11,6 +11,7 @@ import {
 } from './groups';
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
+import { growGroups } from './grow';
 import { findSuspicious } from './suspicious';
 import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
@@ -113,6 +114,17 @@ async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
     await ensureStarterGroups(db);
     await backfill(db, false);
     const written = await processQueue(db);
+    if (written > 0) {
+      // Trained groups that tabs now need appear on the fly; a failure here never stops the pipeline.
+      const grown = await growGroups(db, embed).catch((e: unknown) => {
+        console.error('growing groups failed', e);
+        return [];
+      });
+      if (grown.length) {
+        scheduleSync(db); // stashed tabs may have changed group
+        await mirrorAll(db).catch((e: unknown) => console.error('mirror failed', e));
+      }
+    }
     if (written > 0 || r.deleted > 0) {
       await maybeSuggest(db);
       if (Date.now() - lastSweep >= SWEEP_INTERVAL_MS) {

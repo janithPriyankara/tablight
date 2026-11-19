@@ -45,6 +45,8 @@ export interface Group {
   centroid: number[] | null;
   createdAt: number;
   suggested?: boolean;
+  /** When a trained group was created on the fly because tabs needed it (grow.ts); absent for every other group. */
+  grownAt?: number;
 }
 export interface Snapshot {
   id: string;
