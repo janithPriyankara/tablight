@@ -22,6 +22,8 @@ export interface Item {
   embKey?: string;
   /** Local only (never synced or exported, no updatedAt bump): when embedding this item was given up on. */
   embGaveUpAt?: number;
+  /** Local only (never synced or exported, no updatedAt bump): the topic the classifier wanted but no group existed for. */
+  want?: string;
   /**
    * Local only: false while the tab has never been the active tab since it appeared ("New"); true once it has.
    * Missing (older data, tabs whose past is unknown) counts as opened.

@@ -1,8 +1,7 @@
-import { classify } from '../classify/assign';
 import { suggestGroups } from '../classify/cluster';
 import { HEAD } from '../classify/head';
 import { EMBED_MODEL } from '../classify/model';
-import { ruleGroup } from '../classify/rules';
+import { pickGroup } from '../classify/pick';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
 import { cleanTitle, domainOf, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
@@ -478,9 +477,7 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
  * (trained head + user-taught exemplars) > null. `groups` must exclude suggested groups.
  */
 export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
-  const rule = ruleGroup(item.url, item.title);
-  if (rule !== null && groups.some((g) => g.id === rule)) return rule;
-  return classify(vec, groups, HEAD).groupId;
+  return pickGroup(item, vec, groups, HEAD).groupId;
 }
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
@@ -523,15 +520,17 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       if (cur.normUrl !== snap.normUrl || cleanTitle(cur.title, cur.url) !== cleanTitle(snap.title, snap.url)) continue;
       const vec = vecs.get(keys[k]!)!;
       let groupId = cur.groupId;
+      let want: string | null = null;
       if (cur.groupSource !== 'user') {
-        groupId = autoGroup(cur, vec, groups);
+        ({ groupId, want } = pickGroup(cur, vec, groups, HEAD));
       }
-      const { embGaveUpAt: _cleared, ...rest } = cur; // a success lifts any earlier give-up stamp
+      const { embGaveUpAt: _cleared, want: _oldWant, ...rest } = cur; // a success lifts any earlier give-up stamp
       void _cleared;
+      void _oldWant;
       // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
       // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
       const updatedAt = groupId === cur.groupId ? cur.updatedAt : nextStamp(cur.updatedAt);
-      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt });
+      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}) }); // want: local-only, no updatedAt bump
       done.push(snap.id);
       written++;
     }

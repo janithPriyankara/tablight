@@ -198,7 +198,8 @@ export function pathWords(url: string): string {
   }
   return out.join(' ');
 }
-function isYouTubeVideo(url: string): boolean {
+/** A YouTube watch, Shorts or youtu.be page. */
+export function isYouTubeVideo(url: string): boolean {
   const u = webUrl(url);
   if (!u) return false;
   const host = bareHost(u);

@@ -85,6 +85,21 @@ function softmax(z: number[]): number[] {
   return e.map((v) => v / s);
 }
 
+/** The head's top label and its blended probability; null when the vector doesn't fit the head. */
+export function headTop(vec: ArrayLike<number>, head: Head): { label: string | undefined; score: number } | null {
+  if (vec.length !== head.dim) return null;
+  const x = Array.from(vec);
+  let p = softmax(head.W.map((row, c) => row.reduce((s, w, d) => s + w * x[d]!, head.b[c] ?? 0)));
+  const nb = neighbours(head);
+  if (nb && head.knn) {
+    const vote = neighbourVote(x, head, nb);
+    const a = head.knn.alpha;
+    p = p.map((pc, c) => (1 - a) * pc + a * vote[c]!);
+  }
+  let top = 0;
+  for (let c = 1; c < p.length; c++) if (p[c]! > p[top]!) top = c;
+  return { label: head.labels[top], score: p[top] ?? 0 };
+}
 /**
  * Picks a group for an embedded tab. Run after the caller's user-group and ruleGroup checks.
  * 1. User learning: the single closest user-taught exemplar (drag / learn()) overrides the head when its
@@ -111,19 +126,9 @@ export function classify(
   }
   if (near.groupId !== null && near.score >= similarity) return near;
 
-  if (vec.length !== head.dim) return { groupId: null, score: 0 };
-  const x = Array.from(vec);
-  let p = softmax(head.W.map((row, c) => row.reduce((s, w, d) => s + w * x[d]!, head.b[c] ?? 0)));
-  const nb = neighbours(head);
-  if (nb && head.knn) {
-    const vote = neighbourVote(x, head, nb);
-    const a = head.knn.alpha;
-    p = p.map((pc, c) => (1 - a) * pc + a * vote[c]!);
-  }
-  let top = 0;
-  for (let c = 1; c < p.length; c++) if (p[c]! > p[top]!) top = c;
-  const label = head.labels[top];
-  const score = p[top] ?? 0;
+  const top = headTop(vec, head);
+  if (!top) return { groupId: null, score: 0 };
+  const { label, score } = top;
   const ok =
     label !== undefined && label !== OTHER_GROUP_ID && score >= (opts.threshold ?? head.threshold) &&
     groups.some((g) => g.id === label);
