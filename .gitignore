@@ -9,3 +9,4 @@ playwright-report/
 .build/
 reports/
 .DS_Store
+__pycache__/

@@ -1,0 +1,1596 @@
+{
+ "generatedBy": "node scripts/finetune/gen-fixture.mjs",
+ "pairs": [
+  {
+   "row": {
+    "title": "Rail Europe: Paris to Amsterdam",
+    "url": "https://www.raileurope.com/en-us/trains/paris-amsterdam"
+   },
+   "text": "Rail Europe: Paris to Amsterdam — raileurope.com trains paris amsterdam"
+  },
+  {
+   "row": {
+    "title": "Customer Metrics Q3 - Google Sheets",
+    "url": "https://docs.google.com/spreadsheets/d/1XyZaBcDeFgHiJkLmNoPqRs/edit#gid=0"
+   },
+   "text": "Customer Metrics Q3 - Google Sheets — docs.google.com spreadsheets edit"
+  },
+  {
+   "row": {
+    "title": "Index funds vs ETFs explained - YouTube",
+    "url": "https://www.youtube.com/watch?v=Ew3Rt5Yu7Io"
+   },
+   "text": "Index funds vs ETFs explained"
+  },
+  {
+   "row": {
+    "title": "PubMed: creatine supplementation and cognition",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/38123456/"
+   },
+   "text": "PubMed: creatine supplementation and cognition — pubmed.ncbi.nlm.nih.gov"
+  },
+  {
+   "row": {
+    "title": "Outlook - Mail",
+    "url": "https://outlook.office.com/mail/inbox"
+   },
+   "text": "Outlook - Mail — outlook.office.com mail inbox"
+  },
+  {
+   "row": {
+    "title": "Andor Season 2 - Disney+",
+    "url": "https://www.disneyplus.com/series/andor/3xoUmQwvN9p"
+   },
+   "text": "Andor Season 2 — disneyplus.com series andor"
+  },
+  {
+   "row": {
+    "title": "Mastodon - hachyderm.io",
+    "url": "https://hachyderm.io/@gargron"
+   },
+   "text": "Mastodon - hachyderm.io — hachyderm.io @gargron"
+  },
+  {
+   "row": {
+    "title": "Kyoto Itinerary: 5 days - YouTube",
+    "url": "https://www.youtube.com/watch?v=Gt6Hy8Ju1Ki"
+   },
+   "text": "Kyoto Itinerary: 5 days"
+  },
+  {
+   "row": {
+    "title": "Veterinary clinic opening hours - VCA Animal Hospitals",
+    "url": "https://vcahospitals.com/find-a-hospital"
+   },
+   "text": "Veterinary clinic opening hours - VCA Animal Hospitals — vcahospitals.com find hospital"
+  },
+  {
+   "row": {
+    "title": "Mobbin - UI & UX design inspiration",
+    "url": "https://mobbin.com/browse/ios/apps"
+   },
+   "text": "Mobbin - UI & UX design inspiration — mobbin.com browse ios apps"
+  },
+  {
+   "row": {
+    "title": "Building effective agents - Anthropic Engineering",
+    "url": "https://www.anthropic.com/engineering/building-effective-agents"
+   },
+   "text": "Building effective agents - Anthropic Engineering — anthropic.com engineering building effective agents"
+  },
+  {
+   "row": {
+    "title": "Joe Rogan Experience #2301 - YouTube",
+    "url": "https://www.youtube.com/watch?v=Vb4Nm6Lk2Ws"
+   },
+   "text": "Joe Rogan Experience #2301"
+  },
+  {
+   "row": {
+    "title": "The White Lotus Season 3 - Watch on HBO Max",
+    "url": "https://www.hbomax.com/shows/the-white-lotus"
+   },
+   "text": "The White Lotus Season 3 - Watch on HBO Max — hbomax.com shows the white lotus"
+  },
+  {
+   "row": {
+    "title": "(14) Home / X",
+    "url": "https://x.com/home"
+   },
+   "text": "Home / X — x.com home"
+  },
+  {
+   "row": {
+    "title": "Veritasium: The Strange Physics of Spinning Tops - YouTube",
+    "url": "https://www.youtube.com/watch?v=Mn7Bv5Cx3Za"
+   },
+   "text": "Veritasium: The Strange Physics of Spinning Tops"
+  },
+  {
+   "row": {
+    "title": "Wednesday Season 2 Episode 3 review - IGN",
+    "url": "https://www.ign.com/articles/wednesday-season-2-episode-3-review"
+   },
+   "text": "Wednesday Season 2 Episode 3 review - IGN — ign.com articles wednesday season episode review"
+  },
+  {
+   "row": {
+    "title": "Simon Willison's Weblog: SQLite tricks",
+    "url": "https://simonwillison.net/2026/Oct/21/sqlite-tricks/"
+   },
+   "text": "Simon Willison's Weblog: SQLite tricks — simonwillison.net Oct sqlite tricks"
+  },
+  {
+   "row": {
+    "title": "Semiconductor export rules tighten - The Economist",
+    "url": "https://www.economist.com/business/2026/11/09/semiconductor-export-rules-tighten"
+   },
+   "text": "Semiconductor export rules tighten - The Economist — economist.com business semiconductor export rules tighten"
+  },
+  {
+   "row": {
+    "title": "Refactoring UI - Design tips for developers",
+    "url": "https://www.refactoringui.com/"
+   },
+   "text": "Refactoring UI - Design tips for developers — refactoringui.com"
+  },
+  {
+   "row": {
+    "title": "Can You Beat Me At This? Epic Challenge - YouTube",
+    "url": "https://www.youtube.com/watch?v=Lk9Jh8Gf7Dd"
+   },
+   "text": "Can You Beat Me At This? Epic Challenge"
+  },
+  {
+   "row": {
+    "title": "Node.js v24 Documentation - fs",
+    "url": "https://nodejs.org/docs/latest-v24.x/api/fs.html"
+   },
+   "text": "Node.js v24 Documentation - fs — nodejs.org docs latest v24 api fs"
+  },
+  {
+   "row": {
+    "title": "Nintendo Switch 2 Games - Nintendo",
+    "url": "https://www.nintendo.com/us/store/games/switch-2-games/"
+   },
+   "text": "Nintendo Switch 2 Games - Nintendo — nintendo.com store games switch"
+  },
+  {
+   "row": {
+    "title": "meta-llama/Llama-4-Scout-17B-16E-Instruct · Hugging Face",
+    "url": "https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+   },
+   "text": "meta-llama/Llama-4-Scout-17B-16E-Instruct · Hugging Face — huggingface.co meta llama Scout Instruct"
+  },
+  {
+   "row": {
+    "title": "Dockerfile best practices - Snyk Blog",
+    "url": "https://snyk.io/blog/10-docker-image-security-best-practices/"
+   },
+   "text": "Dockerfile best practices - Snyk Blog — snyk.io blog docker image security best practices"
+  },
+  {
+   "row": {
+    "title": "Sprint 42 Board - Jira",
+    "url": "https://acme.atlassian.net/jira/software/projects/ACME/boards/7"
+   },
+   "text": "Sprint 42 Board - Jira — acme.atlassian.net jira software projects ACME boards"
+  },
+  {
+   "row": {
+    "title": "Yoga With Adriene - Morning Yoga - YouTube",
+    "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE"
+   },
+   "text": "Yoga With Adriene - Morning Yoga"
+  },
+  {
+   "row": {
+    "title": "Ted Lasso Season 4 | Apple TV",
+    "url": "https://tv.apple.com/us/show/ted-lasso/umc.cmc.vtoh0mn0xn7t3c643xqonfzy"
+   },
+   "text": "Ted Lasso Season 4 | Apple TV — tv.apple.com show ted lasso umc cmc"
+  },
+  {
+   "row": {
+    "title": "Rust in 100 Seconds - YouTube",
+    "url": "https://www.youtube.com/watch?v=5C_HPTJg5ek"
+   },
+   "text": "Rust in 100 Seconds"
+  },
+  {
+   "row": {
+    "title": "(2) Reacting to the funniest fails of 2026 - YouTube",
+    "url": "https://www.youtube.com/watch?v=Ty6Ui8Op0As"
+   },
+   "text": "Reacting to the funniest fails of 2026"
+  },
+  {
+   "row": {
+    "title": "Airbnb: Entire apartment in Lisbon",
+    "url": "https://www.airbnb.com/rooms/45678901"
+   },
+   "text": "Airbnb: Entire apartment in Lisbon — airbnb.com rooms"
+  },
+  {
+   "row": {
+    "title": "Keychron Q1 Max - Keychron",
+    "url": "https://www.keychron.com/products/keychron-q1-max-qmk-via-wireless-custom-mechanical-keyboard"
+   },
+   "text": "Keychron Q1 Max - Keychron — keychron.com products keychron q1 max qmk via wireless custom"
+  },
+  {
+   "row": {
+    "title": "Asana - Marketing launch board",
+    "url": "https://app.asana.com/0/1205555555555/board"
+   },
+   "text": "Asana - Marketing launch board — app.asana.com board"
+  },
+  {
+   "row": {
+    "title": "Funniest Animals of the Month - Streamable",
+    "url": "https://streamable.com/k3j9x2"
+   },
+   "text": "Funniest Animals of the Month - Streamable — streamable.com"
+  },
+  {
+   "row": {
+    "title": "Shogun Season 2 renewal news - Deadline",
+    "url": "https://deadline.com/2026/02/shogun-season-2-production-update-1236000000/"
+   },
+   "text": "Shogun Season 2 renewal news - Deadline — deadline.com shogun season production update"
+  },
+  {
+   "row": {
+    "title": "Hot Ones with Pedro Pascal - YouTube",
+    "url": "https://www.youtube.com/watch?v=Ab1Cd2Ef3Gh"
+   },
+   "text": "Hot Ones with Pedro Pascal"
+  },
+  {
+   "row": {
+    "title": "Crash Course World History #1 - YouTube",
+    "url": "https://www.youtube.com/watch?v=Yocja_N5s1I"
+   },
+   "text": "Crash Course World History #1"
+  },
+  {
+   "row": {
+    "title": "The Boys (TV Series 2019- ) - IMDb",
+    "url": "https://www.imdb.com/title/tt1190634/"
+   },
+   "text": "The Boys (TV Series 2019- ) — imdb.com title"
+  },
+  {
+   "row": {
+    "title": "30 Min Full Body Workout - YouTube",
+    "url": "https://www.youtube.com/watch?v=UItWltVZZmE"
+   },
+   "text": "30 Min Full Body Workout"
+  },
+  {
+   "row": {
+    "title": "Tenet: is it worth rewatching? - YouTube",
+    "url": "https://www.youtube.com/watch?v=Bt5Rk0aQw8Y"
+   },
+   "text": "Tenet: is it worth rewatching?"
+  },
+  {
+   "row": {
+    "title": "facebook/react: The library for web and native user interfaces",
+    "url": "https://github.com/facebook/react"
+   },
+   "text": "facebook/react: The library for web and native user interfaces — GitHub repository facebook react"
+  },
+  {
+   "row": {
+    "title": "Lofi Hip Hop Radio - Beats to Relax/Study to - YouTube",
+    "url": "https://www.youtube.com/watch?v=jfKfPfyJRdk"
+   },
+   "text": "Lofi Hip Hop Radio - Beats to Relax/Study to"
+  },
+  {
+   "row": {
+    "title": "Organic Chemistry - Reaction Mechanisms Explained - YouTube",
+    "url": "https://www.youtube.com/watch?v=Zm4Xk8Sa1Pw"
+   },
+   "text": "Organic Chemistry - Reaction Mechanisms Explained"
+  },
+  {
+   "row": {
+    "title": "ggml-org/llama.cpp: LLM inference in C/C++",
+    "url": "https://github.com/ggml-org/llama.cpp"
+   },
+   "text": "ggml-org/llama.cpp: LLM inference in C/C++ — GitHub repository ggml-org llama.cpp"
+  },
+  {
+   "row": {
+    "title": "World leaders gather for COP31 summit | Al Jazeera",
+    "url": "https://www.aljazeera.com/news/2026/11/10/cop31-summit-opens"
+   },
+   "text": "World leaders gather for COP31 summit | Al Jazeera — aljazeera.com news summit opens"
+  },
+  {
+   "row": {
+    "title": "rust-lang/rust: Empowering everyone to build reliable and efficient software",
+    "url": "https://github.com/rust-lang/rust"
+   },
+   "text": "rust-lang/rust: Empowering everyone to build reliable and efficient software — GitHub repository rust-lang rust"
+  },
+  {
+   "row": {
+    "title": "GitLab - Pipelines · backend/api",
+    "url": "https://gitlab.com/backend/api/-/pipelines"
+   },
+   "text": "GitLab - Pipelines · backend/api — gitlab.com backend api pipelines"
+  },
+  {
+   "row": {
+    "title": "Meta signs multi-billion dollar chip deal - The Information",
+    "url": "https://www.theinformation.com/articles/meta-chip-deal"
+   },
+   "text": "Meta signs multi-billion dollar chip deal - The Information — theinformation.com articles meta chip deal"
+  },
+  {
+   "row": {
+    "title": "Issues · denoland/deno",
+    "url": "https://github.com/denoland/deno/issues?q=is%3Aopen+label%3Abug"
+   },
+   "text": "Issues · denoland/deno — GitHub repository denoland deno issues"
+  },
+  {
+   "row": {
+    "title": "Joker: Folie à Deux - Movie Reviews | Metacritic",
+    "url": "https://www.metacritic.com/movie/joker-folie-a-deux/critic-reviews/"
+   },
+   "text": "Joker: Folie à Deux - Movie Reviews | Metacritic — metacritic.com movie joker folie deux critic reviews"
+  },
+  {
+   "row": {
+    "title": "Try Not To Laugh Challenge #47 - YouTube",
+    "url": "https://www.youtube.com/watch?v=Sd5Fg7Hj9Kl"
+   },
+   "text": "Try Not To Laugh Challenge #47"
+  },
+  {
+   "row": {
+    "title": "Releases · astral-sh/uv",
+    "url": "https://github.com/astral-sh/uv/releases"
+   },
+   "text": "Releases · astral-sh/uv — GitHub repository astral-sh uv releases"
+  },
+  {
+   "row": {
+    "title": "Healthline: How much protein do you need?",
+    "url": "https://www.healthline.com/nutrition/how-much-protein-per-day"
+   },
+   "text": "Healthline: How much protein do you need? — healthline.com nutrition how much protein per day"
+  },
+  {
+   "row": {
+    "title": "PyPI · ruff",
+    "url": "https://pypi.org/project/ruff/"
+   },
+   "text": "PyPI · ruff — pypi.org project ruff"
+  },
+  {
+   "row": {
+    "title": "fix: race condition in worker pool · Issue #4821 · tokio-rs/tokio",
+    "url": "https://github.com/tokio-rs/tokio/issues/4821"
+   },
+   "text": "fix: race condition in worker pool · Issue #4821 · tokio-rs/tokio — GitHub repository tokio-rs tokio issues"
+  },
+  {
+   "row": {
+    "title": "Best budget mechanical keyboards 2026 - Wirecutter",
+    "url": "https://www.nytimes.com/wirecutter/reviews/best-mechanical-keyboards/"
+   },
+   "text": "Best budget mechanical keyboards 2026 - Wirecutter — nytimes.com wirecutter reviews best mechanical keyboards"
+  },
+  {
+   "row": {
+    "title": "neovim/neovim: Vim-fork focused on extensibility",
+    "url": "https://github.com/neovim/neovim"
+   },
+   "text": "neovim/neovim: Vim-fork focused on extensibility — GitHub repository neovim neovim"
+  },
+  {
+   "row": {
+    "title": "Yelp: Best Plumbers in Seattle",
+    "url": "https://www.yelp.com/search?find_desc=Plumbers&find_loc=Seattle%2C+WA"
+   },
+   "text": "Yelp: Best Plumbers in Seattle — yelp.com search"
+  },
+  {
+   "row": {
+    "title": "Actions · janith/tab-organizer · Workflow runs",
+    "url": "https://github.com/janith/tab-organizer/actions"
+   },
+   "text": "Actions · janith/tab-organizer · Workflow runs — GitHub repository janith tab-organizer actions"
+  },
+  {
+   "row": {
+    "title": "Awesome Python - GitHub",
+    "url": "https://github.com/vinta/awesome-python"
+   },
+   "text": "Awesome Python — GitHub repository vinta awesome-python"
+  },
+  {
+   "row": {
+    "title": "Baldur's Gate 3 - Wiki Guide - IGN",
+    "url": "https://www.ign.com/wikis/baldurs-gate-3"
+   },
+   "text": "Baldur's Gate 3 - Wiki Guide - IGN — ign.com wikis baldurs gate"
+  },
+  {
+   "row": {
+    "title": "Cheap flights from Colombo to Tokyo - Google Flights",
+    "url": "https://www.google.com/travel/flights?q=Flights%20to%20NRT%20from%20CMB"
+   },
+   "text": "Cheap flights from Colombo to Tokyo - Google Flights — google.com travel flights"
+  },
+  {
+   "row": {
+    "title": "Anthropic Cookbook - tool use",
+    "url": "https://github.com/anthropics/anthropic-cookbook/tree/main/tool_use"
+   },
+   "text": "Anthropic Cookbook - tool use — GitHub repository anthropics anthropic-cookbook tree main tool use"
+  },
+  {
+   "row": {
+    "title": "langchain-ai/langgraph: Build resilient language agents as graphs",
+    "url": "https://github.com/langchain-ai/langgraph"
+   },
+   "text": "langchain-ai/langgraph: Build resilient language agents as graphs — GitHub repository langchain-ai langgraph"
+  },
+  {
+   "row": {
+    "title": "Wikipedia - Dijkstra's algorithm",
+    "url": "https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm"
+   },
+   "text": "Wikipedia - Dijkstra's algorithm — en.wikipedia.org wiki Dijkstra's algorithm"
+  },
+  {
+   "row": {
+    "title": "Pull requests · vercel/next.js",
+    "url": "https://github.com/vercel/next.js/pulls"
+   },
+   "text": "Pull requests · vercel/next.js — GitHub repository vercel next.js pulls"
+  },
+  {
+   "row": {
+    "title": "Add support for streaming responses by janedev · Pull Request #312 · encode/httpx",
+    "url": "https://github.com/encode/httpx/pull/312"
+   },
+   "text": "Add support for streaming responses by janedev · Pull Request #312 · encode/httpx — GitHub repository encode httpx pull"
+  },
+  {
+   "row": {
+    "title": "Kayak: Car rentals in Rome",
+    "url": "https://www.kayak.com/cars/Rome,Italy-c14352"
+   },
+   "text": "Kayak: Car rentals in Rome — kayak.com cars Rome,Italy"
+  },
+  {
+   "row": {
+    "title": "CI failing on main: flaky test in worker module · Issue #77 · acme/svc",
+    "url": "https://github.com/acme/svc/issues/77"
+   },
+   "text": "CI failing on main: flaky test in worker module · Issue #77 · acme/svc — GitHub repository acme svc issues"
+  },
+  {
+   "row": {
+    "title": "Japan Visa Requirements for Sri Lankan Citizens - VisaGuide",
+    "url": "https://visaguide.world/asia/japan-visa/"
+   },
+   "text": "Japan Visa Requirements for Sri Lankan Citizens - VisaGuide — visaguide.world asia japan visa"
+  },
+  {
+   "row": {
+    "title": "TradingView - NVDA chart",
+    "url": "https://www.tradingview.com/chart/?symbol=NASDAQ%3ANVDA"
+   },
+   "text": "TradingView - NVDA chart — tradingview.com chart"
+  },
+  {
+   "row": {
+    "title": "Department of Motor Vehicles - Renew Registration",
+    "url": "https://www.dmv.ca.gov/portal/vehicle-registration/renew-registration/"
+   },
+   "text": "Department of Motor Vehicles - Renew Registration — dmv.ca.gov portal vehicle registration renew"
+  },
+  {
+   "row": {
+    "title": "Local Electricians - Yelp",
+    "url": "https://www.yelp.com/search?find_desc=electrician&find_loc=Denver%2C+CO"
+   },
+   "text": "Local Electricians - Yelp — yelp.com search"
+  },
+  {
+   "row": {
+    "title": "USPS Tracking®",
+    "url": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223197428490"
+   },
+   "text": "USPS Tracking® — tools.usps.com go TrackConfirmAction"
+  },
+  {
+   "row": {
+    "title": "Wimbledon Order of Play",
+    "url": "https://www.wimbledon.com/en_GB/scores/schedule/index.html"
+   },
+   "text": "Wimbledon Order of Play — wimbledon.com scores schedule"
+  },
+  {
+   "row": {
+    "title": "Ancestry® | Family Tree and Genealogy",
+    "url": "https://www.ancestry.com/"
+   },
+   "text": "Ancestry® | Family Tree and Genealogy — ancestry.com"
+  },
+  {
+   "row": {
+    "title": "Search results - Pinterest recipe boards",
+    "url": "https://www.pinterest.com/search/pins/?q=dinner%20ideas"
+   },
+   "text": "Search results - Pinterest recipe boards — pinterest.com search pins"
+  },
+  {
+   "row": {
+    "title": "https://www.nea.gov.sg/weather",
+    "url": "https://www.nea.gov.sg/weather"
+   },
+   "text": "nea.gov.sg weather — nea.gov.sg weather"
+  },
+  {
+   "row": {
+    "title": "Google unveils new Gemini model at event | The Verge",
+    "url": "https://www.theverge.com/2026/11/12/google-gemini-new-model-event"
+   },
+   "text": "Google unveils new Gemini model at event | The Verge — theverge.com google gemini new model event"
+  },
+  {
+   "row": {
+    "title": "Croma - Buy Electronics Online",
+    "url": "https://www.croma.com/"
+   },
+   "text": "Croma - Buy Electronics Online — croma.com"
+  },
+  {
+   "row": {
+    "title": "Google Flights - Sydney to Singapore",
+    "url": "https://www.google.com/travel/flights?q=Flights%20to%20SIN%20from%20SYD"
+   },
+   "text": "Google Flights - Sydney to Singapore — google.com travel flights"
+  },
+  {
+   "row": {
+    "title": "Protein intake: how much do you need? - Examine",
+    "url": "https://examine.com/nutrition/protein-intake/"
+   },
+   "text": "Protein intake: how much do you need? - Examine — examine.com nutrition protein intake"
+  },
+  {
+   "row": {
+    "title": "Crash Course Biology #1 - YouTube",
+    "url": "https://www.youtube.com/watch?v=QnQe0xW_JY4"
+   },
+   "text": "Crash Course Biology #1"
+  },
+  {
+   "row": {
+    "title": "Blackboard Learn - Courses",
+    "url": "https://learn.example.ac.uk/ultra/course"
+   },
+   "text": "Blackboard Learn - Courses — learn.example.ac.uk ultra course"
+  },
+  {
+   "row": {
+    "title": "Reddit - The heart of the internet",
+    "url": "https://www.reddit.com/"
+   },
+   "text": "Reddit - The heart of the internet — reddit.com"
+  },
+  {
+   "row": {
+    "title": "GitHub - Your Repositories",
+    "url": "https://github.com/janedoe?tab=repositories"
+   },
+   "text": "GitHub - Your Repositories — GitHub"
+  },
+  {
+   "row": {
+    "title": "Cineplex - Movies Showtimes",
+    "url": "https://www.cineplex.com/movies"
+   },
+   "text": "Cineplex - Movies Showtimes — cineplex.com movies"
+  },
+  {
+   "row": {
+    "title": "Try Not To Laugh Challenge #47 - YouTube",
+    "url": "https://www.youtube.com/watch?v=Vc7xZa1sDf9"
+   },
+   "text": "Try Not To Laugh Challenge #47"
+  },
+  {
+   "row": {
+    "title": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+   },
+   "text": "youtube.com watch"
+  },
+  {
+   "row": {
+    "title": "Behance - Graphic Design Projects",
+    "url": "https://www.behance.net/search/projects/graphic%20design"
+   },
+   "text": "Behance - Graphic Design Projects — behance.net search projects graphic design"
+  },
+  {
+   "row": {
+    "title": "Inbox (12) - jane@acmeplumbing.com - Gmail",
+    "url": "https://mail.google.com/mail/u/0/#inbox"
+   },
+   "text": "Inbox (12) - jane@acmeplumbing.com - Gmail — mail.google.com mail"
+  },
+  {
+   "row": {
+    "title": "ollama/ollama: Get up and running with Llama 3.3, DeepSeek-R1, Phi-4, Gemma 3",
+    "url": "https://github.com/ollama/ollama"
+   },
+   "text": "ollama/ollama: Get up and running with Llama 3.3, DeepSeek-R1, Phi-4, Gemma 3 — GitHub repository ollama ollama"
+  },
+  {
+   "row": {
+    "title": "microsoft/autogen: A programming framework for agentic AI",
+    "url": "https://github.com/microsoft/autogen"
+   },
+   "text": "microsoft/autogen: A programming framework for agentic AI — GitHub repository microsoft autogen"
+  },
+  {
+   "row": {
+    "title": "GitHub Copilot · Your AI pair programmer",
+    "url": "https://github.com/features/copilot"
+   },
+   "text": "GitHub Copilot · Your AI pair programmer — GitHub repository features copilot"
+  },
+  {
+   "row": {
+    "title": "Model Context Protocol servers - awesome list",
+    "url": "https://github.com/punkpeye/awesome-mcp-servers"
+   },
+   "text": "Model Context Protocol servers - awesome list — GitHub repository punkpeye awesome-mcp-servers"
+  },
+  {
+   "row": {
+    "title": "Latent Space: The AI Engineer Podcast — Episode 112",
+    "url": "https://www.latent.space/p/2025-agents"
+   },
+   "text": "Latent Space: The AI Engineer Podcast — Episode 112 — latent.space agents"
+  },
+  {
+   "row": {
+    "title": "http://127.0.0.1:5173/dashboard",
+    "url": "http://127.0.0.1:5173/dashboard"
+   },
+   "text": "127.0.0.1 dashboard — 127.0.0.1 dashboard"
+  },
+  {
+   "row": {
+    "title": "Deployments | Kubernetes",
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+   },
+   "text": "Deployments | Kubernetes — kubernetes.io docs concepts workloads controllers deployment"
+  },
+  {
+   "row": {
+    "title": "Pinterest: brutalist web design ideas",
+    "url": "https://www.pinterest.com/search/pins/?q=brutalist%20web%20design"
+   },
+   "text": "Pinterest: brutalist web design ideas — pinterest.com search pins"
+  },
+  {
+   "row": {
+    "title": "Design Systems Repo - Shopify Polaris",
+    "url": "https://polaris.shopify.com/components/selection-and-input/button"
+   },
+   "text": "Design Systems Repo - Shopify Polaris — polaris.shopify.com components selection and input button"
+  },
+  {
+   "row": {
+    "title": "Sales Pipeline FY26.xlsx - Microsoft Excel Online",
+    "url": "https://acmecorp-my.sharepoint.com/:x:/r/personal/janith_p/_layouts/15/Doc.aspx?sourcedoc=%7B8A3F%7D"
+   },
+   "text": "Sales Pipeline FY26.xlsx - Microsoft Excel Online — acmecorp-my.sharepoint.com :x: personal janith layouts Doc"
+  },
+  {
+   "row": {
+    "title": "Dropbox - Client Deliverables",
+    "url": "https://www.dropbox.com/home/Client%20Deliverables"
+   },
+   "text": "Dropbox - Client Deliverables — dropbox.com home Client Deliverables"
+  },
+  {
+   "row": {
+    "title": "Discord | #general | Weekend Gamers",
+    "url": "https://discord.com/channels/824729183772803092/824729183772803095"
+   },
+   "text": "Discord | #general | Weekend Gamers — discord.com channels"
+  },
+  {
+   "row": {
+    "title": "https://www.npr.org/2025/11/13/nx-s1-5600000/government-shutdown-ends",
+    "url": "https://www.npr.org/2025/11/13/nx-s1-5600000/government-shutdown-ends"
+   },
+   "text": "npr.org 2025 11 13 nx s1 5600000 government shutdown ends — npr.org nx s1 government shutdown ends"
+  },
+  {
+   "row": {
+    "title": "We Spent 24 Hours in the World's Smallest Hotel - YouTube",
+    "url": "https://www.youtube.com/watch?v=Pa8rWc3nDf0"
+   },
+   "text": "We Spent 24 Hours in the World's Smallest Hotel"
+  },
+  {
+   "row": {
+    "title": "(5) The H3 Podcast #142 - Full Episode - YouTube",
+    "url": "https://www.youtube.com/watch?v=Ga7hY2rLm3K"
+   },
+   "text": "The H3 Podcast #142 - Full Episode"
+  },
+  {
+   "row": {
+    "title": "Box Office Mojo - Domestic Box Office For 2025",
+    "url": "https://www.boxofficemojo.com/year/2025/"
+   },
+   "text": "Box Office Mojo - Domestic Box Office For 2025 — boxofficemojo.com year"
+  },
+  {
+   "row": {
+    "title": "Spotify – Web Player: Music for everyone",
+    "url": "https://open.spotify.com/"
+   },
+   "text": "Spotify – Web Player: Music for everyone — open.spotify.com"
+  },
+  {
+   "row": {
+    "title": "Connections - The New York Times",
+    "url": "https://www.nytimes.com/games/connections"
+   },
+   "text": "Connections - The New York Times — nytimes.com games connections"
+  },
+  {
+   "row": {
+    "title": "Desmos | Graphing Calculator",
+    "url": "https://www.desmos.com/calculator/k3x9pq2rlm"
+   },
+   "text": "Desmos | Graphing Calculator — desmos.com calculator"
+  },
+  {
+   "row": {
+    "title": "Wanderlog - Trip to Portugal",
+    "url": "https://wanderlog.com/plan/xkqpzmvabcdtrfgh/trip-to-portugal"
+   },
+   "text": "Wanderlog - Trip to Portugal — wanderlog.com plan xkqpzmvabcdtrfgh trip to portugal"
+  },
+  {
+   "row": {
+    "title": "Credit Karma - Credit scores",
+    "url": "https://www.creditkarma.com/credit-health"
+   },
+   "text": "Credit Karma - Credit scores — creditkarma.com credit health"
+  },
+  {
+   "row": {
+    "title": "GoodRx - Amoxicillin coupon & prices",
+    "url": "https://www.goodrx.com/amoxicillin"
+   },
+   "text": "GoodRx - Amoxicillin coupon & prices — goodrx.com amoxicillin"
+  },
+  {
+   "row": {
+    "title": "(9) My cat knocks everything off the table : r/cats",
+    "url": "https://www.reddit.com/r/cats/comments/1gv3k9q/my_cat_knocks_everything_off_the_table/"
+   },
+   "text": "My cat knocks everything off the table : r/cats — reddit.com cats comments my cat knocks everything off the"
+  },
+  {
+   "row": {
+    "title": "Quran.com - Surah Al-Fatiha",
+    "url": "https://quran.com/1"
+   },
+   "text": "Quran.com - Surah Al-Fatiha — quran.com"
+  },
+  {
+   "row": {
+    "title": "https://www.ikea.com/gb/en/assembly_instructions/malm-chest-of-6-drawers__AA-2398381-2.pdf",
+    "url": "https://www.ikea.com/gb/en/assembly_instructions/malm-chest-of-6-drawers__AA-2398381-2.pdf"
+   },
+   "text": "ikea.com gb en assembly instructions malm chest of 6 drawers AA 2398381 2 pdf — ikea.com assembly instructions malm chest of drawers AA pdf"
+  },
+  {
+   "row": {
+    "title": "Check a URL for malware - Google Transparency Report",
+    "url": "https://transparencyreport.google.com/safe-browsing/search"
+   },
+   "text": "Check a URL for malware - Google Transparency Report — transparencyreport.google.com safe browsing search"
+  },
+  {
+   "row": {
+    "title": "Bundesliga Tabelle 2026/27 - kicker",
+    "url": "https://www.kicker.de/bundesliga/tabelle"
+   },
+   "text": "Bundesliga Tabelle 2026/27 - kicker — kicker.de bundesliga tabelle"
+  },
+  {
+   "row": {
+    "title": "NFL playoffs analysis - ESPN",
+    "url": "https://www.espn.com/nba/story/_/id/46973/nfl-playoffs-analysis"
+   },
+   "text": "NFL playoffs analysis - ESPN — espn.com nba story id nfl playoffs analysis"
+  },
+  {
+   "row": {
+    "title": "chicken tikka masala with step by step photos - RecipeTin Eats",
+    "url": "https://www.recipetineats.com/chicken-tikka-masala-with-step-by-step-photos/"
+   },
+   "text": "chicken tikka masala with step by step photos - RecipeTin Eats — recipetineats.com chicken tikka masala with step by photos"
+  },
+  {
+   "row": {
+    "title": "CRISPR gene editing explained - r/biology",
+    "url": "https://www.reddit.com/r/biology/comments/8117/crispr-gene-editing-explained/"
+   },
+   "text": "CRISPR gene editing explained - r/biology — reddit.com biology comments crispr gene editing explained"
+  },
+  {
+   "row": {
+    "title": "FPL advice - Fantasy Premier League",
+    "url": "https://fantasy.premierleague.com/a/team/6796/event/9"
+   },
+   "text": "FPL advice - Fantasy Premier League — fantasy.premierleague.com team event"
+  },
+  {
+   "row": {
+    "title": "quantum computing physics explained - YouTube",
+    "url": "https://youtu.be/S9CsiUAvUEw"
+   },
+   "text": "quantum computing physics explained"
+  },
+  {
+   "row": {
+    "title": "Adafruit Feather RP2040 - Product Page",
+    "url": "https://www.adafruit.com/product/4884"
+   },
+   "text": "Adafruit Feather RP2040 - Product Page — adafruit.com product"
+  },
+  {
+   "row": {
+    "title": "Super Bowl LX - extended highlights - YouTube",
+    "url": "https://www.youtube.com/shorts/eMiR3ksYmge"
+   },
+   "text": "Super Bowl LX - extended highlights"
+  },
+  {
+   "row": {
+    "title": "Arduino Nano clone not detected on Mac | Arduino Forum",
+    "url": "https://forum.arduino.cc/t/arduino-nano-clone-not-detected-on-mac/70668"
+   },
+   "text": "Arduino Nano clone not detected on Mac | Arduino Forum — forum.arduino.cc arduino nano clone not detected on mac"
+  },
+  {
+   "row": {
+    "title": "Cómo funciona la fotosíntesis - Muy Interesante",
+    "url": "https://www.muyinteresante.com/ciencia/fotosintesis-explicada.html"
+   },
+   "text": "Cómo funciona la fotosíntesis - Muy Interesante — muyinteresante.com ciencia fotosintesis explicada"
+  },
+  {
+   "row": {
+    "title": "Microscope Slides Set 50pcs - Amazon.com",
+    "url": "https://www.amazon.com/dp/B07XYZ1234"
+   },
+   "text": "Microscope Slides Set 50pcs - Amazon.com — amazon.com dp"
+  },
+  {
+   "row": {
+    "title": "IPL final analysis and reaction - YouTube",
+    "url": "https://www.youtube.com/watch?v=57Dl83rbyBn"
+   },
+   "text": "IPL final analysis and reaction"
+  },
+  {
+   "row": {
+    "title": "gut bacteria what it means - Science News",
+    "url": "https://www.sciencenews.org/article/gut-bacteria-what-it-means"
+   },
+   "text": "gut bacteria what it means - Science News — sciencenews.org article gut bacteria what it means"
+  },
+  {
+   "row": {
+    "title": "Serena Williams latest news - Transfermarkt",
+    "url": "https://www.transfermarkt.com/serena-williams-latest-news/profil/spieler/87667"
+   },
+   "text": "Serena Williams latest news - Transfermarkt — transfermarkt.com serena williams latest news profil spieler"
+  },
+  {
+   "row": {
+    "title": "Лучшие подержанные кроссоверы до миллиона рублей",
+    "url": "https://www.drive.ru/best-used-crossovers"
+   },
+   "text": "Лучшие подержанные кроссоверы до миллиона рублей — drive.ru best used crossovers"
+  },
+  {
+   "row": {
+    "title": "Renault Clio Dealer Inventory - New Kia Sportage Near You",
+    "url": "https://www.carvana.com/cars/renault-clio-2497768"
+   },
+   "text": "Renault Clio Dealer Inventory - New Kia Sportage Near You — carvana.com cars renault clio"
+  },
+  {
+   "row": {
+    "title": "road trip checklist for your car: a beginner's guide",
+    "url": "https://www.jalopnik.com/road-trip-checklist-for-your-car-4474061"
+   },
+   "text": "road trip checklist for your car: a beginner's guide — jalopnik.com road trip checklist for your car"
+  },
+  {
+   "row": {
+    "title": "2025 Kia Sportage Review, Pricing, and Specs",
+    "url": "https://www.edmunds.com/kia-sportage/review/"
+   },
+   "text": "2025 Kia Sportage Review, Pricing, and Specs — edmunds.com kia sportage review"
+  },
+  {
+   "row": {
+    "title": "How to grow cacti - complete care guide",
+    "url": "https://www.gardeningknowhow.com/plant-care/cacti"
+   },
+   "text": "How to grow cacti - complete care guide — gardeningknowhow.com plant care cacti"
+  },
+  {
+   "row": {
+    "title": "Can't strip old paint from a door, advice? : r/HomeImprovement",
+    "url": "https://www.reddit.com/r/HomeImprovement/comments/4483274/strip-old-paint-from-a-door/"
+   },
+   "text": "Can't strip old paint from a door, advice? : r/HomeImprovement — reddit.com HomeImprovement comments strip old paint from door"
+  },
+  {
+   "row": {
+    "title": "unclog a shower drain naturally? Try this : r/CleaningTips",
+    "url": "https://www.reddit.com/r/CleaningTips/comments/4827157/unclog-a-shower-drain-naturally/"
+   },
+   "text": "unclog a shower drain naturally? Try this : r/CleaningTips — reddit.com CleaningTips comments unclog shower drain naturally"
+  },
+  {
+   "row": {
+    "title": "Arc'teryx Haul and Try-On - YouTube",
+    "url": "https://www.youtube.com/watch?v=KquXVnfHKML"
+   },
+   "text": "Arc'teryx Haul and Try-On"
+  },
+  {
+   "row": {
+    "title": "Beginner's guide to niacinamide",
+    "url": "https://www.cosmopolitan.com/style-beauty/beauty/a8554131/niacinamide/"
+   },
+   "text": "Beginner's guide to niacinamide — cosmopolitan.com style beauty niacinamide"
+  },
+  {
+   "row": {
+    "title": "Korean 10-step routine: how to use it in your routine",
+    "url": "https://www.allure.com/story/korean-10-step-routine"
+   },
+   "text": "Korean 10-step routine: how to use it in your routine — allure.com story korean step routine"
+  },
+  {
+   "row": {
+    "title": "Maine Coon Cats: Everything You Should Know - YouTube",
+    "url": "https://youtu.be/HeQE96zwGkn"
+   },
+   "text": "Maine Coon Cats: Everything You Should Know"
+  },
+  {
+   "row": {
+    "title": "Help, can't teach sit and stay! : r/dogtraining",
+    "url": "https://www.reddit.com/r/dogtraining/comments/5270294/teach-sit-and-stay/"
+   },
+   "text": "Help, can't teach sit and stay! : r/dogtraining — reddit.com dogtraining comments teach sit and stay"
+  },
+  {
+   "row": {
+    "title": "Border Collie owners, what do you wish you knew? : r/dogs",
+    "url": "https://www.reddit.com/r/dogs/comments/2279492/border-collie/"
+   },
+   "text": "Border Collie owners, what do you wish you knew? : r/dogs — reddit.com dogs comments border collie"
+  },
+  {
+   "row": {
+    "title": "Cozy 2BR apartment with garden access for rent - Zillow",
+    "url": "https://www.zillow.com/homedetails/2br-garden/48217330_zpid/"
+   },
+   "text": "Cozy 2BR apartment with garden access for rent - Zillow — zillow.com homedetails 2br garden zpid"
+  },
+  {
+   "row": {
+    "title": "Picky eating - Parents Magazine",
+    "url": "https://www.parents.com/picky-eating"
+   },
+   "text": "Picky eating - Parents Magazine — parents.com picky eating"
+  },
+  {
+   "row": {
+    "title": "Parenting Guide: The 4 month sleep regression | PBS for Parents",
+    "url": "https://www.pbs.org/parents/the-4-month-sleep-regression"
+   },
+   "text": "Parenting Guide: The 4 month sleep regression | PBS for Parents — pbs.org parents the month sleep regression"
+  },
+  {
+   "row": {
+    "title": "Parenting Guide: Preparing a toddler for a new sibling | PBS for Parents",
+    "url": "https://www.pbs.org/parents/preparing-a-toddler-for-a-new-sibling"
+   },
+   "text": "Parenting Guide: Preparing a toddler for a new sibling | PBS for Parents — pbs.org parents preparing toddler for new sibling"
+  },
+  {
+   "row": {
+    "title": "Ideas para el cumpleaños de tu hijo en casa",
+    "url": "https://www.mamasyniños.example.com/ideas-cumpleanos-casa"
+   },
+   "text": "Ideas para el cumpleaños de tu hijo en casa — xn--mamasynios-09a.example.com ideas cumpleanos casa"
+  },
+  {
+   "row": {
+    "title": "育児の悩み相談 夜泣きはいつまで続く？ | ベネッセ たまひよ",
+    "url": "https://st.benesse.ne.jp/ikuji/yonaki"
+   },
+   "text": "育児の悩み相談 夜泣きはいつまで続く？ | ベネッセ たまひよ — st.benesse.ne.jp ikuji yonaki"
+  },
+  {
+   "row": {
+    "title": "Top Warehouse Associate Interview Questions and How to Answer Them",
+    "url": "https://www.themuse.com/advice/warehouse-associate-interview-questions"
+   },
+   "text": "Top Warehouse Associate Interview Questions and How to Answer Them — themuse.com advice warehouse associate interview questions"
+  },
+  {
+   "row": {
+    "title": "Top Welder Interview Questions and How to Answer Them",
+    "url": "https://www.themuse.com/advice/welder-interview-questions"
+   },
+   "text": "Top Welder Interview Questions and How to Answer Them — themuse.com advice welder interview questions"
+  },
+  {
+   "row": {
+    "title": "Tell Me About Yourself: Best Interview Answer - YouTube",
+    "url": "https://youtu.be/F7Cy8hSDOaQ"
+   },
+   "text": "Tell Me About Yourself: Best Interview Answer"
+  },
+  {
+   "row": {
+    "title": "Pharmacist Jobs Hiring Now in Ohio - ZipRecruiter",
+    "url": "https://www.ziprecruiter.com/Jobs/Pharmacist/-in-Ohio"
+   },
+   "text": "Pharmacist Jobs Hiring Now in Ohio - ZipRecruiter — ziprecruiter.com Jobs Pharmacist in Ohio"
+  },
+  {
+   "row": {
+    "title": "Why The Three-Body Problem Still Matters - Literary Hub",
+    "url": "https://lithub.com/why-the-three-body-problem-still-matters/"
+   },
+   "text": "Why The Three-Body Problem Still Matters - Literary Hub — lithub.com why the three body problem still matters"
+  },
+  {
+   "row": {
+    "title": "Where the Crawdads Sing - Read Online or Borrow | Open Library",
+    "url": "https://openlibrary.org/works/OL401432W/where-the-crawdads-sing"
+   },
+   "text": "Where the Crawdads Sing - Read Online or Borrow | Open Library — openlibrary.org works where the crawdads sing"
+  },
+  {
+   "row": {
+    "title": "Penguin Classics Collection: My Thoughts - YouTube",
+    "url": "https://youtu.be/eJR0b-4iUiM"
+   },
+   "text": "Penguin Classics Collection: My Thoughts"
+  },
+  {
+   "row": {
+    "title": "Book Cart Rolling Library Shelf - Wayfair",
+    "url": "https://www.wayfair.com/furniture/pdp/rolling-book-cart-w1234.html"
+   },
+   "text": "Book Cart Rolling Library Shelf - Wayfair — wayfair.com furniture pdp rolling book cart"
+  },
+  {
+   "row": {
+    "title": "What does 'contingent' mean on a home listing? - Quora",
+    "url": "https://www.quora.com/questions/70231/what-does-contingent-mean-on-a-home-list"
+   },
+   "text": "What does 'contingent' mean on a home listing? - Quora — quora.com questions what does contingent mean on home list"
+  },
+  {
+   "row": {
+    "title": "Fujifilm X-T5 Silver - Amazon.com: Electronics",
+    "url": "https://www.amazon.com/dp/B0BDXYZ12T"
+   },
+   "text": "Fujifilm X-T5 Silver - Amazon.com: Electronics — amazon.com dp"
+  },
+  {
+   "row": {
+    "title": "Sakamoto Days - Anime News Network",
+    "url": "https://www.animenewsnetwork.com/encyclopedia/anime.php?id=16780"
+   },
+   "text": "Sakamoto Days - Anime News Network — animenewsnetwork.com encyclopedia anime"
+  },
+  {
+   "row": {
+    "title": "Buying a Home Abroad: Portugal Property Guide - YouTube",
+    "url": "https://www.youtube.com/shorts/c8ZdIfnUWZp"
+   },
+   "text": "Buying a Home Abroad: Portugal Property Guide"
+  },
+  {
+   "row": {
+    "title": "Tower of God Episode 600 | WEBTOON",
+    "url": "https://www.webtoons.com/en/fantasy/tower-of-god-episode-600-/ep-1/viewer?title_no=3000"
+   },
+   "text": "Tower of God Episode 600 | WEBTOON — webtoons.com fantasy tower of god episode ep viewer"
+  },
+  {
+   "row": {
+    "title": "Witch Hat Atelier Chapter 75 - Read Manga",
+    "url": "https://readmanga.example/read/witch-hat-atelier-chapter-75"
+   },
+   "text": "Witch Hat Atelier Chapter 75 - Read Manga — readmanga.example read witch hat atelier chapter"
+  },
+  {
+   "row": {
+    "title": "Light Painting Photography Gallery - Flickr Group",
+    "url": "https://www.flickr.com/groups/lightpainting/"
+   },
+   "text": "Light Painting Photography Gallery - Flickr Group — flickr.com groups lightpainting"
+  },
+  {
+   "row": {
+    "title": "Drawing Manga Faces: Basic Anime Art Tutorial - YouTube",
+    "url": "https://youtu.be/PhqZK4RoKot"
+   },
+   "text": "Drawing Manga Faces: Basic Anime Art Tutorial"
+  },
+  {
+   "row": {
+    "title": "Manga Box Set: Naruto Volumes 1-27 - Amazon.com",
+    "url": "https://www.amazon.com/dp/1421569000"
+   },
+   "text": "Manga Box Set: Naruto Volumes 1-27 - Amazon.com — amazon.com dp"
+  },
+  {
+   "row": {
+    "title": "r/UKPersonalFinance on Reddit: Buying my first flat with a 5% deposit",
+    "url": "https://www.reddit.com/r/UKPersonalFinance/comments/14b9re/r-ukpersonalfinance-on-reddit-buying-my-/"
+   },
+   "text": "r/UKPersonalFinance on Reddit: Buying my first flat with a 5% deposit — reddit.com UKPersonalFinance comments on reddit buying my"
+  },
+  {
+   "row": {
+    "title": "Canon RF 100-500mm Review - Image Quality, Autofocus and Handling",
+    "url": "https://www.dpreview.com/reviews/canon-rf-100-500mm-review"
+   },
+   "text": "Canon RF 100-500mm Review - Image Quality, Autofocus and Handling — dpreview.com reviews canon rf review"
+  },
+  {
+   "row": {
+    "title": "I Tried Claude Code for 30 Days #ai - YouTube",
+    "url": "https://www.youtube.com/watch?v=NFn5eZjbTV3"
+   },
+   "text": "I Tried Claude Code for 30 Days ai"
+  },
+  {
+   "row": {
+    "title": "MCP Servers in 10 Minutes #shorts #aiagents - YouTube",
+    "url": "https://www.youtube.com/shorts/Xmh2MN7pEzO"
+   },
+   "text": "MCP Servers in 10 Minutes aiagents"
+  },
+  {
+   "row": {
+    "title": "POV: your agent loops forever #fyp #llm - YouTube",
+    "url": "https://youtu.be/lpvdiQ0pJsl"
+   },
+   "text": "POV: your agent loops forever llm"
+  },
+  {
+   "row": {
+    "title": "vLLM Inference Tricks #shorts #mlops - YouTube",
+    "url": "https://www.youtube.com/shorts/A0ClokMLtQh"
+   },
+   "text": "vLLM Inference Tricks mlops"
+  },
+  {
+   "row": {
+    "title": "Game Changer: Cursor Agents Write Whole PRs? #aicoding - YouTube",
+    "url": "https://www.youtube.com/watch?v=9a21cCgHdvn"
+   },
+   "text": "Game Changer: Cursor Agents Write Whole PRs? aicoding"
+  },
+  {
+   "row": {
+    "title": "Karpathy-style nanoGPT walkthrough | Lex-style podcast #301 - YouTube",
+    "url": "https://youtu.be/BYX7x0IGiKH"
+   },
+   "text": "Karpathy-style nanoGPT walkthrough | Lex-style podcast #301"
+  },
+  {
+   "row": {
+    "title": "LLM 에이전트 만들기 기초 #shorts - YouTube",
+    "url": "https://www.youtube.com/shorts/grakutH-HL6"
+   },
+   "text": "LLM 에이전트 만들기 기초"
+  },
+  {
+   "row": {
+    "title": "Affinity Designer 2 vs Illustrator - YouTube",
+    "url": "https://www.youtube.com/watch?v=cFX4SCiDX4g"
+   },
+   "text": "Affinity Designer 2 vs Illustrator"
+  },
+  {
+   "row": {
+    "title": "Learn Any Subject Faster: Feynman Technique - YouTube",
+    "url": "https://www.youtube.com/watch?v=UVRGJh9_Fiz"
+   },
+   "text": "Learn Any Subject Faster: Feynman Technique"
+  },
+  {
+   "row": {
+    "title": "Inside a Nuclear Reactor: How Fission Works - YouTube",
+    "url": "https://www.youtube.com/shorts/5RmuQ6-0E8D"
+   },
+   "text": "Inside a Nuclear Reactor: How Fission Works"
+  },
+  {
+   "row": {
+    "title": "Whiteboard Challenge with Strangers - YouTube",
+    "url": "https://www.youtube.com/watch?v=TDmI09iWyNF"
+   },
+   "text": "Whiteboard Challenge with Strangers"
+  },
+  {
+   "row": {
+    "title": "(11) Parasite (2019) Bong Joon-ho Q&A at Cannes - YouTube",
+    "url": "https://www.youtube.com/shorts/1jN5ZNr0_Aq"
+   },
+   "text": "Parasite (2019) Bong Joon-ho Q&A at Cannes"
+  },
+  {
+   "row": {
+    "title": "Why Is This Chord Progression Everywhere? Music Theory Explained - YouTube",
+    "url": "https://www.youtube.com/watch?v=vwUn7CDg65h"
+   },
+   "text": "Why Is This Chord Progression Everywhere? Music Theory Explained"
+  },
+  {
+   "row": {
+    "title": "Berserk Manga: Golden Age Explained | Anime Podcast Ep. 51 - YouTube",
+    "url": "https://www.youtube.com/shorts/ZYbafl4KYqY"
+   },
+   "text": "Berserk Manga: Golden Age Explained | Anime Podcast Ep. 51"
+  },
+  {
+   "row": {
+    "title": "Understanding Aperture, ISO and Shutter Speed - YouTube",
+    "url": "https://www.youtube.com/watch?v=Sl5U91F4KXg"
+   },
+   "text": "Understanding Aperture, ISO and Shutter Speed"
+  },
+  {
+   "row": {
+    "title": "Funny Moments Compilation | Week 12 - YouTube",
+    "url": "https://www.youtube.com/watch?v=7K9u9xCvrJz"
+   },
+   "text": "Funny Moments Compilation | Week 12"
+  },
+  {
+   "row": {
+    "title": "Crazy Coincidences Compilation - YouTube",
+    "url": "https://www.youtube.com/shorts/BmDLjEBjuOS"
+   },
+   "text": "Crazy Coincidences Compilation"
+  },
+  {
+   "row": {
+    "title": "Twitter Spaces Hosting Tips - YouTube",
+    "url": "https://www.youtube.com/watch?v=ZtBOeQgriLQ"
+   },
+   "text": "Twitter Spaces Hosting Tips"
+  },
+  {
+   "row": {
+    "title": "Tax Loss Harvesting Tutorial | CPA Explains - YouTube",
+    "url": "https://www.youtube.com/watch?v=-AwWpEoYQOL"
+   },
+   "text": "Tax Loss Harvesting Tutorial | CPA Explains"
+  },
+  {
+   "row": {
+    "title": "Wimbledon 2025 Final Set Tiebreak - YouTube",
+    "url": "https://www.youtube.com/watch?v=4zwHbW4srm8"
+   },
+   "text": "Wimbledon 2025 Final Set Tiebreak"
+  },
+  {
+   "row": {
+    "title": "Porsche 911 GT3 RS Track Day POV - YouTube",
+    "url": "https://www.youtube.com/shorts/D5D3VDBxKGK"
+   },
+   "text": "Porsche 911 GT3 RS Track Day POV"
+  },
+  {
+   "row": {
+    "title": "What's In My Bag? Mixed Edition - YouTube",
+    "url": "https://www.youtube.com/watch?v=GVMkifGgH_I"
+   },
+   "text": "What's In My Bag? Mixed Edition"
+  },
+  {
+   "row": {
+    "title": "Parent-Teacher Conference: Questions to Ask - YouTube",
+    "url": "https://www.youtube.com/watch?v=5-HDRZ3Bulp"
+   },
+   "text": "Parent-Teacher Conference: Questions to Ask"
+  },
+  {
+   "row": {
+    "title": "Is Grain-Free Dog Food Safe? A Vet Weighs In - YouTube",
+    "url": "https://www.youtube.com/shorts/8KnpEVj9EQi"
+   },
+   "text": "Is Grain-Free Dog Food Safe? A Vet Weighs In"
+  },
+  {
+   "row": {
+    "title": "面白動画まとめ 笑ったら負け - YouTube",
+    "url": "https://www.youtube.com/watch?v=x80GKb2WJvP"
+   },
+   "text": "面白動画まとめ 笑ったら負け"
+  },
+  {
+   "row": {
+    "title": "ගෙවත්තේ එළවළු වගාව ආරම්භ කරන ආකාරය - YouTube",
+    "url": "https://www.youtube.com/watch?v=ry1UktgkHId"
+   },
+   "text": "ගෙවත්තේ එළවළු වගාව ආරම්භ කරන ආකාරය"
+  },
+  {
+   "row": {
+    "title": "임신 초기 증상과 주의사항 - YouTube",
+    "url": "https://www.youtube.com/watch?v=7nWceEhHwuL"
+   },
+   "text": "임신 초기 증상과 주의사항"
+  },
+  {
+   "row": {
+    "title": "The 50 best films of 2024 | Sight and Sound",
+    "url": "https://www.bfi.org.uk/sight-and-sound/lists/50-best-films-2024"
+   },
+   "text": "The 50 best films of 2024 | Sight and Sound — bfi.org.uk sight and sound lists best films"
+  },
+  {
+   "row": {
+    "title": "Pinecone: The vector database to build knowledgeable AI",
+    "url": "https://www.pinecone.io/"
+   },
+   "text": "Pinecone: The vector database to build knowledgeable AI — pinecone.io"
+  },
+  {
+   "row": {
+    "title": "Google News - Top stories",
+    "url": "https://news.google.com/home?hl=en-US"
+   },
+   "text": "Google News - Top stories — news.google.com home"
+  },
+  {
+   "row": {
+    "title": "Photosynthesis - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Photosynthesis"
+   },
+   "text": "Photosynthesis - Wikipedia — en.wikipedia.org wiki Photosynthesis"
+  },
+  {
+   "row": {
+    "title": "High-protein overnight oats recipe - EatingWell",
+    "url": "https://www.eatingwell.com/recipe/high-protein-overnight-oats/"
+   },
+   "text": "High-protein overnight oats recipe - EatingWell — eatingwell.com recipe high protein overnight oats"
+  }
+ ],
+ "edge": [
+  {
+   "row": {
+    "title": "",
+    "url": "https://www.example.com/some-path/to_a.page.html"
+   },
+   "text": "example.com some path to a page html — example.com some path to page"
+  },
+  {
+   "row": {
+    "title": "https://news.example.org/2024/05/story",
+    "url": "https://news.example.org/2024/05/story"
+   },
+   "text": "news.example.org 2024 05 story — news.example.org story"
+  },
+  {
+   "row": {
+    "title": "(3) Inbox - Mail",
+    "url": "https://mail.example.com/#inbox/abc123"
+   },
+   "text": "Inbox - Mail — mail.example.com"
+  },
+  {
+   "row": {
+    "title": "(12+) Feed",
+    "url": "https://social.example.com/"
+   },
+   "text": "Feed — social.example.com"
+  },
+  {
+   "row": {
+    "title": "Great video #ClaudeCode #shorts #big_cats",
+    "url": "https://youtu.be/abc123?t=40"
+   },
+   "text": "Great video Claude Code big cats"
+  },
+  {
+   "row": {
+    "title": "#shorts #viral",
+    "url": "https://m.youtube.com/shorts/xyz"
+   },
+   "text": "#shorts #viral"
+  },
+  {
+   "row": {
+    "title": "Song – YouTube",
+    "url": "https://www.youtube.com/watch?v=q"
+   },
+   "text": "Song"
+  },
+  {
+   "row": {
+    "title": "Repo thing · GitHub",
+    "url": "https://github.com/org-name/repo.js/tree/main/src/deep_dir"
+   },
+   "text": "Repo thing · GitHub — GitHub repository org-name repo.js tree main src deep dir"
+  },
+  {
+   "row": {
+    "title": "Project - GitHub",
+    "url": "https://github.com/only-org"
+   },
+   "text": "Project — GitHub"
+  },
+  {
+   "row": {
+    "title": "Bücher",
+    "url": "https://www.bücher.de/kategorie/kinder-bücher"
+   },
+   "text": "Bücher — xn--bcher-kva.de kategorie kinder bücher"
+  },
+  {
+   "row": {
+    "title": "Broken escape",
+    "url": "https://example.com/a%E0%A4%A/b"
+   },
+   "text": "Broken escape — example.com"
+  },
+  {
+   "row": {
+    "title": "Encoded",
+    "url": "https://example.com/caf%C3%A9/na%C3%AFve"
+   },
+   "text": "Encoded — example.com café naïve"
+  },
+  {
+   "row": {
+    "title": "",
+    "url": "chrome://settings/privacy"
+   },
+   "text": "settings privacy — "
+  },
+  {
+   "row": {
+    "title": "",
+    "url": "about:blank"
+   },
+   "text": " — "
+  },
+  {
+   "row": {
+    "title": "Local file",
+    "url": "file:///Users/x/Documents/report.pdf"
+   },
+   "text": "Local file — "
+  },
+  {
+   "row": {
+    "title": "",
+    "url": "not a url"
+   },
+   "text": " — "
+  },
+  {
+   "row": {
+    "title": "Ids",
+    "url": "https://shop.example.com/dp/B09XS7JWHH/ref=abc/3f2a1b0c9d8e/1b3c/tt15398776/a1"
+   },
+   "text": "Ids — shop.example.com dp ref=abc a1"
+  },
+  {
+   "row": {
+    "title": "Noise",
+    "url": "https://example.com/en/us/index.php/www/amp/watch/x"
+   },
+   "text": "Noise — example.com"
+  },
+  {
+   "row": {
+    "title": "Many words",
+    "url": "https://example.com/one/two/three/four/five/six/seven/eight/nine/ten"
+   },
+   "text": "Many words — example.com one two three four five six seven eight"
+  },
+  {
+   "row": {
+    "title": "Dupes",
+    "url": "https://example.com/Foo/foo/FOO/bar"
+   },
+   "text": "Dupes — example.com Foo bar"
+  },
+  {
+   "row": {
+    "title": "Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title ",
+    "url": "https://example.com/long"
+   },
+   "text": "Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 title Ünïcödé 😀 — example.com long"
+  },
+  {
+   "row": {
+    "title": "    spaced title 　 ",
+    "url": "https://www.m.example.com/x"
+   },
+   "text": "spaced title — m.example.com"
+  },
+  {
+   "row": {
+    "title": "Netflix show - Netflix",
+    "url": "https://www.netflix.com/title/123"
+   },
+   "text": "Netflix show — netflix.com title"
+  },
+  {
+   "row": {
+    "title": "IMDb page",
+    "url": "https://m.imdb.com/title/tt0111161/"
+   },
+   "text": "IMDb page — imdb.com title"
+  },
+  {
+   "row": {
+    "title": "Desc | Disney+",
+    "url": "https://www.disneyplus.com/x"
+   },
+   "text": "Desc — disneyplus.com"
+  },
+  {
+   "row": {
+    "title": "Port",
+    "url": "http://localhost:8080/dashboard/main"
+   },
+   "text": "Port — localhost dashboard main"
+  },
+  {
+   "row": {
+    "title": "Shorts page",
+    "url": "https://www.youtube.com/@channel/shorts"
+   },
+   "text": "Shorts page — YouTube video @channel shorts"
+  }
+ ]
+}
