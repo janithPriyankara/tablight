@@ -67,8 +67,8 @@ describe('classifier accuracy', () => {
     expect(await run(rows)).toEqual(rows.map(() => null));
   });
   /** Top-1 on non-`other` rows and the share of `other` rows pushed into a group. Aggregates only. */
-  async function measure(rows: Row[], set: 'installed' | 'all' = 'installed') {
-    const predicted = await run(rows, set);
+  async function measure(rows: Row[], set: 'installed' | 'all' = 'installed', runner = run) {
+    const predicted = await runner(rows, set);
     let correct = 0, total = 0, others = 0, otherAssigned = 0, wrong = 0;
     rows.forEach((r, i) => {
       if (r.group === 'other') {
@@ -92,12 +92,15 @@ describe('classifier accuracy', () => {
   const HOLDOUT_MIN = 0.85;
   const HOLDOUT2_MIN = 0.82;
   // Blind holdouts, written independently and never used for training or tuning.
-  // Only aggregate numbers are printed, by design. Old gates use the installed (starter) groups.
+  // Only aggregate numbers are printed, by design. Old gates use the installed (starter) groups and are scored on
+  // the product pipeline (pickGroup, with the Videos fallback); the caller pipeline's numbers print alongside.
   it(`blind holdout: ≥ ${pc(HOLDOUT_MIN)} top-1, ≤ ${pc(OTHER_MAX)} of \`other\` pages auto-assigned`, async () => {
-    const m = await measure(blind);
+    const m = await measure(blind, 'installed', runProduct);
+    const old = await measure(blind);
     console.log(
       `${line('HOLDOUT', m)}; model ${head.model}, threshold ${head.threshold}, similarity ${head.similarity}` +
-        (head.val ? `; train-time val ${(head.val.acc * 100).toFixed(1)}%` : ''),
+        (head.val ? `; train-time val ${(head.val.acc * 100).toFixed(1)}%` : '') +
+        `\n${line('HOLDOUT (caller pipeline, not gated)', old)}`,
     );
     expect(m.acc).toBeGreaterThanOrEqual(HOLDOUT_MIN);
     expect(m.otherRate).toBeLessThanOrEqual(OTHER_MAX);
@@ -110,9 +113,14 @@ describe('classifier accuracy', () => {
     const urls = new Set(pool.map((r) => norm(r.url)));
     const titles = new Set(pool.map((r) => r.title.toLowerCase()));
     const clean = blind2.filter((r) => !urls.has(norm(r.url)) && !titles.has(r.title.toLowerCase()));
-    const m = await measure(blind2);
-    const c = await measure(clean);
-    console.log(`${line('HOLDOUT2', m)}\n${line(`HOLDOUT2 clean (${clean.length} rows)`, c)}`);
+    const m = await measure(blind2, 'installed', runProduct);
+    const c = await measure(clean, 'installed', runProduct);
+    const old = await measure(blind2);
+    const oldC = await measure(clean);
+    console.log(
+      `${line('HOLDOUT2', m)}\n${line(`HOLDOUT2 clean (${clean.length} rows)`, c)}` +
+        `\n${line('HOLDOUT2 (caller pipeline, not gated)', old)}\n${line(`HOLDOUT2 clean (${clean.length} rows, caller pipeline, not gated)`, oldC)}`,
+    );
     expect(m.acc).toBeGreaterThanOrEqual(HOLDOUT2_MIN);
     expect(m.otherRate).toBeLessThanOrEqual(OTHER_MAX);
   }, 120_000); // Runs inference over both the full and decontaminated holdout.
