@@ -428,8 +428,10 @@ describe('want (local-only wanted topic)', () => {
   });
 });
 describe('neighbour step', () => {
-  // The bundled head reads this vector as `other`: unsure, so only neighbours can place it.
-  const unsure = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+  // Every topic at once: the bundled head's top topic (not `other`) is below its threshold, so only neighbours can
+  // place it.
+  const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+  const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
   it('a tab placed by its neighbours records it, and is left out of the pool; user-placed tabs are in it', async () => {
     await db.groups.put(group('programming'));
     mock = installChromeMock({ windows: [{ tabs: [
@@ -452,6 +454,25 @@ describe('neighbour step', () => {
     const pool = await neighbourPool(db, await db.items.all(), await db.groups.all());
     expect(pool.map((p) => p.id).sort()).toEqual([a!.id, b!.id].sort());
     expect(pool[0]).toMatchObject({ groupId: 'programming', vec: unsure });
+  });
+  it('never pulls a tab the head reads as `other` into a group', async () => {
+    const other = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+    await db.groups.put(group('programming'));
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://zzz.example.net/a', title: 'a' },
+      { url: 'https://zzz.example.net/b', title: 'b' },
+      { url: 'https://zzz.example.net/c', title: 'c' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [a, b, c] = (await db.items.all()).sort((x, y) => x.url.localeCompare(y.url));
+    for (const u of [a!, b!]) {
+      await db.items.put({ ...u, groupId: 'programming', groupSource: 'user' });
+      await db.embeddings.put(await embeddingKey(u), other);
+    }
+    await processQueue(db, async (texts: string[]) => texts.map(() => other));
+    const left = (await db.items.get(c!.id))!;
+    expect(left.groupId).toBeNull();
+    expect(left.placedBy).toBeUndefined();
   });
   it('the pool: rule, exemplar, head and older auto placements and user tabs; never guesses, Videos, Other or suggestions', async () => {
     await db.groups.put(group('programming'));

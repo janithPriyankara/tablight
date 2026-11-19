@@ -24,13 +24,15 @@ export interface Neighbour {
  * The neighbour step: an unsure tab goes where its closest grouped tabs are. Of the NEIGHBOUR_K pool tabs closest
  * to it at cosine ≥ NEIGHBOUR_SIMILARITY (one vote per page), a group with at least NEIGHBOUR_MIN votes and
  * strictly more than any other wins.
- * Chosen on training/sessions-tune.json (tests/quality/neighbours.test.ts) by the sum of right − 2 × wrong over two
- * scenarios: a profile filled by automatic placements alone, and one where the user placed 30% of tabs by hand
- * (teaching their groups, as a drag does), 5 replays each. The grid was similarity 0.50–0.80 × min {2, 3} × k {5, 10},
- * with the head trained 2026-11-19. 0.52 / 2 / 10 scores 1067: automatic only 605 (1405 right, 400 wrong,
- * 200 Unsorted of 2005) and 30% by hand 462 (1016, 277, 126 of 1419). Without neighbours the sum is 875
- * (505: 1295 / 395 / 315, and 370: 922 / 276 / 221). From 0.70 up the step never fires. tests/quality/sessions.json is
- * the blind gate.
+ * Chosen on training/sessions-tune.json (tests/quality/neighbours.test.ts) by the sum, over two scenarios, of
+ * right − 2 × (wrong + `other` tabs put in a group). The scenarios are a profile filled by automatic placements alone
+ * and one where the user placed 30% of tabs by hand (teaching their groups, as a drag does), 5 replays each. The
+ * grid was similarity 0.50–0.80 × min {2, 3} × k {5, 10}, with the head trained 2026-11-19 and the step never run
+ * for a tab the head reads as `other`. 0.52 / 2 / 10 scores 1003:
+ * - automatic only: 570 (1400 right, 400 wrong, 205 Unsorted of 2005; `other` 15/65);
+ * - 30% by hand: 433 (1013, 277, 129 of 1419; `other` 13/54).
+ * Without neighbours the sum is 819 (475 and 344). From 0.70 up the step never fires. tests/quality/sessions.json
+ * is the blind gate.
  */
 export const NEIGHBOUR_SIMILARITY = 0.52;
 export const NEIGHBOUR_MIN = 2;
@@ -72,8 +74,9 @@ export function neighbourGroup(
 }
 /**
  * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
- * (user-taught exemplars, then the trained head at its threshold) > the neighbour step over `pool` > for a YouTube
- * video, the head's top topic at the lower YOUTUBE_THRESHOLD, else Videos (when it exists) > null. `by` says which.
+ * (user-taught exemplars, then the trained head at its threshold) > the neighbour step over `pool` (never for a
+ * tab whose head top label is `other`) > for a YouTube video, the head's top topic at the lower YOUTUBE_THRESHOLD,
+ * else Videos (when it exists) > null. `by` says which.
  * `want` is the head's topic when no group exists for it yet and the head is that sure of it (`threshold`, for
  * pages and videos alike): the lower YouTube bar only places a video into a group that already exists.
  * `groups` must exclude suggested groups; `pool` must exclude the item itself.
@@ -91,11 +94,12 @@ export function pickGroup(
   if (rule !== null && groups.some((g) => g.id === rule)) return { groupId: rule, want: null, by: 'rule' };
   const picked = classify(vec, groups, head);
   if (picked.groupId !== null) return { groupId: picked.groupId, want: null, by: picked.by ?? 'head' };
-  const near = pool.length ? neighbourGroup(vec, pool, groups) : null;
+  const top = headTop(vec, head);
+  // A tab the head reads as `other` is never pulled into a group by its neighbours: only the user files those.
+  const near = pool.length && top?.label !== OTHER_GROUP_ID ? neighbourGroup(vec, pool, groups) : null;
   if (near !== null) return { groupId: near, want: null, by: 'neighbour' };
   const video = isYouTubeVideo(item.url);
   const bar = video ? Math.min(YOUTUBE_THRESHOLD, head.threshold) : head.threshold;
-  const top = headTop(vec, head);
   const label = top?.label !== undefined && top.label !== OTHER_GROUP_ID && top.score >= bar ? top.label : null;
   if (label !== null && groups.some((g) => g.id === label)) return { groupId: label, want: null, by: video ? 'youtube' : 'head' };
   const wanted = label !== null && top !== null && top.score >= head.threshold ? label : null;

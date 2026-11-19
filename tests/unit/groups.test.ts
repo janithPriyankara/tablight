@@ -207,8 +207,10 @@ describe('regroup', () => {
     });
   });
   describe('neighbours', () => {
-    // The bundled head reads this vector as `other`: unsure, so only neighbours can place it.
-    const unsure = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+    // Every topic at once: the bundled head's top topic (not `other`) is below its threshold, so only neighbours can
+    // place it.
+    const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+    const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
     const at = async (over: Partial<Item>) => {
       const i = await addItem(over);
       await db.embeddings.put(await embeddingKey(i), unsure);

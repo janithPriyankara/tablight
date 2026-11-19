@@ -109,6 +109,11 @@ describe('pickGroup neighbours', () => {
     const short = (j: number): Neighbour => ({ ...tab('hardware', j), vec: [0, 0, 0, 0, 0, 1, 0, 0] });
     expect(pickGroup(PAGE, UNSURE, groups, head, [short(1), short(2)]).by).toBeNull();
   });
+  it('never pulls a tab the head reads as `other` into a group', () => {
+    // vec(9) is `other` for `head`; two close tabs in hardware agree, but only the user files such tabs.
+    const nearOther = (j: number): Neighbour => ({ ...tab('hardware', j), vec: near(C, j, 9) });
+    expect(pickGroup(PAGE, vec(9), groups, head, [nearOther(1), nearOther(2)])).toEqual({ groupId: null, want: null, by: null });
+  });
   it('lets a confident head win over neighbours', () => {
     const sure: Head = { ...head, labels: ['hardware', 'ai', 'other'], W: [axis(0), axis(1), axis(9)], b: [0, 0, 0] };
     const nearAi = (j: number): Neighbour => ({ ...tab('hardware', j), vec: near(C, j, 1) });
