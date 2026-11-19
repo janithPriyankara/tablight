@@ -1004,6 +1004,19 @@ describe('dashboard', () => {
       expect(screen.queryByText(/New group:/)).toBeNull();
       fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
       await waitFor(() => expect(sendMock).toHaveBeenCalledWith({ t: 'undo', token: 'tok' }));
+      // Once the notices have ended, the waiting announcement appears.
+      await screen.findByText('Too late to undo');
+      expect(screen.queryByText(/New group:/)).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss' })); // or let its 10 s run out
+      await screen.findByText('New group: Hardware & making · 2 tabs');
+    });
+    it('says "1 tab" for a one-tab group', async () => {
+      const s = grown();
+      s.items = s.items.filter((i) => i.id !== 'g2');
+      serve(s);
+      render(<Dashboard />);
+      await ready();
+      await screen.findByText('New group: Hardware & making · 1 tab');
     });
   });
 });

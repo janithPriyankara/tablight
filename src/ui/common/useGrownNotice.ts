@@ -5,14 +5,15 @@ import type { UndoHook } from './useUndo';
 /**
  * Announces a group the background grew on the fly ("New group: Hardware & making · 2 tabs", with Undo).
  * Seen rule: a group is announced once per page, and only when it was grown after this page loaded, so
- * opening the dashboard later never replays old notices. A pending Undo from another action is not
+ * opening the dashboard later never replays old notices. A notice from another action is not
  * replaced; the announcement waits until it has ended. Undo deletes the group; the background
  * remembers it was removed, so it does not grow again.
  */
 export function useGrownNotice(state: DashboardState | null, hook: Pick<UndoHook, 'notice' | 'notify'>): void {
   const { notice, notify } = hook;
-  // Never replace an Undo the person may still want (a closed tab, a removed saved tab): wait for it to end.
-  const busy = Boolean(notice?.token || notice?.undoRequest);
+  // Never replace a message the person may still be using (an Undo for a closed tab, or its "Undone" result):
+  // wait until the notice has ended, or the announcement would be lost.
+  const busy = notice !== null;
   const loadedAt = useRef(Date.now());
   const seen = useRef(new Set<string>());
   useEffect(() => {

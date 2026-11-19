@@ -10,7 +10,7 @@ export interface UndoHook {
   notice: Notice | null;
   /** Shows a message; with a token it offers Undo for 10 s, then disappears. A hint adds a second line. */
   notify: (message: string, token?: string, hint?: string, undoRequest?: Req) => void;
-  /** Sends `undo` for the current token and clears the notice. Resolves to the RPC's result. */
+  /** Sends `undo` for the current token (or the notice's own request); the caller replaces the notice with the result. Resolves to the RPC's result. */
   undo: () => Promise<boolean>;
   dismiss: () => void;
 }
@@ -31,16 +31,24 @@ export function useUndo(windowMs = UNDO_WINDOW_MS): UndoHook {
     clear();
     setNotice(null);
   };
+  const undoing = useRef(false);
   const undo = async () => {
     const token = notice?.token;
     const request = notice?.undoRequest;
-    dismiss();
-    if (request) {
-      await send(request);
-      return true;
+    if (undoing.current) return false; // a second click while the first is in flight
+    undoing.current = true;
+    try {
+      // The notice stays up until the RPC is done and the caller shows the result (both callers do),
+      // so nothing else, such as a waiting announcement, slips in between.
+      if (request) {
+        await send(request);
+        return true;
+      }
+      if (!token) return false;
+      return await send<boolean>({ t: 'undo', token });
+    } finally {
+      undoing.current = false;
     }
-    if (!token) return false;
-    return send<boolean>({ t: 'undo', token });
   };
   return { notice, notify, undo, dismiss };
 }

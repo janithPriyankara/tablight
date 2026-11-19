@@ -387,7 +387,7 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     const inGroup = slugs.filter((s) => groups.get(s) === group);
     await navButton(page(), group).click();
     await page().getByRole('button', { name: 'Save group for later' }).click();
-    await expect(toast()).toContainText(`Saved ${inGroup.length} tabs for later`);
+    await expect(toast()).toContainText(`Saved ${inGroup.length} tab${inGroup.length === 1 ? '' : 's'} for later`);
     await expect.poll(serverUrls).toEqual(slugs.filter((s) => !inGroup.includes(s)).map(urlOf).sort());
     await expect(page().getByRole('button', { name: 'Save group for later' })).toBeDisabled(); // nothing open left
   });
