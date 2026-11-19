@@ -24,13 +24,15 @@ export interface Neighbour {
  * The neighbour step: an unsure tab goes where its closest grouped tabs are. Of the NEIGHBOUR_K pool tabs closest
  * to it at cosine ≥ NEIGHBOUR_SIMILARITY (one vote per page), a group with at least NEIGHBOUR_MIN votes and
  * strictly more than any other wins.
- * Chosen on training/sessions-tune.json (tests/quality/neighbours.test.ts: 5 replays, 30% of tabs placed by the user,
- * which teaches their group as a drag does) by right − 2 × wrong over similarity 0.60–0.80 × min {2, 3} × k {5, 10},
- * with the head trained 2026-11-19: 0.60 / 2 / 10 scores 415 (957 right, 271 wrong, 191 Unsorted of 1419) against
- * 370 without neighbours (922, 276, 221); k 5 ties k 10. From 0.70 up the step never fires: user-taught exemplars
- * (head.similarity 0.71) already place those tabs. tests/quality/sessions.json is the blind gate.
+ * Chosen on training/sessions-tune.json (tests/quality/neighbours.test.ts) by the sum of right − 2 × wrong over two
+ * scenarios: a profile filled by automatic placements alone, and one where the user placed 30% of tabs by hand
+ * (teaching their groups, as a drag does), 5 replays each. The grid was similarity 0.50–0.80 × min {2, 3} × k {5, 10},
+ * with the head trained 2026-11-19. 0.52 / 2 / 10 scores 1067: automatic only 605 (1405 right, 400 wrong,
+ * 200 Unsorted of 2005) and 30% by hand 462 (1016, 277, 126 of 1419). Without neighbours the sum is 875
+ * (505: 1295 / 395 / 315, and 370: 922 / 276 / 221). From 0.70 up the step never fires. tests/quality/sessions.json is
+ * the blind gate.
  */
-export const NEIGHBOUR_SIMILARITY = 0.6;
+export const NEIGHBOUR_SIMILARITY = 0.52;
 export const NEIGHBOUR_MIN = 2;
 export const NEIGHBOUR_K = 10;
 /** The pool holds at most this many tabs (most recently active first): 100 picks against it stay well under 1.5 s. */

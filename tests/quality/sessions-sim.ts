@@ -20,11 +20,22 @@ export interface SimResult {
 export interface SimOpts {
   /** 'shipped': pickGroup with the pool (the product path); constants: the same step with these values; null: no pool. */
   neighbours: 'shipped' | NeighbourOpts | null;
-  /** Each seed is one replay (a different 30% placed by the user); counts are summed over them. */
+  /** The share of each person's tabs the user places by hand, with their true group (default USER_SHARE). */
+  userShare?: number;
+  /** Each seed is one replay (a different share placed by the user); counts are summed over them. */
   seeds?: number[];
 }
-/** The share of each person's tabs the user places by hand, with their true group. */
+/** The default share of each person's tabs the user places by hand. */
 export const USER_SHARE = 0.3;
+/**
+ * The two scenarios the neighbour step is tuned and gated on: a profile filled by automatic placements alone (the
+ * pool is rule, exemplar and head placements; nothing taught), and one where the user placed 30% by hand (which
+ * also teaches exemplars). The first has no randomness: its replays are identical, kept so both weigh the same.
+ */
+export const SCENARIOS = [
+  { name: 'auto only (0% by hand)', userShare: 0 },
+  { name: `${USER_SHARE * 100}% by hand`, userShare: USER_SHARE },
+] as const;
 export const SEEDS = [1, 2, 3, 4, 5];
 /** Placements that never count as neighbours (tab-index neighbourPool). */
 const GUESSES: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
@@ -43,7 +54,7 @@ function rng(seed: number, person: string): () => number {
 export const score = (r: SimResult): number => r.right - 2 * r.wrong;
 
 /**
- * Loads the real model and head once. `simulate` then replays each person's rows in order: a seeded USER_SHARE of
+ * Loads the real model and head once. `simulate` then replays each person's rows in order: a seeded `userShare` of
  * tabs are placed by the user in their true group (which teaches that group, as a drag does: moveItems → learn);
  * the rest go through pickGroup with the pool so far. Each person has the installed groups plus every on-demand
  * group their rows are labelled with (so their on-demand topics can be reached, as after the interests step).
@@ -62,8 +73,8 @@ export async function loadSessionSim(): Promise<{
     if (todo.length) (await embed(todo)).forEach((v, k) => vecCache.set(todo[k]!, v));
     return texts.map((t) => vecCache.get(t)!);
   }
-  // pickGroup without a pool depends only on the row and the groups, which the user's placements (fixed per seed)
-  // decide: the sweep computes it once per seed and row, not once per setting.
+  // pickGroup without a pool depends only on the row and the groups, which the user's placements (fixed per seed
+  // and share) decide: the sweep computes it once per share, seed and row, not once per setting.
   const baseCache = new WeakMap<SessionRow[], Map<string, ReturnType<typeof pickGroup>>>();
   function pick(
     key: string, cache: Map<string, ReturnType<typeof pickGroup>>, row: SessionRow, vec: Float32Array, groups: Group[],
@@ -79,6 +90,7 @@ export async function loadSessionSim(): Promise<{
   }
   async function simulate(rows: SessionRow[], opts: SimOpts): Promise<SimResult> {
     const vecs = await vectors(rows);
+    const share = opts.userShare ?? USER_SHARE;
     let cache = baseCache.get(rows);
     if (!cache) baseCache.set(rows, (cache = new Map()));
     const out: SimResult = { right: 0, wrong: 0, unsorted: 0, total: 0, others: 0, otherAssigned: 0 };
@@ -92,12 +104,12 @@ export async function loadSessionSim(): Promise<{
         const rand = rng(seed, person);
         for (const { r, v, k } of mine) {
           const normUrl = normalizeUrl(r.url);
-          if (rand() < USER_SHARE && groups.some((g) => g.id === r.group)) {
+          if (rand() < share && groups.some((g) => g.id === r.group)) {
             groups = groups.map((g) => (g.id === r.group ? learn(g, Array.from(v)) : g));
             if (r.group !== VIDEOS_GROUP_ID && r.group !== OTHER_GROUP_ID) pool.unshift({ vec: v, groupId: r.group, normUrl });
             continue;
           }
-          const { groupId, by } = pick(`${seed}:${k}`, cache, r, v, groups, pool, opts.neighbours);
+          const { groupId, by } = pick(`${share}:${seed}:${k}`, cache, r, v, groups, pool, opts.neighbours);
           if (groupId !== null && by !== null && !GUESSES.has(by) && groupId !== VIDEOS_GROUP_ID && groupId !== OTHER_GROUP_ID) {
             pool.unshift({ vec: v, groupId, normUrl });
           }
