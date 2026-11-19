@@ -58,6 +58,22 @@ describe('pickGroup', () => {
     expect(headTop(vec(0), LOW)!.score).toBeLessThan(YOUTUBE_THRESHOLD);
     expect(YOUTUBE_THRESHOLD).toBeLessThan(bundled.threshold);
   });
+  it('uses YOUTUBE_THRESHOLD when the head has no youtubeThreshold (the bundled head has none)', () => {
+    expect('youtubeThreshold' in bundled).toBe(false);
+    expect(MID.youtubeThreshold).toBeUndefined();
+    expect(pickGroup(YT, vec(0), [group('hardware'), group('videos')], MID).groupId).toBe('hardware');
+    expect(pickGroup(YT, vec(0), [group('hardware'), group('videos')], LOW).groupId).toBe('videos');
+  });
+  it("uses the head's youtubeThreshold when present, still capped at head.threshold", () => {
+    const gs = [group('hardware'), group('videos')];
+    // MID ≈ 0.40: a bar of 0.5 parks it, LOW ≈ 0.22: a bar of 0.2 files it.
+    expect(pickGroup(YT, vec(0), gs, { ...MID, youtubeThreshold: 0.5 })).toEqual({ groupId: 'videos', want: null, by: 'videos' });
+    expect(pickGroup(YT, vec(0), gs, { ...LOW, youtubeThreshold: 0.2 })).toEqual({ groupId: 'hardware', want: null, by: 'youtube' });
+    // Above head.threshold (0.6) the bar is head.threshold: hardware at 0.6+ is filed by the head as before.
+    expect(pickGroup(YT, vec(0), gs, { ...head, youtubeThreshold: 0.99 }).groupId).toBe('hardware');
+    // Pages ignore it.
+    expect(pickGroup(PAGE, vec(0), gs, { ...LOW, youtubeThreshold: 0.2 }).groupId).toBeNull();
+  });
   it('lets a rule hit win', () => {
     const r = pickGroup({ url: 'https://www.netflix.com/title/123', title: 'X' }, vec(0), [group('tv'), group('videos')], head);
     expect(r).toEqual({ groupId: 'tv', want: null, by: 'rule' });

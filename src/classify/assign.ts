@@ -37,6 +37,11 @@ export interface Head {
    * item i's index into `labels`. Absent: head only.
    */
   knn?: { k: number; alpha: number; sharp: number; labels: number[]; vecs: string };
+  /**
+   * The YouTube bar for this head's score scale (pickGroup), for evaluating heads trained on another encoder.
+   * Absent (as shipped): pickGroup's YOUTUBE_THRESHOLD.
+   */
+  youtubeThreshold?: number;
 }
 interface Neighbours { vecs: Int8Array; labels: Int32Array; n: number }
 const decoded = new WeakMap<Head, Neighbours | null>();

@@ -14,7 +14,8 @@ export const VIDEOS_GROUP_ID = 'videos';
  * the same at every bar down to 0 and up to 0.27; 83/90 at 0.28). 0.26 sits on that plateau (0 to 0.27) of the
  * tuning set; 0.27 is as good there and differed only by noise-sized amounts elsewhere (one video parked, a few
  * points on the tuning sessions), so 0.26 was kept. youtube-messy.json is not a tuning input: it is the honest
- * score. Re-measure it when the head is retrained.
+ * score. Re-measure it when the head is retrained. A head may carry its own `youtubeThreshold` (an encoder with
+ * another score scale, scripts/tune-youtube-bar.mjs); the shipped head does not, so this constant applies.
  */
 export const YOUTUBE_THRESHOLD = 0.26;
 /** One of the owner's grouped tabs that an unsure tab may follow (tab-index neighbourPool builds the pool). */
@@ -104,7 +105,7 @@ export function pickGroup(
     : null;
   if (near !== null) return { groupId: near, want: null, by: 'neighbour' };
   const video = isYouTubeVideo(item.url);
-  const bar = video ? Math.min(YOUTUBE_THRESHOLD, head.threshold) : head.threshold;
+  const bar = video ? Math.min(head.youtubeThreshold ?? YOUTUBE_THRESHOLD, head.threshold) : head.threshold;
   const label = top?.label !== undefined && top.label !== OTHER_GROUP_ID && top.score >= bar ? top.label : null;
   if (label !== null && groups.some((g) => g.id === label)) return { groupId: label, want: null, by: video ? 'youtube' : 'head' };
   const wanted = label !== null && top !== null && top.score >= head.threshold ? label : null;
