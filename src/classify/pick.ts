@@ -11,9 +11,10 @@ export const VIDEOS_GROUP_ID = 'videos';
  * and without a topic it would only be parked in Videos. Chosen on tests/quality/youtube-topics.json with the head
  * retrained 2026-11-19 (pool 6202, with the messy-title set, so Videos means a video with no subject): the highest bar
  * of the plateau where right − 2 × wrong peaks (84/90 topic videos in their group, 59/59 no-topic in Videos, 0 wrong,
- * the same at every bar down to 0 and up to 0.27; 83/90 at 0.28). 0.26, not 0.27: on youtube-messy.json and the
- * tuning sessions 0.27 scored one video lower (83/159 right, 72 parked vs 71) and 15 points lower.
- * youtube-messy.json is the honest score. Re-measure it when the head is retrained.
+ * the same at every bar down to 0 and up to 0.27; 83/90 at 0.28). 0.26 sits on that plateau (0 to 0.27) of the
+ * tuning set; 0.27 is as good there and differed only by noise-sized amounts elsewhere (one video parked, a few
+ * points on the tuning sessions), so 0.26 was kept. youtube-messy.json is not a tuning input: it is the honest
+ * score. Re-measure it when the head is retrained.
  */
 export const YOUTUBE_THRESHOLD = 0.26;
 /** One of the owner's grouped tabs that an unsure tab may follow (tab-index neighbourPool builds the pool). */
@@ -27,7 +28,7 @@ export interface Neighbour {
  * to it at cosine ≥ head.similarity (one vote per page), a group with at least NEIGHBOUR_MIN votes and strictly
  * more than any other wins. It never runs for a tab the head reads as `other`.
  * The bar is head.similarity, the cosine scripts/train-head.mjs validates for the learned-exemplar override: a single
- * nearest pool item at that cosine is in the right group at least 95% of the time (0.71 as shipped). Two agreeing
+ * nearest pool item at that cosine is in the right group at least 95% of the time (head.similarity, read from head.json: currently 0.74). Two agreeing
  * tabs at that bar are stronger evidence still. The bar was not tuned on the synthetic sessions: lower bars chosen
  * there did not hold up blind (tests/quality/README.md). On those sessions the step rarely fires at this bar, but
  * real profiles repeat pages and sites far more, and that is where it helps. tests/quality/neighbours.test.ts checks
