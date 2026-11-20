@@ -82,8 +82,9 @@ describe('semanticMinFor', () => {
     const { HEAD } = await import('../../src/classify/head');
     expect(semanticMinFor('Xenova/bge-small-en-v1.5')).toBe(0.55);
     expect(semanticMinFor('Xenova/all-MiniLM-L6-v2')).toBe(0.3);
+    expect(semanticMinFor('tablight/bge-small-tabs-v1')).toBe(0.37);
     expect(semanticMinFor('some/other-model')).toBe(0.5);
     // The shipped model has a measured cut-off (not the fallback).
-    expect(['Xenova/bge-small-en-v1.5', 'Xenova/all-MiniLM-L6-v2']).toContain(HEAD.model);
+    expect(['tablight/bge-small-tabs-v1', 'Xenova/bge-small-en-v1.5', 'Xenova/all-MiniLM-L6-v2']).toContain(HEAD.model);
   });
 });

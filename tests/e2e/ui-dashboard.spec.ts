@@ -429,7 +429,7 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     await expect(page().getByRole('button', { name: 'Save group for later' })).toBeEnabled();
     await expect(page().getByRole('button', { name: 'Pause group' })).toBeEnabled();
     // Proof that a suggestion pass ran after the dismiss: a second new topic (knitting) gets suggested. That pass also
-    // saw the beekeeping tabs (still Unsorted), and they must not be suggested again.
+    // saw the genealogy tabs (still Unsorted), and they must not be suggested again.
     const knitting = TOPIC_PAGES_2.map((p) => h.url(p.slug));
     await h.open(knitting);
     await expect.poll(async () => (await h.state()).groups.filter((g) => g.suggested).length, { timeout: 60_000 }).toBe(1);
@@ -438,8 +438,8 @@ test('D-50..D-73 groups: group view actions, Save group, videos to watch, sugges
     const members = s.items.filter((i) => i.groupId === again.id).map((i) => i.url).sort();
     expect(members.length).toBeGreaterThan(0);
     expect(members.every((u) => knitting.includes(u)), `the new suggestion holds only knitting tabs: ${members.join(', ')}`).toBe(true);
-    const bees = TOPIC_PAGES.map((p) => h.url(p.slug));
-    expect(s.items.filter((i) => bees.includes(i.url)).map((i) => i.groupId)).toEqual(bees.map(() => null));
+    const genealogy = TOPIC_PAGES.map((p) => h.url(p.slug));
+    expect(s.items.filter((i) => genealogy.includes(i.url)).map((i) => i.groupId)).toEqual(genealogy.map(() => null));
     await expect(page().locator('section.suggestions')).toContainText(again.name);
     await expect(page().locator('section.suggestions').getByRole('listitem')).toHaveCount(1);
   });

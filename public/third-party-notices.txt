@@ -4,9 +4,11 @@ Tablight includes the open-source software and the AI model listed below. Each i
 reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.
 
 ==============================================================================
-Xenova/bge-small-en-v1.5 (AI model, ONNX conversion by Xenova)
+tablight/bge-small-tabs-v1 (AI model)
 Licence: MIT
-Source: https://huggingface.co/BAAI/bge-small-en-v1.5
+Base model: BAAI/bge-small-en-v1.5, https://huggingface.co/BAAI/bge-small-en-v1.5
+Fine-tuned by Tablight on its own synthetic labelled tabs and converted to ONNX (int8); the base model's
+licence below applies.
 ==============================================================================
 
 MIT License

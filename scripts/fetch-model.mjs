@@ -1,4 +1,5 @@
-// Build-time only: downloads the pinned model files and verifies SHA-256.
+// Build-time only: downloads the pinned model files and verifies SHA-256. A model with a `local-` revision is
+// committed to the repository (it has no download source): its files are only verified in place.
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -19,6 +20,11 @@ for (const [file, expected] of Object.entries(MODEL_FILES)) {
   const dest = join(outDir, file);
   if ((await existingHash(dest)) === expected) {
     console.log(`ok (cached) ${file}`);
+    continue;
+  }
+  if (MODEL_REVISION.startsWith('local-')) {
+    console.error(`missing or changed ${file}: ${MODEL_ID} is committed under public/models, not downloaded`);
+    failed = true;
     continue;
   }
   const url = `https://huggingface.co/${MODEL_ID}/resolve/${MODEL_REVISION}/${file}`;

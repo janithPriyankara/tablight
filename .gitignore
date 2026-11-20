@@ -1,7 +1,9 @@
 node_modules/
 dist/
 release/
-public/models/
+# Downloaded models stay out of git; Tablight's own fine-tuned model is committed (it has no download source).
+public/models/*
+!public/models/tablight/
 public/ort/
 .superpowers/
 test-results/

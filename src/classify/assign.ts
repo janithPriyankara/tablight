@@ -38,8 +38,9 @@ export interface Head {
    */
   knn?: { k: number; alpha: number; sharp: number; labels: number[]; vecs: string };
   /**
-   * The YouTube bar for this head's score scale (pickGroup), for evaluating heads trained on another encoder.
-   * Absent (as shipped): pickGroup's YOUTUBE_THRESHOLD.
+   * The YouTube bar for this head's score scale (pickGroup youtubeBar), chosen on calibration rows by
+   * scripts/tune-youtube-bar.mjs (0.13 for the shipped tablight/bge-small-tabs-v1 head). Absent or not a number in
+   * [0, 1]: pickGroup's YOUTUBE_THRESHOLD.
    */
   youtubeThreshold?: number;
 }

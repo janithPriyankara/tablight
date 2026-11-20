@@ -43,8 +43,10 @@ const out = [
   'reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.',
   '',
 ];
-out.push(RULE, `${MODEL_ID} (AI model, ONNX conversion by Xenova)`, 'Licence: MIT',
-  'Source: https://huggingface.co/BAAI/bge-small-en-v1.5', RULE, '',
+out.push(RULE, `${MODEL_ID} (AI model)`, 'Licence: MIT',
+  'Base model: BAAI/bge-small-en-v1.5, https://huggingface.co/BAAI/bge-small-en-v1.5',
+  'Fine-tuned by Tablight on its own synthetic labelled tabs and converted to ONNX (int8); the base model\'s',
+  'licence below applies.', RULE, '',
   'MIT License', '', 'Copyright (c) Beijing Academy of Artificial Intelligence (BAAI)', '',
   'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated',
   'documentation files (the "Software"), to deal in the Software without restriction, including without limitation',

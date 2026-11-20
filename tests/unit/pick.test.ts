@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { headTop, type Head } from '../../src/classify/assign';
 import bundled from '../../src/classify/head.json';
-import { NEIGHBOUR_POOL_MAX, pickGroup, YOUTUBE_THRESHOLD, type Neighbour } from '../../src/classify/pick';
+import { NEIGHBOUR_POOL_MAX, pickGroup, YOUTUBE_THRESHOLD, youtubeBar, type Neighbour } from '../../src/classify/pick';
 import type { Group } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
 const DIM = 16;
@@ -56,10 +56,13 @@ describe('pickGroup', () => {
   it('keeps the YouTube bar below the bundled head threshold', () => {
     expect(headTop(vec(0), MID)!.score).toBeGreaterThanOrEqual(YOUTUBE_THRESHOLD);
     expect(headTop(vec(0), LOW)!.score).toBeLessThan(YOUTUBE_THRESHOLD);
-    expect(YOUTUBE_THRESHOLD).toBeLessThan(bundled.threshold);
   });
-  it('uses YOUTUBE_THRESHOLD when the head has no youtubeThreshold (the bundled head has none)', () => {
-    expect('youtubeThreshold' in bundled).toBe(false);
+  it('the bundled head carries a valid YouTube bar below its threshold', () => {
+    expect(bundled.youtubeThreshold).toBe(0.13);
+    expect(youtubeBar(bundled)).toBe(0.13);
+    expect(bundled.youtubeThreshold).toBeLessThan(bundled.threshold);
+  });
+  it('uses YOUTUBE_THRESHOLD when the head has no youtubeThreshold', () => {
     expect(MID.youtubeThreshold).toBeUndefined();
     expect(pickGroup(YT, vec(0), [group('hardware'), group('videos')], MID).groupId).toBe('hardware');
     expect(pickGroup(YT, vec(0), [group('hardware'), group('videos')], LOW).groupId).toBe('videos');
@@ -73,6 +76,23 @@ describe('pickGroup', () => {
     expect(pickGroup(YT, vec(0), gs, { ...head, youtubeThreshold: 0.99 }).groupId).toBe('hardware');
     // Pages ignore it.
     expect(pickGroup(PAGE, vec(0), gs, { ...LOW, youtubeThreshold: 0.2 }).groupId).toBeNull();
+  });
+  it('falls back to YOUTUBE_THRESHOLD for a malformed youtubeThreshold', () => {
+    const gs = [group('hardware'), group('videos')];
+    for (const bad of [NaN, Infinity, -Infinity, -0.1, 1.5, '0.1', null, true, {}]) {
+      const h = { ...MID, youtubeThreshold: bad } as unknown as Head;
+      expect(youtubeBar(h), String(bad)).toBe(YOUTUBE_THRESHOLD);
+      // MID ≈ 0.40 clears the fallback bar (0.26): filed, as with no youtubeThreshold at all.
+      expect(pickGroup(YT, vec(0), gs, h).groupId, String(bad)).toBe('hardware');
+      // LOW ≈ 0.22 is below the fallback bar: a malformed value never lowers it.
+      expect(pickGroup(YT, vec(0), gs, { ...LOW, youtubeThreshold: bad } as unknown as Head).groupId, String(bad)).toBe('videos');
+    }
+  });
+  it('accepts the edges 0 and 1 and still caps at head.threshold', () => {
+    expect(youtubeBar({ threshold: 0.6, youtubeThreshold: 0 })).toBe(0);
+    expect(youtubeBar({ threshold: 0.6, youtubeThreshold: 1 })).toBe(0.6);
+    expect(youtubeBar({ threshold: 0.2 })).toBe(0.2);
+    expect(youtubeBar({ threshold: 0.6 })).toBe(YOUTUBE_THRESHOLD);
   });
   it('lets a rule hit win', () => {
     const r = pickGroup({ url: 'https://www.netflix.com/title/123', title: 'X' }, vec(0), [group('tv'), group('videos')], head);

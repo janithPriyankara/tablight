@@ -116,6 +116,15 @@ for (const [entry, urls] of usedEntries) {
 }
 if (usedEntries.size === 0) console.log('  (none found)');
 // ── hashes: model files and ONNX Runtime files ──────────────────────────────
+// Exactly one model ships (a leftover directory of a previous model would only add megabytes).
+try {
+  const dirs = async (d) => (await readdir(d, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name);
+  const shipped = [];
+  for (const org of await dirs(join(dist, 'models'))) for (const m of await dirs(join(dist, 'models', org))) shipped.push(`${org}/${m}`);
+  if (shipped.length !== 1 || shipped[0] !== MODEL_ID) fail(`dist/models must hold only ${MODEL_ID}, found: ${shipped.join(', ') || 'nothing'}`);
+} catch {
+  fail('dist/models is missing');
+}
 for (const [file, expected] of Object.entries(MODEL_FILES)) {
   try {
     const actual = sha256(await readFile(join(dist, 'models', ...MODEL_ID.split('/'), file)));

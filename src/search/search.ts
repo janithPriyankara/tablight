@@ -83,11 +83,15 @@ export function wordSearch(items: Item[], groups: Group[], q: string, limit = 50
 /**
  * Lowest cosine counted as "similar by meaning", per embedding model: each model has its own similarity scale.
  * Measured on the training pool with sample queries: for bge-small, 99% of unrelated tabs score below 0.55
- * while real matches mostly score 0.55–0.82; for MiniLM the same split sat near 0.30.
+ * while real matches mostly score 0.55–0.82; for MiniLM the same split sat near 0.30. The fine-tuned
+ * tablight/bge-small-tabs-v1 pushes unrelated tabs further apart: with 60 short queries (two per group) against
+ * every 4th training-pool row, 99% of unrelated tabs score below 0.37 (bge-small measured the same way: 0.546), and
+ * 71% of same-group tabs score at or above it (bge-small at its 0.55: 34%).
  */
 const SEMANTIC_MIN: Record<string, number> = {
   'Xenova/all-MiniLM-L6-v2': 0.3,
   'Xenova/bge-small-en-v1.5': 0.55,
+  'tablight/bge-small-tabs-v1': 0.37,
 };
 export function semanticMinFor(model: string): number {
   return SEMANTIC_MIN[model] ?? 0.5;

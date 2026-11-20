@@ -1,7 +1,7 @@
 # Tablight
 
 Private AI tab organizer. A browser extension for Microsoft Edge and Google Chrome (desktop) that keeps large numbers of open tabs under control.
-- Lists every open tab in one dashboard and groups them by topic (Movies, Programming, Shopping, ...). Grouping uses a small AI model that ships inside the extension and runs on your computer.
+- Lists every open tab in one dashboard and groups them by topic (Movies, Programming, Shopping, ...). Grouping uses a small AI model that ships inside the extension and runs on your computer: [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) (MIT licence), fine-tuned by Tablight on its own synthetic labelled tabs (`tablight/bge-small-tabs-v1`, see [scripts/finetune](scripts/finetune/README.md)).
 - Finds duplicate tabs and closes the extras (with undo).
 - Pauses tabs to free memory (they stay in your tab strip), or saves them for later (closes the tab, keeps it in a list) and opens them again when you want.
 - Saves a snapshot of your windows every hour and on startup, so you can pick up where you left off.
@@ -13,7 +13,7 @@ Requires Node 20 or newer.
 For automated builds on a Linux VM with Docker-hosted Jenkins, see [Jenkins setup](docs/jenkins.md). The root `Jenkinsfile` runs checks and produces a downloadable extension ZIP.
 ```
 npm ci
-npm run prepare:assets   # downloads the pinned model (checksum-verified) and copies the ONNX Runtime files
+npm run prepare:assets   # verifies the committed model's checksums and copies the ONNX Runtime files
 npm run build            # builds dist/ and runs the release checks
 ```
 Load it unpacked:
@@ -30,7 +30,7 @@ npm run test:e2e         # loads dist/ in real Chromium, checks flows, performan
 ```
 npm run package
 ```
-This runs the release checks again and writes `release/tablight-<version>.zip`. Upload that same zip to the Chrome Web Store and to Edge Add-ons. Store text and permission justifications are in [store/listing.md](store/listing.md). The build fails if the manifest permissions or CSP change, an unexpected URL appears in the code, a model file hash differs, a DOM-injection API appears in app code, a bundled package has a license outside MIT / Apache-2.0 / BSD / ISC / 0BSD, or the package is 45 MB or larger.
+This runs the release checks again and writes `release/tablight-<version>.zip`. Upload that same zip to the Chrome Web Store and to Edge Add-ons. Store text and permission justifications are in [store/listing.md](store/listing.md). The build fails if the manifest permissions or CSP change, an unexpected URL appears in the code, a model file hash differs, a DOM-injection API appears in app code, a bundled package has a license outside MIT / Apache-2.0 / BSD / ISC / 0BSD, or the package is 55 MB or larger.
 - Desktop browsers only.
 - Edge and Chrome do not sync with each other. Use export/import to move your saved tabs between them.
 - Grouping works best for English titles.
