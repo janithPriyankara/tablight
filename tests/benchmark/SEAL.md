@@ -22,3 +22,6 @@ docs/superpowers/plans/2026-11-20-accuracy.md). Nobody reads its rows; tests pri
   programming 45, games 45, videos 44, docs 40, food 32, work 32, science 32, home 32, tv 31, pets 31, jobs 28,
   sports 28, news 21, travel 19, family 18, social 17, ai 14, photo 12, books 11, realestate 10, hardware 9,
   fashion 7, movies 2, cars 1, anime 1.
+
+A second benchmark, v2, was sealed later the same day in `v2/` (see `v2/SEAL.md`). This v1 benchmark is no longer
+scored; it stays as the record of the 2026-11-20 score.

@@ -49,16 +49,21 @@ describe('nearTitle', () => {
     expect(nearTitle('How to: fix a bike-chain')).toBe('how to fix a bike chain');
   });
 });
-describe('sealed benchmark', () => {
+const BENCHMARKS = [
+  { name: 'benchmark v1', dir: 'tests/benchmark' },
+  { name: 'benchmark v2', dir: 'tests/benchmark/v2' },
+] as const;
+describe.each(BENCHMARKS)('sealed $name', ({ name, dir }) => {
   it('benchmark.json matches the SHA-256 in SEAL.md', async () => {
-    const seal = await readFile(resolve(root, 'tests/benchmark/SEAL.md'), 'utf8');
+    const seal = await readFile(resolve(root, dir, 'SEAL.md'), 'utf8');
     const want = /SHA-256:\s*`([0-9a-f]{64})`/.exec(seal)?.[1];
-    expect(want).toBeTruthy();
-    const got = createHash('sha256').update(await readFile(resolve(root, 'tests/benchmark/benchmark.json'))).digest('hex');
-    expect(got).toBe(want);
+    expect(want, `${name}: SEAL.md has no SHA-256`).toBeTruthy();
+    const got = createHash('sha256').update(await readFile(resolve(root, dir, 'benchmark.json'))).digest('hex');
+    // Names the benchmark only, never a row.
+    expect(got, `${name}: benchmark.json does not match the sealed SHA-256`).toBe(want);
   });
   it('no benchmark title or URL appears in any training or quality file', async () => {
-    const bench: Row[] = JSON.parse(await readFile(resolve(root, 'tests/benchmark/benchmark.json'), 'utf8'));
+    const bench: Row[] = JSON.parse(await readFile(resolve(root, dir, 'benchmark.json'), 'utf8'));
     const titles = new Set(bench.map((r) => normTitle(r.title)));
     const urls = new Set(bench.map((r) => normUrl(r.url)));
     const sources = [...(await rowsOf('training')), ...(await rowsOf('tests/quality'))];
@@ -83,12 +88,12 @@ describe('sealed benchmark', () => {
     const short = [...nearBench].filter((n) => n.split(' ').length <= 2).length;
     // Counts only: never print a matching row.
     console.log(
-      `leakage check: ${bench.length} benchmark rows vs ${checked} rows in ${sources.length} files: ${titleHits} title matches, ` +
+      `leakage check (${name}): ${bench.length} benchmark rows vs ${checked} rows in ${sources.length} files: ${titleHits} title matches, ` +
         `${urlHits} url matches, ${nearHits} near-duplicate title matches (${nearBench.size} distinct benchmark titles, ` +
         `${short} of them one or two words)`,
     );
-    expect(titleHits).toBe(0);
-    expect(urlHits).toBe(0);
-    expect(nearHits).toBeLessThanOrEqual(KNOWN_NEAR);
+    expect(titleHits, `${name}: title matches in training or quality files`).toBe(0);
+    expect(urlHits, `${name}: url matches in training or quality files`).toBe(0);
+    expect(nearHits, `${name}: near-duplicate title matches in training or quality files`).toBeLessThanOrEqual(KNOWN_NEAR);
   });
 });
