@@ -1,7 +1,7 @@
 # Tablight
 
 Private AI tab organizer. A browser extension for Microsoft Edge and Google Chrome (desktop) that keeps large numbers of open tabs under control.
-- Lists every open tab in one dashboard and groups them by topic (Movies, Programming, Shopping, ...). Grouping uses a small AI model that ships inside the extension and runs on your computer: [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) (MIT licence), fine-tuned by Tablight on its own synthetic labelled tabs (`tablight/bge-small-tabs-v1`, see [scripts/finetune](scripts/finetune/README.md)).
+- Lists every open tab in one dashboard and groups them by topic (Movies, Programming, Shopping, ...). Grouping uses a small AI model that ships inside the extension and runs on your computer: [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) (MIT licence), fine-tuned by Tablight on its own synthetic labelled tabs (`tablight/bge-small-tabs-v1`, see [scripts/finetune](scripts/finetune/README.md)). How accurate it is, and how that was measured: [docs/accuracy.md](docs/accuracy.md).
 - Finds duplicate tabs and closes the extras (with undo).
 - Pauses tabs to free memory (they stay in your tab strip), or saves them for later (closes the tab, keeps it in a list) and opens them again when you want.
 - Saves a snapshot of your windows every hour and on startup, so you can pick up where you left off.
@@ -23,6 +23,7 @@ Press `Alt+Shift+T` to open the dashboard.
 ```
 npm test                 # unit tests
 npm run test:quality     # classification accuracy on the fixtures
+npm run test:benchmark   # the sealed accuracy benchmark (see docs/accuracy.md)
 npm run train:head       # retrains src/classify/head.json (threshold chosen on scripts/finetune/calibration-bge-small-tabs-v1.json, the rows the model never trained on)
 npx playwright install chromium
 npm run build
