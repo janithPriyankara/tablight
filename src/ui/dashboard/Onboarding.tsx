@@ -34,7 +34,7 @@ function Welcome(props: { busy: boolean; onAutoSleep: () => void; onDone: () => 
         <ul class="onboarding-points">
           <li>Tablight sees only each tab’s title and address. It cannot see your passwords, cookies, what you type or what is on a page.</li>
           <li>Grouping runs on your computer. No servers, no analytics. The only network request is the optional Look it up, after you confirm the text.</li>
-          <li>Nothing leaves your device except tabs you save for later and the examples you teach your groups, which sync through your own browser account. You can turn that off in Settings.</li>
+          <li>Nothing leaves your device except saved tabs and taught examples (if you turn on sync) and, only when you click Look it up and confirm, the text you saw.</li>
           {unpinned && (
             <li>
               <strong>Pin Tablight</strong> so it’s one click away: click the puzzle-piece icon in the toolbar, then

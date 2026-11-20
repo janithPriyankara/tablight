@@ -122,7 +122,7 @@ test('Look it up: nothing is sent until "Look up"; then one request with the sho
     await lookupButtons(row).click();
     const dialog = h.dash.getByRole('dialog', { name: 'Look it up' });
     await expect(dialog).toContainText('Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:');
-    await expect(dialog).toContainText('Never sent: the page address, your other tabs, cookies, or any ID.');
+    await expect(dialog).toContainText('Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.');
     const box = dialog.getByRole('textbox');
     await expect(box).toBeFocused();
     const shown = await box.inputValue();

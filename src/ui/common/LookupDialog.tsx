@@ -13,7 +13,7 @@ import { GlobeIcon } from './icons';
 
 /** The hint under the setting's toggle (Settings → General). */
 export const LOOKUP_SETTING_HINT = 'Sends only the text you confirm, to Wikidata. Nothing is sent unless you click.';
-const NEVER_SENT = 'Never sent: the page address, your other tabs, cookies, or any ID.';
+const NEVER_SENT = 'Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.';
 const PRIVACY_POLICY = 'https://foundation.wikimedia.org/wiki/Policy:Privacy_policy';
 
 /** The text a row may offer for look-up, or null: only Unsorted rows, and never a refused tab (local, sensitive…). */

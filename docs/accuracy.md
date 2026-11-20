@@ -46,13 +46,18 @@ would have chosen anyway.
   such overlaps: 41 tabs, then 22 more.
 - **Scored once:**[^1] with the shipped model and head, after all choices were made. Nothing was changed after
   seeing the result.
-- **How:** each person's tabs are replayed in order through the real pipeline (rules, the groups taught by moving tabs, the offline name step, the trained head, the lower
+- **How:** each person's tabs are replayed in order through the real pipeline (rules, the trained head, the lower
   YouTube bar, the neighbour step), with every group available and nothing placed by hand. That is a new user's
   first run, before Tablight has learned anything from them. Moving tabs by hand teaches groups and makes later
   grouping better; that is not counted here.
 
-The name step looks a name up in an offline list of about 60,000 well-known names built from Wikidata (CC0). It reads only the query of a search-engine results page or the title of a Wikipedia page, never ordinary page titles. The order of steps is: your rules, groups taught by moving tabs, names, the model, neighbours. The "Look it up" button is user-driven (one tab, after the user confirms the text) and is not counted in any figure here.
+## Since v1: the name step
+
+Not in the figures above. The name step looks a name up in an offline list of about 60,000 well-known names built from Wikidata (CC0). It reads only the query of a search-engine results page or the title of a Wikipedia page, never ordinary page titles. The order of steps is: your rules, groups taught by moving tabs, names, the model, neighbours. The "Look it up" button is user-driven (one tab, after the user confirms the text) and is not counted in any figure here.
 A note on blindness: the choice to restrict the name step to search and Wikipedia text was made after seeing aggregate figures on the tuning sessions and on holdout2. Those two sets are therefore no longer blind for the name step. The sealed benchmark v2 was not touched when that choice was made.
+
+
+## Per label
 
 Strict recall per label: how many of that label's tabs ended up in its group.
 

@@ -158,7 +158,7 @@ describe('the dialog', () => {
     const text = (lookupText(GOOGLE, GOOGLE_TITLE) as { text: string }).text;
     expect(text).not.toBe('');
     expect(box().value).toBe(text);
-    expect(within(d).getByText('Never sent: the page address, your other tabs, cookies, or any ID.')).toBeTruthy();
+    expect(within(d).getByText('Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.')).toBeTruthy();
     const link = within(d).getByRole('link', { name: /privacy policy/ });
     expect(link.getAttribute('href')).toBe('https://foundation.wikimedia.org/wiki/Policy:Privacy_policy');
     expect(link.getAttribute('target')).toBe('_blank');

@@ -278,8 +278,8 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                     <li><ShieldIcon />Sees only each tab’s title and address: never passwords, cookies, what you type or what is on a page.</li>
                     <li><ShieldIcon />Grouping runs on your computer. No servers, no analytics. The only network request is the optional Look it up, after you confirm the text.</li>
                     <li>
-                      <ShieldIcon />Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
-                      through your browser account while sync is on.
+                      <ShieldIcon />Nothing leaves your device except saved tabs and taught examples (if you turn on sync) and, only when you click
+                      Look it up and confirm, the text you saw.
                     </li>
                   </ul>
                   <a class="link privacy-link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
