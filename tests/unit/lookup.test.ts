@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 import {
-  LOOKUP_CACHE_MAX, LOOKUP_MAX_BODY, LOOKUP_TIMEOUT_MS, lookUp, lookupUrl, type LookupDeps,
+  LABEL_TIMEOUT_MS, LOOKUP_CACHE_MAX, LOOKUP_MAX_BODY, LOOKUP_TIMEOUT_MS, lookUp, type LookupDeps,
 } from '../../src/ui/common/lookup';
 import { LOOKUP_CACHE_KEY } from '../../src/shared/types';
 
@@ -41,8 +41,10 @@ describe('lookUp request', () => {
     expect(init?.signal).toBeInstanceOf(AbortSignal);
     expect(Object.keys(init!).sort()).toEqual(['cache', 'credentials', 'method', 'referrerPolicy', 'signal']);
   });
-  it('encodes the search text as one parameter (no injection of others)', () => {
-    const u = new URL(lookupUrl('a&format=xml#b c'));
+  it('encodes the search text as one parameter (no injection of others)', async () => {
+    const f = fakeFetch(() => reply());
+    await lookUp('a&format=xml#b c', deps(f));
+    const u = new URL(String(f.mock.calls[0]![0]));
     expect(u.searchParams.get('search')).toBe('a&format=xml#b c');
     expect(u.searchParams.getAll('format')).toEqual(['json']);
     expect(u.hash).toBe('');
@@ -117,7 +119,77 @@ describe('lookUp answers', () => {
   });
 });
 
+describe('lookUp cache and concurrency', () => {
+  it('texts named like Object.prototype members are ordinary texts', async () => {
+    for (const text of ['constructor', 'toString', 'hasOwnProperty', 'valueOf']) {
+      const f = fakeFetch(() => reply({ label: text, description: '' }));
+      expect(await lookUp(text, deps(f))).toEqual({ hits: [{ label: text, description: '', group: null, topic: null }] });
+      expect(f).toHaveBeenCalledTimes(1);
+      expect(await lookUp(text, deps(f))).toEqual({ hits: [{ label: text, description: '', group: null, topic: null }] });
+      expect(f).toHaveBeenCalledTimes(1); // the second one came from the cache
+    }
+    expect(({} as Record<string, unknown>)['hits']).toBeUndefined();
+  });
+  it('a stored __proto__ key does not change how other entries are read', async () => {
+    const stored = JSON.parse('{"__proto__": {"at": 1, "hits": []}, "x": {"at": 2, "hits": [{"label": "X", "description": "", "topic": null}]}}') as object;
+    await chrome.storage.local.set({ [LOOKUP_CACHE_KEY]: stored });
+    const f = fakeFetch(() => reply());
+    expect(await lookUp('x', deps(f))).toEqual({ hits: [{ label: 'X', description: '', group: null, topic: null }] });
+    expect(await lookUp('at', deps(f))).toEqual({ hits: [] });
+    expect(f).toHaveBeenCalledTimes(1); // only 'at' was sent
+  });
+  it('concurrent look-ups keep every answer in the cache', async () => {
+    const f = fakeFetch(() => reply());
+    await Promise.all([lookUp('alpha', deps(f)), lookUp('beta', deps(f)), lookUp('gamma', deps(f))]);
+    const stored = (await chrome.storage.local.get(LOOKUP_CACHE_KEY))[LOOKUP_CACHE_KEY] as Record<string, unknown>;
+    expect(Object.keys(stored).sort()).toEqual(['alpha', 'beta', 'gamma']);
+  });
+  it('the same text asked twice at once is sent once', async () => {
+    const f = fakeFetch(() => reply({ label: 'Same', description: 'film' }));
+    const [a, b] = await Promise.all([lookUp('same', deps(f)), lookUp('same', deps(f, { groups: [{ id: 'movies' }] }))]);
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(a).toEqual({ hits: [{ label: 'Same', description: 'film', group: null, topic: 'movies' }] });
+    expect(b).toEqual({ hits: [{ label: 'Same', description: 'film', group: 'movies', topic: 'movies' }] });
+  });
+  it('a head fallback that never answers gives up after 5 s (no topic), all hits at once', async () => {
+    vi.useFakeTimers();
+    const f = fakeFetch(() => reply({ label: 'A', description: 'a' }, { label: 'B', description: 'b' }, { label: 'C', description: 'film' }));
+    const labelForText = vi.fn(() => new Promise<string | null>(() => undefined));
+    const p = lookUp('hang', deps(f, { labelForText }));
+    await vi.advanceTimersByTimeAsync(LABEL_TIMEOUT_MS);
+    expect(await p).toEqual({ hits: [
+      { label: 'A', description: 'a', group: null, topic: null },
+      { label: 'B', description: 'b', group: null, topic: null },
+      { label: 'C', description: 'film', group: null, topic: 'movies' },
+    ] });
+    expect(labelForText).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
 describe('untrusted reply', () => {
+  it('a body that stalls after the headers is a timeout', async () => {
+    vi.useFakeTimers();
+    const f = vi.fn<typeof fetch>(async (_u, init) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(c) {
+          c.enqueue(new TextEncoder().encode('{"search": ['));
+          init?.signal?.addEventListener('abort', () => c.error(new DOMException('aborted', 'AbortError')));
+        },
+      });
+      return new Response(body, { status: 200 });
+    });
+    const p = lookUp('stall', deps(f));
+    await vi.advanceTimersByTimeAsync(LOOKUP_TIMEOUT_MS);
+    expect(await p).toEqual({ error: 'timeout' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('__proto__ and constructor keys in the reply are ignored and pollute nothing', async () => {
+    const body = '{"__proto__": {"polluted": 1}, "search": [{"__proto__": {"label": "P"}, "label": "X", "description": "d", "constructor": {"x": 1}}]}';
+    const r = await lookUp('proto', deps(fakeFetch(() => json(body))));
+    expect(r).toEqual({ hits: [{ label: 'X', description: 'd', group: null, topic: null }] });
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(({} as Record<string, unknown>)['label']).toBeUndefined();
+  });
   it('non-200 is an http error and is not cached', async () => {
     const f = fakeFetch(() => json({ search: [] }, { status: 503 }));
     expect(await lookUp('x', deps(f))).toEqual({ error: 'http' });

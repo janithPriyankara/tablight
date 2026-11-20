@@ -43,19 +43,27 @@ interface ChunkRecord {
   lib: Record<string, number>;
   /** appIn: for each app URL, the app modules (paths relative to the project root) it appears in. */
   urls: { app: Record<string, number>; appIn: Record<string, string[]>; lib: Record<string, string[]> };
+  /** The app's own modules in this chunk (paths relative to the project root). */
+  appModules: string[];
 }
+/** The look-up client: the gate allows only listed importers (LOOKUP_IMPORTERS in scripts/verify-release.mjs). */
+const LOOKUP_MODULE = 'src/ui/common/lookup.ts';
+const rel = (id: string): string => relative(import.meta.dirname, id.split('?')[0]!).split(sep).join('/');
 function buildRecordPlugin(): Plugin {
   const modules = new Set<string>();
   const chunks: Record<string, ChunkRecord> = {};
+  /** Who imports the look-up client: direct importers, and every module from which an import chain reaches it. */
+  let lookup: { importers: string[]; ancestors: string[] } | null = null;
   return {
     name: 'tab-organizer-build-record',
     generateBundle(_options, bundle) {
       for (const file of Object.values(bundle)) {
         if (file.type !== 'chunk') continue;
-        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, appIn: {}, lib: {} } };
+        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, appIn: {}, lib: {} }, appModules: [] };
         for (const [id, mod] of Object.entries(file.modules)) {
           modules.add(id);
           const pkg = packageOf(id);
+          if (!pkg) entry.appModules.push(rel(id));
           const side = pkg ? entry.lib : entry.app;
           for (const m of mod.code?.matchAll(BANNED_CODE) ?? []) {
             const name = bannedName(m[0]);
@@ -65,19 +73,38 @@ function buildRecordPlugin(): Plugin {
             const url = cleanUrl(m[0]);
             if (!pkg) {
               entry.urls.app[url] = (entry.urls.app[url] ?? 0) + 1;
-              const where = relative(import.meta.dirname, id.split('?')[0]!).split(sep).join('/');
-              entry.urls.appIn[url] = [...new Set([...(entry.urls.appIn[url] ?? []), where])];
+              entry.urls.appIn[url] = [...new Set([...(entry.urls.appIn[url] ?? []), rel(id)])];
             }
             else entry.urls.lib[url] = [...new Set([...(entry.urls.lib[url] ?? []), pkg])];
           }
         }
+        entry.appModules.sort();
         chunks[file.fileName] = entry;
+      }
+      // The module graph, not just the chunks: an importer that was tree-shaken away still counts.
+      const lookupId = [...this.getModuleIds()].find((id) => rel(id) === LOOKUP_MODULE);
+      if (lookupId) {
+        const importersOf = (id: string): string[] => {
+          const info = this.getModuleInfo(id);
+          return [...(info?.importers ?? []), ...(info?.dynamicImporters ?? [])];
+        };
+        const ancestors = new Set<string>();
+        const queue = [lookupId];
+        while (queue.length) {
+          for (const imp of importersOf(queue.pop()!)) {
+            if (!ancestors.has(imp)) {
+              ancestors.add(imp);
+              queue.push(imp);
+            }
+          }
+        }
+        lookup = { importers: [...new Set(importersOf(lookupId).map(rel))].sort(), ancestors: [...ancestors].map(rel).sort() };
       }
     },
     closeBundle() {
       const dir = resolve(import.meta.dirname, '.build');
       mkdirSync(dir, { recursive: true });
-      writeFileSync(resolve(dir, 'build-record.json'), JSON.stringify({ modules: [...modules].sort(), chunks }, null, 2));
+      writeFileSync(resolve(dir, 'build-record.json'), JSON.stringify({ modules: [...modules].sort(), chunks, lookup }, null, 2));
     },
   };
 }

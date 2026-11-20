@@ -43,3 +43,54 @@ export function urlScopeError(entry, name, chunk) {
   if (foreign.length) return `comes from ${foreign.join(', ')}, allowed only from ${entry.pkgs.join(', ')}`;
   return null;
 }
+/** The look-up client: the only source file that may name Wikidata's API, and the only modules that may import it. */
+export const LOOKUP_SOURCE = 'src/ui/common/lookup.ts';
+/** Product modules allowed to import LOOKUP_SOURCE (the confirm dialog, Task 7). Tests are not built and are exempt. */
+export const LOOKUP_IMPORTERS = ['src/ui/common/LookupDialog.tsx'];
+const ANY_WIKIDATA = /wikidata/gi;
+/**
+ * "Wikidata" as a word in prose: capitalised, not part of a host, path or identifier, and not the edge of a quoted
+ * string (so 'https://www.wikidata' + '.org' and ['www', 'wikidata', 'org'] do not count).
+ */
+const PROSE_WIKIDATA = /(?<![\w./'"`+-])Wikidata(?![\w-]|\.\w|['"`](?!s\b))/g;
+/** The one attribution line of the offline name list in third-party-notices.txt (a notice, never fetched). */
+const NOTICE_LINE = 'Source: https://www.wikidata.org';
+/**
+ * Lines of `path` (project-relative) that mention Wikidata where they may not. Allowed: anything in LOOKUP_SOURCE;
+ * the word in prose (in src/ code only on comment lines); the name list's attribution line in third-party-notices.txt.
+ */
+export function wikidataMentions(path, text) {
+  if (path === LOOKUP_SOURCE) return [];
+  ANY_WIKIDATA.lastIndex = 0;
+  if (!ANY_WIKIDATA.test(text)) return [];
+  const code = path.startsWith('src/') && /\.[cm]?[jt]sx?$/.test(path);
+  const notice = /(^|\/)third-party-notices\.txt$/.test(path);
+  const bad = [];
+  text.split('\n').forEach((line, i) => {
+    const all = line.match(ANY_WIKIDATA)?.length ?? 0;
+    if (!all) return;
+    if (notice && line.trim() === NOTICE_LINE) return;
+    const prose = line.match(PROSE_WIKIDATA)?.length ?? 0;
+    const comment = /^\s*(\/\/|\/?\*)/.test(line);
+    if (prose === all && (!code || comment)) return;
+    bad.push(`${path}:${i + 1}`);
+  });
+  return bad;
+}
+/** Project-relative `src/` modules that `text` (the source of `path`) imports, statically, dynamically or re-exported. */
+export function importsOf(path, text) {
+  const out = new Set();
+  const re = /\b(?:import|export)\s+(?:type\s+)?[^'"`;]*?\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)|\bimport\s*['"]([^'"]+)['"]/g;
+  const dir = path.split('/').slice(0, -1);
+  for (const m of text.matchAll(re)) {
+    const spec = m[1] ?? m[2] ?? m[3];
+    if (!spec.startsWith('.')) continue;
+    const parts = [...dir];
+    for (const seg of spec.split('/')) {
+      if (seg === '..') parts.pop();
+      else if (seg !== '.') parts.push(seg);
+    }
+    out.add(parts.join('/').replace(/\.(?:[cm]?[jt]sx?)$/, ''));
+  }
+  return [...out];
+}

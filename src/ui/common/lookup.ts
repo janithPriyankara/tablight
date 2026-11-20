@@ -1,6 +1,7 @@
 // The opt-in look-up (design Part 2): the only network request Tablight makes, and only after the user clicked
 // "Look it up" and confirmed the dialog. One cleaned text goes to Wikidata's public search API; the reply is
-// untrusted data. Nothing here logs the text or the reply.
+// untrusted data. Nothing here logs the text or the reply. Only the confirm dialog may import this module
+// (LOOKUP_IMPORTERS in scripts/release-patterns.mjs; checked by a unit test and by verify-release).
 import { describeLabel } from '../../classify/describe';
 import { send, type LabelForTextReply } from '../../shared/rpc';
 import { cleanLookupText } from '../../shared/lookup-text';
@@ -13,7 +14,11 @@ export interface LookupHit {
   description: string;
   /** The id of the existing group whose label is this hit's topic, or null. */
   group: string | null;
-  /** The Tablight label the description maps to (a starter group id), or null; lets the UI create that group. */
+  /**
+   * The Tablight label the description maps to (a starter group id), or null. It can name a group that does not exist:
+   * an on-demand group never created, or one the user deleted. The dialog may then offer to create it, and only on the
+   * user's click.
+   */
   topic: string | null;
 }
 export type LookupError = 'offline' | 'timeout' | 'http' | 'bad-reply';
@@ -27,8 +32,10 @@ export interface LookupDeps {
   groups?: ReadonlyArray<{ id: string }>;
 }
 
-export const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
+const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 export const LOOKUP_TIMEOUT_MS = 10_000;
+/** Deadline of each on-device head fallback (labelForText); on expiry the hit has no topic. */
+export const LABEL_TIMEOUT_MS = 5_000;
 /** Largest reply body read, in bytes (a 5-hit answer is a few kB). */
 export const LOOKUP_MAX_BODY = 256_000;
 /** Longest label or description kept, in characters. */
@@ -37,7 +44,7 @@ export const LOOKUP_MAX_HITS = 3;
 export const LOOKUP_CACHE_MAX = 500;
 
 /** The request URL: the fixed parameters plus `search`, encoded by URLSearchParams. */
-export function lookupUrl(text: string): string {
+function lookupUrl(text: string): string {
   const url = new URL(WIKIDATA_API);
   const params: [string, string][] = [
     ['action', 'wbsearchentities'], ['search', text], ['language', 'en'], ['uselang', 'en'], ['type', 'item'],
@@ -59,7 +66,6 @@ function plain(s: string): string {
 /** What the cache keeps per hit: no group (that depends on the groups when it is read). */
 interface CachedHit { label: string; description: string; topic: string | null }
 interface CacheEntry { at: number; hits: CachedHit[] }
-type Cache = Record<string, CacheEntry>;
 
 const isStrOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string';
 function validEntry(v: unknown): v is CacheEntry {
@@ -71,29 +77,36 @@ function validEntry(v: unknown): v is CacheEntry {
     return typeof x['label'] === 'string' && typeof x['description'] === 'string' && isStrOrNull(x['topic']);
   });
 }
-async function readCache(): Promise<Cache> {
+/** The stored cache as a Map (own keys only, so "constructor" or "__proto__" are ordinary texts). */
+async function readCache(): Promise<Map<string, CacheEntry>> {
+  const out = new Map<string, CacheEntry>();
   try {
     const raw: unknown = (await chrome.storage.local.get(LOOKUP_CACHE_KEY))[LOOKUP_CACHE_KEY];
-    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
-    const out: Cache = {};
-    for (const [k, v] of Object.entries(raw)) if (validEntry(v)) out[k] = v;
-    return out;
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+    for (const [k, v] of Object.entries(raw)) if (validEntry(v)) out.set(k, v);
   } catch {
-    return {};
+    // An unreadable cache is an empty one.
   }
+  return out;
 }
+/** Cache writes of this page, one after another; each merges into what is stored at that moment (other pages too). */
+let writes: Promise<void> = Promise.resolve();
 /** Adds an answer, keeping the newest LOOKUP_CACHE_MAX entries (the oldest are evicted first). */
-async function writeCache(text: string, entry: CacheEntry): Promise<void> {
-  try {
-    const cache = await readCache();
-    cache[text] = entry;
-    const kept = Object.entries(cache).sort((a, b) => b[1].at - a[1].at).slice(0, LOOKUP_CACHE_MAX);
-    await chrome.storage.local.set({ [LOOKUP_CACHE_KEY]: Object.fromEntries(kept) });
-  } catch {
-    // A full or unavailable storage only costs the cache.
-  }
+function writeCache(text: string, entry: CacheEntry): Promise<void> {
+  writes = writes.then(async () => {
+    try {
+      const cache = await readCache();
+      cache.set(text, entry);
+      const kept = [...cache].sort((a, b) => b[1].at - a[1].at).slice(0, LOOKUP_CACHE_MAX);
+      const obj: Record<string, CacheEntry> = Object.create(null) as Record<string, CacheEntry>;
+      for (const [k, v] of kept) Object.defineProperty(obj, k, { value: v, enumerable: true, writable: true, configurable: true });
+      await chrome.storage.local.set({ [LOOKUP_CACHE_KEY]: obj });
+    } catch {
+      // A full or unavailable storage only costs the cache.
+    }
+  });
+  return writes;
 }
-
 /** Reads at most LOOKUP_MAX_BODY bytes; null when the body is larger. */
 async function readBody(res: Response): Promise<string | null> {
   const declared = res.headers.get('content-length');
@@ -155,7 +168,10 @@ async function request(text: string, f: typeof fetch): Promise<{ label: string; 
     const res = await f(lookupUrl(text), {
       method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: controller.signal,
     });
-    if (res.status !== 200) return 'http';
+    if (res.status !== 200) {
+      void res.body?.cancel().catch(() => undefined);
+      return 'http';
+    }
     const body = await readBody(res);
     if (body === null) return 'bad-reply';
     return parseReply(body) ?? 'bad-reply';
@@ -168,7 +184,33 @@ async function request(text: string, f: typeof fetch): Promise<{ label: string; 
 
 const defaultLabelForText = async (t: string): Promise<string | null> =>
   (await send<LabelForTextReply>({ t: 'labelForText', text: t })).label;
-
+/** The head fallback with a deadline: null on expiry or error. */
+async function headLabel(labelFor: (t: string) => Promise<string | null>, text: string): Promise<string | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expiry = new Promise<null>((res) => (timer = setTimeout(() => res(null), LABEL_TIMEOUT_MS)));
+  try {
+    const v = await Promise.race([labelFor(text).catch(() => null), expiry]);
+    return typeof v === 'string' ? v : null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+/** Look-ups of this page in flight, by cleaned text: the same text is sent once even when asked twice at once. */
+const inFlight = new Map<string, Promise<CachedHit[] | LookupError>>();
+async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] | LookupError> {
+  const cached = (await readCache()).get(clean);
+  if (cached) return cached.hits;
+  const reply = await request(clean, deps.fetch ?? fetch.bind(globalThis));
+  if (typeof reply === 'string') return reply;
+  const labelFor = deps.labelForText ?? defaultLabelForText;
+  const hits = await Promise.all(reply.map(async ({ label, description }): Promise<CachedHit> => {
+    const topic = (description ? describeLabel(description) : null)
+      ?? (await headLabel(labelFor, description ? `${label} — ${description}` : label));
+    return { label, description, topic };
+  }));
+  await writeCache(clean, { at: (deps.now ?? Date.now)(), hits });
+  return hits;
+}
 /**
  * Looks the text up on Wikidata (after the user confirmed it). The text is cleaned again (cleaning is idempotent);
  * an empty result sends nothing and answers 'bad-reply'. An answer already in the cache is never sent again.
@@ -178,25 +220,16 @@ export async function lookUp(text: string, deps: LookupDeps = {}): Promise<Looku
   try {
     const clean = cleanLookupText(text);
     if (!clean) return { error: 'bad-reply' };
+    let pending = inFlight.get(clean);
+    if (!pending) {
+      pending = fetchHits(clean, deps).finally(() => inFlight.delete(clean));
+      inFlight.set(clean, pending);
+    }
+    const hits = await pending;
+    if (typeof hits === 'string') return { error: hits };
     const groupOf = (topic: string | null): string | null =>
       topic === null ? null : (deps.groups?.find((g) => g.id === topic)?.id ?? null);
-    const withGroups = (hits: CachedHit[]): LookupHit[] =>
-      hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({ ...h, group: groupOf(h.topic) }));
-    const cached = (await readCache())[clean];
-    if (cached) return { hits: withGroups(cached.hits) };
-    const reply = await request(clean, deps.fetch ?? fetch.bind(globalThis));
-    if (typeof reply === 'string') return { error: reply };
-    const labelFor = deps.labelForText ?? defaultLabelForText;
-    const hits: CachedHit[] = [];
-    for (const { label, description } of reply) {
-      let topic = description ? describeLabel(description) : null;
-      if (topic === null) {
-        topic = await labelFor(description ? `${label} — ${description}` : label).catch(() => null);
-      }
-      hits.push({ label, description, topic: typeof topic === 'string' ? topic : null });
-    }
-    await writeCache(clean, { at: (deps.now ?? Date.now)(), hits });
-    return { hits: withGroups(hits) };
+    return { hits: hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({ ...h, group: groupOf(h.topic) })) };
   } catch {
     return { error: 'bad-reply' };
   }

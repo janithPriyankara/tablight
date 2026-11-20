@@ -10,3 +10,7 @@ export function urlScopeError(
     | { urls?: { app: Record<string, number>; appIn?: Record<string, string[]>; lib: Record<string, string[]> } }
     | undefined,
 ): string | null;
+export const LOOKUP_SOURCE: string;
+export const LOOKUP_IMPORTERS: string[];
+export function wikidataMentions(path: string, text: string): string[];
+export function importsOf(path: string, text: string): string[];

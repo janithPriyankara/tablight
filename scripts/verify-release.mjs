@@ -9,7 +9,9 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODEL_FILES, MODEL_ID, ORT_FILES_SHA256 } from './model-manifest.mjs';
-import { BANNED_CODE, URL_LITERAL, cleanUrl, packageOf, urlScopeError } from './release-patterns.mjs';
+import {
+  BANNED_CODE, LOOKUP_IMPORTERS, LOOKUP_SOURCE, URL_LITERAL, cleanUrl, importsOf, packageOf, urlScopeError, wikidataMentions,
+} from './release-patterns.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
 /**
@@ -27,13 +29,6 @@ export const NAMES_LIMIT = 1_500_000;
 const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', 'tabs', 'unlimitedStorage'];
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
-/**
- * The only source file that may name Wikidata's host. The build record attributes each app URL literal to its
- * module, and the source scan below proves no other file in src/ names the host (so it cannot be assembled in
- * another chunk, or reach the service worker, without failing the gate).
- */
-const LOOKUP_SOURCE = 'src/ui/common/lookup.ts';
-const LOOKUP_HOST = /wikidata\.org/i;
 /**
  * http(s):// literals tolerated in shipped JS. Except the look-up API, none is ever fetched: each is a comment, an
  * error-message hint, an XML namespace, or a default that src/offscreen overrides (and the e2e test proves no request
@@ -129,14 +124,53 @@ for (const [entry, urls] of usedEntries) {
   for (const u of urls) console.log(`      ${u}`);
 }
 if (usedEntries.size === 0) console.log('  (none found)');
-// The look-up host may be named in one source file only (comments included), and it must be there.
+// ── the opt-in look-up: who may call it, and where Wikidata may be named ────
+// 1. Importers. The build record lists every module whose import chain reaches LOOKUP_SOURCE (from the module graph,
+//    so a tree-shaken importer still counts). Only LOOKUP_IMPORTERS may import it, nothing in the service worker or the
+//    offscreen document may reach it, and its code may not land in background.js or the offscreen chunk.
+// 2. Mentions. "wikidata" (any case) may appear only in LOOKUP_SOURCE, as a prose word, or as the name list's notice
+//    line. Checked over every file of src/ and public/ (catches split strings like 'www.wikidata' + '.org' and
+//    copies of the URL in JSON, HTML or text assets) and every file of dist/, JS or not (manifest.json may hold it only
+//    in the pinned CSP; a JS chunk only when it carries LOOKUP_SOURCE, whose other modules the source scan covers).
+console.log('\nLook-up (Wikidata) checks:');
 {
-  const named = [];
-  for (const f of await walk(join(root, 'src'))) {
-    if (LOOKUP_HOST.test(await readFile(f, 'utf8'))) named.push(relative(root, f).split('\\').join('/'));
+  const before = errors.length;
+  const lk = record?.lookup;
+  if (record && lk === undefined) fail('build record has no look-up entry; rebuild');
+  if (lk) {
+    const foreign = lk.importers.filter((m) => !LOOKUP_IMPORTERS.includes(m));
+    if (foreign.length) fail(`${LOOKUP_SOURCE} is imported by ${foreign.join(', ')}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
+    const worker = lk.ancestors.filter((m) => /^src\/(background|offscreen)\//.test(m));
+    if (worker.length) fail(`${LOOKUP_SOURCE} is reachable from ${worker.join(', ')}`);
   }
-  if (named.join() !== LOOKUP_SOURCE) fail(`wikidata.org must be named only in ${LOOKUP_SOURCE}; found in: ${named.join(', ') || 'no file'}`);
-  else console.log(`\nLook-up host: named only in ${LOOKUP_SOURCE}`);
+  for (const [name, chunk] of Object.entries(record?.chunks ?? {})) {
+    if (!chunk.appModules) fail(`build record chunk ${name} has no module list; rebuild`);
+    else if (chunk.appModules.includes(LOOKUP_SOURCE) && (name === 'background.js' || /offscreen/.test(name))) {
+      fail(`${LOOKUP_SOURCE} is bundled into ${name}`);
+    }
+  }
+  // A static or dynamic import in the sources, even one the bundler dropped.
+  const sources = [...(await walk(join(root, 'src'))), ...(await walk(join(root, 'public')))];
+  for (const f of sources) {
+    const path = relative(root, f).split('\\').join('/');
+    const text = (await readFile(f)).toString('latin1');
+    for (const where of wikidataMentions(path, text)) fail(`Wikidata named outside ${LOOKUP_SOURCE}: ${where}`);
+    if (/\.[cm]?[jt]sx?$/.test(path) && path !== LOOKUP_SOURCE && importsOf(path, text).includes(LOOKUP_SOURCE.replace(/\.ts$/, ''))
+      && !LOOKUP_IMPORTERS.includes(path)) {
+      fail(`${path} imports ${LOOKUP_SOURCE}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
+    }
+  }
+  const pinnedCsp = JSON.stringify(CSP).slice(1, -1);
+  for (const f of files) {
+    const name = relative(dist, f).split('\\').join('/');
+    let text = (await readFile(f)).toString('latin1');
+    if (name === 'manifest.json') text = text.split(pinnedCsp).join('');
+    if (record?.chunks?.[name]?.appModules?.includes(LOOKUP_SOURCE)) continue;
+    for (const where of wikidataMentions(`dist/${name}`, text)) fail(`Wikidata named in dist outside the look-up chunk: ${where}`);
+  }
+  console.log(errors.length === before
+    ? `  OK: importers ${lk ? lk.importers.join(', ') || '(none)' : '(not built: nothing imports it)'}; allowed: ${LOOKUP_IMPORTERS.join(', ')}`
+    : '  FAILED (see below)');
 }
 // ── hashes: model files and ONNX Runtime files ──────────────────────────────
 // Exactly one model ships (a leftover directory of a previous model would only add megabytes).
