@@ -18,7 +18,7 @@ export const SENSITIVE_TERMS: readonly string[] = [
   // mail and calendar
   'mail', 'inbox', 'calendar',
   // health, money and sign-up gaps
-  'health', 'lab results', 'hiv', 'std', 'abortion', 'doctor', 'pharmacy', 'insurance', 'mortgage', 'loan',
+  'health', 'lab results', 'hiv', 'std', 'abortion', 'pharmacy', 'insurance', 'mortgage', 'loan',
   'credit card', 'debit', 'statement', 'sign up', 'signup', 'register', 'reset', 'security', 'crypto',
 ];
 /**
@@ -39,11 +39,11 @@ export const SENSITIVE_HOST_PATTERNS: readonly RegExp[] = [
 ];
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const termPattern = (t: string): string => esc(t).replace(/[ -]/g, '[\\s-]+');
-// Long single words match inside a word (MyBank, NetBanking); short ones and phrases need word boundaries and may be plural.
-const LONG = SENSITIVE_TERMS.filter((t) => /^[a-z]{4,}$/.test(t));
-const SHORT = SENSITIVE_TERMS.filter((t) => !/^[a-z]{4,}$/.test(t));
+// Only these compound-prone terms match inside a word (MyBank, NetBanking); all others need word boundaries, with plurals.
+const COMPOUND = ['bank', 'banking', 'password', 'login', 'signin', 'invoice', 'payroll', 'payslip', 'checkout', 'paypal'];
+const REST = SENSITIVE_TERMS.filter((t) => !COMPOUND.includes(t));
 const TEXT_SENSITIVE = new RegExp(
-  `(?:${LONG.join('|')})|(?<![a-z0-9])(?:${SHORT.map(termPattern).join('|')})(?:e?s)?(?![a-z0-9])`,
+  `(?:${COMPOUND.join('|')})|(?<![a-z0-9])(?:${REST.map(termPattern).join('|')})(?:e?s)?(?![a-z0-9])`,
   'i',
 );
 const LOCAL_SUFFIX =
@@ -72,10 +72,16 @@ function looksLikePartNumber(tok: string): boolean {
   if (segs.every((x) => /^[0-9a-f]+$/i.test(x))) return false; // dashed hex, such as a UUID
   return segs.every((s) => (s.match(/[A-Za-z]+|\d+/g) ?? []).length - 1 <= 2);
 }
+/** A dashless part number such as STM32F103C8T6: upper-case letters and digits, 2+ leading letters, never hex or a key. */
+function dashlessPart(tok: string): boolean {
+  if (!/^[A-Z]{2}[A-Z0-9]{4,18}$/.test(tok) || /\d{6,}/.test(tok)) return false;
+  if (/^[0-9A-F]+$/.test(tok) || /^(?:AKIA|ASIA)[A-Z0-9]{16}$/.test(tok)) return false;
+  return true;
+}
 /** Drops hex/base64-like runs of 12+ characters, wherever they sit, even with punctuation touching them. */
 function dropTokens(s: string): string {
   return s.replace(/[A-Za-z0-9+/=_-]{12,}/g, (tok) => {
-    if (looksLikePartNumber(tok)) return tok;
+    if (looksLikePartNumber(tok) || dashlessPart(tok)) return tok;
     const letters = /[A-Za-z]/.test(tok);
     const digits = /\d/.test(tok);
     return (letters && digits) || /[+/=_]/.test(tok) || (digits && !letters) ? ' ' : tok;
@@ -89,7 +95,11 @@ function cleanOnce(input: string): string {
   s = s.replace(/\bwww\.\S+/gi, ' ');
   s = s.replace(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:[/?#]\S*)?/gi, ' '); // host names
   s = s.replace(/\+\d[\d\s().-]{7,}\d/g, ' '); // international phones
-  s = s.replace(/\b[A-Z]{2}\d{2}(?:[\s-]?[A-Z0-9]{2,4}){3,}\b/gi, ' '); // IBAN shapes
+  s = s.replace(/\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){2,7}(?:[ -]?[A-Z0-9]{1,3})?\b/g, (m) => {
+    const c = m.replace(/[ -]/g, ''); // an IBAN has 15 to 34 characters, mostly digits
+    return c.length >= 15 && c.length <= 34 && (c.match(/\d/g) ?? []).length >= 10 ? ' ' : m;
+  });
+  s = s.replace(/\b(call|tel|phone|ph)\b([.:]?\s*)\d{3} \d{4}\b/gi, '$1 '); // 3+4 phone next to a phone word
   s = s.replace(/\b\d(?:[\s-]?\d){8,}\b/g, ' '); // grouped card, account and SSN numbers
   s = s.replace(/\(?\b\d{2,4}\)?[-.\s]\d{3,4}[-.]\d{3,4}\b/g, ' ');
   s = s.replace(/\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, ' ');

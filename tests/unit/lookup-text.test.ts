@@ -186,3 +186,34 @@ describe('round 1 review probes', () => {
     }
   });
 });
+
+describe('round 2 review', () => {
+  it.each(['IP68 rated phone case', 'gt86 review', 'HD44780 LCD display module', 'ES2015 features explained',
+    'Dune AB12 part one two three', 'MK11 ultimate edition', 'FM24 tactics guide', 'XC90 recharge hybrid'])('keeps %s', (t) => {
+    expect(cleanLookupText(t)).toBe(t);
+  });
+  it('still removes real IBANs', () => {
+    expect(cleanLookupText('GB82 WEST 1234 5698 7654 32 x')).toBe('x');
+    expect(cleanLookupText('DE89 3704 0044 0532 0130 00 x')).toBe('x');
+    expect(cleanLookupText('NL91ABNA0417164300 x')).toBe('x');
+  });
+  it.each(['Courtney Barnett', 'Mailchimp templates', 'Doctor Who', 'Legally Blonde', 'Patience song'])('allows %s', (t) => {
+    expect(lookupText('https://example.com/x', t)).toEqual({ text: t });
+  });
+  it.each(['MyBank login', 'NetBanking', 'accountant salary', 'Manage your passwords'])('refuses %s', (t) => {
+    expect(lookupText('https://example.com/x', t)).toEqual({ refused: 'sensitive' });
+  });
+  it('keeps dashless part numbers and drops key shapes', () => {
+    expect(cleanLookupText('STM32F103C8T6 datasheet')).toBe('STM32F103C8T6 datasheet');
+    expect(cleanLookupText('TPS62133RGTR buck')).toBe('TPS62133RGTR buck');
+    for (const k of ['sk-proj-AbC123dEf456GhI789', 'ghp_AbC123dEf456GhI789jKl', 'AKIAIOSFODNN7EXAMPLE',
+      'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r', '550e8400-e29b-41d4-a716-446655440000',
+      '9f8e7d6c5b4a3f2e1d0c', 'ABCDEF0123456789ABCD']) {
+      expect(cleanLookupText(`k ${k} x`), k).toBe('k x');
+    }
+  });
+  it('removes a 3+4 phone next to a phone word only', () => {
+    expect(cleanLookupText('call 555 1234 now')).toBe('call now');
+    expect(cleanLookupText('Dune 555 1234')).toBe('Dune 555 1234');
+  });
+});
