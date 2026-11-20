@@ -31,34 +31,51 @@ export function parseId(v: unknown): string {
 // ───────────────────────────── helpers ─────────────────────────────
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
-/** How long teaching waits for the model to embed an item that has no cached vector yet. */
+/** How long a late teaching step waits for the model to embed items that had no cached vector. */
 export const TEACH_EMBED_TIMEOUT_MS = 5_000;
-/**
- * Cached vectors of items (current key, else the pre-upgrade `embKey`). With `embedFn`, classifiable items without
- * one (not embedded yet, e.g. right after a model change emptied the cache) are embedded now, waiting at most
- * TEACH_EMBED_TIMEOUT_MS; items still without a vector are left out.
- */
-async function vectorsOf(db: Db, items: Item[], embedFn?: EmbedFn): Promise<Map<string, number[]>> {
+/** Cached vectors of items (current key, else the pre-upgrade `embKey`); items without one are left out. */
+async function vectorsOf(db: Db, items: Item[]): Promise<Map<string, number[]>> {
   const got = await cachedVectors(db, items);
-  const out = new Map([...got].map(([id, v]) => [id, Array.from(v)]));
-  const missing = items.filter((i) => i.classifiable && !out.has(i.id));
-  if (embedFn && missing.length) {
+  return new Map([...got].map(([id, v]) => [id, Array.from(v)]));
+}
+const teaching = new Set<Promise<void>>();
+/** Resolves once every late teaching step started so far has finished (tests, and nothing else, wait on it). */
+export async function whenTeachingDone(): Promise<void> {
+  while (teaching.size) await Promise.all([...teaching]);
+}
+/**
+ * The late half of teaching, for taught items that had no cached vector (e.g. right after a model change emptied
+ * the cache): the placement and the lesson are already committed; this embeds the texts (waiting at most
+ * TEACH_EMBED_TIMEOUT_MS) and, in a transaction of its own that touches only the group, adds each vector as an
+ * exemplar while its lesson is still there. It never changes where any item is. Never rejects; on a cold or failing
+ * model the lessons alone remain (synced, and learned by the next model migration's rebuild).
+ */
+function teachLater(db: Db, groupId: string, texts: string[], embedFn: EmbedFn | undefined): void {
+  if (!embedFn || !texts.length) return;
+  const run = (async () => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const vecs = await Promise.race([
-        embedFn(missing.map(embedText)),
+        embedFn(texts),
         new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error('timed out')), TEACH_EMBED_TIMEOUT_MS))),
       ]);
-      if (vecs.length === missing.length) missing.forEach((i, k) => out.set(i.id, Array.from(vecs[k]!)));
+      if (vecs.length !== texts.length) return;
+      await db.tx(['groups'], async (s) => {
+        const g = await s.groups.get(groupId);
+        if (!g) return;
+        const lessons = new Set((g.lessons ?? []).map(([t]) => t));
+        const fresh = texts.flatMap((t, k) => (lessons.has(lessonText(t)) ? [Array.from(vecs[k]!)] : []));
+        if (fresh.length) await s.groups.put(fresh.reduce((acc, v) => learn(acc, v), g));
+      });
     } catch {
-      // cold or failing model: these items are taught by their lesson text only (withExemplars)
+      // cold or failing model: the lessons stay without exemplars
     } finally {
       clearTimeout(timer);
     }
-  }
-  return out;
+  })();
+  teaching.add(run);
+  void run.finally(() => teaching.delete(run));
 }
-
 /** An example the user taught: its text always, its vector when there is one. */
 interface Taught { vec?: number[]; text: string }
 /**
@@ -93,7 +110,8 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
-  const vecs = await vectorsOf(db, items, embedFn);
+  const vecs = await vectorsOf(db, items);
+  const late: string[] = [];
   await db.tx(['items', 'groups'], async (s) => {
     const g = await s.groups.get(groupId);
     if (!g) throw new Error('unknown group');
@@ -106,7 +124,10 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
       if (!already && cur.classifiable) taught.push({ vec: vecs.get(cur.id), text: embedText(cur) });
     }
     if (taught.length) await s.groups.put(withExemplars(g, taught));
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });
+  // The move is committed without waiting on the model; items it had no vector for are taught afterwards.
+  teachLater(db, groupId, late, embedFn);
 }
 
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */
@@ -129,12 +150,13 @@ export async function createGroup(db: Db, name: string, ids: string[], embedFn?:
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
-  const vecs = await vectorsOf(db, items, embedFn);
-  return db.tx(['items', 'groups'], async (s) => {
+  const vecs = await vectorsOf(db, items);
+  const taught: Taught[] = items.flatMap((i) => (i.classifiable ? [{ vec: vecs.get(i.id), text: embedText(i) }] : []));
+  const made = await db.tx(['items', 'groups'], async (s) => {
     const all = await s.groups.all();
     assertFreeName(all, clean);
     const base = newUserGroup(clean, all.length);
-    const group = withExemplars(base, items.flatMap((i) => (i.classifiable ? [{ vec: vecs.get(i.id), text: embedText(i) }] : [])));
+    const group = withExemplars(base, taught);
     await s.groups.put(group);
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
@@ -142,6 +164,8 @@ export async function createGroup(db: Db, name: string, ids: string[], embedFn?:
     }
     return group;
   });
+  teachLater(db, made.id, taught.filter((t) => !t.vec).map((t) => t.text), embedFn);
+  return made;
 }
 
 export async function renameGroup(db: Db, id: string, name: string): Promise<void> {
@@ -211,7 +235,8 @@ export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): P
   const g = await mustGroup(db, id);
   if (!g.suggested) throw new Error('not a suggestion');
   const members = (await db.items.all()).filter((i) => i.groupId === id);
-  const vecs = await vectorsOf(db, members, embedFn);
+  const vecs = await vectorsOf(db, members);
+  const late: string[] = [];
   await db.tx(['items', 'groups'], async (s) => {
     const cur = await s.groups.get(id);
     if (!cur?.suggested) throw new Error('not a suggestion');
@@ -225,7 +250,9 @@ export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): P
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;
     await s.groups.put(rest);
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });
+  teachLater(db, id, late, embedFn);
 }
 
 /** Dismisses a suggestion: items return to Unsorted and the cluster is remembered so it is not re-suggested. */

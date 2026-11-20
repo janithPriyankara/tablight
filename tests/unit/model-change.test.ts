@@ -1,7 +1,8 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { moveItems, regroupPreview } from '../../src/background/groups';
+import { moveItems, regroupPreview, whenTeachingDone } from '../../src/background/groups';
+import { growGroups } from '../../src/background/grow';
 import { BACKOFF_MS, EMBED_MODEL_KEY, LEGACY_MODEL, migrateModel } from '../../src/background/model-change';
 import { EMBED_INPUT_VERSION, cachedVectors, embeddingKey, processQueue } from '../../src/background/tab-index';
 import { EMBED_MODEL } from '../../src/classify/model';
@@ -272,13 +273,83 @@ describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () 
     const b = await oldItem();
     expect(await migrateModel(db, fakeEmbed)).toBe(true); // the cache is empty, nothing re-embedded yet
     await moveItems(db, [a.id], 'games', fakeEmbed);
+    await whenTeachingDone();
     let g = (await db.groups.get('games'))!;
     expect(g.exemplars).toEqual([Array.from(newVec(embedText(a)))]);
     expect(g.lessons!.map(([t]) => t)).toEqual([embedText(a)]);
     await moveItems(db, [b.id], 'games', () => Promise.reject(new Error('cold')));
+    await whenTeachingDone();
     g = (await db.groups.get('games'))!;
     expect(g.exemplars).toHaveLength(1); // no vector for b
     expect(g.lessons!.map(([t]) => t)).toEqual([embedText(a), embedText(b)]); // but its lesson is kept (and syncs)
+  });
+  it('a later move wins over an earlier one whose embed is still pending; teaching never moves a tab', async () => {
+    await db.groups.put(group('games'));
+    await db.groups.put(group('news'));
+    const x = await oldItem({ state: 'stashed' });
+    const y = await oldItem({ state: 'stashed' });
+    expect(await migrateModel(db, fakeEmbed)).toBe(true);
+    // x was re-embedded already; y's embed (the model is busy or cold) is held until released.
+    await db.embeddings.put(await embeddingKey(x), newVec(embedText(x)));
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    const slowEmbed = async (texts: string[]) => {
+      await held;
+      return fakeEmbed(texts);
+    };
+    await moveItems(db, [x.id, y.id], 'games', slowEmbed); // returns with the move committed, embed still pending
+    expect((await db.items.get(x.id))!.groupId).toBe('games');
+    await moveItems(db, [x.id], 'news', slowEmbed);
+    const afterB = (await db.items.get(x.id))!;
+    expect(afterB.groupId).toBe('news');
+    release();
+    await whenTeachingDone();
+    const final = (await db.items.get(x.id))!;
+    expect(final).toMatchObject({ groupId: 'news', groupSource: 'user' });
+    expect(final.updatedAt).toBe(afterB.updatedAt); // the News move is the newest stamp: it is what syncs for x
+    expect((await db.items.get(y.id))!.groupId).toBe('games');
+    expect((await db.groups.get('games'))!.exemplars).toContainEqual(Array.from(newVec(embedText(y)))); // y taught late
+  });
+  it("growGroups keeps a quiet re-pick's tabs unstamped; a user move clears the mark", async () => {
+    // Three saved tabs that the migration's re-pick leaves in Unsorted wanting Hardware (a trained group not there).
+    const tabs = [];
+    for (let k = 0; k < 3; k++) tabs.push(await oldItem({ state: 'stashed', groupId: 'news', updatedAt: 700 }));
+    await db.groups.put(group('news'));
+    expect(await migrateModel(db, fakeEmbed)).toBe(true);
+    // The quiet write as processBatch makes it when the pick changes group (the head is not faked here).
+    for (const t of tabs) {
+      const cur = (await db.items.get(t.id))!;
+      await db.items.put({ ...cur, groupId: null, want: 'hardware', quietPick: true });
+    }
+    const grown = await growGroups(db, fakeEmbed);
+    expect(grown.map((g) => g.id)).toEqual(['hardware']);
+    for (const t of tabs) {
+      expect(await db.items.get(t.id)).toMatchObject({ groupId: 'hardware', updatedAt: 700, quietPick: true });
+    }
+    await moveItems(db, [tabs[0]!.id], 'news');
+    const moved = (await db.items.get(tabs[0]!.id))!;
+    expect(moved.quietPick).toBeUndefined();
+    expect(moved.updatedAt).toBeGreaterThan(700);
+  });
+  it('processBatch marks a quiet change of group, keeps the mark while the group stays, and a stamped move drops it', async () => {
+    const item = await oldItem({ state: 'stashed', groupId: 'news', groupSource: 'auto', updatedAt: 500 });
+    const text = embedText(item);
+    await db.groups.put(group('news'));
+    await db.groups.put(group('games', { lessons: [[text, 1]] }));
+    expect(await migrateModel(db, fakeEmbed)).toBe(true);
+    await processQueue(db, fakeEmbed);
+    expect(await db.items.get(item.id)).toMatchObject({ groupId: 'games', updatedAt: 500, quietPick: true });
+    await db.queue.add(item.id); // an ordinary re-run that keeps the group: still the quiet placement
+    await processQueue(db, fakeEmbed);
+    expect(await db.items.get(item.id)).toMatchObject({ groupId: 'games', updatedAt: 500, quietPick: true });
+    const cur = (await db.items.get(item.id))!;
+    await db.items.put({ ...cur, groupId: 'news' }); // as if placed elsewhere; an ordinary pass moves it back, stamped
+    await db.queue.add(item.id);
+    await processQueue(db, fakeEmbed);
+    const after = (await db.items.get(item.id))!;
+    expect(after.groupId).toBe('games');
+    expect(after.updatedAt).toBeGreaterThan(500);
+    expect(after.quietPick).toBeUndefined();
   });
   it('migrates a store marked with another model too', async () => {
     await chrome.storage.local.set({ [EMBED_MODEL_KEY]: 'Xenova/all-MiniLM-L6-v2' });
