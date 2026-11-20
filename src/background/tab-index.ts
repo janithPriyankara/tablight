@@ -522,7 +522,8 @@ export function autoPick(
 export interface PoolTab extends Neighbour { id: string }
 /**
  * Placements that are themselves guesses: they never count as evidence for the neighbour step. A name-step placement
- * ('name') is evidence: an exact whole-title match from the name list, as sure as the head.
+ * ('name') is evidence: an exact match of a search query or a Wikipedia title (or a part-number pattern there), as sure as
+ * the head.
  */
 const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
 /**

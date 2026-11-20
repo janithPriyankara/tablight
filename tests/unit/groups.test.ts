@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
@@ -10,6 +10,7 @@ import {
 } from '../../src/background/tab-index';
 import { cosine, normalize } from '../../src/shared/vec';
 import { HEAD } from '../../src/classify/head';
+import { resetNameIndexForTests } from '../../src/background/names-load';
 import type { Group, Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 const DIM = 384;
@@ -248,6 +249,41 @@ describe('regroup', () => {
       const i = await at({ groupId: 'programming', placedBy: 'neighbour' });
       await moveItems(db, [i.id], 'games');
       expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
+    });
+  });
+  describe('tabs the name step placed', () => {
+    // A Wikipedia title the name list files under TV, with a vector the head is sure is hardware.
+    const hardware = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+    const named = async () => {
+      await db.groups.put(group('tv'));
+      await db.groups.put(group('hardware'));
+      const i = await addItem({
+        url: 'https://en.wikipedia.org/wiki/Breaking_Bad', title: 'Breaking Bad - Wikipedia', groupId: 'tv', placedBy: 'name',
+      });
+      await db.embeddings.put(await embeddingKey(i), hardware);
+      return i;
+    };
+    beforeEach(() => {
+      resetNameIndexForTests();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      resetNameIndexForTests();
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+    it('stay where the name step put them when the name list loads', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('#tv\nbreaking bad\n')));
+      const i = await named();
+      expect(await regroupApply(db)).toBe(0);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'tv', placedBy: 'name' });
+    });
+    it('are left alone when the name list fails to load (the head does not take them over)', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('unreadable'); }));
+      const i = await named();
+      expect(await regroupPreview(db)).toEqual([]);
+      expect(await regroupApply(db)).toBe(0);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'tv', placedBy: 'name' });
     });
   });
   it('leaves items in pending suggestions alone', async () => {

@@ -173,20 +173,18 @@ function genericPart(raw: string): boolean {
   return raw.includes('-') || (raw.match(/\d+/g) ?? []).length >= 2;
 }
 /**
- * Hardware part numbers. On a plain page title (source 'title') they count only on a datasheet or distributor site or
- * a title containing "datasheet" (`opts.title`): elsewhere a title naming a part is as often a shop listing or a news
- * story as a hardware page. On a search query or a Wikipedia title the family patterns always count; the generic
- * manufacturer shape counts on a search query, a datasheet or distributor site, or a "datasheet" title.
+ * Hardware part numbers in a search query or a Wikipedia title (nameLabel reads no plain page title). The family
+ * patterns count on a search query or a Wikipedia title; the generic manufacturer shape counts on a search query, a
+ * datasheet or distributor host, or a title containing "datasheet" (`opts.title`).
  */
 export function partNumberLabel(
   core: string,
   url: string,
-  source: CoreSource,
+  source: Exclude<CoreSource, 'title'>,
   opts: { raw?: string; title?: string } = {},
 ): 'hardware' | null {
   const u = parse(url);
   const datasheet = (u !== null && DATASHEET_HOSTS.test(u.hostname.toLowerCase())) || /datasheet/i.test(opts.title ?? '');
-  if (source === 'title' && !datasheet) return null;
   if (SPECIFIC_PARTS.some((p) => p.test(core))) return 'hardware';
   if (source !== 'search' && !datasheet) return null;
   const raw = (opts.raw ?? core.replace(/ /g, '-')).trim();

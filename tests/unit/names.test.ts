@@ -130,19 +130,23 @@ describe('nameLabel', () => {
   it('recognizes part numbers in searches, on Wikipedia and on datasheet or distributor pages', () => {
     for (const t of ['i7 8700', 'i7-8700K', 'Ryzen 5 5600X', 'RTX 4090', 'ESP32-S3', 'STM32F103C8T6', 'ATmega328P', 'RP2040']) {
       expect(nameLabel(`https://www.google.com/search?q=${encodeURIComponent(t)}`, 'x', null), t).toBe('hardware');
-      expect(partNumberLabel(normName(t), 'https://www.digikey.com/en/products/detail/x', 'title', { raw: t }), t).toBe('hardware');
+      expect(partNumberLabel(normName(t), 'https://www.digikey.com/en/products/detail/x', 'wikipedia', { raw: t }), t).toBe('hardware');
       expect(nameLabel('https://www.digikey.com/en/products/detail/x', `${t} | DigiKey`, null), t).toBeNull();
       expect(nameLabel('https://example.com/post', t, null), t).toBeNull();
     }
     expect(nameLabel('https://en.wikipedia.org/wiki/RP2040', 'RP2040 - Wikipedia', null)).toBe('hardware');
   });
-  it('part numbers on a plain page title count only on datasheet or distributor pages (partNumberLabel)', () => {
+  it('a part number on a plain page title is not read; in a search it counts (partNumberLabel takes no plain title)', () => {
     const amazon = 'Intel Core i7-8700 Processor - Amazon.com';
     expect(nameLabel('https://www.amazon.com/dp/B07598VZR8', amazon, null)).toBeNull();
-    expect(partNumberLabel('i7 8700', 'https://www.amazon.com/dp/B07598VZR8', 'title', { raw: 'i7-8700', title: amazon })).toBeNull();
     expect(nameLabel('https://www.google.com/search?q=i7+8700', 'i7 8700 - Google Search', null)).toBe('hardware');
-    expect(partNumberLabel('acs770kcb 150b', 'https://www.digikey.com/en/products/detail/x', 'title', { raw: 'ACS770KCB-150B' })).toBe('hardware');
-    expect(partNumberLabel('esp32 s3', 'https://example.com/a', 'title', { raw: 'ESP32-S3', title: 'ESP32-S3 datasheet' })).toBe('hardware');
+    // The generic shape on a Wikipedia title counts on a distributor host or a "datasheet" title, and nowhere else.
+    expect(partNumberLabel('acs770kcb 150b', 'https://www.digikey.com/en/products/detail/x', 'wikipedia', { raw: 'ACS770KCB-150B' })).toBe('hardware');
+    expect(partNumberLabel('acs770kcb 150b', 'https://en.wikipedia.org/wiki/X', 'wikipedia', { raw: 'ACS770KCB-150B' })).toBeNull();
+    expect(partNumberLabel('esp32 s3', 'https://en.wikipedia.org/wiki/ESP32', 'wikipedia', { raw: 'ESP32-S3' })).toBe('hardware');
+  });
+  it('a Google search for "rtx 2000" is hardware (the model number is not read as a year)', () => {
+    expect(nameLabel('https://www.google.com/search?q=rtx+2000', 'rtx 2000 - Google Search', null)).toBe('hardware');
   });
   it('the name step reads no plain page title, not even a distributor\'s', () => {
     expect(nameLabel('https://www.digikey.com/en/products/detail/x', 'ACS770KCB-150B | DigiKey', null)).toBeNull();
@@ -152,7 +156,7 @@ describe('nameLabel', () => {
     expect(nameLabel('https://www.google.com/search?q=ACS770KCB-150B', 'x', null)).toBe('hardware');
     expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', null)).toBeNull();
     expect(nameLabel('https://blog.example.com/p', 'ACS770KCB-150B', null)).toBeNull();
-    expect(partNumberLabel('acs770kcb 150b', 'https://blog.example.com/p', 'title', { raw: 'ACS770KCB-150B', title: 'ACS770KCB-150B datasheet' })).toBe('hardware');
+    expect(partNumberLabel('acs770kcb 150b', 'https://blog.example.com/p', 'wikipedia', { raw: 'ACS770KCB-150B', title: 'ACS770KCB-150B datasheet' })).toBe('hardware');
   });
   it('sentences and codes never match', () => {
     expect(nameLabel('https://example.com/a', 'how jack ryan changed spy fiction', idx)).toBeNull();

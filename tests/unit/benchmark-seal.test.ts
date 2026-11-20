@@ -14,8 +14,9 @@ const normUrl = (u: string) => normalizeUrl(u).toLowerCase();
 const SITE_SUFFIX = /\s+[-|—–·•]\s+[^-|—–·•]{1,40}$/u;
 const NEAR_MIN = 8;
 /**
- * Near-duplicate title matches allowed. The benchmark was re-sealed on 2026-11-20, before scoring, without the 22 rows
- * whose near form matched a training or quality title, so none may remain.
+ * Near-duplicate title matches allowed, for both sealed sets. v1 was re-sealed on 2026-11-20, before scoring, without
+ * the 22 rows whose near form matched a training or quality title; v2 was sealed with that leakage already removed.
+ * So none may remain in either.
  */
 const KNOWN_NEAR = 0;
 const nearTitle = (t: string): string =>

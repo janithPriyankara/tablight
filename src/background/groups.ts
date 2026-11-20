@@ -300,7 +300,7 @@ interface Move { itemId: string; from: string | null; to: string | null; want: s
 
 /** What the automatic pipeline would now do with each auto item that has a cached vector. */
 async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; items: Item[] }> {
-  await loadNameIndex(); // the name step runs here too, or a regroup would undo its placements
+  const names = await loadNameIndex(); // the name step runs here too, or a regroup would undo its placements
   const [groups, items] = await Promise.all([db.groups.all(), db.items.all()]);
   const regular = groups.filter((g) => !g.suggested);
   const suggestedIds = new Set(groups.filter((g) => g.suggested).map((g) => g.id));
@@ -311,6 +311,8 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
   const vecs = await cachedVectors(db, candidates);
   const pool = await neighbourPool(db, items, groups);
   for (const i of candidates) {
+    // The list did not load, so the name step is off: tabs it placed stay where it put them.
+    if (names === null && i.placedBy === 'name') continue;
     const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
     const { groupId: to, want, by } = autoPick(i, v, regular, pool, i.id);
