@@ -42,7 +42,7 @@ A name is dropped when:
   gives the bare word to another meaning: "Halo", "Titanic", "The Office" lose; "Metallica", "Nvidia", "The Wire"
   stay), or such a short alias;
 - it is an everyday phrase (every word common) taken from an alias, from an item whose Wikipedia title is
-  bracketed, or from an item below twice its group's bar;
+  bracketed, or (two words) from an item below twice its group's bar;
 - it is the bare title of a bracketed article whose bare title belongs to a person ("Ada Lovelace
   (microarchitecture)");
 - it belongs to a person who is not the primary topic of their own unbracketed Wikipedia title, is one word, or is an

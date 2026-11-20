@@ -230,38 +230,47 @@ for (const g of GROUPS) {
   console.log(`  hardware: ${under.size} classes under NOT_HARDWARE; ${notChip} products of those kinds left out`);
   console.log(`  hardware makers ${classCounts.hwmakers ?? 0}, products ${classCounts.hwproducts ?? 0}`);
 }
-const personDrops = { otherFame: 0 };
-for (const g of PERSONS) {
+const personDrops = { otherFame: 0, split: 0 };
+{
   // One occupation per query: the combined query streams too long and the endpoint cuts it off.
-  const found = new Map();
-  const occs = new Map();
-  for (const occ of Object.keys(g.occ)) {
-    const pattern = `?item wdt:P106 wd:${occ}; wdt:P31 wd:Q5.`;
-    for (const it of await items(pattern, g.bar, g.limit)) found.set(it.id, it);
-    const occRows = await sparql(`SELECT ?item ?occ WHERE {
+  const found = PERSONS.map(() => new Map());
+  const occs = new Map(); // every occupation (P106) of each person found
+  for (const [gi, g] of PERSONS.entries()) {
+    for (const occ of Object.keys(g.occ)) {
+      const pattern = `?item wdt:P106 wd:${occ}; wdt:P31 wd:Q5.`;
+      for (const it of await items(pattern, g.bar, g.limit)) found[gi].set(it.id, it);
+      const occRows = await sparql(`SELECT ?item ?occ WHERE {
   ${pattern}
   ?item wikibase:sitelinks ?sl. FILTER(?sl >= ${g.bar})
   ?item wdt:P106 ?occ.
 }`);
-    for (const r of occRows) {
-      const id = qid(r.item);
-      if (!occs.has(id)) occs.set(id, new Set());
-      occs.get(id).add(qid(r.occ));
+      for (const r of occRows) {
+        const id = qid(r.item);
+        if (!occs.has(id)) occs.set(id, new Set());
+        occs.get(id).add(qid(r.occ));
+      }
     }
   }
-  for (const it of found.values()) {
-    const mine = [...(occs.get(it.id) ?? [])];
-    const domain = mine.filter((o) => o in g.occ).length;
-    const other = mine.filter((o) => o in OTHER_FAME).length;
-    if (domain <= other) {
-      personDrops.otherFame++;
-      continue;
+  // A person goes to the group with strictly the most of their occupations (a basketball player who also recorded an
+  // album is sports), and only when those outnumber their acting/political/business ones.
+  const count = (id, set) => [...(occs.get(id) ?? [])].filter((o) => o in set).length;
+  for (const [gi, g] of PERSONS.entries()) {
+    for (const it of found[gi].values()) {
+      const mine = count(it.id, g.occ);
+      const rival = Math.max(0, ...PERSONS.filter((_, k) => k !== gi).map((o) => count(it.id, o.occ)));
+      if (mine <= rival) {
+        if (gi === 0 || mine === rival) personDrops.split++;
+        continue;
+      }
+      if (mine <= count(it.id, OTHER_FAME)) {
+        personDrops.otherFame++;
+        continue;
+      }
+      add(g.id, g.label, it, { person: true });
     }
-    add(g.id, g.label, it, { person: true });
+    console.log(`  ${g.id}: ${classCounts[g.id] ?? 0} people`);
   }
-  console.log(`  ${g.id}: ${classCounts[g.id] ?? 0} people`);
 }
-
 // ── bracketed titles whose bare title is a person ───────────────────────────
 // "Ada Lovelace (microarchitecture)": the bare words name a person first, so the item may not claim them.
 const BRACKET_TITLE = /\s*\(([^()]+)\)\s*$/;
@@ -324,8 +333,12 @@ function claim(name, e, kind) {
     // ("The Wire" stays; "Halo (franchise)", "The Office (American TV series)" do not).
     if (kind === 'alias') return void drops.singleAlias++;
     if (!primary) return void drops.notPrimary++;
-  } else if (words.every((w) => COMMON.has(w)) && (kind === 'alias' || bracketed || e.sl < 2 * GROUP_BAR[e.group])) {
-    // An everyday phrase ("lost in space", "the other side") only from a well-known item that owns the bare title.
+  } else if (
+    words.every((w) => COMMON.has(w)) &&
+    (kind === 'alias' || bracketed || (coreWords(name).length < 3 && e.sl < 2 * GROUP_BAR[e.group]))
+  ) {
+    // An everyday phrase ("lost in space", "the other side") only from an item that owns the bare title, and a two-word
+    // one ("good time") only from an item at twice its group's bar; longer ones ("doom at your service") are specific.
     return void drops.commonPhrase++;
   }
   let c = claims.get(name);
@@ -397,7 +410,7 @@ await writeFile(OUT, text);
 
 console.log(`\nnames: ${queries} queries (${fetched} fetched, ${queries - fetched} cached); ${entities.size} items`);
 console.log(`  per class group: ${Object.entries(classCounts).map(([k, v]) => `${k} ${v}`).join(', ')}`);
-console.log(`  people dropped for other fame (actor/politician/...): ${personDrops.otherFame}`);
+console.log(`  people dropped: other fame (actor/politician/...) ${personDrops.otherFame}, music/sport tie or other side ${personDrops.split}`);
 console.log(`  names dropped: ${Object.entries(drops).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 console.log(`  per label: ${labels.map((l) => `${l} ${byLabel.get(l).length}`).join(', ')}`);
 console.log(`  SCOWL common words: ${COMMON.size} (sha256 ${scowlSha})`);
