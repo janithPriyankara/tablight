@@ -19,7 +19,7 @@ export const SENSITIVE_TERMS: readonly string[] = [
   'mail', 'inbox', 'calendar',
   // health, money and sign-up gaps
   'health', 'lab results', 'hiv', 'std', 'abortion', 'pharmacy', 'insurance', 'mortgage', 'loan',
-  'credit card', 'debit', 'statement', 'sign up', 'signup', 'register', 'reset', 'security', 'crypto',
+  'credit card', 'debit', 'statement', 'appointment', 'sign up', 'signup', 'register', 'reset', 'security', 'crypto',
 ];
 /**
  * Mail, documents, drive, calendar and cloud-storage hosts are refused whatever the title says. Matched against the
@@ -75,6 +75,7 @@ function looksLikePartNumber(tok: string): boolean {
 /** A dashless part number such as STM32F103C8T6: upper-case letters and digits, 2+ leading letters, never hex or a key. */
 function dashlessPart(tok: string): boolean {
   if (!/^[A-Z]{2}[A-Z0-9]{4,18}$/.test(tok) || /\d{6,}/.test(tok)) return false;
+  if (/^[A-Z2-7]{16,}$/.test(tok)) return false; // Base32 TOTP seed
   if (/^[0-9A-F]+$/.test(tok) || /^(?:AKIA|ASIA)[A-Z0-9]{16}$/.test(tok)) return false;
   return true;
 }
@@ -94,6 +95,8 @@ function cleanOnce(input: string): string {
   s = s.replace(/\w+\s?(?:\(at\)|\[at\])\s?[\w.-]+(?:\s?(?:\(dot\)|\[dot\])\s?\w+)*/gi, ' ');
   s = s.replace(/\bwww\.\S+/gi, ' ');
   s = s.replace(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:[/?#]\S*)?/gi, ' '); // host names
+  // Long tokens go before the number rules, so a token is dropped whole instead of leaving pieces behind.
+  s = dropTokens(s);
   s = s.replace(/\+\d[\d\s().-]{7,}\d/g, ' '); // international phones
   s = s.replace(/\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){2,7}(?:[ -]?[A-Z0-9]{1,3})?\b/g, (m) => {
     const c = m.replace(/[ -]/g, ''); // an IBAN has 15 to 34 characters, mostly digits
@@ -105,8 +108,6 @@ function cleanOnce(input: string): string {
   s = s.replace(/\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, ' ');
   s = s.replace(/\b\d{2,4}[\s.-]\d{3}[\s.-]\d{4}\b/g, ' ');
   s = s.replace(/\b\d{3}[-.]\d{4}\b/g, ' ');
-  // Long tokens go before digit runs, so a hex token is dropped whole instead of leaving its letters behind.
-  s = dropTokens(s);
   s = s.replace(/\d{6,}/g, ' ');
   return s.replace(/\s+/g, ' ').trim();
 }

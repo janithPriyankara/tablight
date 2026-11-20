@@ -217,3 +217,17 @@ describe('round 2 review', () => {
     expect(cleanLookupText('Dune 555 1234')).toBe('Dune 555 1234');
   });
 });
+
+describe('round 3 review', () => {
+  it.each(['JBSWY3DPEHPK3PXP', 'GEZDGNBVGY3TQOJQ', 'KRSXG5CTMVRXEZLU', 'JBSWY3DPEHPK3PXPJBSW'])('drops TOTP seed %s', (k) => {
+    expect(cleanLookupText(`k ${k} x`)).toBe('k x');
+  });
+  it.each(['STM32F103C8T6', 'TPS62133RGTR', 'NRF52840QIAA', 'ESP32S3WROOM1', 'SN74HC595N'])('keeps part %s', (p) => {
+    expect(cleanLookupText(`${p} x`)).toBe(`${p} x`);
+  });
+  it('refuses appointments but not Doctor Who', () => {
+    expect(lookupText('https://example.com/x', 'My doctor appointment notes')).toEqual({ refused: 'sensitive' });
+    expect(lookupText('https://example.com/x', 'Appointments')).toEqual({ refused: 'sensitive' });
+    expect(lookupText('https://example.com/x', 'Doctor Who')).toEqual({ text: 'Doctor Who' });
+  });
+});
