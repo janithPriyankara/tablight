@@ -2,7 +2,7 @@
 // Fails (exit 1) on: manifest permission/CSP/version drift, URL literals in shipped JS that are not
 // allowlisted or not confined to the library they come from, model/ORT hash mismatch, DOM-injection or
 // dynamic-code APIs in app code, a Node-only package in the bundle, a non-allowlisted license among
-// bundled packages, or a package size of 55 MB (55,000,000 bytes) or more (unpacked dist, and the zip
+// bundled packages, a names/names.txt that is not the pinned file or is over 1,500,000 bytes, or a package size of 55 MB (55,000,000 bytes) or more (unpacked dist, and the zip
 // when `--zip <file>` is given).
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -20,6 +20,10 @@ export const SIZE_LIMIT = 55_000_000;
 const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
   "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+/** SHA-256 of public/names/names.txt, the offline Wikidata name list (scripts/names/build.mjs prints it). */
+export const NAMES_SHA256 = '89577ea8b4cf994f07f6b2673c766913aac024f6f91d219c4d681d2a424f136b';
+/** names.txt cap in bytes (design Part 1); tests/unit/names-file.test.ts checks the same. */
+export const NAMES_LIMIT = 1_500_000;
 const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', 'tabs', 'unlimitedStorage'];
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
@@ -143,6 +147,16 @@ for (const f of ORT_FILES) {
   } catch {
     fail(`ORT file missing (dist/ort/${f} or node_modules/onnxruntime-web/dist/${f}); run "npm ci && npm run prepare:assets"`);
   }
+}
+// ── name list: pinned like the model, and capped ────────────────────────────
+try {
+  const names = await readFile(join(dist, 'names', 'names.txt'));
+  const actual = sha256(names);
+  console.log(`\nName list: dist/names/names.txt ${names.length} bytes (limit ${NAMES_LIMIT}), sha256 ${actual}`);
+  if (actual !== NAMES_SHA256) fail('name list hash mismatch: dist/names/names.txt is not the file pinned in NAMES_SHA256');
+  if (names.length > NAMES_LIMIT) fail(`name list is ${names.length} bytes (limit ${NAMES_LIMIT})`);
+} catch {
+  fail('name list missing from dist (dist/names/names.txt); run "npm run names:build" and rebuild');
 }
 // ── build record: DOM-injection APIs and bundled-package licenses ───────────
 if (record) {

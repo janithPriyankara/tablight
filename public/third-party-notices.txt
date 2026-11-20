@@ -1,7 +1,7 @@
 Tablight - third-party software notices
 
-Tablight includes the open-source software and the AI model listed below. Each is used under its own licence,
-reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.
+Tablight includes the open-source software, the AI model and the data listed below. Each is used under its own
+licence, reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.
 
 ==============================================================================
 tablight/bge-small-tabs-v1 (AI model)
@@ -28,6 +28,16 @@ THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRI
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
+
+==============================================================================
+Wikidata (name list, names/names.txt)
+Licence: CC0 1.0 Universal (public domain dedication)
+Source: https://www.wikidata.org
+==============================================================================
+
+The offline name list (names of well-known films, series, games, bands, albums, books, cars, sports clubs,
+hardware and their makers) was built from Wikidata. Wikidata's structured data is available under the
+Creative Commons CC0 1.0 Universal Public Domain Dedication: https://creativecommons.org/publicdomain/zero/1.0/
 
 ==============================================================================
 @huggingface/jinja 0.5.13
