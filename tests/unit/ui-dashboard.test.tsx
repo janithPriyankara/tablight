@@ -613,13 +613,13 @@ describe('dashboard', () => {
     serve(state({ settings: ANSWERED }));
     render(<Dashboard />);
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tablight' });
-    expect(onboarding.textContent).toMatch(/Nothing leaves your device except saved tabs and taught examples \(if you turn on sync\) and, only when you click Look it up and confirm, the text you saw/);
+    expect(onboarding.textContent).toMatch(/Nothing leaves your device except saved tabs and taught examples \(synced through your browser account while sync is on\) and, only when you click Look it up and confirm, the text you saw/);
     act(() => {
       location.hash = '#view=settings&tab=privacy';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     const privacy = await screen.findByRole('region', { name: 'Privacy' });
-    expect(privacy.textContent).toMatch(/except saved tabs and taught examples \(if you turn on sync\) and, only when you click\s+Look it up and confirm, the text you saw/);
+    expect(privacy.textContent).toMatch(/except saved tabs and taught examples \(synced through your browser account while sync is on\) and, only when you click\s+Look it up and confirm, the text you saw/);
   });
   it('Undo works while another action is still running', async () => {
     let release!: () => void;
