@@ -1,13 +1,7 @@
 // The offline name matcher: whole-core lookups of a tab's search query or title in a bundled name list, plus explicit
 // hardware part-number patterns. Pure; no chrome APIs.
-/** What a name in the list stands for: its label id, and whether it is a person (a musician or an athlete). */
-export interface NameEntry {
-  label: string;
-  /** Matched only on a search query or a Wikipedia title, never on a page title (a colleague's profile page). */
-  person: boolean;
-}
-/** Normalized name -> its entry. */
-export type NameIndex = ReadonlyMap<string, NameEntry>;
+/** Normalized name -> label id. */
+export type NameIndex = ReadonlyMap<string, string>;
 export type CoreSource = 'search' | 'wikipedia' | 'title';
 /** Lowercase, diacritics stripped, anything that is not a letter or digit becomes a space, collapsed and trimmed. */
 export function normName(s: string): string {
@@ -18,23 +12,19 @@ export function normName(s: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 }
-const PERSON_SUFFIX = '.person';
 /**
  * `#<label>` section lines, then one normalized name per line; blank lines are ignored. First section wins a repeat.
- * A `#<label>.person` section holds people filed under `<label>` (scripts/names/build.mjs writes music and sports ones).
+ * A `#<label>.person` section (people, written by scripts/names/build.mjs for music and sports) reads as `<label>`:
+ * every list name matches the same way (nameLabel), so the distinction is not needed here.
  */
 export function parseNames(text: string): NameIndex {
-  const out = new Map<string, NameEntry>();
-  let entry: NameEntry | null = null;
+  const out = new Map<string, string>();
+  let label = '';
   for (const line of text.split(/\r?\n/)) {
     const t = line.trim();
     if (!t) continue;
-    if (t.startsWith('#')) {
-      const h = t.slice(1).trim();
-      const person = h.endsWith(PERSON_SUFFIX);
-      const label = person ? h.slice(0, -PERSON_SUFFIX.length) : h;
-      entry = label ? { label, person } : null;
-    } else if (entry && !out.has(t)) out.set(t, entry);
+    if (t.startsWith('#')) label = t.slice(1).trim().replace(/\.person$/, '');
+    else if (label && !out.has(t)) out.set(t, label);
   }
   return out;
 }
@@ -204,21 +194,20 @@ export function partNumberLabel(
 }
 /**
  * Wikipedia disambiguator, then part-number patterns, then an exact whole-core lookup (also without its own "the ").
- * A person's name counts only on a search query or a Wikipedia title: on any other page the title is more likely
- * someone's profile ("David Silva | LinkedIn") than a topic.
+ * The list lookup counts only on a search query or a Wikipedia title, never on any other page's title: there a bare
+ * name is as likely someone's profile ("David Silva | LinkedIn") or an unrelated page as the topic, and on the blind
+ * sets plain-title matches only added wrong placements. Part numbers keep counting on titles.
  */
 export function nameLabel(url: string, title: string, index: NameIndex | null): string | null {
   const wiki = wikiDisambig(url, title);
   if (wiki) return wiki;
   if (hasWikiBracket(url, title)) return null; // an unmapped disambiguator ("Mercury (element)") is not the bare name
-
   const c = tabCore(url, title);
   if (!c) return null;
   const part = partNumberLabel(c.core, url, c.source, { raw: c.raw, title });
   if (part) return part;
-  if (!index) return null;
-  const ok = (e: NameEntry | undefined): string | null => (e && (!e.person || c.source !== 'title') ? e.label : null);
+  if (!index || c.source === 'title') return null;
   const hit = index.get(c.core);
-  if (hit) return ok(hit);
-  return c.core.startsWith('the ') ? ok(index.get(c.core.slice(4))) : null;
+  if (hit) return hit;
+  return c.core.startsWith('the ') ? (index.get(c.core.slice(4)) ?? null) : null;
 }

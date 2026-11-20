@@ -23,7 +23,7 @@ describe('loadNameIndex', () => {
     expect(b).toBe(a);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith('chrome-extension://me/names/names.txt');
-    expect(currentNameIndex()?.get('breaking bad')).toEqual({ label: 'tv', person: false });
+    expect(currentNameIndex()?.get('breaking bad')).toBe('tv');
   });
   it('resolves null on a failed read and tries again next time', async () => {
     fetchMock.mockRejectedValueOnce(new Error('gone')).mockResolvedValueOnce(new Response('', { status: 404 }));
@@ -31,7 +31,7 @@ describe('loadNameIndex', () => {
     expect(await loadNameIndex()).toBeNull();
     expect(currentNameIndex()).toBeNull();
     fetchMock.mockResolvedValueOnce(new Response('#games\nelden ring\n'));
-    expect((await loadNameIndex())?.get('elden ring')?.label).toBe('games');
+    expect((await loadNameIndex())?.get('elden ring')).toBe('games');
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
   it('resolves null without throwing when the runtime is missing', async () => {

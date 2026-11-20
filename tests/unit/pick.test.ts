@@ -116,9 +116,12 @@ describe('pickGroup name step', () => {
   it('name step sets want when the group is missing', () => {
     setNameIndex(names);
     expect(pickGroup(SEARCH, vec(5), [group('hardware')], head)).toEqual({ groupId: null, want: 'tv', by: null });
-    // A YouTube video still parks in Videos, wanting the named topic.
-    const yt = { url: 'https://www.youtube.com/watch?v=x', title: 'Breaking Bad - YouTube' };
-    expect(pickGroup(yt, vec(5), [group('videos')], head)).toEqual({ groupId: 'videos', want: 'tv', by: 'videos' });
+    // A YouTube video still parks in Videos, wanting the named topic (a part number: list names need a search).
+    const yt = { url: 'https://www.youtube.com/watch?v=x', title: 'RTX 4090 - YouTube' };
+    expect(pickGroup(yt, vec(5), [group('videos')], head)).toEqual({ groupId: 'videos', want: 'hardware', by: 'videos' });
+    // The list never names a plain page title.
+    const page = { url: 'https://example.com/bb', title: 'Breaking Bad' };
+    expect(pickGroup(page, vec(5), [group('tv')], head)).toEqual({ groupId: null, want: null, by: null });
   });
   it('lets the head place a tab whose named group is missing', () => {
     setNameIndex(names);
@@ -131,8 +134,8 @@ describe('pickGroup name step', () => {
   });
   it('rule beats name', () => {
     setNameIndex(names);
-    const netflix = { url: 'https://www.netflix.com/title/123', title: 'Foo Bar | Netflix' };
-    expect(pickGroup(netflix, vec(0), [group('tv'), group('movies')], head)).toEqual({ groupId: 'tv', want: null, by: 'rule' });
+    const netflix = { url: 'https://www.netflix.com/title/123', title: 'RTX 4090 | Netflix' };
+    expect(pickGroup(netflix, vec(0), [group('tv'), group('hardware')], head)).toEqual({ groupId: 'tv', want: null, by: 'rule' });
   });
   it('pickGroup without names loaded', () => {
     setNameIndex(null);

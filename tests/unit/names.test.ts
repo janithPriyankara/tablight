@@ -3,16 +3,16 @@ import { nameLabel, normName, parseNames, partNumberLabel, tabCore } from '../..
 const idx = parseNames('#tv\njack ryan\n#movies\nthe admiral\n\n#hardware\nnvidia\n');
 describe('parseNames / normName', () => {
   it('reads sections and ignores blank lines', () => {
-    expect(idx.get('jack ryan')).toEqual({ label: 'tv', person: false });
-    expect(idx.get('the admiral')).toEqual({ label: 'movies', person: false });
-    expect(idx.get('nvidia')).toEqual({ label: 'hardware', person: false });
+    expect(idx.get('jack ryan')).toBe('tv');
+    expect(idx.get('the admiral')).toBe('movies');
+    expect(idx.get('nvidia')).toBe('hardware');
     expect(idx.size).toBe(3);
   });
-  it('reads `#<label>.person` sections as people of that label', () => {
+  it('reads `#<label>.person` sections as that label', () => {
     const i = parseNames('#sports\nreal madrid\n#sports.person\ndavid silva\n#music.person\nbob dylan\n');
-    expect(i.get('real madrid')).toEqual({ label: 'sports', person: false });
-    expect(i.get('david silva')).toEqual({ label: 'sports', person: true });
-    expect(i.get('bob dylan')).toEqual({ label: 'music', person: true });
+    expect(i.get('real madrid')).toBe('sports');
+    expect(i.get('david silva')).toBe('sports');
+    expect(i.get('bob dylan')).toBe('music');
   });
   it('normalizes case, diacritics and punctuation', () => {
     expect(normName('  Amélie: The  Movie! ')).toBe('amelie the movie');
@@ -43,7 +43,8 @@ describe('store and listing suffixes', () => {
   it('strips " on Steam" like a site suffix', () => {
     expect(tabCore('https://store.steampowered.com/app/1086940/', "Baldur's Gate 3 on Steam")).toMatchObject({ core: 'baldur s gate 3', source: 'title' });
     expect(tabCore('https://store.steampowered.com/app/1245620/', 'Save 40% on ELDEN RING on Steam')?.core).toBe('elden ring');
-    expect(nameLabel('https://store.steampowered.com/app/1086940/', "Baldur's Gate 3 on Steam", parseNames('#games\nbaldur s gate 3\n'))).toBe('games');
+    // A Steam page title is a plain title: the list does not match it (the store rule files Steam app pages).
+    expect(nameLabel('https://store.steampowered.com/app/1086940/', "Baldur's Gate 3 on Steam", parseNames('#games\nbaldur s gate 3\n'))).toBeNull();
   });
   it('strips a trailing bracketed year', () => {
     expect(tabCore('https://www.imdb.com/title/tt15398776/', 'Oppenheimer (2023) - IMDb')?.core).toBe('oppenheimer');
@@ -53,7 +54,7 @@ describe('store and listing suffixes', () => {
     expect(tabCore('https://example.com/a', 'Oppenheimer (director’s cut)')?.core).toBe('oppenheimer director s cut');
   });
 });
-describe('people', () => {
+describe('list names match only searches and Wikipedia', () => {
   const people = parseNames('#sports.person\ndavid silva\n#music\nmetallica\n');
   it('never match on a plain page title', () => {
     expect(nameLabel('https://www.linkedin.com/in/david-silva-123', 'David Silva | LinkedIn', people)).toBeNull();
@@ -63,9 +64,15 @@ describe('people', () => {
     expect(nameLabel('https://www.google.com/search?q=david+silva', 'david silva - Google Search', people)).toBe('sports');
     expect(nameLabel('https://en.wikipedia.org/wiki/David_Silva', 'David Silva - Wikipedia', people)).toBe('sports');
   });
-  it('a plain title of a name that is not a person still matches', () => {
-    expect(nameLabel('https://example.com/band', 'Metallica', people)).toBe('music');
-    expect(nameLabel('https://example.com/band', 'Metallica | Official Site', people)).toBe('music');
+  it('a plain title of a name that is not a person does not match either; a search for it does', () => {
+    expect(nameLabel('https://example.com/band', 'Metallica', people)).toBeNull();
+    expect(nameLabel('https://example.com/band', 'Metallica | Official Site', people)).toBeNull();
+    expect(nameLabel('https://www.google.com/search?q=metallica', 'metallica - Google Search', people)).toBe('music');
+    expect(nameLabel('https://en.wikipedia.org/wiki/Metallica', 'Metallica - Wikipedia', people)).toBe('music');
+  });
+  it('a part-number title still matches', () => {
+    expect(nameLabel('https://example.com/review', 'RTX 4090', people)).toBe('hardware');
+    expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', people)).toBe('hardware');
   });
 });
 describe('titles that look like noise', () => {
@@ -115,8 +122,9 @@ describe('nameLabel', () => {
     expect(w('Foo (band)')).toBe('music');
     expect(w('Foo (2019 film)')).toBe('movies');
   });
-  it('matches a plain title exactly', () => {
-    expect(nameLabel('https://www.nvidia.com/', 'NVIDIA', idx)).toBe('hardware');
+  it('matches a plain title never, a Wikipedia title exactly', () => {
+    expect(nameLabel('https://www.nvidia.com/', 'NVIDIA', idx)).toBeNull();
+    expect(nameLabel('https://en.wikipedia.org/wiki/Nvidia', 'Nvidia - Wikipedia', idx)).toBe('hardware');
   });
   it('recognizes part numbers anywhere', () => {
     for (const t of ['i7 8700', 'i7-8700K', 'Ryzen 5 5600X', 'RTX 4090', 'ESP32-S3', 'STM32F103C8T6', 'ATmega328P', 'RP2040']) {
