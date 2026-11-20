@@ -530,11 +530,13 @@ for (const { name, e, kind, owns, lookups } of candidates) {
   const bar = GROUP_BAR[e.group];
   // Any label (bracketed article or not) is a real claim; only an alias is weak (see the owner exception below).
   const named = kind === 'label';
-  if (!prev) c.set(e.labelId, { sl: e.sl, rel: e.sl / bar, owns, named });
+  const person = !!e.person;
+  if (!prev) c.set(e.labelId, { sl: e.sl, rel: e.sl / bar, owns, named, person });
   else {
     if (e.sl > prev.sl) Object.assign(prev, { sl: e.sl, rel: e.sl / bar });
     prev.owns ||= owns;
     prev.named ||= named;
+    prev.person ||= person; // a name any person of this label has is matched like a person's (searches only)
   }
 }
 const kept = [];
@@ -549,7 +551,9 @@ for (const [name, c] of claims) {
     drops.ambiguous++;
     continue;
   }
-  kept.push({ name, label: best[0], sl: best[1].sl, rel: best[1].rel });
+  // People go in their own section ("#music.person", "#sports.person"): the app matches them only on a search query or
+  // a Wikipedia title, never on a page title (a colleague's profile page is not a topic).
+  kept.push({ name, label: best[1].person ? `${best[0]}.person` : best[0], sl: best[1].sl, rel: best[1].rel });
 }
 // Fill the budget best-known first (sitelinks relative to the group's bar, so small fields are not crowded out).
 kept.sort((a, b) => b.rel - a.rel || b.sl - a.sl || (a.name < b.name ? -1 : 1));

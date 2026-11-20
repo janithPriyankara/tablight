@@ -1,7 +1,13 @@
 // The offline name matcher: whole-core lookups of a tab's search query or title in a bundled name list, plus explicit
 // hardware part-number patterns. Pure; no chrome APIs.
-/** Normalized name -> label id. */
-export type NameIndex = ReadonlyMap<string, string>;
+/** What a name in the list stands for: its label id, and whether it is a person (a musician or an athlete). */
+export interface NameEntry {
+  label: string;
+  /** Matched only on a search query or a Wikipedia title, never on a page title (a colleague's profile page). */
+  person: boolean;
+}
+/** Normalized name -> its entry. */
+export type NameIndex = ReadonlyMap<string, NameEntry>;
 export type CoreSource = 'search' | 'wikipedia' | 'title';
 /** Lowercase, diacritics stripped, anything that is not a letter or digit becomes a space, collapsed and trimmed. */
 export function normName(s: string): string {
@@ -12,17 +18,34 @@ export function normName(s: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 }
-/** `#<label>` section lines, then one normalized name per line; blank lines are ignored. First section wins a repeat. */
+const PERSON_SUFFIX = '.person';
+/**
+ * `#<label>` section lines, then one normalized name per line; blank lines are ignored. First section wins a repeat.
+ * A `#<label>.person` section holds people filed under `<label>` (scripts/names/build.mjs writes music and sports ones).
+ */
 export function parseNames(text: string): NameIndex {
-  const out = new Map<string, string>();
-  let label = '';
+  const out = new Map<string, NameEntry>();
+  let entry: NameEntry | null = null;
   for (const line of text.split(/\r?\n/)) {
     const t = line.trim();
     if (!t) continue;
-    if (t.startsWith('#')) label = t.slice(1).trim();
-    else if (label && !out.has(t)) out.set(t, label);
+    if (t.startsWith('#')) {
+      const h = t.slice(1).trim();
+      const person = h.endsWith(PERSON_SUFFIX);
+      const label = person ? h.slice(0, -PERSON_SUFFIX.length) : h;
+      entry = label ? { label, person } : null;
+    } else if (entry && !out.has(t)) out.set(t, entry);
   }
   return out;
+}
+let current: NameIndex | null = null;
+/** Installs the name list the pipeline's name step uses (pickGroup); null switches the step off. */
+export function setNameIndex(i: NameIndex | null): void {
+  current = i;
+}
+/** The installed name list, or null while none is loaded. */
+export function currentNameIndex(): NameIndex | null {
+  return current;
 }
 const SEARCH_PARAM: [RegExp, RegExp, string][] = [
   [/(^|\.)google\.(?:com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/, /^\/search\/?$/, 'q'],
@@ -70,6 +93,11 @@ function stripNoise(s: string): string {
   }
 }
 const SITE_SUFFIX = /\s+[-|—–·•]\s+[^-|—–·•]{1,40}$/u;
+/** Steam store pages: "Baldur's Gate 3 on Steam", also "Save 50% on Baldur's Gate 3 on Steam". */
+const STEAM_SUFFIX = /\s+on Steam$/;
+const STEAM_SALE = /^Save \d{1,3}% on\s+/;
+/** A release year in brackets at the end: "Oppenheimer (2023)", IMDb's "Dark (TV Series 2017–2020)". */
+const YEAR_BRACKET = /\s*\((?:TV (?:Mini[ -])?Series |TV Movie |Video Game |Video )?(?:19|20)\d{2}(?:\s*[–—-]\s*(?:(?:19|20)\d{2})?)?\s*\)$/i;
 const WIKI_SUFFIX = /\s+[-–—]\s+Wikipedia$/i;
 const WIKI_BRACKET = /\s*\(([^()]+)\)\s*$/;
 function isWikipedia(u: URL): boolean {
@@ -127,9 +155,11 @@ export function tabCore(url: string, title: string): { core: string; raw: string
     text = title.replace(WIKI_SUFFIX, '').replace(WIKI_BRACKET, '');
     source = 'wikipedia';
   } else {
-    text = title.trim().replace(SITE_SUFFIX, '');
+    const t = title.trim();
+    text = STEAM_SUFFIX.test(t) ? t.replace(STEAM_SUFFIX, '').replace(STEAM_SALE, '') : t.replace(SITE_SUFFIX, '');
     source = 'title';
   }
+  text = text.trim().replace(YEAR_BRACKET, '');
   const raw = stripNoise(text);
   const core = normName(raw);
   return core ? { core, raw, source } : null;
@@ -172,7 +202,11 @@ export function partNumberLabel(
   const raw = (opts.raw ?? core.replace(/ /g, '-')).trim();
   return genericPart(raw) ? 'hardware' : null;
 }
-/** Wikipedia disambiguator, then part-number patterns, then an exact whole-core lookup (also without its own "the "). */
+/**
+ * Wikipedia disambiguator, then part-number patterns, then an exact whole-core lookup (also without its own "the ").
+ * A person's name counts only on a search query or a Wikipedia title: on any other page the title is more likely
+ * someone's profile ("David Silva | LinkedIn") than a topic.
+ */
 export function nameLabel(url: string, title: string, index: NameIndex | null): string | null {
   const wiki = wikiDisambig(url, title);
   if (wiki) return wiki;
@@ -183,7 +217,8 @@ export function nameLabel(url: string, title: string, index: NameIndex | null): 
   const part = partNumberLabel(c.core, url, c.source, { raw: c.raw, title });
   if (part) return part;
   if (!index) return null;
+  const ok = (e: NameEntry | undefined): string | null => (e && (!e.person || c.source !== 'title') ? e.label : null);
   const hit = index.get(c.core);
-  if (hit) return hit;
-  return c.core.startsWith('the ') ? (index.get(c.core.slice(4)) ?? null) : null;
+  if (hit) return ok(hit);
+  return c.core.startsWith('the ') ? ok(index.get(c.core.slice(4))) : null;
 }

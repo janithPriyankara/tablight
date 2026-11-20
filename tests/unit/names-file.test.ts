@@ -41,9 +41,13 @@ describe('public/names/names.txt', () => {
   })();
   const secs = sections(text);
   const ids = new Set(STARTER_GROUPS.map((g) => g.id));
-  it('uses only starter group ids as section labels, each once', () => {
+  it('uses only starter group ids as section labels, each once (people of music and sports in their own)', () => {
     expect(secs.size).toBeGreaterThan(0);
-    for (const label of secs.keys()) expect(ids.has(label), `unknown label ${label}`).toBe(true);
+    for (const label of secs.keys()) {
+      const base = label.replace(/\.person$/, '');
+      expect(ids.has(base), `unknown label ${label}`).toBe(true);
+      if (base !== label) expect(['music', 'sports'], `people under ${label}`).toContain(base);
+    }
     const headers = text.split('\n').filter((l) => l.startsWith('#'));
     expect(new Set(headers).size).toBe(headers.length);
   });
@@ -80,6 +84,13 @@ describe('public/names/names.txt', () => {
       'dada',
     ];
     expect(probes.filter((w) => all.has(w))).toEqual([]);
+  });
+  it('files people in the person sections', () => {
+    expect(secs.get('sports.person') ?? []).toEqual(expect.arrayContaining(['lionel messi', 'david silva']));
+    expect(secs.get('music.person') ?? []).toEqual(expect.arrayContaining(['bob dylan']));
+    expect(secs.get('sports') ?? []).not.toContain('lionel messi');
+    expect(secs.get('music') ?? []).toEqual(expect.arrayContaining(['metallica']));
+    expect(secs.get('music.person') ?? []).not.toContain('metallica');
   });
   it('still holds well-known names', () => {
     const all = new Set([...secs.values()].flat());

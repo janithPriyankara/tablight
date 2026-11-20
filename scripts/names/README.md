@@ -67,5 +67,8 @@ A name is dropped when:
   the item that owns the bare Wikipedia title keeps it when every other label claims it only by an alias ("The
   Shawshank Redemption" the film over the novella's alias). A rival's label, bracketed or not, goes to the 5x rule
   ("Mortal Kombat" the game against "Mortal Kombat (1995 film)").
+People are written in their own sections, `#music.person` and `#sports.person` (a name that any person of its label
+claims counts as a person's). The app matches those only on a search query or a Wikipedia title, never on a plain
+page title: "David Silva | LinkedIn" is far more likely a colleague than the footballer.
 What survives fills the byte budget (1,450,000, under the 1,500,000 cap) best-known first, ranked by sitelinks
 relative to the group's bar.
