@@ -397,7 +397,9 @@ describe('background index', () => {
     expect(Object.keys(await chrome.storage.sync.get(null))).toEqual(['other-ext-key']);
     // Only a fresh "sync is off" status is written back (the old one, and every other key of ours, is gone).
     const local = await chrome.storage.local.get(null);
-    expect(Object.keys(local).sort()).toEqual(['foreign', 'syncStatus']);
+    // embedModel stays: what is stored afterwards (the re-seeded groups) comes from the bundled model.
+    expect(Object.keys(local).sort()).toEqual(['embedModel', 'foreign', 'syncStatus']);
+    expect(local['embedModel']).toBe((await import('../../src/classify/model')).EMBED_MODEL);
     expect(local['syncStatus']).toEqual({ ok: false, reason: 'disabled', message: 'Sync is turned off', lastSyncAt: null });
     expect((await db.groups.all()).length).toBeGreaterThan(10); // starter groups re-seeded
     await vi.waitFor(async () => {

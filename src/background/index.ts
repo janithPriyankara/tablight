@@ -13,6 +13,7 @@ import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { fillTrainedCentroids, growGroups } from './grow';
 import { applyInterests } from './interests';
+import { markModelCurrent, migrateModel } from './model-change';
 import { findSuspicious } from './suspicious';
 import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
 import { openDashboard } from '../shared/nav';
@@ -112,6 +113,9 @@ async function backfill(db: Db, force: boolean): Promise<void> {
  */
 async function pipeline(db: Db, r: ReconcileResult): Promise<void> {
   try {
+    // After an update that changed the bundled model, nothing is classified until stored vectors are moved to it
+    // (model-change.ts); a failure throws here and the pass is retried like a failed embed.
+    await migrateModel(db, embed);
     await ensureStarterGroups(db);
     await backfill(db, false);
     const written = await processQueue(db);
@@ -181,6 +185,7 @@ async function search(db: Db, req: Extract<Req, { t: 'search' }>): Promise<{ wor
   if (!req.semantic) return { words, meaning: [] };
   const ticket = ++searchTicket;
   try {
+    await migrateModel(db, embed); // the query's vector must never be compared with a previous model's
     const [qVec] = await embed([q]);
     if (!qVec || ticket !== searchTicket) return { words, meaning: [], superseded: true }; // a newer search began
     const seen = new Set(words.map((i) => i.id));
@@ -422,7 +427,10 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'close': out = await closeTabs(db, parseIds(req.ids), { keepOne: req.keepOne === true }); break;
     case 'closeExtras': out = await closeExtras(db); break;
     case 'undo': out = await undo(db, parseId(req.token)); break;
-    case 'regroupPreview': return regroupPreview(db);
+    case 'regroupPreview': {
+      await migrateModel(db, embed); // the bundled head and exemplars must read vectors of the bundled model
+      return regroupPreview(db);
+    }
     case 'sessions': return listSessions(db);
     case 'snapshotNow': {
       const snap = await takeSnapshot(db, Date.now());
@@ -437,7 +445,11 @@ export async function handleRequest(req: Req): Promise<unknown> {
     }
     case 'search': return search(db, req);
     case 'state': return dashboardState(db);
-    case 'regroupApply': out = await regroupApply(db, embed); break; // embed: groups tabs now need can appear
+    case 'regroupApply': {
+      await migrateModel(db, embed);
+      out = await regroupApply(db, embed); // embed: groups tabs now need can appear
+      break;
+    }
     case 'keepTab': {
       const item = await db.items.get(parseId(req.id));
       if (!item || item.tabId === undefined) throw new Error('tab not found');
@@ -617,6 +629,8 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   void getDb()
     .then(async (db) => {
       if (fresh) {
+        // Nothing older than the bundled model is stored on a fresh install: no model migration to run.
+        await markModelCurrent().catch((e: unknown) => console.error('model flag failed', e));
         // Only a real install answers the interests step as fresh (an update keeps every group it has). It is
         // written before the dashboard opens, so the onboarding never reads the step as not fresh.
         await db.settings.set({ interestsFresh: true }).catch((e: unknown) => console.error('interests flag failed', e));
