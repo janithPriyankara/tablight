@@ -21,7 +21,7 @@ import { isBlankTab, isClutterTab } from '../shared/url';
 import { semanticMinFor, semanticSearch, wordSearch } from '../search/search';
 import { HEAD } from '../classify/head';
 import type { SuspiciousTab } from '../shared/clues';
-import type { ChangedMessage, DashboardState, GroupSummary, Item, Settings, Snapshot } from '../shared/types';
+import type { ChangedMessage, DashboardState, GroupSummary, Item, ResetMessage, Settings, Snapshot } from '../shared/types';
 import { applyImport, exportJson, parseImport } from '../io/import-export';
 import {
   LAST_SESSION_KEY, SNAPSHOT_ALARM, SNAPSHOT_PERIOD_MINUTES, listSessions, runStartupCheck, sessionAction, startupCheckDone,
@@ -98,6 +98,18 @@ export function notifyChanged(): void {
       // no receiver: nothing to do
     }
   }, CHANGED_DEBOUNCE_MS);
+}
+/**
+ * Tells open pages that "Delete all data" ran, so a look-up still in flight there does not write its answer back
+ * into the cache that was just removed (the page also removes the key again after its pending writes).
+ */
+function broadcastReset(): void {
+  const msg: ResetMessage = { target: 'ui', t: 'reset' };
+  try {
+    void Promise.resolve(chrome.runtime.sendMessage(msg)).catch(() => undefined);
+  } catch {
+    // no receiver: nothing to do
+  }
 }
 /** Backfill runs at most this often from pipeline passes (kicks and startup run it at once). */
 const BACKFILL_INTERVAL_MS = 5 * 60_000;
@@ -479,6 +491,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     case 'export': return exportJson(db);
     case 'deleteAllData': {
       await deleteAllData(db);
+      broadcastReset();
       await ensureStarterGroups(db).catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e));
       await flushTabEvents(); // re-index the open tabs (nothing was closed)
       break;

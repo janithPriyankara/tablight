@@ -160,3 +160,5 @@ export const LAST_SESSION_KEY = 'lastSession';
 export const LOOKUP_CACHE_KEY = 'lookupCache';
 /** The background's broadcast to open extension pages after data changed (debounced). */
 export interface ChangedMessage { target: 'ui'; t: 'changed' }
+/** The worker's broadcast after "Delete all data": open pages drop what they would still write (the look-up cache). */
+export interface ResetMessage { target: 'ui'; t: 'reset' }

@@ -428,8 +428,11 @@ describe('background index', () => {
       badgeMode: 'alert', mirroredGroups: { 5: 'news' }, lastSession: { snapshotId: 'gone' },
     });
     const openTabs = mock.tabs().length;
+    const sentBefore = mock.broadcasts().length;
     await bg.handleRequest({ t: 'deleteAllData' });
     expect(mock.tabs()).toHaveLength(openTabs); // nothing closed
+    // Open pages hear about it, so a look-up still in flight there does not write its answer back.
+    expect(mock.broadcasts().slice(sentBefore)).toContainEqual({ target: 'ui', t: 'reset' });
     const session = await chrome.storage.session.get(null);
     for (const k of ['suspOpeners', 'suspKept', 'mirroredGroups', 'lastSession']) expect(session[k], k).toBeUndefined();
     // The re-index looks the open windows up again and repaints the badge: only fresh values come back.

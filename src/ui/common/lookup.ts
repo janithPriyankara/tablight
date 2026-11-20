@@ -93,11 +93,18 @@ async function readCache(): Promise<Map<string, CacheEntry>> {
 }
 /** Cache writes of this page, one after another; each merges into what is stored at that moment (other pages too). */
 let writes: Promise<void> = Promise.resolve();
-/** Adds an answer, keeping the newest LOOKUP_CACHE_MAX entries (the oldest are evicted first). */
-function writeCache(text: string, entry: CacheEntry): Promise<void> {
+/**
+ * Bumped by every "Delete all data" broadcast. A look-up remembers the epoch it started in and writes its answer only
+ * if no reset came in the meantime, so an answer that arrives after the reset is shown but never stored.
+ */
+let epoch = 0;
+/** Adds an answer, keeping the newest LOOKUP_CACHE_MAX entries (the oldest are evicted first); skipped after a reset. */
+function writeCache(text: string, entry: CacheEntry, startedIn: number): Promise<void> {
   writes = writes.then(async () => {
     try {
+      if (epoch !== startedIn) return;
       const cache = await readCache();
+      if (epoch !== startedIn) return;
       cache.set(text, entry);
       const kept = [...cache].sort((a, b) => b[1].at - a[1].at).slice(0, LOOKUP_CACHE_MAX);
       const obj: Record<string, CacheEntry> = Object.create(null) as Record<string, CacheEntry>;
@@ -108,6 +115,38 @@ function writeCache(text: string, entry: CacheEntry): Promise<void> {
     }
   });
   return writes;
+}
+/** "Delete all data" ran (the worker's broadcast, from our own extension only). */
+function isResetBroadcast(message: unknown, sender: chrome.runtime.MessageSender | undefined): boolean {
+  if (sender?.id === undefined || sender.id !== chrome.runtime.id) return false;
+  if (typeof message !== 'object' || message === null) return false;
+  const m = message as { target?: unknown; t?: unknown };
+  return m.target === 'ui' && m.t === 'reset';
+}
+/**
+ * After a reset: no look-up in flight may write any more (new epoch), the same text is asked afresh, and the key is
+ * removed again after this page's pending writes (one could have landed between the worker's remove and this message).
+ */
+function onReset(): void {
+  epoch++;
+  inFlight.clear();
+  writes = writes.then(() => chrome.storage.local.remove(LOOKUP_CACHE_KEY)).catch(() => undefined);
+}
+const onMessage = (message: unknown, sender: chrome.runtime.MessageSender): false => {
+  if (isResetBroadcast(message, sender)) onReset();
+  return false;
+};
+/** The runtime.onMessage the reset listener is on (a test installs a fresh chrome; a page has one for its life). */
+let listeningOn: unknown;
+function listenForReset(): void {
+  try {
+    const event = chrome.runtime.onMessage;
+    if (event === listeningOn) return;
+    event.addListener(onMessage);
+    listeningOn = event;
+  } catch {
+    // No runtime (not an extension page): nothing can reset under us.
+  }
 }
 /** Reads at most LOOKUP_MAX_BODY bytes; null when the body is larger. */
 async function readBody(res: Response): Promise<string | null> {
@@ -200,6 +239,7 @@ async function headLabel(labelFor: (t: string) => Promise<string | null>, text: 
 /** Look-ups of this page in flight, by cleaned text: the same text is sent once even when asked twice at once. */
 const inFlight = new Map<string, Promise<CachedHit[] | LookupError>>();
 async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] | LookupError> {
+  const startedIn = epoch;
   const cached = (await readCache()).get(clean);
   if (cached) return cached.hits;
   const reply = await request(clean, deps.fetch ?? fetch.bind(globalThis));
@@ -210,7 +250,7 @@ async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] |
       ?? (await headLabel(labelFor, description ? `${label} — ${description}` : label));
     return { label, description, topic };
   }));
-  await writeCache(clean, { at: (deps.now ?? Date.now)(), hits });
+  if (epoch === startedIn) await writeCache(clean, { at: (deps.now ?? Date.now)(), hits }, startedIn);
   return hits;
 }
 /**
@@ -220,11 +260,15 @@ async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] |
  */
 export async function lookUp(text: string, deps: LookupDeps = {}): Promise<LookupResult> {
   try {
+    listenForReset();
     const clean = cleanLookupText(text);
     if (!clean) return { error: 'bad-reply' };
     let pending = inFlight.get(clean);
     if (!pending) {
-      pending = fetchHits(clean, deps).finally(() => inFlight.delete(clean));
+      const p: Promise<CachedHit[] | LookupError> = fetchHits(clean, deps).finally(() => {
+        if (inFlight.get(clean) === p) inFlight.delete(clean); // a reset may have cleared it and a new look-up begun
+      });
+      pending = p;
       inFlight.set(clean, pending);
     }
     const hits = await pending;
@@ -236,3 +280,5 @@ export async function lookUp(text: string, deps: LookupDeps = {}): Promise<Looku
     return { error: 'bad-reply' };
   }
 }
+
+listenForReset(); // at load, so a page hears a reset even before its first look-up

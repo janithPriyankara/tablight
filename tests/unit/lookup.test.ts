@@ -166,6 +166,61 @@ describe('lookUp cache and concurrency', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+describe('lookUp and "Delete all data"', () => {
+  const reset = () => mock.sendMessage({ target: 'ui', t: 'reset' });
+  const stored = async () => (await chrome.storage.local.get(LOOKUP_CACHE_KEY))[LOOKUP_CACHE_KEY];
+  /** A fetch that answers only when `answer` is called. */
+  function deferredFetch() {
+    let answer!: () => void;
+    const gate = new Promise<void>((res) => (answer = res));
+    const f = fakeFetch(async () => {
+      await gate;
+      return reply({ label: 'Secret Film', description: 'film' });
+    });
+    return { f, answer: () => answer() };
+  }
+  it('an answer that arrives after the reset is shown but never written to the cache', async () => {
+    const { f, answer } = deferredFetch();
+    const p = lookUp('secret text', deps(f));
+    await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(1)); // the look-up is in flight
+    await reset(); // the worker removed lookupCache and told the page
+    answer();
+    expect(await p).toEqual({ hits: [{ label: 'Secret Film', description: 'film', group: null, topic: 'movies' }] });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await stored()).toBeUndefined();
+    expect(await chrome.storage.local.get(null)).toEqual({});
+  });
+  it('a write that landed after the worker removed the key is removed again', async () => {
+    const f = fakeFetch(() => reply({ label: 'X', description: '' }));
+    await lookUp('landed', deps(f));
+    expect(await stored()).toHaveProperty('landed'); // as if written between the worker's remove and the message
+    await reset();
+    await vi.waitFor(async () => expect(await stored()).toBeUndefined());
+  });
+  it('the same text asked after the reset is sent afresh and cached again', async () => {
+    const { f, answer } = deferredFetch();
+    const p = lookUp('secret text', deps(f));
+    await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(1));
+    await reset();
+    const g = fakeFetch(() => reply({ label: 'New', description: '' }));
+    const q = lookUp('secret text', deps(g)); // not joined to the stale look-up
+    answer();
+    await p;
+    expect(await q).toEqual({ hits: [{ label: 'New', description: '', group: null, topic: null }] });
+    expect(g).toHaveBeenCalledTimes(1);
+    expect(await stored()).toEqual({ 'secret text': { at: 1000, hits: [{ label: 'New', description: '', topic: null }] } });
+  });
+  it('ignores a reset message from another extension and other broadcasts', async () => {
+    const { f, answer } = deferredFetch();
+    const p = lookUp('kept text', deps(f));
+    await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(1));
+    await mock.sendMessage({ target: 'ui', t: 'reset' }, { id: 'other-extension' });
+    await mock.sendMessage({ target: 'ui', t: 'changed' });
+    answer();
+    await p;
+    expect(await stored()).toHaveProperty('kept text');
+  });
+});
 describe('untrusted reply', () => {
   it('a body that stalls after the headers is a timeout', async () => {
     vi.useFakeTimers();
