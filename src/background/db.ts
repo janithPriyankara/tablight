@@ -11,7 +11,8 @@ export type StoreName =
   | 'items' | 'groups' | 'embeddings' | 'queue' | 'snapshots' | 'tombstones' | 'stashBackups' | 'settings';
 const MAX_STASH_BACKUPS = 3;
 const SETTINGS_KEY = 'main';
-interface QueueEntry { itemId: string; addedAt: number; attempts?: number }
+/** `quiet`: queued by the model migration; a changed automatic placement is written without an updatedAt bump. */
+interface QueueEntry { itemId: string; addedAt: number; attempts?: number; quiet?: true }
 interface Tombstone { id: string; deletedAt: number }
 interface StashBackup { takenAt: number; items: Item[] }
 export interface StoreApis {
@@ -37,9 +38,14 @@ export interface StoreApis {
     keys(): Promise<string[]>;
     /** Reads many vectors in one transaction; missing keys are absent from the map. */
     getMany(keys: string[]): Promise<Map<string, Float32Array>>;
+    /** Deletes every cached vector. */
+    clear(): Promise<void>;
   };
   queue: {
-    add(itemId: string): Promise<void>;
+    /** Queues an item (a no-op when it is already queued; an existing entry keeps its own `quiet`). */
+    add(itemId: string, opts?: { quiet?: boolean }): Promise<void>;
+    /** The ids among `ids` whose entries are `quiet`. */
+    quiet(ids: string[]): Promise<Set<string>>;
     take(n: number): Promise<string[]>;
     remove(ids: string[]): Promise<void>;
     size(): Promise<number>;
@@ -116,14 +122,22 @@ function buildApis(scope: Scope, nextAddedAt: () => number): StoreApis {
           });
           return out;
         }),
+      clear: () => one('embeddings', (tx) => tx.objectStore('embeddings').clear()),
     },
     queue: {
-      add: (itemId) =>
+      add: (itemId, opts) =>
         one('queue', async (tx) => {
           const store = tx.objectStore('queue');
           if ((await store.getKey(itemId)) !== undefined) return;
-          const entry: QueueEntry = { itemId, addedAt: nextAddedAt() };
+          const entry: QueueEntry = { itemId, addedAt: nextAddedAt(), ...(opts?.quiet ? { quiet: true as const } : {}) };
           await store.put(entry);
+        }),
+      quiet: (ids) =>
+        one('queue', async (tx) => {
+          const store = tx.objectStore('queue');
+          const out = new Set<string>();
+          for (const id of ids) if (((await store.get(id)) as QueueEntry | undefined)?.quiet) out.add(id);
+          return out;
         }),
       take: (n) =>
         one('queue', async (tx) => {

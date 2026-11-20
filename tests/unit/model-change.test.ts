@@ -2,11 +2,12 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import { moveItems, regroupPreview } from '../../src/background/groups';
-import { EMBED_MODEL_KEY, LEGACY_MODEL, migrateModel } from '../../src/background/model-change';
+import { BACKOFF_MS, EMBED_MODEL_KEY, LEGACY_MODEL, migrateModel } from '../../src/background/model-change';
 import { EMBED_INPUT_VERSION, cachedVectors, embeddingKey, processQueue } from '../../src/background/tab-index';
 import { EMBED_MODEL } from '../../src/classify/model';
 import { STARTER_GROUPS } from '../../src/classify/seeds';
 import { sha1hex } from '../../src/shared/hash';
+import { normalize } from '../../src/shared/vec';
 import { embedText } from '../../src/shared/url';
 import type { Group, Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -78,6 +79,9 @@ async function oldItem(over: Partial<Item> = {}): Promise<Item> {
 }
 
 beforeEach(async () => {
+  // Only the clock is faked: each test starts an hour later, past any backoff an earlier test left behind.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(Date.UTC(2026, 10, 20) + n * 3_600_000);
   db = await openDb(`model-change-${n++}`);
   mock = installChromeMock();
   embedded = [];
@@ -86,7 +90,10 @@ beforeEach(async () => {
   watch.withOld = 0;
   watch.mixed = 0;
 });
-afterEach(() => mock.uninstall());
+afterEach(() => {
+  mock.uninstall();
+  vi.useRealTimers();
+});
 
 describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () => {
   it('re-embeds every item under the new model id and rebuilds exemplars from lessons, with no cross-model cosine', async () => {
@@ -136,8 +143,16 @@ describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () 
     expect(news.centroid![DIM - 1]).toBe(0);
     expect(embedded).toEqual(expect.arrayContaining(STARTER_GROUPS.find((g) => g.id === 'news')!.seeds));
     // A user group with no lessons, and a suggestion: nothing to rebuild from.
-    expect((await db.groups.get('user-x'))).toMatchObject({ exemplars: [], centroid: null });
-    expect((await db.groups.get('suggested-1'))).toMatchObject({ exemplars: [], centroid: null, suggested: true });
+    // A group with no lessons and no seeds gets its name's vector (as sync builds such groups).
+    expect((await db.groups.get('user-x'))).toMatchObject({ exemplars: [], centroid: normalize(Array.from(newVec('user-x'))) });
+    // A suggestion is dissolved: gone, its member back in Unsorted, nothing recorded as dismissed.
+    expect(await db.groups.get('suggested-1')).toBeUndefined();
+    expect((await db.items.get(items[3]!.id))!.groupId).toBeNull();
+    expect(await chrome.storage.local.get('dismissedSuggestions')).toEqual({});
+    // Queue order: user-placed tabs first, saved tabs last.
+    const queued = await db.queue.take(100);
+    expect(queued.slice(0, 2).sort()).toEqual([items[0]!.id, items[1]!.id].sort());
+    expect(queued.at(-1)).toBe(items[3]!.id);
 
     // The queue re-embeds every item under a key naming the new model.
     embedded = [];
@@ -187,10 +202,84 @@ describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () 
     expect((await db.items.get(item.id))!.embKey).toBe(item.embKey);
     expect(await db.groups.get('games')).toEqual(g);
     expect(await db.embeddings.keys()).toHaveLength(1);
+    // Within the backoff a call fails at once, without loading the model.
+    embedded = [];
+    await expect(migrateModel(db, fakeEmbed)).rejects.toThrow('offscreen down');
+    expect(embedded).toEqual([]);
+    vi.setSystemTime(Date.now() + BACKOFF_MS);
     expect(await migrateModel(db, fakeEmbed)).toBe(true);
     expect((await db.groups.get('games'))!.exemplars).toEqual([Array.from(newVec('x'))]);
   });
 
+  it('backs off longer after each failure, up to 15 minutes', async () => {
+    await db.groups.put(group('games', { lessons: [['x', 1]] }));
+    const down = () => Promise.reject(new Error('down'));
+    const t0 = Date.now();
+    for (const [k, wait] of [[0, 1], [1, 2], [2, 4], [3, 8], [4, 15], [5, 15]] as const) {
+      await expect(migrateModel(db, down)).rejects.toThrow('down');
+      vi.setSystemTime(Date.now() + wait * 60_000 - 1);
+      await expect(migrateModel(db, fakeEmbed), `failure ${k + 1}`).rejects.toThrow('down'); // still waiting
+      vi.setSystemTime(Date.now() + 1);
+    }
+    expect(Date.now() - t0).toBe((1 + 2 + 4 + 8 + 15 + 15) * 60_000);
+    expect(await migrateModel(db, fakeEmbed)).toBe(true);
+  });
+  it('drops only the exemplar of a lesson whose text will not embed', async () => {
+    await db.groups.put(group('games', { lessons: [['good', 1], ['poison', 2], ['fine', 3]] }));
+    const picky = async (texts: string[]) => {
+      if (texts.includes('poison')) throw new Error('bad text');
+      return fakeEmbed(texts);
+    };
+    expect(await migrateModel(db, picky)).toBe(true);
+    const g = (await db.groups.get('games'))!;
+    expect(g.exemplars).toEqual([Array.from(newVec('good')), Array.from(newVec('fine'))]);
+    expect(g.lessons!.map(([t]) => t)).toEqual(['good', 'poison', 'fine']); // lessons are kept
+  });
+  it('a group created while the lessons are embedded makes the run start again', async () => {
+    await db.groups.put(group('games', { lessons: [['a', 1]] }));
+    let first = true;
+    const racing = async (texts: string[]) => {
+      if (first) {
+        first = false;
+        await db.groups.put(group('user-new', { builtIn: false, exemplars: [Array.from(oldVec(3))], lessons: [['b', 2]] }));
+      }
+      return fakeEmbed(texts);
+    };
+    expect(await migrateModel(db, racing)).toBe(true);
+    expect((await db.groups.get('user-new'))!.exemplars).toEqual([Array.from(newVec('b'))]);
+  });
+  it("writes a saved tab's re-pick locally only: no updatedAt bump, nothing for sync (normal passes still stamp)", async () => {
+    // The old model filed this saved tab under News; the new model's vector matches a Games lesson exactly.
+    const item = await oldItem({ state: 'stashed', groupId: 'news', groupSource: 'auto', updatedAt: 500 });
+    const text = embedText(item);
+    await db.groups.put(group('news'));
+    await db.groups.put(group('games', { lessons: [[text, 1]] }));
+    const syncSet = vi.spyOn(chrome.storage.sync, 'set');
+    expect(await migrateModel(db, fakeEmbed)).toBe(true);
+    expect(await processQueue(db, fakeEmbed)).toBe(1);
+    const after = (await db.items.get(item.id))!;
+    expect(after).toMatchObject({ groupId: 'games', groupSource: 'auto', updatedAt: 500 });
+    expect(syncSet).not.toHaveBeenCalled();
+    // The same change outside the migration (an ordinary queue entry) is stamped as before.
+    await db.items.put({ ...after, groupId: 'news' });
+    await db.queue.add(item.id);
+    expect(await processQueue(db, fakeEmbed)).toBe(1);
+    expect((await db.items.get(item.id))!.updatedAt).toBeGreaterThan(500);
+  });
+  it('a move during the re-embed still teaches: embedded on demand, or by its lesson text alone', async () => {
+    await db.groups.put(group('games'));
+    const a = await oldItem();
+    const b = await oldItem();
+    expect(await migrateModel(db, fakeEmbed)).toBe(true); // the cache is empty, nothing re-embedded yet
+    await moveItems(db, [a.id], 'games', fakeEmbed);
+    let g = (await db.groups.get('games'))!;
+    expect(g.exemplars).toEqual([Array.from(newVec(embedText(a)))]);
+    expect(g.lessons!.map(([t]) => t)).toEqual([embedText(a)]);
+    await moveItems(db, [b.id], 'games', () => Promise.reject(new Error('cold')));
+    g = (await db.groups.get('games'))!;
+    expect(g.exemplars).toHaveLength(1); // no vector for b
+    expect(g.lessons!.map(([t]) => t)).toEqual([embedText(a), embedText(b)]); // but its lesson is kept (and syncs)
+  });
   it('migrates a store marked with another model too', async () => {
     await chrome.storage.local.set({ [EMBED_MODEL_KEY]: 'Xenova/all-MiniLM-L6-v2' });
     await oldItem();

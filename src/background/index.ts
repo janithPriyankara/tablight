@@ -391,8 +391,8 @@ export async function handleRequest(req: Req): Promise<unknown> {
   const db = await getDb();
   let out: unknown;
   switch (req.t) {
-    case 'moveItems': await moveItems(db, parseIds(req.ids), parseId(req.groupId)); break;
-    case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids)); break;
+    case 'moveItems': await moveItems(db, parseIds(req.ids), parseId(req.groupId), embed); break;
+    case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids), embed); break;
     case 'groupRename': {
       const id = parseId(req.id);
       await renameGroup(db, id, parseName(req.name));
@@ -401,7 +401,7 @@ export async function handleRequest(req: Req): Promise<unknown> {
     }
     case 'groupMerge': await mergeGroups(db, parseId(req.from), parseId(req.into)); break;
     case 'groupDelete': await deleteGroup(db, parseId(req.id)); break;
-    case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id)); break;
+    case 'acceptSuggestion': await acceptSuggestion(db, parseId(req.id), embed); break;
     case 'dismissSuggestion': await dismissSuggestion(db, parseId(req.id)); break;
     case 'sleep': {
       const r = await sleepTabs(db, parseIds(req.ids));

@@ -486,11 +486,13 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
   const now = Date.now();
   return db.tx(['items', 'queue'], async (s) => {
     let n = 0;
+    const quiet = await s.queue.quiet(ids);
     for (const id of ids) {
       const cur = await s.items.get(id);
       if (!cur) continue;
       if (cur.groupSource === 'auto') {
-        await s.items.put({ ...withoutPlacedBy(cur), groupId: null, embGaveUpAt: now, updatedAt: cur.groupId === null ? cur.updatedAt : nextStamp(cur.updatedAt) });
+        const same = cur.groupId === null || quiet.has(id);
+        await s.items.put({ ...withoutPlacedBy(cur), groupId: null, embGaveUpAt: now, updatedAt: same ? cur.updatedAt : nextStamp(cur.updatedAt) });
         n++;
       } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
@@ -572,6 +574,8 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
     }
     let written = 0;
     const done = [...drop];
+    // Queued by the model migration (model-change.ts): a re-pick is this device's own business, see below.
+    const quiet = await s.queue.quiet(todo.map((i) => i.id));
     for (const [k, snap] of todo.entries()) {
       const cur = await s.items.get(snap.id);
       if (!cur || !cur.classifiable) {
@@ -594,7 +598,9 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
       void _oldBy;
       // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
       // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
-      const updatedAt = groupId === cur.groupId ? cur.updatedAt : nextStamp(cur.updatedAt);
+      // A re-pick from the model migration is written locally only, like want/placedBy: stamped, it would reach
+      // other devices as a group name and be pinned there as the user's choice (sync applyRemote).
+      const updatedAt = groupId === cur.groupId || quiet.has(cur.id) ? cur.updatedAt : nextStamp(cur.updatedAt);
       // want and placedBy: local-only, no updatedAt bump.
       await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}), ...(by !== null ? { placedBy: by } : {}) });
       done.push(snap.id);
