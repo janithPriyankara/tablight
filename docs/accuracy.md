@@ -1,12 +1,13 @@
 # How accurate is Tablight's grouping?
 
-Measured 2026-11-20 on a sealed benchmark, scored once, with the model and settings that ship
+Measured 2026-11-20 on a sealed benchmark, scored once,[^1] with the model and settings that ship
 (`tablight/bge-small-tabs-v1`, `src/classify/head.json`).
 
 ## The result
 
 Of the tabs Tablight put in a group by itself, **72.5% were in the right group**. It grouped **84.9%** of the
 topical tabs; the rest stayed Unsorted for the user to file.
+The project's target was 90% precision. 72.5% falls short of it.
 
 | | Result |
 |---|---|
@@ -21,25 +22,28 @@ The headline is the strictest of the precision figures. It is the one that match
 dropped into "Shopping" looks just as wrong as a recipe in "Programming".
 
 Grouping by neighbouring tabs made no difference here: the figures with it and without it are identical. With no
-tabs placed by hand, the neighbour step did not fire at its bar on these sessions (see `src/classify/pick.ts`).
+tabs placed by hand, the neighbour step made no difference to any figure on these sessions (see
+`src/classify/pick.ts`). Identical figures cannot show whether it placed a tab in the same group the other steps
+would have chosen anyway.
 
 ## What was measured
 
-- **The benchmark:** 1,057 made-up browser tabs (title and address only), 50–70 each for 20 imagined people with
+- **The benchmark:** 1,057 made-up browser tabs (title and address only), 47–61 each (the brief asked for 50–70) for 20 imagined people with
   their own interests: a line cook, a student pilot, an ICU nurse in Sri Lanka, a Linux sysadmin and so on. The brief asked for
   20–30% YouTube videos per person; 47 tabs (4%) are `other`. The titles are deliberately messy: notification counters,
   Shorts hashtags, search result pages, sign-in pages and some non-English titles. Instructions to the writers:
   [tests/benchmark/BRIEF.md](../tests/benchmark/BRIEF.md).
 - **Labels:** each tab was labelled by its writer and again by an independent labeller who saw only the title and
-  address. They agreed on 81.6% of tabs. An adjudicator settled the rest and marked 171 tabs as fitting either
-  label; those count as right only in the 77.1% figure. Two careful people disagree on about 1 tab in 5, so no
-  grouping can score near 100% strict on this set.
+  address. The writer and the independent labeller agreed on 914 of the original 1,120 tabs (81.6%), before the
+  re-seals below removed 63 of them. An adjudicator settled the rest and marked 171 of the remaining tabs as
+  fitting either label; those count as right only in the 77.1% figure. With labels disagreeing on about 1 tab in 5,
+  no grouping can score near 100% strict on this set.
 - **Sealed before any tuning:** written before fine-tuning began, then never read. Its SHA-256 is pinned in
   [tests/benchmark/SEAL.md](../tests/benchmark/SEAL.md), and a test checks that no title or address in it, nor a
   near-identical title, appears in any training or tuning file. It was re-sealed twice before scoring to remove
   such overlaps: 41 tabs, then 22 more.
-- **Scored once:** with the shipped model and head, after all choices were made. Nothing was changed after seeing
-  the result.
+- **Scored once:**[^1] with the shipped model and head, after all choices were made. Nothing was changed after
+  seeing the result.
 - **How:** each person's tabs are replayed in order through the real pipeline (rules, the trained head, the lower
   YouTube bar, the neighbour step), with every group available and nothing placed by hand. That is a new user's
   first run, before Tablight has learned anything from them. Moving tabs by hand teaches groups and makes later
@@ -60,16 +64,19 @@ Strict recall per label: how many of that label's tabs ended up in its group.
 | programming | 29/45 | pets | 28/31 | realestate | 6/10 |
 | games | 30/45 | jobs | 19/28 | hardware | 8/9 |
 | videos | 24/44 | sports | 20/28 | fashion | 5/7 |
-| | | news | 8/21 | movies 1/2, cars 0/1, anime 1/1 | |
+| | | news | 8/21 | movies | 1/2 |
+| | | | | cars | 0/1 |
+| | | | | anime | 1/1 |
 
-Strongest: tv, pets, travel, hardware, food, photo. Weakest: social, docs, news, design, finance. These are labels
+Strongest: tv, pets, travel, hardware, food, photo. Weakest: social, docs, news, home, design, finance. These are labels
 whose tabs often look like another topic (a design article on a news site, a finance page that reads as shopping).
 
 ## How the model was chosen
 
 The model is BAAI/bge-small-en-v1.5, fine-tuned on Tablight's own synthetic labelled tabs and quantised to int8. On
-the project's other test sets it beats the stock model everywhere: holdout 92.4 vs 90.1, holdout3 94.0 vs 91.7,
-synthetic sessions 75.1 vs 67.7, and level on YouTube topics. The bar set in advance was +2 points on holdout2.
+the project's other test sets it is at or above the stock model on every set: holdout 92.4 vs 90.1, holdout3 94.0
+vs 91.7, synthetic sessions 75.1 vs 67.7, and level on YouTube topics. These sets guided the choice of model, so
+they are not blind; the benchmark above is the independent figure. The bar set in advance was +2 points on holdout2.
 It reached +1.96 (226 of 255 tabs against 221; +2 needed 227), one tab short, and was shipped anyway because no
 set got worse. Details: [docs/superpowers/notes/2026-11-20-finetune.md](superpowers/notes/2026-11-20-finetune.md).
 A public web-archive dataset was tried and dropped because it made the model worse.
@@ -90,12 +97,15 @@ A public web-archive dataset was tried and dropped because it made the model wor
 npm run test:benchmark
 ```
 
-The run is deterministic and prints the figures above. Rerunning shows the same number. Tuning anything against
+The run is deterministic and prints the figures above. Rerunning on the same platform should show the same number;
+int8 ONNX on another CPU or onnxruntime build can differ slightly. Tuning anything against
 the benchmark would turn it into a training set, so a future model needs a new sealed benchmark.
 
 ## Draft store wording (not published)
 
 > Tablight groups your tabs by topic on your own computer. In a blind test on 1,057 made-up tabs from 20 different
-> browsing profiles, about 3 in 4 tabs it grouped by itself landed in the right group. Anything it isn't sure
-> about stays Unsorted for you. Every tab you move teaches it, so it gets better at your own tabs over time.
-> How we measured: docs/accuracy.md.
+> browsing profiles, it grouped 84.9% of the topical tabs by itself, and 72.5% of the tabs it grouped landed in the
+> right group. Anything it isn't sure about stays Unsorted for you. When you move a tab, its new group learns from
+> it. How we measured: docs/accuracy.md.
+[^1]: The scoring command ran twice with identical code: the first run's output was not captured (the test
+    runner's default reporter hid it), so it was run again. Nothing changed between the two runs.

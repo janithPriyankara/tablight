@@ -16,6 +16,8 @@ docs/superpowers/plans/2026-11-20-accuracy.md). Nobody reads its rows; tests pri
   dropped, matched a training or quality title (20 distinct titles, most of them one or two words) were removed.
   1,057 rows remain, 171 with `also`. Second seal: c56d2226c89c98e56ca0b1cac7349cbccbdaf1c5d2de94c03ebb969e3ae4200e.
 - Scoring: **strict** counts only `group` as right; **lenient** also accepts `also`. Both are reported.
+- Scored at the end with the shipped model and head. The scoring command ran twice with identical code because the
+  first run's output was not captured; nothing changed between the two runs (docs/accuracy.md).
 - Labels per group: shopping 122, music 80, learning 77, design 67, finance 51, health 51, other 47,
   programming 45, games 45, videos 44, docs 40, food 32, work 32, science 32, home 32, tv 31, pets 31, jobs 28,
   sports 28, news 21, travel 19, family 18, social 17, ai 14, photo 12, books 11, realestate 10, hardware 9,
