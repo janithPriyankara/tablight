@@ -10,7 +10,8 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODEL_FILES, MODEL_ID, ORT_FILES_SHA256 } from './model-manifest.mjs';
 import {
-  BANNED_CODE, LOOKUP_IMPORTERS, LOOKUP_SOURCE, URL_LITERAL, cleanUrl, importsOf, packageOf, urlScopeError, wikidataMentions,
+  BANNED_CODE, LOOKUP_IMPORTERS, LOOKUP_SOURCE, URL_LITERAL, cleanUrl, importsOf, lookupReexports, packageOf, urlScopeError,
+  wikidataMentions,
 } from './release-patterns.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -136,40 +137,57 @@ console.log('\nLook-up (Wikidata) checks:');
 {
   const before = errors.length;
   const lk = record?.lookup;
-  if (record && lk === undefined) fail('build record has no look-up entry; rebuild');
+  const target = LOOKUP_SOURCE.replace(/\.ts$/, '');
+  if (record && (lk === undefined || lk === null || !Array.isArray(lk.ids))) fail('build record has no look-up entry; rebuild');
+  // The record's path matching must work, or every check below would pass by finding nothing.
+  if (record && !record.chunks?.['background.js']?.appModules?.includes('src/background/index.ts')) {
+    fail('build record path matching is broken: background.js does not list src/background/index.ts; rebuild or fix vite.config.ts');
+  }
+  const lkIds = lk?.ids ?? [];
+  if (lkIds.some((id) => id.split(/[?#]/)[0] !== LOOKUP_SOURCE)) fail(`build record look-up ids do not resolve to ${LOOKUP_SOURCE}: ${lkIds.join(', ')}`);
   if (lk) {
     const foreign = lk.importers.filter((m) => !LOOKUP_IMPORTERS.includes(m));
     if (foreign.length) fail(`${LOOKUP_SOURCE} is imported by ${foreign.join(', ')}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
     const worker = lk.ancestors.filter((m) => /^src\/(background|offscreen)\//.test(m));
     if (worker.length) fail(`${LOOKUP_SOURCE} is reachable from ${worker.join(', ')}`);
   }
+  let inChunks = false;
   for (const [name, chunk] of Object.entries(record?.chunks ?? {})) {
     if (!chunk.appModules) fail(`build record chunk ${name} has no module list; rebuild`);
-    else if (chunk.appModules.includes(LOOKUP_SOURCE) && (name === 'background.js' || /offscreen/.test(name))) {
-      fail(`${LOOKUP_SOURCE} is bundled into ${name}`);
+    else if (chunk.appModules.includes(LOOKUP_SOURCE)) {
+      inChunks = true;
+      if (name === 'background.js' || /offscreen/.test(name)) fail(`${LOOKUP_SOURCE} is bundled into ${name}`);
     }
   }
-  // A static or dynamic import in the sources, even one the bundler dropped.
+  // Sources: mentions, imports outside the allowlist (even ones the bundler dropped) and re-exports by allowed importers.
+  let srcImporters = 0;
   const sources = [...(await walk(join(root, 'src'))), ...(await walk(join(root, 'public')))];
   for (const f of sources) {
     const path = relative(root, f).split('\\').join('/');
     const text = (await readFile(f)).toString('latin1');
     for (const where of wikidataMentions(path, text)) fail(`Wikidata named outside ${LOOKUP_SOURCE}: ${where}`);
-    if (/\.[cm]?[jt]sx?$/.test(path) && path !== LOOKUP_SOURCE && importsOf(path, text).includes(LOOKUP_SOURCE.replace(/\.ts$/, ''))
-      && !LOOKUP_IMPORTERS.includes(path)) {
-      fail(`${path} imports ${LOOKUP_SOURCE}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
-    }
+    if (!/\.[cm]?[jt]sx?$/.test(path) || path === LOOKUP_SOURCE || !importsOf(path, text).includes(target)) continue;
+    srcImporters++;
+    if (!LOOKUP_IMPORTERS.includes(path)) fail(`${path} imports ${LOOKUP_SOURCE}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
+    for (const r of lookupReexports(path, text)) fail(`${path} re-exports from ${LOOKUP_SOURCE}: ${r}`);
   }
+  // Dist: the API URL anywhere means the client shipped.
   const pinnedCsp = JSON.stringify(CSP).slice(1, -1);
+  let urlInDist = false;
   for (const f of files) {
     const name = relative(dist, f).split('\\').join('/');
     let text = (await readFile(f)).toString('latin1');
     if (name === 'manifest.json') text = text.split(pinnedCsp).join('');
+    if (/wikidata\.org\/w\/api\.php/i.test(text)) urlInDist = true;
     if (record?.chunks?.[name]?.appModules?.includes(LOOKUP_SOURCE)) continue;
     for (const where of wikidataMentions(`dist/${name}`, text)) fail(`Wikidata named in dist outside the look-up chunk: ${where}`);
   }
+  // Zero client ids in the record is only believable when nothing ships it and nothing in src imports it.
+  if (record && lkIds.length === 0 && (inChunks || urlInDist || srcImporters > 0)) {
+    fail(`build record lists no ${LOOKUP_SOURCE} module, yet ${inChunks ? 'a chunk carries it' : urlInDist ? 'dist holds its URL' : 'src imports it'}: the importer check cannot run`);
+  }
   console.log(errors.length === before
-    ? `  OK: importers ${lk ? lk.importers.join(', ') || '(none)' : '(not built: nothing imports it)'}; allowed: ${LOOKUP_IMPORTERS.join(', ')}`
+    ? `  OK: ids ${lkIds.join(', ') || '(none: nothing imports it)'}; importers ${lk?.importers?.join(', ') || '(none)'}; allowed: ${LOOKUP_IMPORTERS.join(', ')}`
     : '  FAILED (see below)');
 }
 // ── hashes: model files and ONNX Runtime files ──────────────────────────────

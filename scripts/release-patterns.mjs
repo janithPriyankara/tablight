@@ -57,13 +57,14 @@ const PROSE_WIKIDATA = /(?<![\w./'"`+-])Wikidata(?![\w-]|\.\w|['"`](?!s\b))/g;
 const NOTICE_LINE = 'Source: https://www.wikidata.org';
 /**
  * Lines of `path` (project-relative) that mention Wikidata where they may not. Allowed: anything in LOOKUP_SOURCE;
- * the word in prose (in src/ code only on comment lines); the name list's attribution line in third-party-notices.txt.
+ * the word in prose (in src/ code only on comment lines, except in a LOOKUP_IMPORTERS file, whose UI strings may say
+ * it: the dialog sentence); the name list's attribution line in third-party-notices.txt. A host form is never prose.
  */
 export function wikidataMentions(path, text) {
   if (path === LOOKUP_SOURCE) return [];
   ANY_WIKIDATA.lastIndex = 0;
   if (!ANY_WIKIDATA.test(text)) return [];
-  const code = path.startsWith('src/') && /\.[cm]?[jt]sx?$/.test(path);
+  const code = path.startsWith('src/') && /\.[cm]?[jt]sx?$/.test(path) && !LOOKUP_IMPORTERS.includes(path);
   const notice = /(^|\/)third-party-notices\.txt$/.test(path);
   const bad = [];
   text.split('\n').forEach((line, i) => {
@@ -77,20 +78,63 @@ export function wikidataMentions(path, text) {
   });
   return bad;
 }
+/** The project-relative module (no extension, no query) an import specifier in `path` names; null for a package. */
+function resolveSpec(path, spec) {
+  if (!spec.startsWith('.')) return null;
+  const parts = path.split('/').slice(0, -1);
+  for (const seg of spec.split(/[?#]/)[0].split('/')) {
+    if (seg === '..') parts.pop();
+    else if (seg !== '.' && seg !== '') parts.push(seg);
+  }
+  return parts.join('/').replace(/\.(?:[cm]?[jt]sx?)$/, '');
+}
 /** Project-relative `src/` modules that `text` (the source of `path`) imports, statically, dynamically or re-exported. */
 export function importsOf(path, text) {
   const out = new Set();
   const re = /\b(?:import|export)\s+(?:type\s+)?[^'"`;]*?\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)|\bimport\s*['"]([^'"]+)['"]/g;
-  const dir = path.split('/').slice(0, -1);
   for (const m of text.matchAll(re)) {
-    const spec = m[1] ?? m[2] ?? m[3];
-    if (!spec.startsWith('.')) continue;
-    const parts = [...dir];
-    for (const seg of spec.split('/')) {
-      if (seg === '..') parts.pop();
-      else if (seg !== '.') parts.push(seg);
-    }
-    out.add(parts.join('/').replace(/\.(?:[cm]?[jt]sx?)$/, ''));
+    const r = resolveSpec(path, m[1] ?? m[2] ?? m[3]);
+    if (r) out.add(r);
   }
   return [...out];
+}
+/**
+ * Ways `text` (the source of `path`) passes the look-up client on: `export * from` / `export { … } from` it, or
+ * exporting a binding imported from it (`export { lookUp }`, `export default lookUp`, `export const f = lookUp`).
+ * An allowed importer may call lookUp; it may not hand it to other modules.
+ */
+export function lookupReexports(path, text) {
+  const target = LOOKUP_SOURCE.replace(/\.ts$/, '');
+  const bad = [];
+  for (const m of text.matchAll(/\bexport\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s*from\s*['"]([^'"]+)['"]/g)) {
+    if (resolveSpec(path, m[1]) === target) bad.push(m[0].replace(/\s+/g, ' '));
+  }
+  const names = new Set();
+  for (const m of text.matchAll(/\bimport\s+(?:type\s+)?([^'"`;]*?)\s*\bfrom\s*['"]([^'"]+)['"]/g)) {
+    if (resolveSpec(path, m[2]) !== target) continue;
+    const clause = m[1];
+    for (const b of clause.matchAll(/\{([^}]*)\}/g)) {
+      for (const part of b[1].split(',')) {
+        const local = part.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop()?.trim();
+        if (local) names.add(local);
+      }
+    }
+    const ns = /\*\s*as\s+([\w$]+)/.exec(clause);
+    if (ns) names.add(ns[1]);
+    const def = /^\s*([\w$]+)\s*(?:,|$)/.exec(clause);
+    if (def) names.add(def[1]);
+  }
+  for (const n of names) {
+    const id = n.replace(/\$/g, '\\$');
+    const forms = [
+      new RegExp(`\\bexport\\s+(?:type\\s+)?\\{[^}]*(?<![\\w$])${id}(?![\\w$])[^}]*\\}(?!\\s*from)`),
+      new RegExp(`\\bexport\\s+default\\s+${id}(?![\\w$])`),
+      new RegExp(`\\bexport\\s+(?:const|let|var)\\s+[\\w$]+\\s*(?::[^=]+)?=\\s*${id}(?![\\w$(])`),
+    ];
+    for (const re of forms) {
+      const m = re.exec(text);
+      if (m) bad.push(m[0].replace(/\s+/g, ' '));
+    }
+  }
+  return bad;
 }

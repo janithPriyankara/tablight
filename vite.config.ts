@@ -48,12 +48,14 @@ interface ChunkRecord {
 }
 /** The look-up client: the gate allows only listed importers (LOOKUP_IMPORTERS in scripts/verify-release.mjs). */
 const LOOKUP_MODULE = 'src/ui/common/lookup.ts';
-const rel = (id: string): string => relative(import.meta.dirname, id.split('?')[0]!).split(sep).join('/');
+/** A module id as a project-relative path: no query (`?raw`, `?url`…), no virtual-module `\0` prefix. */
+const rel = (id: string): string =>
+  relative(import.meta.dirname, id.replace(/^\0+/, '').split(/[?#]/)[0]!).split(sep).join('/');
 function buildRecordPlugin(): Plugin {
   const modules = new Set<string>();
   const chunks: Record<string, ChunkRecord> = {};
   /** Who imports the look-up client: direct importers, and every module from which an import chain reaches it. */
-  let lookup: { importers: string[]; ancestors: string[] } | null = null;
+  let lookup: { ids: string[]; importers: string[]; ancestors: string[] } | null = null;
   return {
     name: 'tab-organizer-build-record',
     generateBundle(_options, bundle) {
@@ -81,25 +83,28 @@ function buildRecordPlugin(): Plugin {
         entry.appModules.sort();
         chunks[file.fileName] = entry;
       }
-      // The module graph, not just the chunks: an importer that was tree-shaken away still counts.
-      const lookupId = [...this.getModuleIds()].find((id) => rel(id) === LOOKUP_MODULE);
-      if (lookupId) {
-        const importersOf = (id: string): string[] => {
-          const info = this.getModuleInfo(id);
-          return [...(info?.importers ?? []), ...(info?.dynamicImporters ?? [])];
-        };
-        const ancestors = new Set<string>();
-        const queue = [lookupId];
-        while (queue.length) {
-          for (const imp of importersOf(queue.pop()!)) {
-            if (!ancestors.has(imp)) {
-              ancestors.add(imp);
-              queue.push(imp);
-            }
+      // The module graph, not just the chunks: an importer that was tree-shaken away still counts. Every module id that
+      // resolves to the client counts, query variants included (`lookup.ts?raw` is the same file).
+      const lookupIds = [...this.getModuleIds()].filter((id) => rel(id) === LOOKUP_MODULE);
+      const importersOf = (id: string): string[] => {
+        const info = this.getModuleInfo(id);
+        return [...(info?.importers ?? []), ...(info?.dynamicImporters ?? [])];
+      };
+      const ancestors = new Set<string>();
+      const queue = [...lookupIds];
+      while (queue.length) {
+        for (const imp of importersOf(queue.pop()!)) {
+          if (!ancestors.has(imp)) {
+            ancestors.add(imp);
+            queue.push(imp);
           }
         }
-        lookup = { importers: [...new Set(importersOf(lookupId).map(rel))].sort(), ancestors: [...ancestors].map(rel).sort() };
       }
+      lookup = {
+        ids: lookupIds.map((id) => relative(import.meta.dirname, id.replace(/^\0+/, '')).split(sep).join('/')).sort(),
+        importers: [...new Set(lookupIds.flatMap(importersOf).map(rel))].filter((m) => m !== LOOKUP_MODULE).sort(),
+        ancestors: [...ancestors].map(rel).filter((m) => m !== LOOKUP_MODULE).sort(),
+      };
     },
     closeBundle() {
       const dir = resolve(import.meta.dirname, '.build');

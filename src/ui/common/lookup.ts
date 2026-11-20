@@ -32,6 +32,8 @@ export interface LookupDeps {
   groups?: ReadonlyArray<{ id: string }>;
 }
 
+/** The dialog's opening sentence (design Part 2), shown every time before anything is sent. */
+export const LOOKUP_DIALOG_SENTENCE = 'Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 export const LOOKUP_TIMEOUT_MS = 10_000;
 /** Deadline of each on-device head fallback (labelForText); on expiry the hit has no topic. */

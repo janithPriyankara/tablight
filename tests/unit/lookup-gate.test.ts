@@ -3,7 +3,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LOOKUP_IMPORTERS, LOOKUP_SOURCE, importsOf, wikidataMentions } from '../../scripts/release-patterns.mjs';
+import { LOOKUP_IMPORTERS, LOOKUP_SOURCE, importsOf, lookupReexports, wikidataMentions } from '../../scripts/release-patterns.mjs';
+import { LOOKUP_DIALOG_SENTENCE } from '../../src/ui/common/lookup';
 
 const root = join(import.meta.dirname, '..', '..');
 function walk(dir: string): string[] {
@@ -22,6 +23,48 @@ describe('look-up gate', () => {
       .map(([p]) => p);
     expect(importers.filter((p) => !LOOKUP_IMPORTERS.includes(p))).toEqual([]);
     expect(LOOKUP_IMPORTERS).toEqual(['src/ui/common/LookupDialog.tsx']);
+    // An allowed importer may call the client but not pass it on.
+    for (const p of importers) expect(lookupReexports(p, readFileSync(join(root, p), 'utf8')), p).toEqual([]);
+  });
+  it('flags every way an importer could re-export the client', () => {
+    const p = 'src/ui/common/LookupDialog.tsx';
+    const imp = "import { lookUp, LOOKUP_DIALOG_SENTENCE as S } from './lookup';\n";
+    expect(lookupReexports(p, "export * from './lookup';")).toHaveLength(1);
+    expect(lookupReexports(p, "export * as L from './lookup.ts';")).toHaveLength(1);
+    expect(lookupReexports(p, "export { lookUp } from './lookup';")).toHaveLength(1);
+    expect(lookupReexports(p, "export type { LookupHit } from './lookup';")).toHaveLength(1);
+    expect(lookupReexports(p, imp + 'export { lookUp };')).toHaveLength(1);
+    expect(lookupReexports(p, imp + 'export { x, lookUp as find };')).toHaveLength(1);
+    expect(lookupReexports(p, imp + 'export { S };')).toHaveLength(1);
+    expect(lookupReexports(p, imp + 'export default lookUp;')).toHaveLength(1);
+    expect(lookupReexports(p, imp + 'export const find = lookUp;')).toHaveLength(1);
+    expect(lookupReexports(p, "import * as L from './lookup';\nexport const api = L;")).toHaveLength(1);
+    expect(lookupReexports(p, "import L from './lookup';\nexport { L };")).toHaveLength(1);
+    // Calling it, or exporting the dialog itself, is fine.
+    expect(lookupReexports(p, imp + 'export function LookupDialog() { void lookUp(t); return <p>{S}</p>; }')).toEqual([]);
+    expect(lookupReexports(p, imp + 'export const r = lookUp(t);\nexport { LookupDialog };')).toEqual([]);
+    expect(lookupReexports(p, "export * from './lookup-text';")).toEqual([]);
+  });
+  it('accepts the dialog sentence in the allowed importer, never a host there', () => {
+    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:');
+    const dialog = 'src/ui/common/LookupDialog.tsx';
+    const probe = [
+      'export function LookupDialog() {',
+      '  return (',
+      '    <div>',
+      '      <p>Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:</p>',
+      `      <p>{'Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:'}</p>`,
+      `      <p title="Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:" />`,
+      '    </div>',
+      '  );',
+      '}',
+    ].join('\n');
+    expect(wikidataMentions(dialog, probe)).toEqual([]);
+    expect(wikidataMentions(dialog, "const u = 'https://www.wikidata.org/w/api.php';")).toEqual([`${dialog}:1`]);
+    expect(wikidataMentions(dialog, "<a href=\"https://wikidata.org\">Wikidata</a>")).toEqual([`${dialog}:1`]);
+    expect(wikidataMentions(dialog, "fetch('https://www.' + 'wikidata' + '.org')")).toEqual([`${dialog}:1`]);
+    // Anywhere else the sentence in code is still refused (only comments may say the word).
+    expect(wikidataMentions('src/ui/dashboard/X.tsx', probe)).toHaveLength(3);
   });
   it('src/ and public/ name Wikidata only in the client, in prose, or in the name list notice', () => {
     const bad = [...walk(join(root, 'src')), ...walk(join(root, 'public'))]
@@ -36,6 +79,8 @@ describe('look-up gate', () => {
     expect(importsOf(p, "export * from '../common/lookup';")).toContain(LOOKUP_MODULE);
     expect(importsOf(p, "const m = await import('../common/lookup');")).toContain(LOOKUP_MODULE);
     expect(importsOf(p, "import '../common/lookup';")).toContain(LOOKUP_MODULE);
+    expect(importsOf(p, "import src from '../common/lookup.ts?raw';")).toContain(LOOKUP_MODULE);
+    expect(importsOf(p, "import u from '../common/lookup?url';")).toContain(LOOKUP_MODULE);
     expect(importsOf('src/background/index.ts', "import {\n  lookUp,\n} from '../ui/common/lookup';")).toContain(LOOKUP_MODULE);
     expect(importsOf(p, "import { x } from '../common/lookup-text';")).not.toContain(LOOKUP_MODULE);
   });
