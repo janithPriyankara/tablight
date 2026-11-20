@@ -70,6 +70,7 @@ export function SidePanel() {
   const [susOpen, setSusOpen] = useState(true);
   const [susAll, setSusAll] = useState(false);
   const closeAllBtn = useRef<HTMLButtonElement>(null);
+  const searchBox = useRef<HTMLInputElement>(null);
   /** The Unsorted tab whose "Look it up" dialog is open. */
   const [lookupItem, setLookupItem] = useState<Item | null>(null);
   const theme = state?.settings?.theme;
@@ -323,7 +324,7 @@ export function SidePanel() {
         <label class="search">
           <SearchIcon class="search-icon" />
           <input
-            type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups"
+            ref={searchBox} type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups"
             maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
             onInput={(e) => search.setQuery(e.currentTarget.value)}
             onKeyDown={(e) => {
@@ -388,7 +389,17 @@ export function SidePanel() {
           </div>
         </footer>
       </div>
-      {lookupItem && <LookupDialog item={lookupItem} groups={state?.groups ?? []} onClose={() => setLookupItem(null)} />}
+      {lookupItem && (
+        <LookupDialog
+          item={lookupItem} groups={state?.groups ?? []}
+          onClose={(moved) => {
+            setLookupItem(null);
+            // The moved row leaves Unsorted with the next refresh, taking focus with it: start again from the Unsorted
+            // heading, or the search box once Unsorted is gone.
+            if (moved) setTimeout(() => (document.getElementById(`sp-h-${UNSORTED_SECTION}`) ?? searchBox.current)?.focus(), 0);
+          }}
+        />
+      )}
     </>
   );
 }

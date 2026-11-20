@@ -122,8 +122,8 @@ export function LookupDialog(props: {
           setText(e.currentTarget.value);
           if (phase.k !== 'edit') setPhase({ k: 'edit' }); // old hits never sit next to new text
         }}
-        // Enter never sends: only the "Look up" button does.
-        onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+        // Enter never sends: only the "Look up" button does. An IME's Enter (it commits the composition) is left alone.
+        onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && e.preventDefault()}
       />
       {clean !== text && <p class="lookup-note lookup-will-send">{clean ? `Will send: ${clean}` : 'Nothing is left to send.'}</p>}
       <p class="lookup-note">{NEVER_SENT}</p>

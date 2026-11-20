@@ -146,6 +146,19 @@ describe('where the button shows', () => {
     await screen.findAllByRole('listitem');
     expect(screen.queryByRole('button', { name: 'Look it up' })).toBeNull();
   });
+  it('side panel: after a move, focus goes to the Unsorted heading (the moved row is about to leave)', async () => {
+    const items = [item('t1')];
+    sendMock.mockImplementation(async (req) =>
+      (req.t === 'state' ? state(DEFAULT_SETTINGS, items) : req.t === 'moveItems' ? 1 : undefined) as never);
+    render(<SidePanel />);
+    await screen.findByRole('region', { name: /This window/ });
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Look it up' }))[0]!);
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    fireEvent.click(await within(dialog()).findByRole('button', { name: 'Move to TV Series' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: /^Unsorted/ })));
+    expect(document.activeElement?.id).toBe('sp-h-unsorted');
+  });
 });
 
 describe('the dialog', () => {
@@ -192,11 +205,12 @@ describe('the dialog', () => {
     open();
     expect(document.activeElement).toBe(box());
     const b = box();
-    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(fireEvent.keyDown(b, { key: 'Enter' })).toBe(false); // default prevented
     fireEvent.keyDown(b, { key: 'Enter', repeat: true });
     fireEvent.keyDown(b, { key: 'Enter', repeat: true });
     fireEvent.compositionStart(b);
-    fireEvent.keyDown(b, { key: 'Enter', isComposing: true, keyCode: 229 });
+    // The IME's own Enter commits the composition: it is not prevented.
+    expect(fireEvent.keyDown(b, { key: 'Enter', isComposing: true, keyCode: 229 })).toBe(true);
     fireEvent.compositionEnd(b);
     fireEvent.keyDown(b, { key: 'Enter', isComposing: true });
     await new Promise((r) => setTimeout(r, 20));
