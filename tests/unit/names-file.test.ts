@@ -67,6 +67,25 @@ describe('public/names/names.txt', () => {
     const all = new Set([...secs.values()].flat());
     for (const w of ['friends', 'up', 'her', 'cars', 'home', 'news', 'games', 'music']) expect(all.has(w), w).toBe(false);
   });
+  // Regressions from the Task 3 review: writers filed as musicians, places and holidays claimed by a bracketed
+  // article's bare title, ordinary full names among athletes, "the" + an everyday word.
+  it('leaves out names that belong to something else or to many people', () => {
+    const all = new Set([...secs.values()].flat());
+    const probes = [
+      'leonardo da vinci', 'dan brown', 'douglas adams', 'thomas mann',
+      'new york', 'san francisco', 'las vegas', 'american football', 'groundhog day', 'pearl harbor', 'mona lisa',
+      'michael collins', 'robert bosch',
+      'giuseppe rossi', 'masaaki kato', 'mitsuo watanabe', 'cristian rodriguez',
+      'the music', 'the cars', 'the streets',
+      'dada',
+    ];
+    expect(probes.filter((w) => all.has(w))).toEqual([]);
+  });
+  it('still holds well-known names', () => {
+    const all = new Set([...secs.values()].flat());
+    const probes = ['breaking bad', 'the shawshank redemption', 'metallica', 'lionel messi', 'bob dylan', 'elden ring'];
+    expect(probes.filter((w) => !all.has(w))).toEqual([]);
+  });
 });
 
 describe('scripts/names/norm.mjs', () => {

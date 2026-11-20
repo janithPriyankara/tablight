@@ -21,7 +21,7 @@ const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
   "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 /** SHA-256 of public/names/names.txt, the offline Wikidata name list (scripts/names/build.mjs prints it). */
-export const NAMES_SHA256 = '458c701ff418d1f3592fbf016974e3d3ad8947fa0419d3f5f9118f5e822ae5cc';
+export const NAMES_SHA256 = 'd50933a3952248f020431bbd231d3b557c4bd9d2f146cdb366ae1f6b37225529';
 /** names.txt cap in bytes (design Part 1); tests/unit/names-file.test.ts checks the same. */
 export const NAMES_LIMIT = 1_500_000;
 const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', 'tabs', 'unlimitedStorage'];

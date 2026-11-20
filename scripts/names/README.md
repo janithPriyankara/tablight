@@ -16,7 +16,11 @@ Then update `NAMES_SHA256` in `scripts/verify-release.mjs` to the SHA-256 the sc
   (https://query.wikidata.org/sparql). Wikidata's data is **CC0 1.0** (public domain dedication); credited in
   `public/third-party-notices.txt`. The script sends one query at a time with the generic User-Agent
   `TablightNamesBuild/1.0 (build script)`, backs off on 429/5xx and timeouts, and caches each raw response under
-  `--cache` (default `<os tmpdir>/tablight-names-raw`). The cache is never committed.
+  `--cache` (default `<os tmpdir>/tablight-names-raw`). The cache is never committed. The other-owner check also
+  reads, through the same cache, Wikidata's Action API (https://www.wikidata.org/w/api.php: which item owns an English
+  Wikipedia title, and sitelink counts) and English Wikipedia's Action API (https://en.wikipedia.org/w/api.php: where
+  a title redirects, the target's Wikidata item and its disambiguation flag). Only titles and these facts are used;
+  no article text is read or shipped.
 - **SCOWL** (Spell Checker Oriented Word Lists) 2020.12.07 by Kevin Atkinson, http://wordlist.aspell.net/,
   downloaded from https://downloads.sourceforge.net/project/wordlist/SCOWL/2020.12.07/scowl-2020.12.07.tar.gz.
   Only `final/english-words.10`, `.20` and `.35` are read (about 48,000 everyday lowercase English words; SCOWL keeps
@@ -37,20 +41,31 @@ P452 = semiconductor industry) and what they make (P176), minus consoles, camera
 and software.
 A name is dropped when:
 - it is shorter than 4 or longer than 60 characters, has no letter, or is only digits;
-- it is a single word that is a common English word (SCOWL 10-35);
+- it is a single word that is a common English word (SCOWL 10-35), or "the" + such a word ("the music", "the cars"),
+  unless the item owns that plain Wikipedia title and has at least 4x its group's bar ("The Godfather", "The Who");
 - it is one word (or "the" + one word) that is not the item's own unbracketed English Wikipedia title (Wikipedia
-  gives the bare word to another meaning: "Halo", "Titanic", "The Office" lose; "Metallica", "Nvidia", "The Wire"
-  stay), or such a short alias;
+  gives the bare word to another meaning: "Halo", "Titanic", "The Office" lose; "Metallica", "Nvidia" stay), or such
+  a short alias;
 - it is an everyday phrase (every word common) taken from an alias, from an item whose Wikipedia title is
   bracketed, or (two words) from an item below twice its group's bar;
-- it is the bare title of a bracketed article whose bare title belongs to a person ("Ada Lovelace
-  (microarchitecture)");
+- the item does not own it as its plain Wikipedia title (a bracketed article's bare title, a label that differs from
+  the title, an alias), and the words belong to something outside the list: the English Wikipedia article of that
+  title (also with the words after the first in lower case, and following a redirect for a bracketed article's bare
+  title) is a disambiguation page, a person, or an item with at least half as many sitelinks ("San Francisco (1936
+  film)" loses "san francisco"; "Groundhog Day (film)" loses to the holiday; "American Football (band)" to the sport;
+  "Van Gogh (1991 film)" to the painter; "Robert Bosch", a label of "Bosch (company)", to the person; "Peaky Blinders
+  (TV series)" keeps its name against the smaller gang article), or another item with that English label has at least
+  as many sitelinks. One-word titles with odd capitals are checked against their plainly cased title ("DaDa" the
+  album against "Dada");
 - it belongs to a person who is not the primary topic of their own unbracketed Wikipedia title, is one word, or is an
-  alias; people are only musicians (music) and athletes (sports) at a higher bar, and only when their music or sport
-  occupations outnumber their acting/political/business ones;
+  alias. People are only musicians (music, at 40 sitelinks) and athletes (sports, at 60; queried at 40), and only when
+  their field's occupations (music also counts record producer, conductor, drummer and other instrument and genre
+  occupations) outnumber their other fame: acting, politics, business, film-making, journalism, visual art,
+  scholarship, religion, royalty, the military and modelling, plus writing occupations counted at most twice
+  (writer, novelist, poet, playwright ...). A tie is enough from four field occupations up (John Lennon, Bob Dylan);
 - two labels claim it and the better-known one's best item has fewer than 5x the sitelinks of the other's. Exception:
-  the item that owns the bare Wikipedia title keeps it when every other label claims it only by an alias or by the
-  label of a bracketed article ("The Shawshank Redemption" the film over the novella's alias; "Cowboy Bebop" the anime
-  over "Cowboy Bebop (2021 TV series)").
+  the item that owns the bare Wikipedia title keeps it when every other label claims it only by an alias ("The
+  Shawshank Redemption" the film over the novella's alias). A rival's label, bracketed or not, goes to the 5x rule
+  ("Mortal Kombat" the game against "Mortal Kombat (1995 film)").
 What survives fills the byte budget (1,450,000, under the 1,500,000 cap) best-known first, ranked by sitelinks
 relative to the group's bar.
