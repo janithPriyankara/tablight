@@ -50,6 +50,8 @@ const URL_ALLOWLIST = [
   { re: /^https:\/\/rolldown\.rs\//, pkgs: ['bundler-runtime'], why: 'Bundler runtime helper comment/message (Rolldown docs)' },
   // The one URL the app itself fetches, and only after the user clicks "Look it up" and confirms (design Part 2).
   { re: /^https:\/\/www\.wikidata\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikidata search API: the opt-in look-up, sent only after the user confirms the dialog' },
+  // A link the look-up dialog shows (opened in a new tab only if the user clicks it); never fetched by the app.
+  { re: /^https:\/\/foundation\.wikimedia\.org\/wiki\/Policy:Privacy_policy$/, app: ['src/ui/common/LookupDialog.tsx'], why: 'Wikimedia privacy-policy link in the look-up dialog; a link, not a request' },
 ];
 const errors = [];
 const fail = (m) => errors.push(m);

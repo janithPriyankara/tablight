@@ -607,3 +607,101 @@ button.item-main {
 .item-row:has(.state-new) .item-title {
   font-weight: 600;
 }
+
+/* ---------- Modal (dashboard and side panel) ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(10 10 16 / 40%);
+}
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(420px, 100%);
+  max-height: calc(100vh - 32px);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+  outline: none;
+}
+.modal-wide {
+  width: min(560px, 100%);
+}
+.modal-title {
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow-y: auto;
+  color: var(--text-muted);
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+/* ---------- Look it up dialog ---------- */
+.lookup-for {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lookup-label {
+  color: var(--text);
+}
+.lookup-note {
+  font-size: var(--text-sm);
+}
+.lookup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.lookup-result:empty {
+  display: none;
+}
+.lookup-hits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lookup-hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.lookup-hit-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lookup-hit-label {
+  color: var(--text);
+  font-weight: 500;
+}
+.lookup-hit-desc {
+  font-size: var(--text-sm);
+}
+.setting-hint {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

@@ -4,6 +4,7 @@ import { openDashboard } from '../../shared/nav';
 import type { GroupSummary, Item } from '../../shared/types';
 import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
+import { LookItUpButton, LookupDialog, lookupOffer } from '../common/LookupDialog';
 import { displayTitle, plural } from '../common/format';
 import { CloseIcon, GridIcon, LogoMark, PauseIcon, PlayIcon, SearchIcon, StashIcon } from '../common/icons';
 import { applyTheme } from '../common/theme';
@@ -69,6 +70,8 @@ export function SidePanel() {
   const [susOpen, setSusOpen] = useState(true);
   const [susAll, setSusAll] = useState(false);
   const closeAllBtn = useRef<HTMLButtonElement>(null);
+  /** The Unsorted tab whose "Look it up" dialog is open. */
+  const [lookupItem, setLookupItem] = useState<Item | null>(null);
   const theme = state?.settings?.theme;
   useEffect(() => applyTheme(theme), [theme]);
 
@@ -213,6 +216,7 @@ export function SidePanel() {
       )}
     </section>
   );
+  const lookupOn = state?.settings.lookupButton === true;
   const row = (i: Item, showGroup: boolean) => {
     const g = showGroup && i.groupId !== null ? groups.get(i.groupId) : undefined;
     const active = i.tabId !== undefined && i.tabId === activeTab;
@@ -222,6 +226,7 @@ export function SidePanel() {
         rowProps={{ class: active ? 'is-active' : '', ...(active ? { 'aria-current': 'page' } : {}) } as never}
         actions={
           <>
+            {lookupOn && lookupOffer(i) !== null && <LookItUpButton item={i} disabled={busy} onClick={setLookupItem} />}
             {i.state === 'open' && i.classifiable && !active && (
               <button type="button" class="icon-btn" aria-label="Pause" title="Pause: frees its memory, stays in your tab strip" disabled={busy} onClick={() => void sleep([i.id])}>
                 <PauseIcon />
@@ -302,7 +307,8 @@ export function SidePanel() {
   };
 
   return (
-    <div class="sp">
+    <>
+    <div class="sp" inert={lookupItem ? true : undefined}>
       <header class="sp-top">
         <div class="brand">
           <LogoMark />
@@ -382,5 +388,7 @@ export function SidePanel() {
         </div>
       </footer>
     </div>
+    {lookupItem && <LookupDialog item={lookupItem} groups={state?.groups ?? []} onClose={() => setLookupItem(null)} />}
+    </>
   );
 }

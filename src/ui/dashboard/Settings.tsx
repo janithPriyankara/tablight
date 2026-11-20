@@ -4,6 +4,7 @@ import { send } from '../../shared/rpc';
 import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
 import { ago, plural } from '../common/format';
 import { DownloadIcon, InfoIcon, ShieldIcon, TrashIcon, UploadIcon } from '../common/icons';
+import { LOOKUP_SETTING_HINT } from '../common/LookupDialog';
 import { SETTINGS_TABS, type SettingsTab, isoDate, syncStatusLine } from './views';
 
 /** Same limit the background's import enforces; checked before the file is read. */
@@ -141,7 +142,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
       ))}
     </span>
   );
-  const saveOn = (key: 'autoCreateGroups' | 'removeOnOpen' | 'syncEnabled' | 'suspiciousTabs') => (on: boolean) =>
+  const saveOn = (key: 'autoCreateGroups' | 'removeOnOpen' | 'syncEnabled' | 'suspiciousTabs' | 'lookupButton') => (on: boolean) =>
     void act(() => save({ [key]: on }));
   return (
     <div class="page-scroll">
@@ -182,6 +183,9 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                     <button type="button" class="btn btn-sm" disabled={busy} onClick={onInterests}>Choose…</button>
                   </SettingRow>
                 )}
+                <SettingRow id="set-lookup" name="Show the Look it up button" hint={LOOKUP_SETTING_HINT}>
+                  {sw('set-lookup', settings.lookupButton, saveOn('lookupButton'))}
+                </SettingRow>
               </Section>
               <Section id="memory" title="Tabs and memory">
                 <SettingRow
@@ -335,10 +339,13 @@ function Section(props: { id: string; title: string; danger?: boolean; children:
  * One setting: its name and its control on one line. The explanation is not on screen until the ⓘ button next to
  * the name is pressed (it stays in the page, hidden, and describes the control for screen readers).
  * `group`: the control is a radio group or buttons, so the name labels the row instead of one input.
+ * `hint`: a short line always shown under the row (and read with the control).
  */
-function SettingRow(props: { id: string; name: string; help?: string; group?: boolean; children: ComponentChildren }) {
+function SettingRow(props: { id: string; name: string; help?: string; hint?: string; group?: boolean; children: ComponentChildren }) {
   const [open, setOpen] = useState(false);
   const helpId = `${props.id}-help`;
+  const hintId = `${props.id}-hint`;
+  const described = [props.hint ? hintId : '', props.help ? helpId : ''].filter(Boolean).join(' ');
   const nameId = `${props.id}-name`;
   const name = props.group
     ? <span class="setting-name" id={nameId}>{props.name}</span>
@@ -346,7 +353,7 @@ function SettingRow(props: { id: string; name: string; help?: string; group?: bo
   return (
     <div
       class="setting-row" role={props.group ? 'group' : undefined}
-      aria-labelledby={props.group ? nameId : undefined} aria-describedby={props.help ? helpId : undefined}
+      aria-labelledby={props.group ? nameId : undefined} aria-describedby={described || undefined}
     >
       <div class="setting">
         <span class="setting-text">
@@ -363,6 +370,7 @@ function SettingRow(props: { id: string; name: string; help?: string; group?: bo
         </span>
         {props.children}
       </div>
+      {props.hint && <p class="setting-hint" id={hintId}>{props.hint}</p>}
       {props.help && <p class="setting-help" id={helpId} hidden={!open}>{props.help}</p>}
     </div>
   );

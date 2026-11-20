@@ -18,6 +18,7 @@ import { CLOSE_ALL_BODY, SUSPICIOUS_INTRO, SuspiciousRows, closeAllTitle } from 
 import { GroupList, ViewSelect } from './GroupList';
 import { ItemGrid, type RowAction, type SelectMode } from './ItemGrid';
 import { ConfirmDialog, type ConfirmOptions, Modal, NameDialog } from './Modal';
+import { LookupDialog } from '../common/LookupDialog';
 import { InterestsCard, InterestsDialog, type InterestsAnswer } from './Interests';
 import { Onboarding } from './Onboarding';
 import { LastSessionCard, type SessionActionKind, type SessionSummary, Sessions } from './Sessions';
@@ -43,7 +44,8 @@ type Dialog =
   | { kind: 'name'; title: string; initial?: string; confirmLabel: string; resolve: (name: string | null) => void }
   | { kind: 'merge'; from: GroupSummary }
   | { kind: 'regroup'; rows: RegroupRow[] }
-  | { kind: 'interests' };
+  | { kind: 'interests' }
+  | { kind: 'lookup'; item: Item };
 
 const hasTab = (i: Item) => i.state !== 'stashed' && i.tabId !== undefined;
 /** An empty id set that keeps its identity across renders. */
@@ -306,6 +308,7 @@ export function Dashboard() {
     setSelected(new Set());
   };
   const onRowAction = (action: RowAction, item: Item) => {
+    if (action === 'lookup') return openDialog({ kind: 'lookup', item });
     if (action === 'move') {
       setSelected(new Set([item.id]));
       anchor.current = item.id;
@@ -775,7 +778,7 @@ export function Dashboard() {
               windowNo={windowNo} nowTabIds={nowTabIds} extraMeta={searching ? (i) => (meaningIds.has(i.id) ? 'Similar by meaning' : undefined)
                 : lastCopyIds.size ? (i) => (lastCopyIds.has(i.id) ? 'Last copy, still open' : undefined) : undefined}
               onOpen={(i) => void openItem(i)} onSelect={select} onClearSelection={() => setSelected(new Set())}
-              onAction={onRowAction} onDelete={onDelete} onDragStart={onDragStart}
+              onAction={onRowAction} onDelete={onDelete} onDragStart={onDragStart} lookup={settings?.lookupButton === true}
               onDragEnd={() => {
                 dragIds.current = [];
                 setDragging(false);
@@ -855,6 +858,9 @@ export function Dashboard() {
       )}
       {dialog?.kind === 'interests' && (
         <InterestsDialog groups={groups} busy={busy} onContinue={(a) => void answerInterests(a)} onClose={() => setDialog(null)} />
+      )}
+      {dialog?.kind === 'lookup' && (
+        <LookupDialog item={dialog.item} groups={groups} onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'regroup' && (
         <RegroupDialog rows={dialog.rows} groups={groupMap} onClose={() => setDialog(null)} onApply={applyRegroup} />

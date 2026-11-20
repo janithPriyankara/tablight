@@ -16,6 +16,10 @@ function Svg({ size = 16, class: cls, children }: IconProps & { children: JSX.El
 export const SearchIcon = (p: IconProps) => (
   <Svg {...p}><circle cx="7" cy="7" r="4.25" /><path d="m10.25 10.25 3 3" /></Svg>
 );
+/** A globe: the "Look it up" action (asks a public encyclopedia, after a confirm). */
+export const GlobeIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="8" cy="8" r="5.75" /><path d="M2.25 8h11.5" /><path d="M8 2.25c1.6 1.6 2.4 3.5 2.4 5.75S9.6 12.15 8 13.75C6.4 12.15 5.6 10.25 5.6 8S6.4 3.85 8 2.25z" /></Svg>
+);
 export const GridIcon = (p: IconProps) => (
   <Svg {...p}><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1" /><rect x="9" y="2.5" width="4.5" height="4.5" rx="1" /><rect x="2.5" y="9" width="4.5" height="4.5" rx="1" /><rect x="9" y="9" width="4.5" height="4.5" rx="1" /></Svg>
 );

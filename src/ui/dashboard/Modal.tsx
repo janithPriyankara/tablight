@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ConfirmTitles } from '../common/Suspicious';
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, a[href], [tabindex]:not([tabindex="-1"])';
@@ -23,7 +23,9 @@ export function Modal(props: {
   // Read while rendering, before this render commits: the page behind turns inert with it, and the browser then
   // blurs the control that opened the dialog, so an effect would only find <body>.
   const [before] = useState(() => document.activeElement as HTMLElement | null);
-  useEffect(() => {
+  // A layout effect: focus is inside before the first paint, so a key pressed as soon as the dialog shows (Esc, Tab)
+  // already reaches it.
+  useLayoutEffect(() => {
     const box = ref.current;
     const first = box?.querySelector<HTMLElement>('[data-autofocus]') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? box)?.focus();

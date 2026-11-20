@@ -22,7 +22,7 @@ describe('settings rpc', () => {
     const before = await db.settings.get();
     const bad: unknown[] = [
       { autoSleepMinutes: 4 }, { autoSleepMinutes: 1441 }, { autoSleepMinutes: 30.5 }, { autoSleepMinutes: '60' },
-      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' }, { autoCreateGroups: 'on' }, { toolbarOpens: 'tab' }, { toolbarOpens: true }, { suspiciousTabs: 'no' }, { suspiciousTabs: 0 },
+      { syncEnabled: 'yes' }, { mirrorTabGroups: 1 }, { removeOnOpen: null }, { theme: 'blue' }, { onboarded: 'true' }, { autoCreateGroups: 'on' }, { toolbarOpens: 'tab' }, { toolbarOpens: true }, { suspiciousTabs: 'no' }, { suspiciousTabs: 0 }, { lookupButton: 'off' }, { lookupButton: null },
       { evil: true }, { __proto__: { onboarded: true } }, JSON.parse('{"__proto__":{"onboarded":true}}'),
       null, [], 'theme', { theme: 'dark', extra: 1 },
     ];
@@ -37,6 +37,7 @@ describe('settings rpc', () => {
     expect(ok.data).toMatchObject({ autoSleepMinutes: 60, removeOnOpen: false, theme: 'dark', onboarded: true, autoCreateGroups: true });
     expect(await db.settings.get()).toEqual(ok.data);
     expect(await mock.sendMessage({ t: 'settings', patch: { suspiciousTabs: false } })).toMatchObject({ ok: true, data: { suspiciousTabs: false } });
+    expect(await mock.sendMessage({ t: 'settings', patch: { lookupButton: false } })).toMatchObject({ ok: true, data: { lookupButton: false } });
     expect(((await mock.sendMessage({ t: 'settings', patch: { autoSleepMinutes: null } })) as { data: Settings }).data.autoSleepMinutes).toBeNull();
     for (const m of [5, 1440]) {
       expect(await mock.sendMessage({ t: 'settings', patch: { autoSleepMinutes: m } })).toMatchObject({ ok: true });

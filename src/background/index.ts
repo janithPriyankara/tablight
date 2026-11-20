@@ -313,7 +313,7 @@ const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
   'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens', 'suspiciousTabs',
-  'interestsAnswered',
+  'interestsAnswered', 'lookupButton',
 ]);
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 /**
@@ -344,7 +344,7 @@ export function parseSettingsPatch(v: unknown): Partial<Settings> {
         out.toolbarOpens = val;
         break;
       case 'syncEnabled': case 'mirrorTabGroups': case 'removeOnOpen': case 'onboarded': case 'autoCreateGroups': case 'suspiciousTabs':
-      case 'interestsAnswered':
+      case 'interestsAnswered': case 'lookupButton':
         if (!isBool(val)) throw new Error(`${key} must be true or false`);
         out[key as 'syncEnabled'] = val;
         break;

@@ -91,6 +91,12 @@ export interface Settings {
    * so an install upgraded from an older version (stored settings lack the key) only adds groups. Not a user setting.
    */
   interestsFresh: boolean;
+  /**
+   * Show the "Look it up" action on Unsorted rows (dashboard and side panel). On by default; stored settings from
+   * before it lack the key and read as on (db.readSettings merges DEFAULT_SETTINGS). Nothing is sent without the
+   * confirm dialog either way.
+   */
+  lookupButton: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -104,6 +110,7 @@ export const DEFAULT_SETTINGS: Settings = {
   suspiciousTabs: true,
   interestsAnswered: false,
   interestsFresh: false,
+  lookupButton: true,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.
