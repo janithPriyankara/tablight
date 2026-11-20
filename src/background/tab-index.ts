@@ -492,7 +492,12 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
       if (!cur) continue;
       if (cur.groupSource === 'auto') {
         const same = cur.groupId === null || quiet.has(id);
-        await s.items.put({ ...withoutPlacedBy(cur), groupId: null, embGaveUpAt: now, updatedAt: same ? cur.updatedAt : nextStamp(cur.updatedAt) });
+        const { quietPick: _q, ...base } = withoutPlacedBy(cur);
+        void _q;
+        await s.items.put({
+          ...base, ...quietPickAfter(cur, null, quiet.has(id)), groupId: null, embGaveUpAt: now,
+          updatedAt: same ? cur.updatedAt : nextStamp(cur.updatedAt),
+        });
         n++;
       } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
@@ -533,11 +538,17 @@ export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Pro
     return vec ? [{ id: i.id, vec, groupId: i.groupId!, normUrl: i.normUrl }] : [];
   });
 }
-/** The item as the user placed it: how the automatic pipeline once placed it no longer applies. */
+/** The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies. */
 export function withoutPlacedBy(i: Item): Item {
-  const { placedBy: _p, ...rest } = i;
+  const { placedBy: _p, quietPick: _q, ...rest } = i;
   void _p;
+  void _q;
   return rest;
+}
+/** quietPick after an automatic write: set by a quiet change of group, kept while the group stays, else gone. */
+function quietPickAfter(cur: Item, groupId: string | null, quiet: boolean): { quietPick?: true } {
+  if (groupId !== cur.groupId) return quiet ? { quietPick: true } : {};
+  return cur.quietPick ? { quietPick: true } : {};
 }
 async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () => Promise<PoolTab[]>): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
@@ -592,17 +603,21 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
         ({ groupId, want, by } = autoPick(cur, vec, groups, live, cur.id));
       }
       // A success lifts any earlier give-up stamp; want and placedBy are rewritten below.
-      const { embGaveUpAt: _cleared, want: _oldWant, placedBy: _oldBy, ...rest } = cur;
+      const { embGaveUpAt: _cleared, want: _oldWant, placedBy: _oldBy, quietPick: _oldQuiet, ...rest } = cur;
       void _cleared;
       void _oldWant;
       void _oldBy;
+      void _oldQuiet;
       // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
       // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
       // A re-pick from the model migration is written locally only, like want/placedBy: stamped, it would reach
       // other devices as a group name and be pinned there as the user's choice (sync applyRemote).
       const updatedAt = groupId === cur.groupId || quiet.has(cur.id) ? cur.updatedAt : nextStamp(cur.updatedAt);
       // want and placedBy: local-only, no updatedAt bump.
-      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}), ...(by !== null ? { placedBy: by } : {}) });
+      await s.items.put({
+        ...rest, groupId, embKey: keys[k]!, updatedAt, ...quietPickAfter(cur, groupId, quiet.has(cur.id)),
+        ...(want !== null ? { want } : {}), ...(by !== null ? { placedBy: by } : {}),
+      });
       done.push(snap.id);
       written++;
     }

@@ -95,8 +95,9 @@ export async function growGroups(
       for (const cur of fresh) {
         const { want: _w, ...rest } = cur;
         void _w;
-        // The head was sure of this topic (want needs head.threshold): the tab counts as a neighbour.
-        await s.items.put({ ...rest, groupId: group.id, placedBy: 'head', updatedAt: nextStamp(cur.updatedAt, now) });
+        // The head was sure of this topic (want needs head.threshold): the tab counts as a neighbour. A placement
+        // from a model migration's quiet re-pick stays local (quietPick): unstamped, it never syncs.
+        await s.items.put({ ...rest, groupId: group.id, placedBy: 'head', updatedAt: cur.quietPick ? cur.updatedAt : nextStamp(cur.updatedAt, now) });
       }
       ids.add(group.id);
       names.add(group.name.toLowerCase());

@@ -33,6 +33,12 @@ export interface Item {
    */
   placedBy?: PlacedBy;
   /**
+   * Local only (never synced or exported, no updatedAt bump): the current automatic placement came from a re-pick after
+   * a model change (model-change.ts quiet queue entries) and was never stamped, so it stays on this device: growGroups
+   * keeps it unstamped too. Removed by any user placement (withoutPlacedBy) and by a stamped automatic move.
+   */
+  quietPick?: true;
+  /**
    * Local only: false while the tab has never been the active tab since it appeared ("New"); true once it has.
    * Missing (older data, tabs whose past is unknown) counts as opened.
    */
