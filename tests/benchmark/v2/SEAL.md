@@ -15,3 +15,4 @@ To be scored once, at the end of that plan (Task 9). Nobody reads its rows; test
 - Labels per group: shopping 95, cars 55, sports 51, finance 50, hardware 49, health 47, work 46, programming 46,
   learning 43, videos 43, other 43, science 33, movies 33, tv 32, music 32, photo 31, food 30, docs 29, realestate 29,
   games 28, jobs 22, family 22, travel 21, home 15, news 15, social 13, pets 8, books 7, design 6, anime 5, ai 4.
+- Scored once on 2026-11-20 at commit 53a1c5f.
