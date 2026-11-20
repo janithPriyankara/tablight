@@ -30,8 +30,16 @@ export async function markModelCurrent(): Promise<void> {
 /** Vectors of the texts that embedded; `failed` holds the ones that did not, even alone. */
 interface Embedded { vecs: Map<string, number[]>; failed: Set<string>; ok: number; tried: number; error?: unknown }
 /**
+ * The embedder is down: the run's first two embed calls failed (the first chunk and its first text alone, or the
+ * first call and the next) and none has worked. Rethrows the last error so the run stops at once instead of trying
+ * every remaining text and seed group, each a cold model load when the model cannot load.
+ */
+function abortIfDown(emb: Embedded): void {
+  if (emb.ok === 0 && emb.tried >= 2) throw emb.error instanceof Error ? emb.error : new Error('embedding failed');
+}
+/**
  * Embeds `texts` in chunks; a chunk that fails is retried text by text, so one bad text costs only its own vector.
- * `ok` / `tried` count the embed calls that worked / were made (all failing means the embedder is down).
+ * `ok` / `tried` count the embed calls that worked / were made; abortIfDown stops the run when the embedder is down.
  */
 async function embedAll(texts: string[], embedFn: EmbedFn, into?: Embedded): Promise<Embedded> {
   const out = into ?? { vecs: new Map<string, number[]>(), failed: new Set<string>(), ok: 0, tried: 0 };
@@ -52,11 +60,16 @@ async function embedAll(texts: string[], embedFn: EmbedFn, into?: Embedded): Pro
   for (let i = 0; i < todo.length; i += CHUNK) {
     const part = todo.slice(i, i + CHUNK);
     if (await one(part)) continue;
+    abortIfDown(out);
     if (part.length === 1) {
       out.failed.add(part[0]!);
       continue;
     }
-    for (const t of part) if (!(await one([t]))) out.failed.add(t);
+    for (const t of part) {
+      if (await one([t])) continue;
+      abortIfDown(out);
+      out.failed.add(t);
+    }
   }
   return out;
 }
@@ -83,6 +96,7 @@ async function rebuild(db: Db, embedFn: EmbedFn): Promise<void> {
       emb.ok++;
     } catch (e) {
       emb.error = e;
+      abortIfDown(emb);
     }
   }
   const named = untaught.filter((g) => !SEED_IDS.has(g.id));
@@ -143,9 +157,31 @@ async function rebuild(db: Db, embedFn: EmbedFn): Promise<void> {
 /** After a failed run, the next one waits this long (doubling per failure, at most MAX_BACKOFF_MS). */
 export const BACKOFF_MS = 60_000;
 export const MAX_BACKOFF_MS = 15 * 60_000;
-let failures = 0;
-let retryAt = 0;
-let lastError: unknown;
+/**
+ * chrome.storage.session: the failed-run backoff. It outlives a service-worker restart (an MV3 worker idles out
+ * after about 30 s, and a tab event wakes it again), so a model that cannot load is not cold-loaded on every wake;
+ * it is cleared with the browser session.
+ */
+export const MIGRATION_BACKOFF_KEY = 'modelMigrationBackoff';
+interface Backoff { failures: number; retryAt: number; error: string }
+async function readBackoff(): Promise<Backoff> {
+  const none: Backoff = { failures: 0, retryAt: 0, error: '' };
+  try {
+    const v = (await chrome.storage.session.get(MIGRATION_BACKOFF_KEY))[MIGRATION_BACKOFF_KEY] as Partial<Backoff> | undefined;
+    if (!v || typeof v.failures !== 'number' || typeof v.retryAt !== 'number') return none;
+    return { failures: v.failures, retryAt: v.retryAt, error: typeof v.error === 'string' ? v.error : '' };
+  } catch {
+    return none;
+  }
+}
+async function writeBackoff(b: Backoff | null): Promise<void> {
+  try {
+    if (b) await chrome.storage.session.set({ [MIGRATION_BACKOFF_KEY]: b });
+    else await chrome.storage.session.remove(MIGRATION_BACKOFF_KEY);
+  } catch {
+    // storage.session unavailable: the run itself is unaffected
+  }
+}
 async function run(db: Db, embedFn: EmbedFn, now: number): Promise<boolean> {
   const stored = await readStored();
   if (stored === EMBED_MODEL) return false;
@@ -155,7 +191,8 @@ async function run(db: Db, embedFn: EmbedFn, now: number): Promise<boolean> {
   }
   // Failing closed (classifying against old vectors would be worse), but without reloading the model for every
   // tab event while it keeps failing.
-  if (now < retryAt) throw lastError instanceof Error ? lastError : new Error('model migration failed');
+  const backoff = await readBackoff();
+  if (now < backoff.retryAt) throw new Error(backoff.error || 'model migration failed');
   try {
     for (let attempt = 1; ; attempt++) {
       try {
@@ -166,13 +203,15 @@ async function run(db: Db, embedFn: EmbedFn, now: number): Promise<boolean> {
       }
     }
   } catch (e) {
-    failures++;
-    retryAt = now + Math.min(MAX_BACKOFF_MS, BACKOFF_MS * 2 ** (failures - 1));
-    lastError = e;
+    const failures = backoff.failures + 1;
+    await writeBackoff({
+      failures,
+      retryAt: now + Math.min(MAX_BACKOFF_MS, BACKOFF_MS * 2 ** (failures - 1)),
+      error: e instanceof Error ? e.message : String(e),
+    });
     throw e;
   }
-  failures = 0;
-  retryAt = 0;
+  if (backoff.failures) await writeBackoff(null);
   await markModelCurrent();
   return true;
 }
@@ -189,8 +228,10 @@ let running: Promise<boolean> | undefined;
  *   placements; the entries are `quiet`, so a re-pick never bumps updatedAt or reaches other devices;
  * - the vector cache is emptied.
  * The key is written only after all of that committed; if embedding fails nothing is changed or stored, and the
- * next call after a backoff (BACKOFF_MS, doubling, at most MAX_BACKOFF_MS; earlier calls reject at once) tries
- * again. Concurrent calls share one run. Resolves true when it migrated.
+ * next call after a backoff (BACKOFF_MS, doubling, at most MAX_BACKOFF_MS; earlier calls reject at once; kept in
+ * chrome.storage.session, so a worker restart keeps it) tries again. A run whose first two embed calls fail stops
+ * there (the embedder is down) rather than trying every text. Concurrent calls share one run. Resolves true when it
+ * migrated.
  */
 export function migrateModel(db: Db, embedFn: EmbedFn = embed, now = Date.now()): Promise<boolean> {
   running ??= run(db, embedFn, now).finally(() => {

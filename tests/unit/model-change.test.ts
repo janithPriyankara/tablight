@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
-import { moveItems, regroupPreview, whenTeachingDone } from '../../src/background/groups';
+import { acceptSuggestion, createGroup, moveItems, regroupPreview, whenTeachingDone } from '../../src/background/groups';
 import { growGroups } from '../../src/background/grow';
-import { BACKOFF_MS, EMBED_MODEL_KEY, LEGACY_MODEL, migrateModel } from '../../src/background/model-change';
+import { BACKOFF_MS, EMBED_MODEL_KEY, LEGACY_MODEL, MIGRATION_BACKOFF_KEY, migrateModel } from '../../src/background/model-change';
 import { EMBED_INPUT_VERSION, cachedVectors, embeddingKey, processQueue } from '../../src/background/tab-index';
 import { EMBED_MODEL } from '../../src/classify/model';
 import { STARTER_GROUPS } from '../../src/classify/seeds';
@@ -225,6 +225,64 @@ describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () 
     expect(Date.now() - t0).toBe((1 + 2 + 4 + 8 + 15 + 15) * 60_000);
     expect(await migrateModel(db, fakeEmbed)).toBe(true);
   });
+  it('stops after two failed embed calls when the embedder is down, instead of trying every text and seed group', async () => {
+    // 40 lessons (two chunks), two untaught seed groups and an untaught user group: a down embedder used to be
+    // asked once per chunk, once per text and once per group.
+    const lessons = Array.from({ length: 40 }, (_, k): [string, number] => [`lesson ${k}`, k]);
+    await db.groups.put(group('games', { lessons }));
+    const seeds = STARTER_GROUPS.slice(0, 3).map((g) => g.id).filter((id) => id !== 'games').slice(0, 2);
+    for (const id of seeds) await db.groups.put(group(id));
+    await db.groups.put(group('user-x', { builtIn: false }));
+    let calls = 0;
+    const down = async (): Promise<Float32Array[]> => {
+      calls++;
+      throw new Error('model will not load');
+    };
+    await expect(migrateModel(db, down)).rejects.toThrow('model will not load');
+    expect(calls).toBe(2); // the first chunk, then its first text alone
+    expect(await chrome.storage.local.get(EMBED_MODEL_KEY)).toEqual({});
+  });
+  it('stops after two failed calls when only seed groups need embedding', async () => {
+    const seeds = STARTER_GROUPS.slice(0, 4).map((g) => g.id);
+    for (const id of seeds) await db.groups.put(group(id));
+    await oldItem();
+    let calls = 0;
+    await expect(migrateModel(db, async () => {
+      calls++;
+      throw new Error('down');
+    })).rejects.toThrow('down');
+    expect(calls).toBe(2);
+  });
+  it('keeps trying the other texts once one call has worked (one bad text is not a down embedder)', async () => {
+    await db.groups.put(group('games', { lessons: [['good', 1], ['poison', 2], ['fine', 3], ['also poison', 4]] }));
+    const picky = async (texts: string[]) => {
+      if (texts.some((t) => t.includes('poison'))) throw new Error('bad text');
+      return fakeEmbed(texts);
+    };
+    expect(await migrateModel(db, picky)).toBe(true);
+    expect((await db.groups.get('games'))!.exemplars).toEqual([Array.from(newVec('good')), Array.from(newVec('fine'))]);
+  });
+  it('keeps the backoff in chrome.storage.session, so a service-worker restart still waits', async () => {
+    await db.groups.put(group('games', { lessons: [['x', 1]] }));
+    await expect(migrateModel(db, () => Promise.reject(new Error('offscreen down')))).rejects.toThrow('offscreen down');
+    const stored = (await chrome.storage.session.get(MIGRATION_BACKOFF_KEY))[MIGRATION_BACKOFF_KEY];
+    expect(stored).toEqual({ failures: 1, retryAt: Date.now() + BACKOFF_MS, error: 'offscreen down' });
+    // A fresh copy of the module is a restarted worker: nothing in memory, the backoff still holds.
+    vi.resetModules();
+    const fresh = await import('../../src/background/model-change');
+    embedded = [];
+    await expect(fresh.migrateModel(db, fakeEmbed)).rejects.toThrow('offscreen down');
+    expect(embedded).toEqual([]);
+    // Its second failure doubles the wait from the stored count.
+    vi.setSystemTime(Date.now() + BACKOFF_MS);
+    await expect(fresh.migrateModel(db, () => Promise.reject(new Error('still down')))).rejects.toThrow('still down');
+    expect((await chrome.storage.session.get(MIGRATION_BACKOFF_KEY))[MIGRATION_BACKOFF_KEY])
+      .toEqual({ failures: 2, retryAt: Date.now() + 2 * BACKOFF_MS, error: 'still down' });
+    // A success clears it.
+    vi.setSystemTime(Date.now() + 2 * BACKOFF_MS);
+    expect(await fresh.migrateModel(db, fakeEmbed)).toBe(true);
+    expect(await chrome.storage.session.get(MIGRATION_BACKOFF_KEY)).toEqual({});
+  });
   it('drops only the exemplar of a lesson whose text will not embed', async () => {
     await db.groups.put(group('games', { lessons: [['good', 1], ['poison', 2], ['fine', 3]] }));
     const picky = async (texts: string[]) => {
@@ -282,6 +340,48 @@ describe('migrateModel: an install upgrading from Xenova/bge-small-en-v1.5', () 
     g = (await db.groups.get('games'))!;
     expect(g.exemplars).toHaveLength(1); // no vector for b
     expect(g.lessons!.map(([t]) => t)).toEqual([embedText(a), embedText(b)]); // but its lesson is kept (and syncs)
+  });
+  it('a migration committing between the vector read and the teaching transaction never leaves an old-model exemplar', async () => {
+    watch.on = true;
+    // A Db whose next transaction first lets the whole migration commit: the vectors were read (through the old
+    // embKey) before it, the teaching transaction runs after it.
+    const racing = (): Db => {
+      let raced = false;
+      return {
+        ...db,
+        tx: (async (stores: never, fn: never) => {
+          if (!raced) {
+            raced = true;
+            expect(await migrateModel(db, fakeEmbed)).toBe(true);
+          }
+          return db.tx(stores, fn);
+        }) as Db['tx'],
+      };
+    };
+    const noOld = (g: Group | undefined) => {
+      expect(g).toBeDefined();
+      for (const v of g!.exemplars) expect(v[DIM - 1]).not.toBeCloseTo(OLD);
+      if (g!.centroid) expect(g!.centroid[DIM - 1]).not.toBeCloseTo(OLD);
+    };
+    await db.groups.put(group('games'));
+    const a = await oldItem();
+    await moveItems(racing(), [a.id], 'games', fakeEmbed);
+    await whenTeachingDone();
+    noOld(await db.groups.get('games'));
+    expect((await db.groups.get('games'))!.exemplars).toEqual([Array.from(newVec(embedText(a)))]); // taught late
+    await chrome.storage.local.remove(EMBED_MODEL_KEY); // the next race migrates again
+    const b = await oldItem();
+    const made = await createGroup(racing(), 'Made', [b.id], fakeEmbed);
+    await whenTeachingDone();
+    noOld(await db.groups.get(made.id));
+    expect((await db.groups.get(made.id))!.exemplars).toEqual([Array.from(newVec(embedText(b)))]);
+    await chrome.storage.local.remove(EMBED_MODEL_KEY);
+    await db.groups.put(group('sugg', { builtIn: false, suggested: true }));
+    const c = await oldItem({ groupId: 'sugg' });
+    // The migration dissolves the suggestion, so accepting it fails; nothing old is taught anywhere.
+    await expect(acceptSuggestion(racing(), 'sugg', fakeEmbed)).rejects.toThrow('not a suggestion');
+    for (const g of await db.groups.all()) noOld(g);
+    expect((await db.items.get(c.id))!.groupId).toBeNull();
   });
   it('a later move wins over an earlier one whose embed is still pending; teaching never moves a tab', async () => {
     await db.groups.put(group('games'));

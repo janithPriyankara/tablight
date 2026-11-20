@@ -42,7 +42,7 @@ export interface Neighbour {
  * to it at cosine ≥ head.similarity (one vote per page), a group with at least NEIGHBOUR_MIN votes and strictly
  * more than any other wins. It never runs for a tab the head reads as `other`.
  * The bar is head.similarity, the cosine scripts/train-head.mjs validates for the learned-exemplar override: a single
- * nearest pool item at that cosine is in the right group at least 95% of the time (head.similarity, read from head.json: currently 0.74). Two agreeing
+ * nearest pool item at that cosine is in the right group at least 95% of the time (head.similarity is read from head.json). Two agreeing
  * tabs at that bar are stronger evidence still. The bar was not tuned on the synthetic sessions: lower bars chosen
  * there did not hold up blind (tests/quality/README.md). On those sessions the step rarely fires at this bar, but
  * real profiles repeat pages and sites far more, and that is where it helps. tests/quality/neighbours.test.ts checks

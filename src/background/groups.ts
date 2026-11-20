@@ -38,6 +38,14 @@ async function vectorsOf(db: Db, items: Item[]): Promise<Map<string, number[]>> 
   const got = await cachedVectors(db, items);
   return new Map([...got].map(([id, v]) => [id, Array.from(v)]));
 }
+/**
+ * The vector read for `snap` before a teaching transaction, if it still belongs to `cur` (the item read inside it).
+ * A model migration that commits in between drops every embKey; a vector read through the old embKey is then the
+ * old model's and must not become an exemplar, so the item is taught late (embedded again) instead.
+ */
+function stillCurrent(vecs: Map<string, number[]>, snap: Item, cur: Item): number[] | undefined {
+  return cur.embKey === snap.embKey ? vecs.get(cur.id) : undefined;
+}
 const teaching = new Set<Promise<void>>();
 /** Resolves once every late teaching step started so far has finished (tests, and nothing else, wait on it). */
 export async function whenTeachingDone(): Promise<void> {
@@ -121,7 +129,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
       if (!cur) continue;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
       await s.items.put({ ...withoutPlacedBy(cur), groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
-      if (!already && cur.classifiable) taught.push({ vec: vecs.get(cur.id), text: embedText(cur) });
+      if (!already && cur.classifiable) taught.push({ vec: stillCurrent(vecs, snap, cur), text: embedText(cur) });
     }
     if (taught.length) await s.groups.put(withExemplars(g, taught));
     late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
@@ -151,20 +159,28 @@ export async function createGroup(db: Db, name: string, ids: string[], embedFn?:
     (i): i is Item => i !== undefined,
   );
   const vecs = await vectorsOf(db, items);
-  const taught: Taught[] = items.flatMap((i) => (i.classifiable ? [{ vec: vecs.get(i.id), text: embedText(i) }] : []));
+  const late: string[] = [];
   const made = await db.tx(['items', 'groups'], async (s) => {
     const all = await s.groups.all();
     assertFreeName(all, clean);
     const base = newUserGroup(clean, all.length);
-    const group = withExemplars(base, taught);
-    await s.groups.put(group);
+    const taught: Taught[] = [];
+    const moved: Item[] = [];
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
-      if (cur) await s.items.put({ ...withoutPlacedBy(cur), groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+      if (!cur) continue;
+      moved.push(cur);
+      if (cur.classifiable) taught.push({ vec: stillCurrent(vecs, snap, cur), text: embedText(cur) });
     }
+    const group = withExemplars(base, taught);
+    await s.groups.put(group);
+    for (const cur of moved) {
+      await s.items.put({ ...withoutPlacedBy(cur), groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+    }
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
     return group;
   });
-  teachLater(db, made.id, taught.filter((t) => !t.vec).map((t) => t.text), embedFn);
+  teachLater(db, made.id, late, embedFn);
   return made;
 }
 
@@ -245,7 +261,7 @@ export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): P
       const i = await s.items.get(m.id);
       if (!i || i.groupId !== id) continue;
       await s.items.put({ ...withoutPlacedBy(i), groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
-      if (i.classifiable) taught.push({ vec: vecs.get(i.id), text: embedText(i) });
+      if (i.classifiable) taught.push({ vec: stillCurrent(vecs, m, i), text: embedText(i) });
     }
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;
