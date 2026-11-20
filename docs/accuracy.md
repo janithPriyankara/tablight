@@ -107,5 +107,6 @@ the benchmark would turn it into a training set, so a future model needs a new s
 > browsing profiles, it grouped 84.9% of the topical tabs by itself, and 72.5% of the tabs it grouped landed in the
 > right group. Anything it isn't sure about stays Unsorted for you. When you move a tab, its new group learns from
 > it. How we measured: docs/accuracy.md.
+
 [^1]: The scoring command ran twice with identical code: the first run's output was not captured (the test
     runner's default reporter hid it), so it was run again. Nothing changed between the two runs.
