@@ -5,6 +5,11 @@ export interface Suggestion {
   name: string;
 }
 
+/**
+ * Average-link cut. Kept at 0.55 for tablight/bge-small-tabs-v1: on the rows its fine-tuning held out
+ * (scripts/measure-similarity.mjs) 0.09% of different-group pairs reach 0.55 (bge-small: 1.08%) while the share of
+ * same-group pairs is unchanged (21.9% vs 22.7%), so the new model clusters no looser than before.
+ */
 export const CLUSTER_THRESHOLD = 0.55;
 export const CLUSTER_MIN_SIZE = 3;
 /** O(n²) memory/time: only the most recent items are clustered. */

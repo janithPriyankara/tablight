@@ -6,7 +6,8 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT, CALIBRATION (path to finetune.py's calibration.json: the head still trains on every
 // pool row, but the L2 choice, Unsorted threshold and override similarity use only those rows, which a fine-tuned
-// encoder never saw; without it everything is unchanged).
+// encoder never saw; without it everything is unchanged). The bundled tablight/bge-small-tabs-v1 defaults to its
+// committed scripts/finetune/calibration-bge-small-tabs-v1.json; another tablight/* model without one is refused.
 //
 // Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + train-f.json + tests/quality/fixture.json.
 // tests/quality/holdout.json, holdout2.json and holdout3.json are never read here: they are the blind test sets.
@@ -26,7 +27,15 @@ const MODEL_PATH = process.env.MODEL_PATH ?? join(root, 'public', 'models');
 const POOLING = process.env.POOLING ?? MODEL_POOLING;
 const OUT = process.env.OUT ?? join(root, 'src', 'classify', 'head.json');
 
-const CALIBRATION = process.env.CALIBRATION;
+/** The calibration keys of each committed fine-tuned encoder (scripts/finetune/README.md). */
+const COMMITTED_CALIBRATION = { 'tablight/bge-small-tabs-v1': 'scripts/finetune/calibration-bge-small-tabs-v1.json' };
+const CALIBRATION = process.env.CALIBRATION ??
+  (COMMITTED_CALIBRATION[MODEL_ID] ? join(root, COMMITTED_CALIBRATION[MODEL_ID]) : undefined);
+// A fine-tuned encoder saw most pool rows in training: a threshold chosen on them would be too optimistic.
+if (!CALIBRATION && MODEL_ID.startsWith('tablight/')) {
+  throw new Error(`${MODEL_ID} is fine-tuned on the pool: set CALIBRATION=<its calibration.json>`);
+}
+if (CALIBRATION && !process.env.CALIBRATION) console.log(`calibration rows: ${CALIBRATION} (committed for ${MODEL_ID})`);
 const SEED = 42;
 /** Cost of a wrong group relative to a tab left Unsorted, for the threshold choice (head-fit.mjs). */
 const WRONG_COST = Number(process.env.WRONG_COST ?? 2);

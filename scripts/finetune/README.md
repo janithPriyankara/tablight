@@ -32,8 +32,8 @@ python scripts/finetune/finetune.py --pool training/ --out DIR --calib-share 0.2
 # int8 ONNX vs PyTorch parity on 500 pool rows; exits 1 if the mean cosine is under 0.99.
 python scripts/finetune/export.py --model DIR --out MODELS_ROOT/tablight/bge-small-tabs-v1
 
-# Use it from JS.
-MODEL_ID=tablight/bge-small-tabs-v1 MODEL_PATH=MODELS_ROOT node scripts/train-head.mjs
+# Use it from JS: the head's threshold and similarity must be chosen on the calibration rows (rows the encoder never
+CALIBRATION=DIR/calibration.json MODEL_ID=tablight/bge-small-tabs-v1 MODEL_PATH=MODELS_ROOT node scripts/train-head.mjs
 
 # Tests: the Python embedText matches the TS one (fixture), and the pool files match train-head.mjs.
 python -m pytest -q scripts/finetune/test_embedtext.py
@@ -60,3 +60,8 @@ dynamic int8 quantisation with optimum's arm64 config (no avx512_vnni assumption
 weights. Per-tensor weights (as the Xenova file uses) drifted to 0.978 mean cosine on a fine-tuned model;
 per-channel holds 0.999 at the same size (~34 MB) and speed. The file loads in onnxruntime-web (WASM) and in
 transformers.js with `dtype: 'q8'`.
+`tablight/bge-small-tabs-v1` (committed under public/models/) is the `--seed 2 --loss mnrl-seeds --epochs 5 --lr 2e-5`
+run (epoch 3 kept). Its held-out keys are [calibration-bge-small-tabs-v1.json](calibration-bge-small-tabs-v1.json)
+(1244 pool rows): `npm run train:head` uses that file by default for this model and reproduces src/classify/head.json
+(threshold 0.25, similarity 0.71; youtubeThreshold 0.13 comes from `scripts/tune-youtube-bar.mjs` with the same file),
+and `node scripts/measure-similarity.mjs` measures the search and clustering cut-offs on the same rows.

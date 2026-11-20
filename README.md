@@ -23,6 +23,7 @@ Press `Alt+Shift+T` to open the dashboard.
 ```
 npm test                 # unit tests
 npm run test:quality     # classification accuracy on the fixtures
+npm run train:head       # retrains src/classify/head.json (threshold chosen on scripts/finetune/calibration-bge-small-tabs-v1.json, the rows the model never trained on)
 npx playwright install chromium
 npm run build
 npm run test:e2e         # loads dist/ in real Chromium, checks flows, performance and that no network request is made
