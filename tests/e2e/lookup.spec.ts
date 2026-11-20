@@ -1,13 +1,15 @@
 /**
  * The opt-in look-up, end to end, in the BUILT extension (dist/). Run `npm run build` first.
- * Wikidata is never reached: https://www.wikidata.org/** is routed to a fixture, and the Google results page the tab
- * shows is routed to a local stub. Checks that showing the button sends nothing, that "Look it up" → "Look up" sends
+ * Nothing reaches the network: the Wikidata search API is routed to a fixture, the Google results page the tab shows
+ * to a local stub, and a catch-all route aborts (and fails the test on) anything else. Requests are also watched from
+ * the service worker and, over raw CDP, the offscreen document. Checks that showing the button sends nothing, that "Look it up" → "Look up" sends
  * exactly one request (to the search API, with the text shown in the box, no Cookie, no Referer), and that
  * "Move to" puts the tab in that group. The zero-network run in extension.spec.ts stays as it is.
  */
 import { expect, test, type Locator, type Page, type Request } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { captureNetwork, type NetworkCapture } from './fixtures/cdp-network';
 import { navButton } from './fixtures/launch';
 import type { Item } from '../../src/shared/types';
 import { Harness, SETTLE_MS } from './fixtures/ui';
@@ -19,16 +21,34 @@ const GOOGLE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>${Q
   '<link rel="icon" href="data:,"></head><body><p>Results</p></body></html>';
 
 let h: Harness;
-/** Every request any page of the browser made to a wikidata.org host (seen by the route). */
+let cdp: NetworkCapture;
+const API = 'https://www.wikidata.org/w/api.php';
+/** Every request to the Wikidata API that the fixture route served, with its headers. */
 const seen: { url: string; headers: Record<string, string> }[] = [];
-/** Every wikidata.org request the context reported (a second, independent count). */
-const reported: string[] = [];
+/** Requests the catch-all route aborted: anything but the extension, the Google stub and the Wikidata fixture. */
+const unexpected: string[] = [];
+/** Every request Playwright reported (pages and the service worker), as "source url". */
+const traffic: { source: string; url: string }[] = [];
+const allowed = (url: string): boolean =>
+  url.startsWith(`chrome-extension://${h.extId}/`) || /^(data|blob):/.test(url) ||
+  url.startsWith('https://www.google.com/') || url.startsWith(`${API}?`);
+/** Every request seen anywhere: Playwright pages, the service worker, and (raw CDP) the offscreen document. */
+const everything = () => [...traffic, ...cdp.requests.map((r) => ({ source: `cdp ${r.targetType}`, url: r.url }))];
+const wikidataRequests = () => everything().filter((r) => /wikidata\.org/i.test(r.url));
 test.use({ actionTimeout: 20_000 });
 test.beforeAll(async () => {
-  h = await Harness.start();
+  h = await Harness.start(['--remote-debugging-port=0']);
+  cdp = await captureNetwork(h.dir);
+  // Playwright tries the last-registered route first: this catch-all only gets what the two below do not take.
+  await h.context.route('**/*', (route) => {
+    const url = route.request().url();
+    if (url.startsWith(`chrome-extension://${h.extId}/`)) return route.continue();
+    unexpected.push(url);
+    return route.abort();
+  });
   await h.context.route('https://www.google.com/**', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: GOOGLE_HTML }));
-  await h.context.route(/^https:\/\/([a-z0-9-]+\.)*wikidata\.org\//, async (route) => {
+  await h.context.route(`${API}?**`, async (route) => {
     const req = route.request();
     seen.push({ url: req.url(), headers: await req.allHeaders() });
     await route.fulfill({
@@ -36,16 +56,19 @@ test.beforeAll(async () => {
       headers: { 'access-control-allow-origin': '*' },
     });
   });
-  h.context.on('request', (r: Request) => {
-    if (/^https?:\/\/([a-z0-9-]+\.)*wikidata\.org\//.test(r.url())) reported.push(r.url());
-  });
+  h.context.on('request', (r: Request) => traffic.push({ source: r.serviceWorker() ? 'service-worker' : 'page', url: r.url() }));
   // A cookie the browser would send to Wikidata if the request carried credentials.
   await h.context.addCookies([{ name: 'probe', value: 'must-not-be-sent', domain: '.wikidata.org', path: '/', secure: true, sameSite: 'None' }]);
 });
+test.afterEach(() => {
+  // Nothing may leave for anywhere else, from any page, the service worker or the offscreen document.
+  expect(unexpected, 'requests the catch-all route aborted').toEqual([]);
+  expect(everything().filter((r) => !allowed(r.url)), 'requests to anything but the extension, the stub and the fixture').toEqual([]);
+});
 test.afterAll(async () => {
+  cdp?.close();
   await h?.close();
 });
-
 const lookupButtons = (p: Page | Locator) => p.getByRole('button', { name: 'Look it up' });
 /**
  * Opens the Google results tab (as a Playwright page, so the route serves it: a tab made by chrome.tabs.create can
@@ -70,6 +93,13 @@ const itemById = async (id: string) => (await h.state()).items.find((i) => i.id 
 test('Look it up: nothing is sent until "Look up"; then one request with the shown text; "Move to" moves the tab', async () => {
   await h.reset();
   const it = await openGoogle();
+  // The guards work: the stub page was seen, and a probe to anywhere else is aborted and recorded.
+  expect(traffic.some((r) => r.url === GOOGLE)).toBe(true);
+  const stub = h.context.pages().find((p) => p.url() === GOOGLE)!;
+  expect(await stub.evaluate(() => fetch('https://probe.example.net/x').then(() => 'reached', () => 'blocked'))).toBe('blocked');
+  expect(unexpected).toEqual(['https://probe.example.net/x']);
+  unexpected.length = 0;
+  traffic.splice(0, traffic.length, ...traffic.filter((r) => !r.url.startsWith('https://probe.example.net/')));
   // The fixture query is not a name anything knows: the tab stays Unsorted.
   expect(it.groupId).toBeNull();
   expect((await h.state()).groups.some((g) => g.id === 'tv')).toBe(true);
@@ -84,7 +114,7 @@ test('Look it up: nothing is sent until "Look up"; then one request with the sho
     await panel.waitForTimeout(1500);
     await panel.close();
     expect(seen).toEqual([]);
-    expect(reported).toEqual([]);
+    expect(wikidataRequests()).toEqual([]);
   });
 
   await test.step('Look it up → Look up: exactly one request, to the search API, with the shown text, no Cookie, no Referer', async () => {
@@ -105,7 +135,9 @@ test('Look it up: nothing is sent until "Look up"; then one request with the sho
     await expect(dialog.getByRole('list', { name: 'Matches' })).toContainText('<b>Zorblax</b>');
     await h.dash.screenshot({ path: test.info().outputPath('lookup-dialog.png') });
     expect(seen).toHaveLength(1);
-    expect(reported).toHaveLength(1);
+    // One request across every page, the service worker and the offscreen document.
+    expect(wikidataRequests()).toHaveLength(1);
+    expect(wikidataRequests()[0]!.source).toBe('page');
     const url = new URL(seen[0]!.url);
     expect(`${url.origin}${url.pathname}`).toBe('https://www.wikidata.org/w/api.php');
     expect(url.searchParams.get('search')).toBe(shown);
@@ -128,7 +160,8 @@ test('Look it up: nothing is sent until "Look up"; then one request with the sho
 
 test('with the setting off there is no button, and Cancel / Escape send nothing', async () => {
   seen.length = 0;
-  reported.length = 0;
+  traffic.length = 0;
+  cdp.requests.length = 0;
   await h.reset();
   expect((await openGoogle()).groupId).toBeNull();
   await navButton(h.dash, 'Unsorted').click();
@@ -156,5 +189,5 @@ test('with the setting off there is no button, and Cancel / Escape send nothing'
   await expect(lookupButtons(panel)).toHaveCount(0);
   await panel.close();
   expect(seen).toEqual([]);
-  expect(reported).toEqual([]);
+  expect(wikidataRequests()).toEqual([]);
 });

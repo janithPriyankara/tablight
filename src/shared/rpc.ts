@@ -31,6 +31,9 @@ export type Req =
   | { t: 'deleteAllData' } // Settings: wipe everything this extension stored, then re-seed
   | { t: 'interests'; picked: string[]; custom: string[] } // the interests step's Continue: creates the picked groups
   | { t: 'import'; json: string }
+  // The look-up dialog's "Create <starter> and move": creates that one starter group (no other effect); returns the
+  // id to move the tab to (the starter's, or a same-named user group's).
+  | { t: 'groupCreateStarter'; id: string }
   // The look-up dialog: the head's label for "<label> — <description>" from Wikidata, embedded on this device.
   // Returns LabelForTextReply; label is null below the head's threshold or for `other`.
   | { t: 'labelForText'; text: string };
@@ -41,7 +44,7 @@ const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'keepTab', 'settings', 'export', 'deleteAllData', 'import',
-  'interests', 'labelForText',
+  'interests', 'labelForText', 'groupCreateStarter',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

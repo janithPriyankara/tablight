@@ -308,87 +308,87 @@ export function SidePanel() {
 
   return (
     <>
-    <div class="sp" inert={lookupItem ? true : undefined}>
-      <header class="sp-top">
-        <div class="brand">
-          <LogoMark />
-          <span class="brand-name">Tablight</span>
-        </div>
-        {state && !state.modelReady && (
-          <span class="status-pill" title="The on-device model is grouping your tabs">
-            <span class="pulse" aria-hidden="true" />Organizing
-          </span>
-        )}
-      </header>
-      <label class="search">
-        <SearchIcon class="search-icon" />
-        <input
-          type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups"
-          maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
-          onInput={(e) => search.setQuery(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            const first = search.results?.words[0] ?? search.results?.meaning[0];
-            if (e.key === 'Enter' && first && !search.pending) void openItem(first);
-            if (e.key === 'Escape' && search.query) {
-              e.preventDefault();
-              search.setQuery('');
-            }
-          }}
-        />
-      </label>
-      {state && <p class="totals">{totalsLine(state)}</p>}
-      {error && (
-        <div class="callout callout-error" role="alert">
-          <span>{state ? 'Couldn’t refresh: showing the last known tabs.' : 'Couldn’t load your tabs.'}</span>
-          <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
-        </div>
-      )}
-
-      <main class="sp-body" aria-busy={search.pending}>
-        {search.query.trim() ? (
-          <SearchResultsView
-            results={search.results} pending={search.pending} error={search.error} groups={state?.groups ?? []}
-            onOpen={(i) => void openItem(i)}
-          />
-        ) : state ? (
-          <>
-            {suspiciousSection}
-            {section(WINDOW_SECTION, 'This window', thisWindow, { showGroup: true })}
-            {shownGroups.map((g) =>
-              section(`group:${g.id}`, g.name, items.filter((i) => i.groupId === g.id).sort(byUse), { group: g, count: g.count }))}
-            {unsorted.length > 0 && section(UNSORTED_SECTION, 'Unsorted', unsorted, {})}
-          </>
-        ) : (
-          !error && <p class="empty" aria-busy="true">Counting tabs…</p>
-        )}
-      </main>
-
-      <footer class="sp-foot">
-        <div class="notice" role="status" aria-live="polite">
-          {notice && (
-            <span class="notice-text">
-              {notice.message}
-              {notice.hint && <span class="notice-hint">{notice.hint}</span>}
+      <div class="sp" inert={lookupItem ? true : undefined}>
+        <header class="sp-top">
+          <div class="brand">
+            <LogoMark />
+            <span class="brand-name">Tablight</span>
+          </div>
+          {state && !state.modelReady && (
+            <span class="status-pill" title="The on-device model is grouping your tabs">
+              <span class="pulse" aria-hidden="true" />Organizing
             </span>
           )}
-          {(notice?.token || notice?.undoRequest) && (
-            <button type="button" class="btn btn-ghost btn-sm" onClick={() => void runUndo()}>Undo</button>
+        </header>
+        <label class="search">
+          <SearchIcon class="search-icon" />
+          <input
+            type="search" aria-label="Search tabs" placeholder="Search tabs, saved tabs and groups"
+            maxLength={MAX_QUERY} value={search.query} spellcheck={false} autocomplete="off"
+            onInput={(e) => search.setQuery(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              const first = search.results?.words[0] ?? search.results?.meaning[0];
+              if (e.key === 'Enter' && first && !search.pending) void openItem(first);
+              if (e.key === 'Escape' && search.query) {
+                e.preventDefault();
+                search.setQuery('');
+              }
+            }}
+          />
+        </label>
+        {state && <p class="totals">{totalsLine(state)}</p>}
+        {error && (
+          <div class="callout callout-error" role="alert">
+            <span>{state ? 'Couldn’t refresh: showing the last known tabs.' : 'Couldn’t load your tabs.'}</span>
+            <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
+          </div>
+        )}
+
+        <main class="sp-body" aria-busy={search.pending}>
+          {search.query.trim() ? (
+            <SearchResultsView
+              results={search.results} pending={search.pending} error={search.error} groups={state?.groups ?? []}
+              onOpen={(i) => void openItem(i)}
+            />
+          ) : state ? (
+            <>
+              {suspiciousSection}
+              {section(WINDOW_SECTION, 'This window', thisWindow, { showGroup: true })}
+              {shownGroups.map((g) =>
+                section(`group:${g.id}`, g.name, items.filter((i) => i.groupId === g.id).sort(byUse), { group: g, count: g.count }))}
+              {unsorted.length > 0 && section(UNSORTED_SECTION, 'Unsorted', unsorted, {})}
+            </>
+          ) : (
+            !error && <p class="empty" aria-busy="true">Counting tabs…</p>
           )}
-        </div>
-        <div class="sp-actions">
-          <button type="button" class="btn btn-primary" onClick={() => void openDashboard()}>
-            <GridIcon />Dashboard
-          </button>
-          <button
-            type="button" class="btn" disabled={busy || !state}
-            onClick={() => void sleep(items.filter((i) => i.state === 'open' && i.classifiable && i.tabId !== activeTab).map((i) => i.id))}
-          >
-            <PauseIcon />Pause other tabs
-          </button>
-        </div>
-      </footer>
-    </div>
-    {lookupItem && <LookupDialog item={lookupItem} groups={state?.groups ?? []} onClose={() => setLookupItem(null)} />}
+        </main>
+
+        <footer class="sp-foot">
+          <div class="notice" role="status" aria-live="polite">
+            {notice && (
+              <span class="notice-text">
+                {notice.message}
+                {notice.hint && <span class="notice-hint">{notice.hint}</span>}
+              </span>
+            )}
+            {(notice?.token || notice?.undoRequest) && (
+              <button type="button" class="btn btn-ghost btn-sm" onClick={() => void runUndo()}>Undo</button>
+            )}
+          </div>
+          <div class="sp-actions">
+            <button type="button" class="btn btn-primary" onClick={() => void openDashboard()}>
+              <GridIcon />Dashboard
+            </button>
+            <button
+              type="button" class="btn" disabled={busy || !state}
+              onClick={() => void sleep(items.filter((i) => i.state === 'open' && i.classifiable && i.tabId !== activeTab).map((i) => i.id))}
+            >
+              <PauseIcon />Pause other tabs
+            </button>
+          </div>
+        </footer>
+      </div>
+      {lookupItem && <LookupDialog item={lookupItem} groups={state?.groups ?? []} onClose={() => setLookupItem(null)} />}
     </>
   );
 }

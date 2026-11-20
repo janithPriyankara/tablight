@@ -2,14 +2,13 @@
 // opens. This is the one module allowed to import the look-up client (LOOKUP_IMPORTERS in
 // scripts/release-patterns.mjs), and lookUp is called in exactly one place: the dialog's "Look up" click handler.
 // Nothing is sent before that click; what is sent is the text shown in the box, cleaned again.
-import { useId, useState } from 'preact/hooks';
+import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import { INTEREST_CHOICES } from '../../classify/seeds';
 import { cleanLookupText, lookupText } from '../../shared/lookup-text';
 import { send } from '../../shared/rpc';
 import type { Item } from '../../shared/types';
 import { Modal } from '../dashboard/Modal';
 import { LOOKUP_DIALOG_SENTENCE, lookUp, type LookupError, type LookupHit } from './lookup';
-import { displayTitle } from './format';
 import { GlobeIcon } from './icons';
 
 /** The hint under the setting's toggle (Settings → General). */
@@ -43,21 +42,25 @@ type Phase =
   | { k: 'hits'; hits: LookupHit[] }
   | { k: 'error'; error: LookupError }
   | { k: 'moving' }
-  | { k: 'moveFailed' };
+  | { k: 'moveFailed' }
+  | { k: 'gone' };
 
 /** A starter group's name by id (the groups the interests step can create). */
 const starterName = (id: string): string | null => INTEREST_CHOICES.find((c) => c.id === id)?.name ?? null;
 
 /**
  * The confirm dialog, shown every time: the sentence, the editable cleaned text, what is never sent, Wikimedia's
- * privacy policy, Look up / Cancel. Hits are plain text. "Move to" is the user's own move (it teaches the group);
- * a hit whose topic group does not exist offers to create that starter group first. After a move it closes.
+ * privacy policy, Look up / Cancel. Only activating the "Look up" button sends (Enter in the box does nothing, so a
+ * held or repeated Enter from the row button, or an IME's confirming Enter, can never send). Hits are plain text.
+ * "Move to" is the user's own move (it teaches the group); a hit whose topic group does not exist offers to create
+ * that one starter group first (groupCreateStarter: no other effect). After a move it closes.
  */
 export function LookupDialog(props: {
   item: Item;
   /** The groups that exist (suggestions excluded by the caller or here). */
   groups: ReadonlyArray<{ id: string; name: string; suggested?: boolean }>;
-  onClose: () => void;
+  /** `moved`: the tab was moved (its row may be about to leave the list the dialog was opened from). */
+  onClose: (moved?: boolean) => void;
 }) {
   const { item, onClose } = props;
   const groups = props.groups.filter((g) => !g.suggested);
@@ -66,30 +69,39 @@ export function LookupDialog(props: {
   const boxId = useId();
   const clean = cleanLookupText(text);
   const busy = phase.k === 'busy' || phase.k === 'moving';
+  /** A move in flight: the dialog cannot be cancelled until it settles (the move would still happen). */
+  const moving = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => () => void (mounted.current = false), []);
+  const cancel = () => {
+    if (!moving.current) onClose(false);
+  };
 
   const onLookUp = async () => {
     const sent = cleanLookupText(text);
     if (!sent || busy) return;
-    setText(sent); // the box shows exactly what is sent
+    setText(sent); // the box shows exactly what is sent (and the "Will send" line already showed it)
     setPhase({ k: 'busy' });
     const r = await lookUp(sent, { groups });
-    setPhase('error' in r ? { k: 'error', error: r.error } : { k: 'hits', hits: r.hits });
+    if (mounted.current) setPhase('error' in r ? { k: 'error', error: r.error } : { k: 'hits', hits: r.hits });
   };
   const move = async (hit: LookupHit) => {
-    const groupId = hit.group ?? hit.topic;
-    if (groupId === null) return;
+    if (hit.group === null && hit.topic === null) return;
+    moving.current = true;
     setPhase({ k: 'moving' });
+    let next: Phase | null = null;
     try {
-      if (hit.group === null) {
-        // Creates the starter group (the interests path). Every existing group is listed too, so even a first answer
-        // on a fresh install removes nothing.
-        await send({ t: 'interests', picked: [groupId, ...groups.map((g) => g.id)], custom: [] });
-      }
-      await send({ t: 'moveItems', ids: [item.id], groupId });
-      onClose();
+      // A missing starter group is created first: that one group, nothing else (a same-named user group is reused).
+      const groupId = hit.group ?? (await send<string>({ t: 'groupCreateStarter', id: hit.topic! }));
+      const moved = await send<number>({ t: 'moveItems', ids: [item.id], groupId });
+      if (moved === 0) next = { k: 'gone' };
     } catch {
-      setPhase({ k: 'moveFailed' });
+      next = { k: 'moveFailed' };
     }
+    moving.current = false;
+    if (!mounted.current) return;
+    if (next) setPhase(next);
+    else onClose(true);
   };
   const actionFor = (hit: LookupHit) => {
     if (hit.group !== null) {
@@ -101,32 +113,32 @@ export function LookupDialog(props: {
   };
 
   return (
-    <Modal title="Look it up" onClose={onClose}>
-      <p class="lookup-for">{displayTitle(item)}</p>
+    <Modal title="Look it up" onClose={cancel}>
       <label class="lookup-label" for={boxId}>{LOOKUP_DIALOG_SENTENCE}</label>
       <input
         id={boxId} class="field lookup-text" value={text} maxLength={200} spellcheck={false} autocomplete="off" data-autofocus
         disabled={busy}
-        onInput={(e) => setText(e.currentTarget.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            void onLookUp();
-          }
+        onInput={(e) => {
+          setText(e.currentTarget.value);
+          if (phase.k !== 'edit') setPhase({ k: 'edit' }); // old hits never sit next to new text
         }}
+        // Enter never sends: only the "Look up" button does.
+        onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
       />
+      {clean !== text && <p class="lookup-note lookup-will-send">{clean ? `Will send: ${clean}` : 'Nothing is left to send.'}</p>}
       <p class="lookup-note">{NEVER_SENT}</p>
       <p class="lookup-note">
         <a class="link" href={PRIVACY_POLICY} target="_blank" rel="noopener noreferrer">Wikimedia’s privacy policy</a>
       </p>
       <div class="lookup-buttons">
-        <button type="button" class="btn" onClick={onClose}>Cancel</button>
+        <button type="button" class="btn" disabled={phase.k === 'moving'} onClick={cancel}>Cancel</button>
         <button type="button" class="btn btn-primary" disabled={!clean || busy} onClick={() => void onLookUp()}>Look up</button>
       </div>
       <div class="lookup-result" role="status" aria-live="polite">
         {phase.k === 'busy' && <p>Looking up…</p>}
         {phase.k === 'moving' && <p>Moving…</p>}
         {phase.k === 'moveFailed' && <p>Couldn’t move the tab.</p>}
+        {phase.k === 'gone' && <p>That tab is no longer open.</p>}
         {phase.k === 'error' && phase.error === 'offline' && <p>You seem to be offline.</p>}
         {phase.k === 'error' && phase.error === 'timeout' && <p>Wikidata didn't answer in time.</p>}
         {phase.k === 'error' && phase.error === 'http' && <p>Wikidata returned an error.</p>}

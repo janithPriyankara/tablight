@@ -66,6 +66,26 @@ describe('settings rpc', () => {
     mock.uninstall();
   });
 
+  it('groupCreateStarter: one starter group through the RPC, then moveItems counts the moved tab; nothing queued', async () => {
+    const mock = installChromeMock();
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    await db.groups.delete('anime').catch(() => undefined);
+    const before = await db.settings.get();
+    await db.items.put({
+      id: 'look', url: 'https://www.google.com/search?q=x', normUrl: 'https://www.google.com/search?q=x', title: 'x', domain: 'www.google.com',
+      state: 'open', groupId: null, groupSource: 'auto', kind: 'other', createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    });
+    await db.queue.remove(await db.queue.take(10_000));
+    expect(await mock.sendMessage({ t: 'groupCreateStarter', id: 'anime' })).toEqual({ ok: true, data: 'anime' });
+    expect(await mock.sendMessage({ t: 'groupCreateStarter', id: 'bogus' })).toMatchObject({ ok: false });
+    expect(await db.queue.take(10_000)).toEqual([]);
+    expect(await db.settings.get()).toEqual(before);
+    expect(await mock.sendMessage({ t: 'moveItems', ids: ['look'], groupId: 'anime' })).toEqual({ ok: true, data: 1 });
+    expect(await mock.sendMessage({ t: 'moveItems', ids: ['gone'], groupId: 'anime' })).toEqual({ ok: true, data: 0 });
+    expect((await db.items.get('look'))!).toMatchObject({ groupId: 'anime', groupSource: 'user' });
+    mock.uninstall();
+  });
   it('turning auto-create on also turns waiting suggestions into groups', async () => {
     const mock = installChromeMock();
     const bg = await import('../../src/background/index');

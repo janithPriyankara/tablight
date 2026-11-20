@@ -31,7 +31,7 @@ export class Harness {
     readonly sw: Worker,
     readonly extId: string,
     readonly server: PageServer,
-    private readonly dir: string,
+    readonly dir: string,
     public dash: Page,
   ) {}
   /** Whether the fresh install opened the dashboard tab by itself (see start()). */

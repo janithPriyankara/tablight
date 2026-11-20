@@ -860,7 +860,14 @@ export function Dashboard() {
         <InterestsDialog groups={groups} busy={busy} onContinue={(a) => void answerInterests(a)} onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'lookup' && (
-        <LookupDialog item={dialog.item} groups={groups} onClose={() => setDialog(null)} />
+        <LookupDialog
+          item={dialog.item} groups={groups}
+          onClose={(moved) => {
+            setDialog(null);
+            // The moved row leaves Unsorted with the next refresh, taking focus with it: start again from the title.
+            if (moved) setTimeout(() => document.getElementById('view-title')?.focus(), 0);
+          }}
+        />
       )}
       {dialog?.kind === 'regroup' && (
         <RegroupDialog rows={dialog.rows} groups={groupMap} onClose={() => setDialog(null)} onApply={applyRegroup} />

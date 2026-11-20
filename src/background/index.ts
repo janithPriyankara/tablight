@@ -12,7 +12,7 @@ import {
 import { handle } from '../shared/rpc';
 import { deleteAllData } from './reset';
 import { fillTrainedCentroids, growGroups } from './grow';
-import { applyInterests } from './interests';
+import { applyInterests, createStarterGroup } from './interests';
 import { markModelCurrent, migrateModel } from './model-change';
 import { findSuspicious } from './suspicious';
 import { forgetTab, keepTab, loadContexts, pruneKept, recordCreated } from './tab-context';
@@ -408,7 +408,8 @@ export async function handleRequest(req: Req): Promise<unknown> {
   const db = await getDb();
   let out: unknown;
   switch (req.t) {
-    case 'moveItems': await moveItems(db, parseIds(req.ids), parseId(req.groupId), embed); break;
+    case 'moveItems': out = await moveItems(db, parseIds(req.ids), parseId(req.groupId), embed); break;
+    case 'groupCreateStarter': out = await createStarterGroup(db, embed, req.id); break;
     case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids), embed); break;
     case 'groupRename': {
       const id = parseId(req.id);

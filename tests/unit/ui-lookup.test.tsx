@@ -121,7 +121,20 @@ describe('where the button shows', () => {
     render(<SidePanel />);
     await screen.findByRole('region', { name: /This window/ });
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Look it up' })).toHaveLength(1));
-    fireEvent.click(screen.getByRole('button', { name: 'Look it up' }));
+    // A held Enter on the row button: the first press opens the dialog (focus lands in the box), the repeats and a
+    // second press reach the box. None of them sends.
+    const rowButton = screen.getByRole('button', { name: 'Look it up' });
+    rowButton.focus();
+    fireEvent.keyDown(rowButton, { key: 'Enter' });
+    fireEvent.click(rowButton);
+    expect(document.activeElement).toBe(box());
+    for (let i = 0; i < 5; i++) fireEvent.keyDown(document.activeElement!, { key: 'Enter', repeat: true });
+    fireEvent.keyUp(document.activeElement!, { key: 'Enter' });
+    fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
+    fireEvent.keyUp(document.activeElement!, { key: 'Enter' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(lookUpMock).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
     expect(box().value).toBe((lookupText(GOOGLE, GOOGLE_TITLE) as { text: string }).text);
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -150,6 +163,10 @@ describe('the dialog', () => {
     expect(link.getAttribute('href')).toBe('https://foundation.wikimedia.org/wiki/Policy:Privacy_policy');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    // The body starts with the sentence (no tab title or anything else before it).
+    const body = d.querySelector('.modal-body')!;
+    expect(body.textContent!.startsWith(LOOKUP_DIALOG_SENTENCE)).toBe(true);
+    expect(body.textContent).not.toContain(GOOGLE_TITLE);
     // The order: sentence, box, note, link, then the buttons.
     const html = d.innerHTML;
     const at = (s: string) => html.indexOf(s);
@@ -164,11 +181,40 @@ describe('the dialog', () => {
     const onClose = open();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Cancel' }));
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenLastCalledWith(false);
     fireEvent.keyDown(box(), { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(lookUpMock).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
+  });
+  it('Enter in the box never sends: plain, repeated or while an IME is composing', async () => {
+    open();
+    expect(document.activeElement).toBe(box());
+    const b = box();
+    fireEvent.keyDown(b, { key: 'Enter' });
+    fireEvent.keyDown(b, { key: 'Enter', repeat: true });
+    fireEvent.keyDown(b, { key: 'Enter', repeat: true });
+    fireEvent.compositionStart(b);
+    fireEvent.keyDown(b, { key: 'Enter', isComposing: true, keyCode: 229 });
+    fireEvent.compositionEnd(b);
+    fireEvent.keyDown(b, { key: 'Enter', isComposing: true });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(lookUpMock).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(dialog()).toBeTruthy();
+  });
+  it('shows what will be sent when the edit is not clean yet; editing clears old hits', async () => {
+    open();
+    fireEvent.input(box(), { target: { value: 'Severance call +1 555 123 4567' } });
+    const will = within(dialog()).getByText(/^Will send: /);
+    expect(will.textContent).toBe(`Will send: ${'Severance call'}`);
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    await within(dialog()).findByRole('list', { name: 'Matches' });
+    expect(lookUpMock.mock.calls[0]![0]).toBe('Severance call');
+    expect(within(dialog()).queryByText(/^Will send: /)).toBeNull(); // the box now holds exactly that text
+    fireEvent.input(box(), { target: { value: 'Something else' } });
+    expect(within(dialog()).queryByRole('list', { name: 'Matches' })).toBeNull();
   });
   it('keeps focus inside (Tab wraps)', () => {
     open();
@@ -216,15 +262,44 @@ describe('the dialog', () => {
     expect(moves()).toEqual([{ t: 'moveItems', ids: ['t1'], groupId: 'tv' }]);
   });
   it('a missing starter group is created first, then the tab moves into it', async () => {
+    sendMock.mockImplementation(async (req) => (req.t === 'groupCreateStarter' ? 'anime' : req.t === 'moveItems' ? 1 : undefined) as never);
     const onClose = open();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
     fireEvent.click(await within(dialog()).findByRole('button', { name: 'Create Anime & comics and move' }));
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    await waitFor(() => expect(onClose).toHaveBeenCalledWith(true));
     expect(moves()).toEqual([
-      // Every existing group is listed too, so a first answer on a fresh install removes nothing.
-      { t: 'interests', picked: ['anime', 'tv', 'programming'], custom: [] },
+      // Only that one starter group (no interests answer, nothing re-queued), then the user move.
+      { t: 'groupCreateStarter', id: 'anime' },
       { t: 'moveItems', ids: ['t1'], groupId: 'anime' },
     ]);
+  });
+  it('moves into the group the background names (a same-named user group)', async () => {
+    sendMock.mockImplementation(async (req) => (req.t === 'groupCreateStarter' ? 'u7' : req.t === 'moveItems' ? 1 : undefined) as never);
+    const onClose = open();
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    fireEvent.click(await within(dialog()).findByRole('button', { name: 'Create Anime & comics and move' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledWith(true));
+    expect(moves()).toEqual([{ t: 'groupCreateStarter', id: 'anime' }, { t: 'moveItems', ids: ['t1'], groupId: 'u7' }]);
+  });
+  it('a tab that closed meanwhile: says so, stays open', async () => {
+    sendMock.mockImplementation(async (req) => (req.t === 'moveItems' ? 0 : undefined) as never);
+    const onClose = open();
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    fireEvent.click(await within(dialog()).findByRole('button', { name: 'Move to TV Series' }));
+    await within(dialog()).findByText('That tab is no longer open.');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+  it('cannot be cancelled while a move runs (the move would still happen)', async () => {
+    let finish!: (n: number) => void;
+    sendMock.mockImplementation((req) => (req.t === 'moveItems' ? new Promise<number>((r) => (finish = r)) : Promise.resolve(undefined)) as never);
+    const onClose = open();
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    fireEvent.click(await within(dialog()).findByRole('button', { name: 'Move to TV Series' }));
+    await waitFor(() => expect((within(dialog()).getByRole('button', { name: 'Cancel' }) as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.keyDown(dialog(), { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    finish(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledWith(true));
   });
   it('a failed move says so and closes nothing', async () => {
     const onClose = open();

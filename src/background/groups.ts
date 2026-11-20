@@ -115,12 +115,14 @@ async function mustGroup(db: Db, id: string): Promise<Group> {
  * Moves items into a group as a user decision (groupSource 'user') and teaches the group each
  * item's cached vector (newest MAX_EXEMPLARS kept). Unknown ids are ignored.
  */
-export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?: EmbedFn): Promise<void> {
+/** Moves the items into the group as the user's placement; returns how many still existed and were moved. */
+export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?: EmbedFn): Promise<number> {
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
   const vecs = await vectorsOf(db, items);
   const late: string[] = [];
+  let moved = 0;
   await db.tx(['items', 'groups'], async (s) => {
     const g = await s.groups.get(groupId);
     if (!g) throw new Error('unknown group');
@@ -128,6 +130,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
       if (!cur) continue;
+      moved++;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
       await s.items.put({ ...withoutPlacedBy(cur), groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
       if (!already && cur.classifiable) taught.push({ vec: stillCurrent(vecs, snap, cur), text: embedText(cur) });
@@ -137,6 +140,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
   });
   // The move is committed without waiting on the model; items it had no vector for are taught afterwards.
   teachLater(db, groupId, late, embedFn);
+  return moved;
 }
 
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */

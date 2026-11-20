@@ -130,3 +130,36 @@ export async function applyInterests(
   await chrome.storage.local.set({ [INTERESTS_KEY]: { picked: [...picked], custom } });
   return result;
 }
+/**
+ * The look-up dialog's "Create <starter> and move": makes exactly one starter group (seed id `id`, built from its
+ * seeds) and returns the id the tab should move to. Nothing else changes: no settings, no stored interests answer,
+ * nothing queued for classification, no tab moved.
+ * - A group with that id already exists: its id.
+ * - A user group already has the starter's name (any case): that group's id (it is not adopted or renamed).
+ * - A built-in group holds the name (a renamed starter): an error, nothing created.
+ * The trained group is no longer remembered as removed, so a later grow may use it too.
+ */
+export async function createStarterGroup(db: Db, embedFn: (t: string[]) => Promise<Float32Array[]>, rawId: unknown): Promise<string> {
+  if (typeof rawId !== 'string' || !CHOICE_IDS.has(rawId)) throw new Error('unknown starter group');
+  const id = rawId;
+  const named = (all: Group[], name: string) => all.find((g) => !g.suggested && g.name.toLowerCase() === name.toLowerCase());
+  const pre = await db.groups.all();
+  if (pre.some((g) => g.id === id)) return id;
+  const choice = INTEREST_CHOICES.find((c) => c.id === id)!;
+  const holder = named(pre, choice.name);
+  if (holder?.builtIn) throw new Error(`A group called “${holder.name}” already exists`);
+  if (holder) return holder.id;
+  // Embedding is not an IndexedDB request: the group is built before the transaction opens.
+  const seed = await buildTrainedGroup(id, embedFn);
+  const out = await db.tx(['groups'], async (s) => {
+    const all = await s.groups.all();
+    if (all.some((g) => g.id === id)) return id;
+    const h = named(all, seed.name);
+    if (h?.builtIn) throw new Error(`A group called “${h.name}” already exists`);
+    if (h) return h.id;
+    await s.groups.put(seed);
+    return id;
+  });
+  if (out === id) await forgetRemovedTrained([id]);
+  return out;
+}
