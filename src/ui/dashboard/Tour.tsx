@@ -103,7 +103,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="settings"]',
     title: 'Settings',
-    body: <p>Turn on Auto-pause and automatic groups, choose what the toolbar icon opens, manage sync and backups, or delete everything. Your data stays yours: there are no servers and no tracking.</p>,
+    body: <p>Turn on Auto-pause and automatic groups, choose what the toolbar icon opens, manage sync and backups, or delete everything. Your data stays yours: there are no servers and no tracking, and Tablight uses the network only if you confirm Look it up.</p>,
   },
   {
     title: 'You’re all set',

@@ -6,8 +6,10 @@ Private AI tab organizer. A browser extension for Microsoft Edge and Google Chro
 - Pauses tabs to free memory (they stay in your tab strip), or saves them for later (closes the tab, keeps it in a list) and opens them again when you want.
 - Saves a snapshot of your windows every hour and on startup, so you can pick up where you left off.
 - Searches by words (typo tolerant) and by meaning.
+- Recognises about 60,000 well-known names (TV, films, games, music, anime, books, cars, sports, hardware) from an offline list built from [Wikidata](https://www.wikidata.org) (CC0), packaged with the extension and read only on your device. It is used only on the query of a search-engine results page or the title of a Wikipedia page, never on ordinary page titles. Order of steps: your rules, groups you taught by moving tabs, names, the model, neighbouring tabs.
+- "Look it up" (optional, user-driven): for an Unsorted tab, asks Wikidata what the cleaned text is, after you confirm. Moving the tab to a suggested group teaches that group.
 - Backs up and restores your saved tabs with an export/import file. Saved tabs can sync between your own devices through your browser account.
-Nothing leaves your device. The extension makes no network requests, has no servers, accounts or analytics, and never reads page contents (only each tab's title and address). The one exception you control is the optional sync, through your browser's own extension sync, of saved tabs and of the examples you taught your groups (the title and site of tabs you moved into a group), so your other devices group the same way. See [public/privacy.html](public/privacy.html) for the full statement.
+Nothing leaves your device, with two exceptions you control. The extension makes no network requests unless you click **Look it up** on an Unsorted tab and confirm; then one request goes to Wikidata's public search API (`www.wikidata.org`, run by the Wikimedia Foundation) carrying only the cleaned text you saw and could edit, with no cookies and no referrer. It is refused for non-web, local and sensitive tabs (banking, payments, sign-in, medical, legal, salary/tax, mail, calendar, documents), answers are cached on the device (up to 500), never synced, and removed by "Delete all data", and the button can be hidden in Settings. The extension has no host permissions (the CSP `connect-src` allows only `'self'` and `https://www.wikidata.org`), no servers, accounts, analytics or API keys, and never reads page contents (only each tab's title and address). The other exception is the optional sync, through your browser's own extension sync, of saved tabs and of the examples you taught your groups (the title and site of tabs you moved into a group), so your other devices group the same way. See [public/privacy.html](public/privacy.html) for the full statement.
 Requires Node 20 or newer.
 
 For automated builds on a Linux VM with Docker-hosted Jenkins, see [Jenkins setup](docs/jenkins.md). The root `Jenkinsfile` runs checks and produces a downloadable extension ZIP.
@@ -27,7 +29,7 @@ npm run test:benchmark   # the sealed accuracy benchmark (see docs/accuracy.md)
 npm run train:head       # retrains src/classify/head.json (threshold chosen on scripts/finetune/calibration-bge-small-tabs-v1.json, the rows the model never trained on)
 npx playwright install chromium
 npm run build
-npm run test:e2e         # loads dist/ in real Chromium, checks flows, performance and that no network request is made
+npm run test:e2e         # loads dist/ in real Chromium, checks flows, performance and that no network request is made unless Look it up is confirmed
 ```
 ```
 npm run package
