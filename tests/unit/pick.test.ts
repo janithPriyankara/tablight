@@ -116,9 +116,9 @@ describe('pickGroup name step', () => {
   it('name step sets want when the group is missing', () => {
     setNameIndex(names);
     expect(pickGroup(SEARCH, vec(5), [group('hardware')], head)).toEqual({ groupId: null, want: 'tv', by: null });
-    // A YouTube video still parks in Videos, wanting the named topic (a part number: list names need a search).
-    const yt = { url: 'https://www.youtube.com/watch?v=x', title: 'RTX 4090 - YouTube' };
-    expect(pickGroup(yt, vec(5), [group('videos')], head)).toEqual({ groupId: 'videos', want: 'hardware', by: 'videos' });
+    // A YouTube video's plain title is never named: it parks in Videos without a named topic.
+    const yt = { url: 'https://www.youtube.com/watch?v=x', title: 'Breaking Bad - YouTube' };
+    expect(pickGroup(yt, vec(5), [group('videos')], head)).toEqual({ groupId: 'videos', want: null, by: 'videos' });
     // The list never names a plain page title.
     const page = { url: 'https://example.com/bb', title: 'Breaking Bad' };
     expect(pickGroup(page, vec(5), [group('tv')], head)).toEqual({ groupId: null, want: null, by: null });
@@ -134,7 +134,8 @@ describe('pickGroup name step', () => {
   });
   it('rule beats name', () => {
     setNameIndex(names);
-    const netflix = { url: 'https://www.netflix.com/title/123', title: 'RTX 4090 | Netflix' };
+    // The rule runs first: a rule page is decided before any name (rule hosts are never search or Wikipedia pages).
+    const netflix = { url: 'https://www.netflix.com/title/123', title: 'Breaking Bad | Netflix' };
     expect(pickGroup(netflix, vec(0), [group('tv'), group('hardware')], head)).toEqual({ groupId: 'tv', want: null, by: 'rule' });
   });
   it('pickGroup without names loaded', () => {
@@ -144,7 +145,7 @@ describe('pickGroup name step', () => {
     expect(pickGroup(SEARCH, vec(5), [group('tv')], head)).toEqual({ groupId: null, want: null, by: null });
   });
   it('files a part number once the list is loaded, and not before', () => {
-    const rtx = { url: 'https://example.com/a', title: 'RTX 4090' };
+    const rtx = { url: 'https://www.google.com/search?q=rtx+4090', title: 'rtx 4090 - Google Search' };
     expect(pickGroup(rtx, vec(5), [group('hardware')], head)).toEqual({ groupId: null, want: null, by: null });
     setNameIndex(names);
     expect(pickGroup(rtx, vec(5), [group('hardware')], head)).toEqual({ groupId: 'hardware', want: null, by: 'name' });

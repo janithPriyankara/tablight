@@ -173,8 +173,10 @@ function genericPart(raw: string): boolean {
   return raw.includes('-') || (raw.match(/\d+/g) ?? []).length >= 2;
 }
 /**
- * Hardware part numbers. The family patterns count anywhere; the generic manufacturer shape only on a search query,
- * a datasheet or distributor site, or a title containing "datasheet" (`opts.title`).
+ * Hardware part numbers. On a plain page title (source 'title') they count only on a datasheet or distributor site or
+ * a title containing "datasheet" (`opts.title`): elsewhere a title naming a part is as often a shop listing or a news
+ * story as a hardware page. On a search query or a Wikipedia title the family patterns always count; the generic
+ * manufacturer shape counts on a search query, a datasheet or distributor site, or a "datasheet" title.
  */
 export function partNumberLabel(
   core: string,
@@ -182,31 +184,29 @@ export function partNumberLabel(
   source: CoreSource,
   opts: { raw?: string; title?: string } = {},
 ): 'hardware' | null {
-  if (SPECIFIC_PARTS.some((p) => p.test(core))) return 'hardware';
   const u = parse(url);
-  const gated =
-    source === 'search' ||
-    (u !== null && DATASHEET_HOSTS.test(u.hostname.toLowerCase())) ||
-    /datasheet/i.test(opts.title ?? '');
-  if (!gated) return null;
+  const datasheet = (u !== null && DATASHEET_HOSTS.test(u.hostname.toLowerCase())) || /datasheet/i.test(opts.title ?? '');
+  if (source === 'title' && !datasheet) return null;
+  if (SPECIFIC_PARTS.some((p) => p.test(core))) return 'hardware';
+  if (source !== 'search' && !datasheet) return null;
   const raw = (opts.raw ?? core.replace(/ /g, '-')).trim();
   return genericPart(raw) ? 'hardware' : null;
 }
 /**
  * Wikipedia disambiguator, then part-number patterns, then an exact whole-core lookup (also without its own "the ").
- * The list lookup counts only on a search query or a Wikipedia title, never on any other page's title: there a bare
- * name is as likely someone's profile ("David Silva | LinkedIn") or an unrelated page as the topic, and on the blind
- * sets plain-title matches only added wrong placements. Part numbers keep counting on titles.
+ * Only a search query or a Wikipedia title is read: on any other page's title a bare name or part number is as likely
+ * someone's profile ("David Silva | LinkedIn"), a shop listing or an unrelated page as the topic, and on the blind
+ * sets plain-title matches (names and part numbers alike) only added wrong placements.
  */
 export function nameLabel(url: string, title: string, index: NameIndex | null): string | null {
   const wiki = wikiDisambig(url, title);
   if (wiki) return wiki;
   if (hasWikiBracket(url, title)) return null; // an unmapped disambiguator ("Mercury (element)") is not the bare name
   const c = tabCore(url, title);
-  if (!c) return null;
+  if (!c || c.source === 'title') return null;
   const part = partNumberLabel(c.core, url, c.source, { raw: c.raw, title });
   if (part) return part;
-  if (!index || c.source === 'title') return null;
+  if (!index) return null;
   const hit = index.get(c.core);
   if (hit) return hit;
   return c.core.startsWith('the ') ? (index.get(c.core.slice(4)) ?? null) : null;

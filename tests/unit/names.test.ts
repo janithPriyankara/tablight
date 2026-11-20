@@ -70,9 +70,10 @@ describe('list names match only searches and Wikipedia', () => {
     expect(nameLabel('https://www.google.com/search?q=metallica', 'metallica - Google Search', people)).toBe('music');
     expect(nameLabel('https://en.wikipedia.org/wiki/Metallica', 'Metallica - Wikipedia', people)).toBe('music');
   });
-  it('a part-number title still matches', () => {
-    expect(nameLabel('https://example.com/review', 'RTX 4090', people)).toBe('hardware');
-    expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', people)).toBe('hardware');
+  it('a part-number title does not match either; a search for it does', () => {
+    expect(nameLabel('https://example.com/review', 'RTX 4090', people)).toBeNull();
+    expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', people)).toBeNull();
+    expect(nameLabel('https://www.google.com/search?q=rtx+4090', 'x', people)).toBe('hardware');
   });
 });
 describe('titles that look like noise', () => {
@@ -126,14 +127,30 @@ describe('nameLabel', () => {
     expect(nameLabel('https://www.nvidia.com/', 'NVIDIA', idx)).toBeNull();
     expect(nameLabel('https://en.wikipedia.org/wiki/Nvidia', 'Nvidia - Wikipedia', idx)).toBe('hardware');
   });
-  it('recognizes part numbers anywhere', () => {
+  it('recognizes part numbers in searches, on Wikipedia and on datasheet or distributor pages', () => {
     for (const t of ['i7 8700', 'i7-8700K', 'Ryzen 5 5600X', 'RTX 4090', 'ESP32-S3', 'STM32F103C8T6', 'ATmega328P', 'RP2040']) {
-      expect(nameLabel('https://example.com/post', t, null), t).toBe('hardware');
+      expect(nameLabel(`https://www.google.com/search?q=${encodeURIComponent(t)}`, 'x', null), t).toBe('hardware');
+      expect(partNumberLabel(normName(t), 'https://www.digikey.com/en/products/detail/x', 'title', { raw: t }), t).toBe('hardware');
+      expect(nameLabel('https://www.digikey.com/en/products/detail/x', `${t} | DigiKey`, null), t).toBeNull();
+      expect(nameLabel('https://example.com/post', t, null), t).toBeNull();
     }
+    expect(nameLabel('https://en.wikipedia.org/wiki/RP2040', 'RP2040 - Wikipedia', null)).toBe('hardware');
+  });
+  it('part numbers on a plain page title count only on datasheet or distributor pages (partNumberLabel)', () => {
+    const amazon = 'Intel Core i7-8700 Processor - Amazon.com';
+    expect(nameLabel('https://www.amazon.com/dp/B07598VZR8', amazon, null)).toBeNull();
+    expect(partNumberLabel('i7 8700', 'https://www.amazon.com/dp/B07598VZR8', 'title', { raw: 'i7-8700', title: amazon })).toBeNull();
+    expect(nameLabel('https://www.google.com/search?q=i7+8700', 'i7 8700 - Google Search', null)).toBe('hardware');
+    expect(partNumberLabel('acs770kcb 150b', 'https://www.digikey.com/en/products/detail/x', 'title', { raw: 'ACS770KCB-150B' })).toBe('hardware');
+    expect(partNumberLabel('esp32 s3', 'https://example.com/a', 'title', { raw: 'ESP32-S3', title: 'ESP32-S3 datasheet' })).toBe('hardware');
+  });
+  it('the name step reads no plain page title, not even a distributor\'s', () => {
+    expect(nameLabel('https://www.digikey.com/en/products/detail/x', 'ACS770KCB-150B | DigiKey', null)).toBeNull();
+    expect(nameLabel('https://example.com/a', 'ESP32-S3 datasheet', null)).toBeNull();
   });
   it('generic part numbers need a search, a distributor or "datasheet"', () => {
     expect(nameLabel('https://www.google.com/search?q=ACS770KCB-150B', 'x', null)).toBe('hardware');
-    expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', null)).toBe('hardware');
+    expect(nameLabel('https://www.mouser.com/ProductDetail/x', 'ACS770KCB-150B', null)).toBeNull();
     expect(nameLabel('https://blog.example.com/p', 'ACS770KCB-150B', null)).toBeNull();
     expect(partNumberLabel('acs770kcb 150b', 'https://blog.example.com/p', 'title', { raw: 'ACS770KCB-150B', title: 'ACS770KCB-150B datasheet' })).toBe('hardware');
   });
