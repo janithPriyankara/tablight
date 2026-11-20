@@ -1357,12 +1357,6 @@
  },
  {
   "person": "b04-teacher",
-  "title": "Sweet pea sowing guide - Thompson & Morgan",
-  "url": "https://www.thompson-morgan.com/sweet-pea-sowing-guide",
-  "group": "home"
- },
- {
-  "person": "b04-teacher",
   "title": "Scholastic Book Fair order form - class wishlist",
   "url": "https://bookfairs.scholastic.co.uk/wishlist",
   "group": "books"
@@ -1654,12 +1648,6 @@
   "title": "Twitch DJ Program - Twitch",
   "url": "https://www.twitch.tv/creatorcamp/en/paths/dj-program/",
   "group": "music"
- },
- {
-  "person": "b05-streamer",
-  "title": "Sign in to your account - Streamlabs",
-  "url": "https://streamlabs.com/login",
-  "group": "other"
  },
  {
   "person": "b05-streamer",
@@ -2057,12 +2045,6 @@
  },
  {
   "person": "b06-retiree",
-  "title": "Ancestry - Family Tree: Henderson line",
-  "url": "https://www.ancestry.com/family-tree/tree/183746502/family",
-  "group": "other"
- },
- {
-  "person": "b06-retiree",
   "title": "Grandma's first time on a zip line!! #shorts #grandma",
   "url": "https://www.youtube.com/shorts/Ck2nM7dLq5A",
   "group": "videos"
@@ -2411,12 +2393,6 @@
  },
  {
   "person": "b07-nurse",
-  "title": "Facebook - ICU Nurses Sri Lanka group",
-  "url": "https://www.facebook.com/groups/icunursessrilanka/",
-  "group": "social"
- },
- {
-  "person": "b07-nurse",
   "title": "Night shift sleep tips for nurses - Sleep Foundation",
   "url": "https://www.sleepfoundation.org/shift-work-disorder",
   "group": "health"
@@ -2441,21 +2417,9 @@
  },
  {
   "person": "b07-nurse",
-  "title": "Daily Mirror - Dengue cases rise in Colombo",
-  "url": "https://www.dailymirror.lk/breaking-news/dengue-cases-rise-in-colombo",
-  "group": "news"
- },
- {
-  "person": "b07-nurse",
   "title": "People's Bank - Fixed Deposit rates 2024",
   "url": "https://www.peoplesbank.lk/deposit-rates/",
   "group": "finance"
- },
- {
-  "person": "b07-nurse",
-  "title": "Google Translate - Sinhala to English",
-  "url": "https://translate.google.com/?sl=si&tl=en",
-  "group": "other"
  },
  {
   "person": "b07-nurse",
@@ -2942,12 +2906,6 @@
  },
  {
   "person": "b09-biohacker",
-  "title": "Ledger Live - Portfolio",
-  "url": "https://app.ledger.com/portfolio",
-  "group": "finance"
- },
- {
-  "person": "b09-biohacker",
   "title": "Deadlift form fix in 20 seconds #gym #deadlift #shorts",
   "url": "https://www.youtube.com/shorts/sD34dl1ft001",
   "group": "health"
@@ -3131,12 +3089,6 @@
   "title": "Rep ranges: is 5 reps really better than 12? - YouTube",
   "url": "https://www.youtube.com/watch?v=r3pr4ng30010",
   "group": "health"
- },
- {
-  "person": "b09-biohacker",
-  "title": "TradingView - BTCUSDT Chart",
-  "url": "https://www.tradingview.com/chart/?symbol=BINANCE%3ABTCUSDT",
-  "group": "finance"
  },
  {
   "person": "b09-biohacker",
@@ -3593,12 +3545,6 @@
  },
  {
   "person": "b11-indiemusic",
-  "title": "Bandcamp Daily - The Best Ambient Albums of 2026",
-  "url": "https://daily.bandcamp.com/lists/best-ambient-2026",
-  "group": "music"
- },
- {
-  "person": "b11-indiemusic",
   "title": "Joe Hisaishi - One Summer's Day (Spirited Away) Piano - YouTube",
   "url": "https://www.youtube.com/watch?v=j03h1s41sh02",
   "group": "music"
@@ -3653,12 +3599,6 @@
   "title": "Elektron Digitakt II - Thomann",
   "url": "https://www.thomann.de/gb/elektron_digitakt_2.htm",
   "group": "shopping"
- },
- {
-  "person": "b11-indiemusic",
-  "title": "Bandcamp - Your collection",
-  "url": "https://bandcamp.com/janith_beats",
-  "group": "music"
  },
  {
   "person": "b11-indiemusic",
@@ -3893,12 +3833,6 @@
  },
  {
   "person": "b11-indiemusic",
-  "title": "SoundCloud - my demo: night drive (private link)",
-  "url": "https://soundcloud.com/janith-beats/night-drive-demo",
-  "group": "music"
- },
- {
-  "person": "b11-indiemusic",
   "title": "Why is my kick muddy? - gearspace forum",
   "url": "https://gearspace.com/board/bass-traps-acoustic-panels/1400011-muddy-kick.html",
   "group": "music"
@@ -3992,12 +3926,6 @@
   "title": "Hiring a founding engineer: scorecard template - First Round Review",
   "url": "https://review.firstround.com/founding-engineer-scorecard",
   "group": "jobs"
- },
- {
-  "person": "b12-founder",
-  "title": "OpenAI Platform - Usage and billing",
-  "url": "https://platform.openai.com/usage",
-  "group": "ai"
  },
  {
   "person": "b12-founder",
@@ -4151,12 +4079,6 @@
   "title": "Sign in - Docusign eSignature",
   "url": "https://account.docusign.com/signin",
   "group": "other"
- },
- {
-  "person": "b12-founder",
-  "title": "TechCrunch | AI startup funding hits record in Q3",
-  "url": "https://techcrunch.com/2026/10/ai-startup-funding-record-q3/",
-  "group": "news"
  },
  {
   "person": "b12-founder",
@@ -5009,12 +4931,6 @@
   "title": "Georgia Tech Admissions: First-Year Applicant Deadlines",
   "url": "https://admission.gatech.edu/first-year/deadlines",
   "group": "learning"
- },
- {
-  "person": "b15-collegeapp",
-  "title": "New Balance 550 White Green | Foot Locker",
-  "url": "https://www.footlocker.com/product/new-balance-550/BB550WT1.html",
-  "group": "shopping"
  },
  {
   "person": "b15-collegeapp",
@@ -5903,12 +5819,6 @@
  },
  {
   "person": "b17-designer",
-  "title": "Account settings - Framer",
-  "url": "https://framer.com/projects/account",
-  "group": "other"
- },
- {
-  "person": "b17-designer",
   "title": "UX writing: microcopy that makes people click - YouTube",
   "url": "https://www.youtube.com/watch?v=uxWrMicro771",
   "group": "design"
@@ -6014,12 +5924,6 @@
   "title": "Schufa auskunft kostenlos bestellen - Google Search",
   "url": "https://www.google.com/search?q=schufa+auskunft+kostenlos+bestellen",
   "group": "finance"
- },
- {
-  "person": "b18-expat",
-  "title": "Duolingo - German Course",
-  "url": "https://www.duolingo.com/course/de/en/Learn-German",
-  "group": "learning"
  },
  {
   "person": "b18-expat",
@@ -6140,12 +6044,6 @@
   "title": "Wise: send money from Germany to USA",
   "url": "https://wise.com/gb/send-money/send-money-to-usa",
   "group": "finance"
- },
- {
-  "person": "b18-expat",
-  "title": "Sign in to your account - Microsoft Authenticator",
-  "url": "https://login.microsoftonline.com/common/oauth2/authorize",
-  "group": "other"
  },
  {
   "person": "b18-expat",
@@ -6506,12 +6404,6 @@
  },
  {
   "person": "b19-astronomy",
-  "title": "Dune (Frank Herbert) - Wikipedia",
-  "url": "https://en.wikipedia.org/wiki/Dune_(novel)",
-  "group": "books"
- },
- {
-  "person": "b19-astronomy",
   "title": "The Three-Body Problem review - Locus Online",
   "url": "https://locusmag.com/2015/04/three-body-problem-review/",
   "group": "books"
@@ -6541,12 +6433,6 @@
   "person": "b19-astronomy",
   "title": "Sign in - Astrobin",
   "url": "https://www.astrobin.com/accounts/login/",
-  "group": "other"
- },
- {
-  "person": "b19-astronomy",
-  "title": "Settings - Stellarium Mobile Plus account",
-  "url": "https://stellarium-labs.com/account/settings",
   "group": "other"
  },
  {
@@ -6638,12 +6524,6 @@
   "title": "Gaia Sky - ESA Gaia mission",
   "url": "https://www.cosmos.esa.int/web/gaia/gaia-sky",
   "group": "science"
- },
- {
-  "person": "b20-shopper",
-  "title": "Slickdeals - Frontpage Deals",
-  "url": "https://slickdeals.net/deals/",
-  "group": "shopping"
  },
  {
   "person": "b20-shopper",
@@ -6886,18 +6766,6 @@
   "person": "b20-shopper",
   "title": "Sign in or Create Account - Amazon",
   "url": "https://www.amazon.com/ap/signin",
-  "group": "other"
- },
- {
-  "person": "b20-shopper",
-  "title": "Account Settings - Rakuten cash back",
-  "url": "https://www.rakuten.com/account/settings",
-  "group": "other"
- },
- {
-  "person": "b20-shopper",
-  "title": "Password reset - Slickdeals",
-  "url": "https://slickdeals.net/forums/password-reset",
   "group": "other"
  },
  {

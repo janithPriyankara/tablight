@@ -14,11 +14,10 @@ const normUrl = (u: string) => normalizeUrl(u).toLowerCase();
 const SITE_SUFFIX = /\s+[-|—–·•]\s+[^-|—–·•]{1,40}$/u;
 const NEAR_MIN = 8;
 /**
- * Near-duplicate title matches present when this check was added (2026-11-20), over all training/ and
- * tests/quality/ files: 40 matches on 20 distinct benchmark titles, 16 of them one or two words. benchmark.json
- * is sealed and is not edited here; the count is a ratchet (it may fall, never rise) pending a ruling.
+ * Near-duplicate title matches allowed. The benchmark was re-sealed on 2026-11-20, before scoring, without the 22 rows
+ * whose near form matched a training or quality title, so none may remain.
  */
-const KNOWN_NEAR = 40;
+const KNOWN_NEAR = 0;
 const nearTitle = (t: string): string =>
   t.toLowerCase().replace(/\s+/g, ' ').trim().replace(SITE_SUFFIX, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 type Row = { title: string; url: string };
