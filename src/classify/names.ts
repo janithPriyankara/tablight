@@ -25,13 +25,13 @@ export function parseNames(text: string): NameIndex {
   return out;
 }
 const SEARCH_PARAM: [RegExp, RegExp, string][] = [
-  [/(^|\.)google\.[a-z.]+$/, /search/, 'q'],
-  [/(^|\.)bing\.com$/, /search/, 'q'],
+  [/(^|\.)google\.(?:com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/, /^\/search\/?$/, 'q'],
+  [/(^|\.)bing\.com$/, /^\/search\/?$/, 'q'],
   [/(^|\.)duckduckgo\.com$/, /./, 'q'],
-  [/(^|\.)search\.yahoo\.com$/, /search/, 'p'],
-  [/(^|\.)search\.brave\.com$/, /search/, 'q'],
-  [/(^|\.)ecosia\.org$/, /search/, 'q'],
-  [/(^|\.)startpage\.com$/, /search/, 'query'],
+  [/(^|\.)search\.yahoo\.com$/, /^\/search/, 'p'],
+  [/(^|\.)search\.brave\.com$/, /^\/search\/?$/, 'q'],
+  [/(^|\.)ecosia\.org$/, /^\/search\/?$/, 'q'],
+  [/(^|\.)startpage\.com$/, /^\/(?:sp|do)\/search\/?$/, 'query'],
 ];
 function parse(url: string): URL | null {
   try {
@@ -55,11 +55,15 @@ const NOISE =
 const SEP = '[\\s,:;|·–—-]+';
 const NOISE_END = new RegExp(`${SEP}(?:${NOISE})$`, 'i');
 const NOISE_ALL = new RegExp(`^(?:${NOISE})$`, 'i');
-const NOISE_START = new RegExp(`^(?:${NOISE})${SEP}`, 'i');
+// At the start only the numbered forms: a bare "cast" or "price" opens real titles (Cast Away, Price Tag).
+const NOISE_START = new RegExp(`^(?:season \\d+|episode \\d+)${SEP}`, 'i');
+const MODEL_BEFORE_YEAR = /(?:^|\s)(?:rtx|gtx|rx|i[3579])[\s-]+(?:19[5-9]\d|20[0-2]\d)$/i;
 function stripNoise(s: string): string {
   let cur = s.replace(/\s+/g, ' ').trim();
   for (;;) {
-    if (NOISE_ALL.test(cur)) return '';
+    if (NOISE_ALL.test(cur) && !/^\d{4}$/.test(cur)) return '';
+    if (/^\d{4}$/.test(cur)) return cur;
+    if (MODEL_BEFORE_YEAR.test(cur)) return cur;
     const next = cur.replace(NOISE_END, '').replace(NOISE_START, '').trim();
     if (next === cur) return cur;
     cur = next;
@@ -91,6 +95,11 @@ export const WIKI_DISAMBIG: Record<string, string> = {
   'graphics card': 'hardware',
   'single-board computer': 'hardware',
 };
+function hasWikiBracket(url: string, title: string): boolean {
+  const u = parse(url);
+  return !!u && isWikipedia(u) && WIKI_SUFFIX.test(title) && WIKI_BRACKET.test(title.replace(WIKI_SUFFIX, '').trim());
+}
+
 function wikiDisambig(url: string, title: string): string | null {
   const u = parse(url);
   if (!u || !isWikipedia(u) || !WIKI_SUFFIX.test(title)) return null;
@@ -167,6 +176,8 @@ export function partNumberLabel(
 export function nameLabel(url: string, title: string, index: NameIndex | null): string | null {
   const wiki = wikiDisambig(url, title);
   if (wiki) return wiki;
+  if (hasWikiBracket(url, title)) return null; // an unmapped disambiguator ("Mercury (element)") is not the bare name
+
   const c = tabCore(url, title);
   if (!c) return null;
   const part = partNumberLabel(c.core, url, c.source, { raw: c.raw, title });

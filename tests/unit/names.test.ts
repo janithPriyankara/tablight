@@ -28,12 +28,39 @@ describe('tabCore', () => {
   });
   it('trims noise words and years at both ends; null when empty', () => {
     expect(tabCore('https://www.google.com/search?q=jack+ryan+season+2+cast', 'x')?.core).toBe('jack ryan');
-    expect(tabCore('https://www.google.com/search?q=2019+imdb+jack+ryan', 'x')?.core).toBe('jack ryan');
+    expect(tabCore('https://www.google.com/search?q=jack+ryan+2019+imdb', 'x')?.core).toBe('jack ryan');
     expect(tabCore('https://www.google.com/search?q=cast', 'x')).toBeNull();
     expect(tabCore('https://example.com/', '')).toBeNull();
   });
 });
+describe('titles that look like noise', () => {
+  const core = (t: string) => tabCore('https://example.com/a', t)?.core;
+  it('keeps real titles whole', () => {
+    expect(core('Cast Away')).toBe('cast away');
+    expect(core('Price Tag')).toBe('price tag');
+    expect(core('Trailer Park Boys')).toBe('trailer park boys');
+    expect(core('2012')).toBe('2012');
+    expect(core('1984')).toBe('1984');
+    expect(core('2001: A Space Odyssey')).toBe('2001 a space odyssey');
+    expect(core('RTX 2000')).toBe('rtx 2000');
+    expect(core('Season 2 Jack Ryan')).toBe('jack ryan');
+  });
+  it('only a real search results page counts as a search', () => {
+    expect(tabCore('https://drive.google.com/drive/search?q=type:pdf', 'x')?.source).toBe('title');
+    expect(tabCore('https://www.google.com/maps/search/?q=cafe', 'x')?.source).toBe('title');
+  });
+});
 describe('nameLabel', () => {
+  it('does not use a bare name when a Wikipedia disambiguator is unmapped', () => {
+    const i = parseNames('#music\nmercury\npython\n');
+    expect(nameLabel('https://en.wikipedia.org/wiki/Mercury_(element)', 'Mercury (element) - Wikipedia', i)).toBeNull();
+    expect(nameLabel('https://en.wikipedia.org/wiki/Python_(programming_language)', 'Python (programming language) - Wikipedia', i)).toBeNull();
+  });
+  it('rejects loose hardware lookalikes', () => {
+    for (const t of ['Arduino projects for kids', 'i7', 'RTX', 'why the RTX 4090 is overpriced', '2019']) {
+      expect(nameLabel('https://example.com/a', t, null), t).toBeNull();
+    }
+  });
   it('matches search queries against the index', () => {
     expect(nameLabel('https://www.google.com/search?q=jack+ryan', 'jack ryan - Google Search', idx)).toBe('tv');
     expect(nameLabel('https://www.bing.com/search?q=The+Admiral', 'The Admiral - Search', idx)).toBe('movies');
