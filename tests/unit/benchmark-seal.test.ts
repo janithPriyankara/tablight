@@ -21,12 +21,24 @@ const KNOWN_NEAR = 0;
 const nearTitle = (t: string): string =>
   t.toLowerCase().replace(/\s+/g, ' ').trim().replace(SITE_SUFFIX, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 type Row = { title: string; url: string };
+/**
+ * JSON files under training/ or tests/quality/ that are deliberately not arrays of {title, url} rows, by path. None
+ * today. Any other file of another shape fails the check instead of being skipped: a training file the leakage
+ * check silently ignored would defeat it.
+ */
+const NOT_ROWS: ReadonlySet<string> = new Set<string>([]);
+const isRow = (r: unknown): r is Row =>
+  !!r && typeof r === 'object' && typeof (r as Row).title === 'string' && typeof (r as Row).url === 'string';
 async function rowsOf(dir: string): Promise<{ file: string; rows: Row[] }[]> {
   const files = (await readdir(resolve(root, dir))).filter((f) => f.endsWith('.json'));
   const out: { file: string; rows: Row[] }[] = [];
   for (const f of files) {
-    const data = JSON.parse(await readFile(resolve(root, dir, f), 'utf8'));
-    if (Array.isArray(data) && data.every((r) => r && typeof r === 'object' && 'title' in r && 'url' in r)) out.push({ file: `${dir}/${f}`, rows: data });
+    const file = `${dir}/${f}`;
+    if (NOT_ROWS.has(file)) continue;
+    const data: unknown = JSON.parse(await readFile(resolve(root, dir, f), 'utf8'));
+    // Names the file only, never a row.
+    if (!Array.isArray(data) || !data.every(isRow)) throw new Error(`${file} is not an array of {title, url} rows (add it to NOT_ROWS if that is intended)`);
+    out.push({ file, rows: data });
   }
   return out;
 }

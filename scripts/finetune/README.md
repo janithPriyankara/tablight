@@ -26,7 +26,9 @@ src/classify/seeds.ts.
 # Fine-tune on the Mac GPU (mps). Writes the model to DIR, DIR/calibration.json (pool keys `url\ntitle` held out
 # from the encoder, for train-head CALIBRATION=...) and DIR/finetune.json (settings, per-epoch calibration scores).
 python scripts/finetune/finetune.py --pool training/ --out DIR --calib-share 0.2 --seed 1 [--extra FILE...] \
-  [--loss mnrl-seeds|triplet] [--epochs 4] [--lr 2e-5] [--batch-size 32]
+  [--loss mnrl-seeds|triplet] [--epochs 4] [--lr 2e-5] [--batch-size 32] [--base-revision COMMIT]
+# --base-revision defaults to 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a, the BAAI/bge-small-en-v1.5 commit the
+# shipped model was trained from (pass another commit together with another --base).
 
 # Export to MODELS_ROOT/tablight/bge-small-tabs-v1 (config + tokenizer files, onnx/model_quantized.onnx) and check
 # int8 ONNX vs PyTorch parity on 500 pool rows; exits 1 if the mean cosine is under 0.99.

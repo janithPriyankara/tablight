@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain .mjs build script helper
-import { calibrationIndices, rowKey } from '../../scripts/calibration.mjs';
+import { calibrationIndices, matchCalibration, rowKey } from '../../scripts/calibration.mjs';
 // @ts-expect-error plain .mjs build script helper
 import { fitHead, mulberry32 } from '../../scripts/head-fit.mjs';
 const pool = [
@@ -20,6 +20,23 @@ describe('calibrationIndices', () => {
   });
   it('is empty without keys: no row outside the file can reach threshold or similarity selection', () => {
     expect(calibrationIndices(pool, [])).toEqual([]);
+  });
+});
+describe('matchCalibration (train-head key check)', () => {
+  it('returns the indices when every distinct key matches a pool row', () => {
+    const keys = [rowKey(pool[3]!), rowKey(pool[0]!), rowKey(pool[0]!)];
+    expect(matchCalibration(pool, keys, { file: 'cal.json' })).toEqual([0, 3]);
+  });
+  it('throws when no key matches', () => {
+    expect(() => matchCalibration(pool, ['https://nowhere.test/\nZ'], { file: 'cal.json' })).toThrow(/cal\.json: none of its 1 keys/);
+  });
+  it('throws on a partial match: a drifted pool must not quietly shrink the calibration set', () => {
+    const keys = [rowKey(pool[0]!), 'https://nowhere.test/\nZ'];
+    expect(() => matchCalibration(pool, keys, { file: 'cal.json' })).toThrow(/only 1 of its 2 distinct keys/);
+  });
+  it('accepts a partial match only with the explicit override', () => {
+    const keys = [rowKey(pool[0]!), 'https://nowhere.test/\nZ'];
+    expect(matchCalibration(pool, keys, { allowPartial: true })).toEqual([0]);
   });
 });
 // fitHead is train-head.mjs's selection and training step; here it runs on small synthetic vectors.

@@ -6,7 +6,8 @@
 // Env overrides (for model experiments): MODEL_ID, MODEL_PATH (dir holding <org>/<model>/),
 // POOLING (mean|cls), OUT, CALIBRATION (path to finetune.py's calibration.json: the head still trains on every
 // pool row, but the L2 choice, Unsorted threshold and override similarity use only those rows, which a fine-tuned
-// encoder never saw; without it everything is unchanged). The bundled tablight/bge-small-tabs-v1 defaults to its
+// encoder never saw; without it everything is unchanged; every key must match a pool row unless
+// CALIBRATION_ALLOW_PARTIAL=1). The bundled tablight/bge-small-tabs-v1 defaults to its
 // committed scripts/finetune/calibration-bge-small-tabs-v1.json; another tablight/* model without one is refused.
 //
 // Pool = training/train-a.json + train-b.json + train-c.json + train-d.json + train-e.json + train-f.json + tests/quality/fixture.json.
@@ -17,7 +18,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env, pipeline } from '@huggingface/transformers';
 import { runnerImport } from 'vite';
-import { calibrationIndices } from './calibration.mjs';
+import { matchCalibration } from './calibration.mjs';
 import { FOLDS, fitHead, KNN } from './head-fit.mjs';
 import { MODEL_ID as DEFAULT_MODEL, MODEL_POOLING } from './model-manifest.mjs';
 
@@ -81,15 +82,15 @@ const Y = pool.map((r) => LABELS.indexOf(r.group));
 const RULE = pool.map((r) => ruleGroup(r.url, r.title));
 
 // Calibration rows (CALIBRATION): every key must be a pool row's `url\ntitle`. A key-format drift would silently
-// shrink the calibration set, so the match count is logged and zero matches is an error.
+// shrink the calibration set, so the match count is logged, zero matches is an error, and so is a partial match
+// unless CALIBRATION_ALLOW_PARTIAL=1.
 let calIdx = null;
 if (CALIBRATION) {
   const keys = JSON.parse(await readFile(CALIBRATION, 'utf8'));
-  calIdx = calibrationIndices(pool, keys);
   // The pool is deduplicated by the same key, so each matched key is exactly one pool row.
+  calIdx = matchCalibration(pool, keys, { file: CALIBRATION, allowPartial: process.env.CALIBRATION_ALLOW_PARTIAL === '1' });
   const matched = calIdx.length;
   console.log(`calibration: ${matched} of ${new Set(keys).size} distinct keys matched pool rows (${matched} of ${pool.length} pool rows)`);
-  if (!matched) throw new Error(`${CALIBRATION}: none of its ${keys.length} keys matches a pool row (key format \`url\\ntitle\`?)`);
 }
 
 // Split, L2 choice, Unsorted threshold, override similarity and final head (head-fit.mjs).

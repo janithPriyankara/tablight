@@ -122,6 +122,11 @@ def main() -> None:
     ap.add_argument("--extra", nargs="*", default=[], help="extra training-only files of {title,url,group}")
     ap.add_argument("--base", default="BAAI/bge-small-en-v1.5")
     ap.add_argument(
+        "--base-revision", default="5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+        help="Hugging Face commit of --base (default: the BAAI/bge-small-en-v1.5 commit tablight/bge-small-tabs-v1 "
+        "was trained from), so a re-run starts from the same weights; pass another commit with another --base",
+    )
+    ap.add_argument(
         "--loss", choices=["mnrl-seeds", "triplet"], default="mnrl-seeds",
         help="mnrl-seeds: MultipleNegativesRanking of each row against its label's description (seeds.ts), one row "
         "per label per batch; triplet: batch-all triplet over labels (cosine distance)",
@@ -166,7 +171,8 @@ def main() -> None:
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
-    tr = Transformer(args.base, max_seq_length=512)
+    rev = {"revision": args.base_revision}
+    tr = Transformer(args.base, max_seq_length=512, model_kwargs=rev, processor_kwargs=dict(rev), config_kwargs=dict(rev))
     model = SentenceTransformer(
         modules=[tr, Pooling(tr.auto_model.config.hidden_size, pooling_mode="mean"), Normalize()], device=args.device
     )
@@ -223,6 +229,7 @@ def main() -> None:
     base_acc = history[0]["calib_knn_acc"]
     meta = {
         "base": args.base,
+        "base_revision": args.base_revision,
         "loss": args.loss,
         "epochs_max": args.epochs,
         "epoch_chosen": best["epoch"],
