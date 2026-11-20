@@ -1,7 +1,7 @@
 // Service worker entry. Every listener is registered synchronously at top level (MV3: a worker woken
 // by an event only delivers it to listeners that exist after the first synchronous run).
-import type { Req } from '../shared/rpc';
-import { buildStarterGroups } from '../classify/assign';
+import type { LabelForTextReply, Req } from '../shared/rpc';
+import { OTHER_GROUP_ID, buildStarterGroups, headTop } from '../classify/assign';
 import { openDb, type Db } from './db';
 import { findDuplicates, invalidateBadges, updateBadge } from './duplicates';
 import { OFFSCREEN_IDLE_ALARM, closeIfIdle, embed, isWarm } from './embedder';
@@ -382,12 +382,29 @@ async function updateSettings(db: Db, raw: unknown): Promise<Settings> {
   }
   return db.settings.get();
 }
+/** Longest text labelForText accepts: a look-up hit's label and description (200 characters each) and the dash. */
+export const LABEL_TEXT_MAX = 500;
+/**
+ * The look-up dialog's fallback when no keyword names a hit's description: the head's label for the text, embedded
+ * here (the text never leaves the device). Null below the head's threshold, for `other`, or for a vector that does
+ * not fit the head. Stores nothing.
+ */
+async function labelForText(text: unknown): Promise<LabelForTextReply> {
+  if (typeof text !== 'string' || !text.trim() || text.length > LABEL_TEXT_MAX) throw new Error('invalid text');
+  const [vec] = await embed([text]);
+  const top = vec ? headTop(vec, HEAD) : null;
+  if (!top) return { label: null, score: 0 };
+  const { label, score } = top;
+  if (label === undefined || label === OTHER_GROUP_ID || !(score >= HEAD.threshold)) return { label: null, score }; // NaN too
+  return { label, score };
+}
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
   if (req.t === 'offscreenIdle') {
     await closeIfIdle();
     return null;
   }
+  if (req.t === 'labelForText') return labelForText(req.text); // reads and changes no data
   const db = await getDb();
   let out: unknown;
   switch (req.t) {

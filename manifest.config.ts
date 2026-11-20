@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 /** package.json is the single source of the version; verify-release asserts the built manifest matches. */
 export const VERSION: string = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
 export const CSP =
-  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://www.wikidata.org; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 export const manifest = {
   manifest_version: 3,
   name: 'Tablight: Private AI Tab Organizer',

@@ -19,7 +19,7 @@ const dist = join(root, 'dist');
 export const SIZE_LIMIT = 55_000_000;
 const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
-  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://www.wikidata.org; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 /** SHA-256 of public/names/names.txt, the offline Wikidata name list (scripts/names/build.mjs prints it). */
 export const NAMES_SHA256 = 'ab527a25f6104247c2d0e3d2ec65243a3a4712867e516f0ff844c9f622f37084';
 /** names.txt cap in bytes (design Part 1); tests/unit/names-file.test.ts checks the same. */
@@ -28,10 +28,18 @@ const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', '
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
 /**
- * http(s):// literals tolerated in shipped JS. None is ever fetched: each is a comment, an error-message
- * hint, an XML namespace, or a default that src/offscreen overrides (and the e2e test proves no request
- * is made). Each entry is scoped to the package(s) it comes from: it may appear only in a chunk where the
- * build record attributes it to one of those packages, never in app code and never in background.js.
+ * The only source file that may name Wikidata's host. The build record attributes each app URL literal to its
+ * module, and the source scan below proves no other file in src/ names the host (so it cannot be assembled in
+ * another chunk, or reach the service worker, without failing the gate).
+ */
+const LOOKUP_SOURCE = 'src/ui/common/lookup.ts';
+const LOOKUP_HOST = /wikidata\.org/i;
+/**
+ * http(s):// literals tolerated in shipped JS. Except the look-up API, none is ever fetched: each is a comment, an
+ * error-message hint, an XML namespace, or a default that src/offscreen overrides (and the e2e test proves no request
+ * is made). Each library entry (`pkgs`) is scoped to the package(s) it comes from: it may appear only in a chunk where
+ * the build record attributes it to one of those packages, never in app code and never in background.js. The one app
+ * entry (`app`) may appear only where the build record attributes it to the source file it names.
  * Anything else fails the gate.
  */
 const URL_ALLOWLIST = [
@@ -44,6 +52,8 @@ const URL_ALLOWLIST = [
   { re: /^https:\/\/developer\.mozilla\.org\//, pkgs: ['@huggingface/transformers', 'onnxruntime-web'], why: 'Transformers.js documentation link in a comment/message (MDN)' },
   { re: /^https:\/\/web\.dev\//, pkgs: ['onnxruntime-web', '@huggingface/transformers'], why: 'ONNX Runtime/Transformers.js warning text linking to web.dev (cross-origin isolation)' },
   { re: /^https:\/\/rolldown\.rs\//, pkgs: ['bundler-runtime'], why: 'Bundler runtime helper comment/message (Rolldown docs)' },
+  // The one URL the app itself fetches, and only after the user clicks "Look it up" and confirms (design Part 2).
+  { re: /^https:\/\/www\.wikidata\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikidata search API: the opt-in look-up, sent only after the user confirms the dialog' },
 ];
 const errors = [];
 const fail = (m) => errors.push(m);
@@ -115,10 +125,19 @@ for (const [url, where] of [...urlHits].sort()) {
   usedEntries.get(entry).push(`${url}  [${[...where].join(', ')}]`);
 }
 for (const [entry, urls] of usedEntries) {
-  console.log(`  - ${entry.why} (from ${entry.pkgs.join(', ')})`);
+  console.log(`  - ${entry.why} (from ${(entry.pkgs ?? entry.app).join(', ')})`);
   for (const u of urls) console.log(`      ${u}`);
 }
 if (usedEntries.size === 0) console.log('  (none found)');
+// The look-up host may be named in one source file only (comments included), and it must be there.
+{
+  const named = [];
+  for (const f of await walk(join(root, 'src'))) {
+    if (LOOKUP_HOST.test(await readFile(f, 'utf8'))) named.push(relative(root, f).split('\\').join('/'));
+  }
+  if (named.join() !== LOOKUP_SOURCE) fail(`wikidata.org must be named only in ${LOOKUP_SOURCE}; found in: ${named.join(', ') || 'no file'}`);
+  else console.log(`\nLook-up host: named only in ${LOOKUP_SOURCE}`);
+}
 // ── hashes: model files and ONNX Runtime files ──────────────────────────────
 // Exactly one model ships (a leftover directory of a previous model would only add megabytes).
 try {

@@ -17,12 +17,24 @@ export function packageOf(id) {
   return parts[0].startsWith('@') ? `${parts[0]}/${parts[1]}` : parts[0];
 }
 /**
- * Why an allowlisted URL literal (matching `entry` = { re, pkgs }) may not appear in dist chunk `name`
- * (build-record `chunk`), or null when it is confined to the package(s) the entry names.
+ * Why an allowlisted URL literal (matching `entry` = { re, pkgs } or { re, app }) may not appear in dist chunk
+ * `name` (build-record `chunk`), or null when it is confined to the package(s) or the app module(s) the entry names.
+ * An `app` entry lists project-relative source files (e.g. 'src/ui/common/lookup.ts'): the URL may come only from
+ * those modules, never from a library or any other app module.
  */
 export function urlScopeError(entry, name, chunk) {
   if (name === 'background.js') return 'the service worker must not contain URL literals';
   if (!chunk?.urls) return 'chunk not in the build record';
+  if (entry.app) {
+    const hits = Object.keys(chunk.urls.app).filter((u) => entry.re.test(u));
+    const libHits = Object.keys(chunk.urls.lib).filter((u) => entry.re.test(u));
+    if (libHits.length) return `found in library code (${libHits.join(', ')}), allowed only in ${entry.app.join(', ')}`;
+    if (!hits.length) return 'not attributable to an app module';
+    const from = [...new Set(hits.flatMap((u) => chunk.urls.appIn?.[u] ?? ['(unknown module)']))];
+    const foreign = from.filter((m) => !entry.app.includes(m));
+    if (foreign.length) return `found in ${foreign.join(', ')}, allowed only in ${entry.app.join(', ')}`;
+    return null;
+  }
   const inApp = Object.keys(chunk.urls.app).filter((u) => entry.re.test(u));
   if (inApp.length) return `found in app code (${inApp.join(', ')})`;
   const fromLib = Object.entries(chunk.urls.lib).filter(([u]) => entry.re.test(u));

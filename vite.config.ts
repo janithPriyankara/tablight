@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { basename, resolve } from 'node:path';
+import { basename, relative, resolve, sep } from 'node:path';
 import preact from '@preact/preset-vite';
 import { defaultClientConditions, defineConfig, type Plugin } from 'vite';
 import { manifest } from './manifest.config.ts';
@@ -41,7 +41,8 @@ function extensionPlugin(): Plugin {
 interface ChunkRecord {
   app: Record<string, number>;
   lib: Record<string, number>;
-  urls: { app: Record<string, number>; lib: Record<string, string[]> };
+  /** appIn: for each app URL, the app modules (paths relative to the project root) it appears in. */
+  urls: { app: Record<string, number>; appIn: Record<string, string[]>; lib: Record<string, string[]> };
 }
 function buildRecordPlugin(): Plugin {
   const modules = new Set<string>();
@@ -51,7 +52,7 @@ function buildRecordPlugin(): Plugin {
     generateBundle(_options, bundle) {
       for (const file of Object.values(bundle)) {
         if (file.type !== 'chunk') continue;
-        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, lib: {} } };
+        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, appIn: {}, lib: {} } };
         for (const [id, mod] of Object.entries(file.modules)) {
           modules.add(id);
           const pkg = packageOf(id);
@@ -62,7 +63,11 @@ function buildRecordPlugin(): Plugin {
           }
           for (const m of mod.code?.matchAll(URL_LITERAL) ?? []) {
             const url = cleanUrl(m[0]);
-            if (!pkg) entry.urls.app[url] = (entry.urls.app[url] ?? 0) + 1;
+            if (!pkg) {
+              entry.urls.app[url] = (entry.urls.app[url] ?? 0) + 1;
+              const where = relative(import.meta.dirname, id.split('?')[0]!).split(sep).join('/');
+              entry.urls.appIn[url] = [...new Set([...(entry.urls.appIn[url] ?? []), where])];
+            }
             else entry.urls.lib[url] = [...new Set([...(entry.urls.lib[url] ?? []), pkg])];
           }
         }

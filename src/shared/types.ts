@@ -146,5 +146,10 @@ export interface DashboardState {
 }
 /** chrome.storage.session key of the startup check's result: `{ snapshotId: string | null }`. */
 export const LAST_SESSION_KEY = 'lastSession';
+/**
+ * chrome.storage.local key of the opt-in look-up's answers (src/ui/common/lookup.ts): cleaned text -> { at, hits }.
+ * Local only: never synced or exported, removed by "Delete all data".
+ */
+export const LOOKUP_CACHE_KEY = 'lookupCache';
 /** The background's broadcast to open extension pages after data changed (debounced). */
 export interface ChangedMessage { target: 'ui'; t: 'changed' }
