@@ -2,7 +2,7 @@ import type { SuspiciousTab } from './clues';
 export type ItemState = 'open' | 'sleeping' | 'stashed';
 export type Kind = 'watch' | 'read' | 'other';
 /** How the automatic pipeline placed a tab (classify/pick.ts). */
-export type PlacedBy = 'rule' | 'exemplar' | 'head' | 'neighbour' | 'youtube' | 'videos';
+export type PlacedBy = 'rule' | 'exemplar' | 'name' | 'head' | 'neighbour' | 'youtube' | 'videos';
 export interface Item {
   id: string;
   url: string;

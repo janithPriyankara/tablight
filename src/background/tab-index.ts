@@ -9,6 +9,7 @@ import { cleanTitle, domainOf, embedText, isWebUrl, isYouTubeVideo, kindOf, norm
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
+import { loadNameIndex } from './names-load';
 import { nextStamp } from '../shared/stamp';
 import { acceptSuggestion } from './groups';
 
@@ -453,6 +454,8 @@ export function lazyPool(db: Db): () => Promise<PoolTab[]> {
   }));
 }
 async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+  // The name step's list (read once; a failed read leaves the step off for this batch and is retried by the next).
+  await loadNameIndex();
   // One pool per batch, shared by the per-item retries below (a batch's own placements join the next batch's pool).
   const pool = lazyPool(db);
   try {
@@ -517,11 +520,14 @@ export function autoPick(
 }
 /** A pool tab with the id of its item, so a caller can leave the item it is picking for out. */
 export interface PoolTab extends Neighbour { id: string }
-/** Placements that are themselves guesses: they never count as evidence for the neighbour step. */
+/**
+ * Placements that are themselves guesses: they never count as evidence for the neighbour step. A name-step placement
+ * ('name') is evidence: an exact whole-title match from the name list, as sure as the head.
+ */
 const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
 /**
  * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
- * than Videos and Other, placed by the user or by a rule, an exemplar or the head (a missing `placedBy`, from
+ * than Videos and Other, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
  * older data, counts, except for a YouTube video: those were placed at the low video bar), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
  * (items without one are left out).
  */

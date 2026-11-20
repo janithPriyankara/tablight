@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { headTop, type Head } from '../../src/classify/assign';
 import bundled from '../../src/classify/head.json';
+import { currentNameIndex, parseNames, setNameIndex } from '../../src/classify/names';
 import { NEIGHBOUR_POOL_MAX, pickGroup, YOUTUBE_THRESHOLD, youtubeBar, type Neighbour } from '../../src/classify/pick';
 import type { Group } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
@@ -101,6 +102,49 @@ describe('pickGroup', () => {
   it('wants nothing when a user exemplar decides', () => {
     const taught = { ...group('mine'), exemplars: [vec(0)] };
     expect(pickGroup(PAGE, vec(0), [taught], head)).toEqual({ groupId: 'mine', want: null, by: 'exemplar' });
+  });
+});
+describe('pickGroup name step', () => {
+  afterEach(() => setNameIndex(null));
+  const names = parseNames('#tv\nbreaking bad\n#movies\nfoo bar\n');
+  // vec(0) reads as hardware at 0.73 with `head`: the head would file it, so a name hit shows the step runs first.
+  const SEARCH = { url: 'https://www.google.com/search?q=breaking+bad', title: 'breaking bad - Google Search' };
+  it('name step files a bare-name search into tv when tv exists', () => {
+    setNameIndex(names);
+    expect(pickGroup(SEARCH, vec(0), [group('tv'), group('hardware')], head)).toEqual({ groupId: 'tv', want: null, by: 'name' });
+  });
+  it('name step sets want when the group is missing', () => {
+    setNameIndex(names);
+    expect(pickGroup(SEARCH, vec(5), [group('hardware')], head)).toEqual({ groupId: null, want: 'tv', by: null });
+    // A YouTube video still parks in Videos, wanting the named topic.
+    const yt = { url: 'https://www.youtube.com/watch?v=x', title: 'Breaking Bad - YouTube' };
+    expect(pickGroup(yt, vec(5), [group('videos')], head)).toEqual({ groupId: 'videos', want: 'tv', by: 'videos' });
+  });
+  it('lets the head place a tab whose named group is missing', () => {
+    setNameIndex(names);
+    expect(pickGroup(SEARCH, vec(0), [group('hardware')], head)).toEqual({ groupId: 'hardware', want: null, by: 'head' });
+  });
+  it('exemplar beats name', () => {
+    setNameIndex(names);
+    const taught = { ...group('mine'), exemplars: [vec(0)] };
+    expect(pickGroup(SEARCH, vec(0), [taught, group('tv')], head)).toEqual({ groupId: 'mine', want: null, by: 'exemplar' });
+  });
+  it('rule beats name', () => {
+    setNameIndex(names);
+    const netflix = { url: 'https://www.netflix.com/title/123', title: 'Foo Bar | Netflix' };
+    expect(pickGroup(netflix, vec(0), [group('tv'), group('movies')], head)).toEqual({ groupId: 'tv', want: null, by: 'rule' });
+  });
+  it('pickGroup without names loaded', () => {
+    setNameIndex(null);
+    expect(currentNameIndex()).toBeNull();
+    expect(pickGroup(SEARCH, vec(0), [group('tv'), group('hardware')], head)).toEqual({ groupId: 'hardware', want: null, by: 'head' });
+    expect(pickGroup(SEARCH, vec(5), [group('tv')], head)).toEqual({ groupId: null, want: null, by: null });
+  });
+  it('files a part number once the list is loaded, and not before', () => {
+    const rtx = { url: 'https://example.com/a', title: 'RTX 4090' };
+    expect(pickGroup(rtx, vec(5), [group('hardware')], head)).toEqual({ groupId: null, want: null, by: null });
+    setNameIndex(names);
+    expect(pickGroup(rtx, vec(5), [group('hardware')], head)).toEqual({ groupId: 'hardware', want: null, by: 'name' });
   });
 });
 describe('pickGroup neighbours', () => {

@@ -26,6 +26,7 @@ import {
 import type { Group, Item } from '../../src/shared/types';
 import { HEAD } from '../../src/classify/head';
 import { NEIGHBOUR_POOL_MAX } from '../../src/classify/pick';
+import { resetNameIndexForTests } from '../../src/background/names-load';
 import { normalize } from '../../src/shared/vec';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 
@@ -426,6 +427,32 @@ describe('want (local-only wanted topic)', () => {
     await db.queue.add(first!.id);
     await processQueue(db, async (texts: string[]) => texts.map(() => away));
     expect((await db.items.get(first!.id))!.want).toBeUndefined();
+  });
+});
+describe('name step', () => {
+  const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+  const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
+  afterEach(() => {
+    resetNameIndexForTests();
+    vi.unstubAllGlobals();
+  });
+  it('a batch loads the bundled name list and files a bare-name search by it', async () => {
+    const fetchMock = vi.fn(async () => new Response('#tv\nbreaking bad\n'));
+    vi.stubGlobal('fetch', fetchMock);
+    await db.groups.put(group('tv'));
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://www.google.com/search?q=breaking+bad', title: 'breaking bad - Google Search' },
+      { url: 'https://zzz.example.net/a', title: 'a' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, async (texts: string[]) => texts.map(() => unsure));
+    const items = await db.items.all();
+    expect(items.find((i) => i.url.includes('google'))).toMatchObject({ groupId: 'tv', groupSource: 'auto', placedBy: 'name' });
+    expect(items.find((i) => i.url.includes('zzz'))!.groupId).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith('chrome-extension://mock-extension-id/names/names.txt');
+    // A name placement is evidence for the neighbour step.
+    const pool = await neighbourPool(db, items, await db.groups.all());
+    expect(pool.map((p) => p.groupId)).toEqual(['tv']);
   });
 });
 describe('neighbour step', () => {

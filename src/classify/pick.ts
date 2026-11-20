@@ -1,7 +1,8 @@
 import type { Group, Item, PlacedBy } from '../shared/types';
 import { isYouTubeVideo } from '../shared/url';
 import { cosine } from '../shared/vec';
-import { classify, headTop, OTHER_GROUP_ID, type Head } from './assign';
+import { exemplarPick, headPick, headTop, OTHER_GROUP_ID, type Head } from './assign';
+import { currentNameIndex, nameLabel } from './names';
 import { ruleGroup } from './rules';
 export type { PlacedBy };
 export const VIDEOS_GROUP_ID = 'videos';
@@ -87,12 +88,15 @@ export function neighbourGroup(
   return top !== null && !tie && most >= opts.min ? top : null;
 }
 /**
- * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
- * (user-taught exemplars, then the trained head at its threshold) > the neighbour step over `pool` (never for a
- * tab whose head top label is `other`) > for a YouTube video, the head's top topic at the lower YOUTUBE_THRESHOLD,
- * else Videos (when it exists) > null. `by` says which.
- * `want` is the head's topic when no group exists for it yet and the head is that sure of it (`threshold`, for
- * pages and videos alike): the lower YouTube bar only places a video into a group that already exists.
+ * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > user-taught exemplars >
+ * the name step (names.ts nameLabel with the installed name list, currentNameIndex; off while none is installed;
+ * only into an existing group) >
+ * the trained head at its threshold > the neighbour step over `pool` (never for a tab whose head top label is
+ * `other`) > for a YouTube video, the head's top topic at the lower YOUTUBE_THRESHOLD, else Videos (when it exists)
+ * > null. `by` says which.
+ * `want` is the topic of a tab left Unsorted or parked in Videos whose group does not exist yet: the name step's
+ * label, else the head's when the head is that sure of it (`threshold`, for pages and videos alike): the lower
+ * YouTube bar only places a video into a group that already exists.
  * `groups` must exclude suggested groups; `skipId` is the item's own id, left out of `pool`.
  */
 export function pickGroup(
@@ -107,8 +111,29 @@ export function pickGroup(
   // or parked in Videos.
   const rule = ruleGroup(item.url, item.title);
   if (rule !== null && groups.some((g) => g.id === rule)) return { groupId: rule, want: null, by: 'rule' };
-  const picked = classify(vec, groups, head);
-  if (picked.groupId !== null) return { groupId: picked.groupId, want: null, by: picked.by ?? 'head' };
+  const taught = exemplarPick(vec, groups, head);
+  if (taught !== null) return { groupId: taught.groupId, want: null, by: 'exemplar' };
+  // A name from the list (a show, a film, a band ...), a Wikipedia disambiguator or a part number. With its group
+  // missing, the rest of the pipeline still runs; the name only decides what an Unsorted or Videos tab wants. Until
+  // the list is loaded (names-load.ts) the whole step is off, so the pipeline is exactly what it was without it.
+  const index = currentNameIndex();
+  const named = index !== null ? nameLabel(item.url, item.title, index) : null;
+  const name = named !== null && named !== OTHER_GROUP_ID && named !== VIDEOS_GROUP_ID ? named : null;
+  if (name !== null && groups.some((g) => g.id === name)) return { groupId: name, want: null, by: 'name' };
+  const rest = afterName(item, vec, groups, head, pool, skipId);
+  return name !== null && (rest.groupId === null || rest.groupId === VIDEOS_GROUP_ID) ? { ...rest, want: name } : rest;
+}
+/** pickGroup after the rule, exemplar and name steps: the head, neighbours, the YouTube bar, Videos. */
+function afterName(
+  item: Pick<Item, 'url' | 'title'>,
+  vec: ArrayLike<number>,
+  groups: Group[],
+  head: Head,
+  pool: Neighbour[],
+  skipId?: string,
+): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  const picked = headPick(vec, groups, head);
+  if (picked.groupId !== null) return { groupId: picked.groupId, want: null, by: 'head' };
   const top = headTop(vec, head);
   // A tab the head reads as `other` is never pulled into a group by its neighbours: only the user files those.
   const near = pool.length && top?.label !== OTHER_GROUP_ID

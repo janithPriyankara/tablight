@@ -123,8 +123,21 @@ export function classify(
   head: Head,
   opts: { threshold?: number; similarity?: number } = {},
 ): Assignment {
-  const similarity = opts.similarity ?? head.similarity;
-  let near: Assignment = { groupId: null, score: -Infinity };
+  const near = exemplarPick(vec, groups, head, opts.similarity);
+  if (near) return { ...near, by: 'exemplar' };
+  return headPick(vec, groups, head, opts.threshold);
+}
+/**
+ * Step 1 of classify alone: the group of the single closest user-taught exemplar (never `other`) when its cosine is
+ * at least `similarity` (head.similarity by default), else null.
+ */
+export function exemplarPick(
+  vec: ArrayLike<number>,
+  groups: Group[],
+  head: Pick<Head, 'similarity'>,
+  similarity = head.similarity,
+): { groupId: string; score: number } | null {
+  let near: { groupId: string | null; score: number } = { groupId: null, score: -Infinity };
   for (const g of groups) {
     if (g.id === OTHER_GROUP_ID) continue;
     for (const e of g.exemplars) {
@@ -132,13 +145,15 @@ export function classify(
       if (s > near.score) near = { groupId: g.id, score: s };
     }
   }
-  if (near.groupId !== null && near.score >= similarity) return { ...near, by: 'exemplar' };
-
+  return near.groupId !== null && near.score >= similarity ? { groupId: near.groupId, score: near.score } : null;
+}
+/** Step 2 of classify alone: the head's top label at `threshold`, when that group exists and is not `other`. */
+export function headPick(vec: ArrayLike<number>, groups: Group[], head: Head, threshold = head.threshold): Assignment {
   const top = headTop(vec, head);
   if (!top) return { groupId: null, score: 0 };
   const { label, score } = top;
   if (
-    label === undefined || label === OTHER_GROUP_ID || score < (opts.threshold ?? head.threshold) ||
+    label === undefined || label === OTHER_GROUP_ID || score < threshold ||
     !groups.some((g) => g.id === label)
   ) return { groupId: null, score };
   return { groupId: label, score, by: 'head' };

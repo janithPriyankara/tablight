@@ -1,5 +1,8 @@
 // Replays imagined people's browsing sessions through the product pipeline, to check the neighbour step.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { buildStarterGroups, buildTrainedGroup, headTop, learn, OTHER_GROUP_ID, TRAINED_IDS } from '../../src/classify/assign';
+import { parseNames, setNameIndex } from '../../src/classify/names';
 import { neighbourGroup, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type NeighbourOpts, type PlacedBy } from '../../src/classify/pick';
 import { embedText, normalizeUrl } from '../../src/shared/url';
 import type { Group } from '../../src/shared/types';
@@ -62,7 +65,7 @@ function rng(seed: number, person: string): () => number {
 export const score = (r: SimResult): number => r.right - 2 * (r.wrong + r.otherAssigned);
 
 /**
- * Loads the real model and head once. `simulate` then replays each person's rows in order: a seeded `userShare` of
+ * Loads the real model and head, and installs the shipped name list, once. `simulate` then replays each person's rows in order: a seeded `userShare` of
  * tabs are placed by the user in their true group (which teaches that group, as a drag does: moveItems → learn);
  * the rest go through pickGroup with the pool so far. Each person has the installed groups plus every on-demand
  * group their rows are labelled with (so their on-demand topics can be reached, as after the interests step), or,
@@ -73,6 +76,8 @@ export async function loadSessionSim(): Promise<{
   simulate: (rows: SessionRow[], opts: SimOpts) => Promise<SimResult>;
 }> {
   const { head, embed } = await loadProductModel();
+  // The shipped name list, as the background worker installs it before a batch (names-load.ts).
+  setNameIndex(parseNames(readFileSync(resolve(import.meta.dirname, '../../public/names/names.txt'), 'utf8')));
   const starter = await buildStarterGroups(embed);
   const trained = new Map((await Promise.all([...TRAINED_IDS].map((id) => buildTrainedGroup(id, embed)))).map((g) => [g.id, g]));
   const vecCache = new Map<string, Float32Array>();

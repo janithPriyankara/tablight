@@ -4,6 +4,7 @@ import { embedText } from '../shared/url';
 import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
+import { loadNameIndex } from './names-load';
 import { autoPick, cachedVectors, fingerprintOf, neighbourPool, recordDismissed, withoutPlacedBy } from './tab-index';
 import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
@@ -295,6 +296,7 @@ interface Move { itemId: string; from: string | null; to: string | null; want: s
 
 /** What the automatic pipeline would now do with each auto item that has a cached vector. */
 async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; items: Item[] }> {
+  await loadNameIndex(); // the name step runs here too, or a regroup would undo its placements
   const [groups, items] = await Promise.all([db.groups.all(), db.items.all()]);
   const regular = groups.filter((g) => !g.suggested);
   const suggestedIds = new Set(groups.filter((g) => g.suggested).map((g) => g.id));
