@@ -3,7 +3,7 @@
  * on a tie the earlier (more specific) table row wins. Whole words or phrases only.
  */
 const TABLE: ReadonlyArray<readonly [string, readonly string[]]> = [
-  ['music', ['film score', 'soundtrack album', 'soundtrack', 'studio album', 'album', 'rock band', 'band', 'musical group',
+  ['music', ['video game composer', 'film composer', 'film score', 'soundtrack album', 'soundtrack', 'studio album', 'album', 'rock band', 'band', 'musical group',
     'music group', 'singer', 'rapper', 'musician', 'composer', 'record label', 'song', 'ep']],
   ['hardware', ['video game console', 'semiconductor', 'microcontroller', 'integrated circuit', 'processor',
     'graphics card', 'graphics processing unit', 'single-board computer']],
@@ -13,7 +13,7 @@ const TABLE: ReadonlyArray<readonly [string, readonly string[]]> = [
   ['tv', ['television series', 'tv series', 'web series', 'miniseries', 'sitcom', 'television program', 'television programme']],
   ['books', ['novel', 'book series', 'short story', 'poetry collection', 'comic book']],
   ['cars', ['automobile', 'car model', 'car manufacturer', 'automobile manufacturer']],
-  ['sports', ['football club', 'basketball team', 'sports team', 'national team', 'football player', 'footballer',
+  ['sports', ['football club', 'basketball team', 'sports team', 'football team', 'cricket team', 'rugby team', 'baseball team', 'hockey team', 'national team', 'football player', 'footballer',
     'basketball player', 'tennis player', 'cricketer', 'racing driver', 'boxer', 'athlete', 'formula one']],
 ];
 const compiled = TABLE.map(([label, phrases]) => ({

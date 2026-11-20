@@ -17,6 +17,9 @@ describe('describeLabel', () => {
     ['association football club', 'sports'],
     ['Wikimedia disambiguation page', null],
     ['human settlement', null],
+    ['video game composer', 'music'],
+    ['American football team', 'sports'],
+    ['cricket team', 'sports'],
     ['American actor', null],
     ['', null],
   ])('%s -> %s', (d, l) => {

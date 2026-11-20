@@ -17,71 +17,108 @@ export const SENSITIVE_TERMS: readonly string[] = [
   'salary', 'payslip', 'payroll', 'tax', 'ssn',
   // mail and calendar
   'mail', 'inbox', 'calendar',
+  // health, money and sign-up gaps
+  'health', 'lab results', 'hiv', 'std', 'abortion', 'doctor', 'pharmacy', 'insurance', 'mortgage', 'loan',
+  'credit card', 'debit', 'statement', 'sign up', 'signup', 'register', 'reset', 'security', 'crypto',
 ];
-/** Mail, documents and drive hosts are refused whatever the title says. */
-const SENSITIVE_HOSTS = /^(?:mail\.google\.com|docs\.google\.com|drive\.google\.com|(?:[a-z0-9-]+\.)*outlook\.[a-z.]+)$/;
+/**
+ * Mail, documents, drive, calendar and cloud-storage hosts are refused whatever the title says. Matched against the
+ * lower-cased host without a trailing dot.
+ */
+export const SENSITIVE_HOST_PATTERNS: readonly RegExp[] = [
+  /(?:^|\.)(?:mail|docs|drive|sheets|slides|keep|calendar|contacts|photos|forms|meet|chat)\.google\.com$/,
+  /(?:^|\.)outlook\.[a-z0-9.]+$/,
+  /(?:^|\.)(?:office365|office|microsoft365|sharepoint)\.com$/,
+  /(?:^|\.)(?:onedrive|mail|outlook)\.live\.com$/,
+  /(?:^|\.)(?:onedrive\.com|1drv\.ms)$/,
+  /(?:^|\.)mail\.yahoo\.[a-z.]+$/,
+  /(?:^|\.)(?:proton\.me|protonmail\.com|proton\.ch|pm\.me)$/,
+  /(?:^|\.)zoho\.[a-z.]+$/,
+  /(?:^|\.)(?:dropbox|box|icloud|evernote|airtable|mega|wetransfer|notion|coda|fastmail|tutanota|tuta|gmx|aol)\.[a-z.]+$/,
+  /(?:^|\.)(?:notion\.so|mega\.nz)$/,
+];
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const termPattern = (t: string): string => esc(t).replace(/[ -]/g, '[\\s-]+');
-const TEXT_SENSITIVE = new RegExp(`(?<![a-z0-9])(?:${SENSITIVE_TERMS.map(termPattern).join('|')})(?![a-z0-9])`, 'i');
-const HOST_SENSITIVE = new RegExp(
-  `(?:${SENSITIVE_TERMS.filter((t) => /^[a-z]{4,}$/.test(t)).join('|')})|${TEXT_SENSITIVE.source}`,
+// Long single words match inside a word (MyBank, NetBanking); short ones and phrases need word boundaries and may be plural.
+const LONG = SENSITIVE_TERMS.filter((t) => /^[a-z]{4,}$/.test(t));
+const SHORT = SENSITIVE_TERMS.filter((t) => !/^[a-z]{4,}$/.test(t));
+const TEXT_SENSITIVE = new RegExp(
+  `(?:${LONG.join('|')})|(?<![a-z0-9])(?:${SHORT.map(termPattern).join('|')})(?:e?s)?(?![a-z0-9])`,
   'i',
 );
-const LOCAL_SUFFIX = /\.(?:localhost|local|internal|lan|home|corp|intranet)$/;
+const LOCAL_SUFFIX =
+  /(?:^|\.)(?:localhost|local|internal|lan|home|corp|intranet|home\.arpa|test|example|invalid|localdomain|localtest\.me|lvh\.me|nip\.io|sslip\.io|xip\.io)$/;
 function localHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/\.$/, '');
   if (!h) return true;
   if (h === 'localhost' || LOCAL_SUFFIX.test(h)) return true;
   if (h.startsWith('[') || h.includes(':')) return true; // any IPv6 literal, including ::1, fe80::/10 and fc00::/7
   if (/^\d+(?:\.\d+){3}$/.test(h)) return true; // any raw IPv4, private or public
+  if (/(?:^|[.-])\d{1,3}(?:[.-]\d{1,3}){3}(?:[.-]|$)/.test(h)) return true; // a DNS name that wraps an IP
   if (!h.includes('.')) return true; // single label, also an IDN that has no dot
   return false;
 }
 function sensitiveHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/\.$/, '');
-  return SENSITIVE_HOSTS.test(h) || HOST_SENSITIVE.test(h.replace(/\./g, ' '));
+  return SENSITIVE_HOST_PATTERNS.some((re) => re.test(h)) || TEXT_SENSITIVE.test(h.replace(/\./g, ' '));
 }
 const MAX_WORDS = 8;
 const MAX_CHARS = 80;
 /** A part number: has a dash and each dash-separated segment alternates letters and digits at most twice. */
 function looksLikePartNumber(tok: string): boolean {
-  if (!tok.includes('-')) return false;
+  if (!tok.includes('-') || /\d{6,}/.test(tok)) return false;
   const segs = tok.split('-');
   if (segs.some((s) => s === '' || !/^[A-Za-z0-9]+$/.test(s))) return false;
   if (segs.every((x) => /^[0-9a-f]+$/i.test(x))) return false; // dashed hex, such as a UUID
   return segs.every((s) => (s.match(/[A-Za-z]+|\d+/g) ?? []).length - 1 <= 2);
 }
+/** Drops hex/base64-like runs of 12+ characters, wherever they sit, even with punctuation touching them. */
 function dropTokens(s: string): string {
-  return s
-    .split(/\s+/)
-    .filter((tok) => {
-      if (tok.length < 12) return true;
-      if (!/^[A-Za-z0-9+/=_-]+$/.test(tok)) return true;
-      if (looksLikePartNumber(tok)) return true;
-      const letters = /[A-Za-z]/.test(tok);
-      const digits = /\d/.test(tok);
-      return !((letters && digits) || /[+/=_]/.test(tok) || (digits && !letters));
-    })
-    .join(' ');
+  return s.replace(/[A-Za-z0-9+/=_-]{12,}/g, (tok) => {
+    if (looksLikePartNumber(tok)) return tok;
+    const letters = /[A-Za-z]/.test(tok);
+    const digits = /\d/.test(tok);
+    return (letters && digits) || /[+/=_]/.test(tok) || (digits && !letters) ? ' ' : tok;
+  });
 }
-/**
- * Cleans text bound for Wikidata: strips URLs and host names, emails, @handles, phone numbers, long digit runs and
- * hex/base64-like tokens, then keeps at most 8 words and 80 characters. Also applied to the user's edit.
- */
-export function cleanLookupText(input: string): string {
+function cleanOnce(input: string): string {
   let s = input;
   s = s.replace(/\b[a-z][a-z0-9+.-]*:\/\/\S*/gi, ' '); // URLs, including any user:pass@
-  s = s.replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, ' '); // emails
-  s = s.replace(/\b(?:www\.)\S+/gi, ' ');
-  s = s.replace(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:\/\S*)?/gi, ' '); // host names
-  s = s.replace(/(^|\s)@\w+/g, ' '); // handles
-  s = s.replace(/\+\d[\d\s().-]{7,}\d/g, ' '); // phones
+  s = s.replace(/\S*@\S*/g, ' '); // emails (any domain shape) and @handles
+  s = s.replace(/\w+\s?(?:\(at\)|\[at\])\s?[\w.-]+(?:\s?(?:\(dot\)|\[dot\])\s?\w+)*/gi, ' ');
+  s = s.replace(/\bwww\.\S+/gi, ' ');
+  s = s.replace(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:[/?#]\S*)?/gi, ' '); // host names
+  s = s.replace(/\+\d[\d\s().-]{7,}\d/g, ' '); // international phones
+  s = s.replace(/\b[A-Z]{2}\d{2}(?:[\s-]?[A-Z0-9]{2,4}){3,}\b/gi, ' '); // IBAN shapes
+  s = s.replace(/\b\d(?:[\s-]?\d){8,}\b/g, ' '); // grouped card, account and SSN numbers
   s = s.replace(/\(?\b\d{2,4}\)?[-.\s]\d{3,4}[-.]\d{3,4}\b/g, ' ');
   s = s.replace(/\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, ' ');
+  s = s.replace(/\b\d{2,4}[\s.-]\d{3}[\s.-]\d{4}\b/g, ' ');
+  s = s.replace(/\b\d{3}[-.]\d{4}\b/g, ' ');
   // Long tokens go before digit runs, so a hex token is dropped whole instead of leaving its letters behind.
-  s = dropTokens(s.replace(/\s+/g, ' ').trim());
+  s = dropTokens(s);
   s = s.replace(/\d{6,}/g, ' ');
-  s = s.replace(/\s+/g, ' ').trim();
+  return s.replace(/\s+/g, ' ').trim();
+}
+/** Maps a decimal digit of any script to 0-9, so the digit rules see it. */
+function asciiDigit(ch: string): string {
+  let cp = ch.codePointAt(0) ?? 0;
+  const at = cp;
+  while (cp > 0 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1))) cp--;
+  return String((at - cp) % 10);
+}
+/**
+ * Cleans text bound for Wikidata: strips URLs and host names, emails, @handles, phone numbers, grouped card/IBAN/SSN
+ * numbers, long digit runs and hex/base64-like tokens, then keeps at most 8 words and 80 characters. It repeats until
+ * nothing changes, so cleaning the cleaned text gives the same text. Also applied to the user's edit.
+ */
+export function cleanLookupText(input: string): string {
+  let s = input.normalize('NFKC').replace(/\p{Cf}/gu, '').replace(/\p{Nd}/gu, asciiDigit);
+  for (let i = 0; i < 10; i++) {
+    const next = cleanOnce(s);
+    if (next === s) break;
+    s = next;
+  }
   const words = s.split(/\s+/).filter(Boolean).slice(0, MAX_WORDS);
   let out = '';
   for (const w of words) {
