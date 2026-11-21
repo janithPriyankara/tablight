@@ -58,7 +58,7 @@ are too small to say much.
   user's first run, before Tablight has learned anything from them. Moving tabs by hand teaches groups and makes later
   grouping better; that is not counted here. The pipeline now includes the name step, which uses only search and
   Wikipedia text. The "Look it up" button is user-driven and is not counted in any figure here.
-The name step looks a name up in an offline list of about 60,000 well-known names built from Wikidata (CC0). It reads only the query of a search-engine results page or the title of a Wikipedia page, never ordinary page titles. The order of steps is: your rules, groups taught by moving tabs, names, the model, neighbours. The "Look it up" button is user-driven (one tab, after the user confirms the text; it asks Wikidata, then Wikipedia if Wikidata finds nothing) and is not counted in any figure here.
+The name step looks a name up in an offline list of about 60,000 well-known names built from Wikidata (CC0). It reads only the query of a search-engine results page or the title of a Wikipedia page, never ordinary page titles. The order of steps is: your rules, groups taught by moving tabs, names, the model, neighbours. The "Look it up" button is user-driven (one tab, after the user confirms the text; it asks Wikidata, then Wikipedia if Wikidata has no usable match) and is not counted in any figure here.
 A note on blindness: the choice to restrict the name step to search and Wikipedia text was made after seeing aggregate figures on the tuning sessions and on holdout2. Those two sets are therefore no longer blind for the name step. The sealed benchmark v2 was not touched when that choice was made.
 ## How the model was chosen
 
