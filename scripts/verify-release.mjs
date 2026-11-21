@@ -10,8 +10,8 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODEL_FILES, MODEL_ID, ORT_FILES_SHA256 } from './model-manifest.mjs';
 import {
-  BANNED_CODE, LOOKUP_IMPORTERS, LOOKUP_SOURCE, URL_LITERAL, cleanUrl, importsOf, lookupReexports, packageOf, urlScopeError,
-  wikidataMentions,
+  BANNED_CODE, LOOKUP_APIS, LOOKUP_IMPORTERS, LOOKUP_SOURCE, URL_LITERAL, cleanUrl, importsOf, lookupApiMentions, lookupReexports,
+  packageOf, urlScopeError, wikidataMentions,
 } from './release-patterns.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -22,7 +22,7 @@ const dist = join(root, 'dist');
 export const SIZE_LIMIT = 55_000_000;
 const mb = (n) => `${(n / 1_000_000).toFixed(2)} MB`;
 const CSP =
-  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://www.wikidata.org; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://www.wikidata.org https://en.wikipedia.org; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 /** SHA-256 of public/names/names.txt, the offline Wikidata name list (scripts/names/build.mjs prints it). */
 export const NAMES_SHA256 = 'ab527a25f6104247c2d0e3d2ec65243a3a4712867e516f0ff844c9f622f37084';
 /** names.txt cap in bytes (design Part 1); tests/unit/names-file.test.ts checks the same. */
@@ -31,10 +31,10 @@ const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', '
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
 /**
- * http(s):// literals tolerated in shipped JS. Except the look-up API, none is ever fetched: each is a comment, an
+ * http(s):// literals tolerated in shipped JS. Except the look-up APIs, none is ever fetched: each is a comment, an
  * error-message hint, an XML namespace, or a default that src/offscreen overrides (and the e2e test proves no request
  * is made). Each library entry (`pkgs`) is scoped to the package(s) it comes from: it may appear only in a chunk where
- * the build record attributes it to one of those packages, never in app code and never in background.js. The one app
+ * the build record attributes it to one of those packages, never in app code and never in background.js. An app
  * entry (`app`) may appear only where the build record attributes it to the source file it names.
  * Anything else fails the gate.
  */
@@ -48,8 +48,10 @@ const URL_ALLOWLIST = [
   { re: /^https:\/\/developer\.mozilla\.org\//, pkgs: ['@huggingface/transformers', 'onnxruntime-web'], why: 'Transformers.js documentation link in a comment/message (MDN)' },
   { re: /^https:\/\/web\.dev\//, pkgs: ['onnxruntime-web', '@huggingface/transformers'], why: 'ONNX Runtime/Transformers.js warning text linking to web.dev (cross-origin isolation)' },
   { re: /^https:\/\/rolldown\.rs\//, pkgs: ['bundler-runtime'], why: 'Bundler runtime helper comment/message (Rolldown docs)' },
-  // The one URL the app itself fetches, and only after the user clicks "Look it up" and confirms (design Part 2).
+  // The URLs the app itself fetches, and only after the user clicks "Look it up" and confirms (design Part 2).
   { re: /^https:\/\/www\.wikidata\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikidata search API: the opt-in look-up, sent only after the user confirms the dialog' },
+  // The look-up's fallback, in the same confirmed click: the same text, only when Wikidata answered with no topical hit.
+  { re: /^https:\/\/en\.wikipedia\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikipedia search API: the opt-in look-up\'s fallback when Wikidata finds nothing, same confirmed text and click' },
   // A link the look-up dialog shows (opened in a new tab only if the user clicks it); never fetched by the app.
   { re: /^https:\/\/foundation\.wikimedia\.org\/wiki\/Policy:Privacy_policy$/, app: ['src/ui/common/LookupDialog.tsx'], why: 'Wikimedia privacy-policy link in the look-up dialog; a link, not a request' },
 ];
@@ -132,10 +134,12 @@ if (usedEntries.size === 0) console.log('  (none found)');
 //    so a tree-shaken importer still counts). Only LOOKUP_IMPORTERS may import it, nothing in the service worker or the
 //    offscreen document may reach it, and its code may not land in background.js or the offscreen chunk.
 // 2. Mentions. "wikidata" (any case) may appear only in LOOKUP_SOURCE, as a prose word, or as the name list's notice
-//    line. Checked over every file of src/ and public/ (catches split strings like 'www.wikidata' + '.org' and
+//    line; a MediaWiki API endpoint (lookupApiMentions: Wikipedia's or Wikidata's, split or not) only in LOOKUP_SOURCE. Checked over every file of src/ and public/ (catches split strings like 'www.wikidata' + '.org' and
 //    copies of the URL in JSON, HTML or text assets) and every file of dist/, JS or not (manifest.json may hold it only
 //    in the pinned CSP; a JS chunk only when it carries LOOKUP_SOURCE, whose other modules the source scan covers).
-console.log('\nLook-up (Wikidata) checks:');
+// 3. Endpoints. When the client ships, the chunk carrying it must hold both API URLs (LOOKUP_APIS): a missing one means
+//    the build changed the client in a way these checks no longer see.
+console.log('\nLook-up (Wikidata, Wikipedia fallback) checks:');
 {
   const before = errors.length;
   const lk = record?.lookup;
@@ -168,21 +172,32 @@ console.log('\nLook-up (Wikidata) checks:');
     const path = relative(root, f).split('\\').join('/');
     const text = (await readFile(f)).toString('latin1');
     for (const where of wikidataMentions(path, text)) fail(`Wikidata named outside ${LOOKUP_SOURCE}: ${where}`);
+    for (const where of lookupApiMentions(path, text)) fail(`look-up API endpoint named outside ${LOOKUP_SOURCE}: ${where}`);
     if (!/\.[cm]?[jt]sx?$/.test(path) || path === LOOKUP_SOURCE || !importsOf(path, text).includes(target)) continue;
     srcImporters++;
     if (!LOOKUP_IMPORTERS.includes(path)) fail(`${path} imports ${LOOKUP_SOURCE}; allowed only: ${LOOKUP_IMPORTERS.join(', ')}`);
     for (const r of lookupReexports(path, text)) fail(`${path} re-exports from ${LOOKUP_SOURCE}: ${r}`);
   }
-  // Dist: the API URL anywhere means the client shipped.
+  // Dist: an API URL anywhere means the client shipped; outside its chunk, it is a leak.
   const pinnedCsp = JSON.stringify(CSP).slice(1, -1);
   let urlInDist = false;
+  const apisInLookupChunks = new Set();
   for (const f of files) {
     const name = relative(dist, f).split('\\').join('/');
     let text = (await readFile(f)).toString('latin1');
     if (name === 'manifest.json') text = text.split(pinnedCsp).join('');
-    if (/wikidata\.org\/w\/api\.php/i.test(text)) urlInDist = true;
-    if (record?.chunks?.[name]?.appModules?.includes(LOOKUP_SOURCE)) continue;
+    if (LOOKUP_APIS.some((a) => a.re.test(text))) urlInDist = true;
+    if (record?.chunks?.[name]?.appModules?.includes(LOOKUP_SOURCE)) {
+      for (const a of LOOKUP_APIS) if (text.includes(a.url)) apisInLookupChunks.add(a.name);
+      continue;
+    }
     for (const where of wikidataMentions(`dist/${name}`, text)) fail(`Wikidata named in dist outside the look-up chunk: ${where}`);
+    for (const where of lookupApiMentions(`dist/${name}`, text)) fail(`look-up API endpoint in dist outside the look-up chunk: ${where}`);
+  }
+  if (inChunks) {
+    for (const a of LOOKUP_APIS) {
+      if (!apisInLookupChunks.has(a.name)) fail(`the look-up chunk does not contain the ${a.name} API URL ${a.url}: the client changed shape; update the gate`);
+    }
   }
   // Zero client ids in the record is only believable when nothing ships it and nothing in src imports it.
   if (record && lkIds.length === 0 && (inChunks || urlInDist || srcImporters > 0)) {

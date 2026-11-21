@@ -33,7 +33,7 @@ function Welcome(props: { busy: boolean; onAutoSleep: () => void; onDone: () => 
         <h2 id="onboarding-h" class="card-title" tabIndex={-1}>Welcome to Tablight</h2>
         <ul class="onboarding-points">
           <li>Tablight sees only each tab’s title and address. It cannot see your passwords, cookies, what you type or what is on a page.</li>
-          <li>Grouping runs on your computer. No servers, no analytics. The only network request is the optional Look it up, after you confirm the text.</li>
+          <li>Grouping runs on your computer. No servers, no analytics. The only network requests are the optional Look it up, to Wikimedia, after you confirm the text.</li>
           <li>Nothing leaves your device except saved tabs and taught examples (synced through your browser account while sync is on) and, only when you click Look it up and confirm, the text you saw.</li>
           {unpinned && (
             <li>

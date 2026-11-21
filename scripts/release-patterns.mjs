@@ -43,7 +43,7 @@ export function urlScopeError(entry, name, chunk) {
   if (foreign.length) return `comes from ${foreign.join(', ')}, allowed only from ${entry.pkgs.join(', ')}`;
   return null;
 }
-/** The look-up client: the only source file that may name Wikidata's API, and the only modules that may import it. */
+/** The look-up client: the only source file that may name Wikidata's or Wikipedia's API; see LOOKUP_IMPORTERS for who may import it. */
 export const LOOKUP_SOURCE = 'src/ui/common/lookup.ts';
 /** Product modules allowed to import LOOKUP_SOURCE (the confirm dialog, Task 7). Tests are not built and are exempt. */
 export const LOOKUP_IMPORTERS = ['src/ui/common/LookupDialog.tsx'];
@@ -75,6 +75,31 @@ export function wikidataMentions(path, text) {
     const comment = /^\s*(\/\/|\/?\*)/.test(line);
     if (prose === all && (!code || comment)) return;
     bad.push(`${path}:${i + 1}`);
+  });
+  return bad;
+}
+/**
+ * The look-up's API endpoints, as the dist check matches them: each must be in the look-up chunk (else the client
+ * shipped without it) and in no other file of dist/.
+ */
+export const LOOKUP_APIS = [
+  { name: 'Wikidata', url: 'https://www.wikidata.org/w/api.php', re: /wikidata\.org\/w\/api\.php/i },
+  { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/api.php', re: /wikipedia\.org\/w\/api\.php/i },
+];
+/**
+ * Forms of a MediaWiki API endpoint (Wikipedia's or Wikidata's), any case: the host and API path together, even split
+ * by quotes, `+` or dots ('https://en.wikipedia' + '.org/w/api.php', ['wikipedia', 'org', 'w', 'api']), or the path
+ * alone ('/w/api', 'api.php'), which no other file needs. The word "Wikipedia" and page URLs (wikipedia.org/wiki/…)
+ * stay allowed: the name step matches Wikipedia tabs.
+ */
+const API_FORMS = [/wikipedia\W*org\W*w\W*api/i, /\/w\/api\b/i, /\bapi\.php\b/i];
+/** Lines of `path` (project-relative) that name a look-up API endpoint outside LOOKUP_SOURCE, comments included. */
+export function lookupApiMentions(path, text) {
+  if (path === LOOKUP_SOURCE) return [];
+  if (!API_FORMS.some((re) => re.test(text))) return [];
+  const bad = [];
+  text.split('\n').forEach((line, i) => {
+    if (API_FORMS.some((re) => re.test(line))) bad.push(`${path}:${i + 1}`);
   });
   return bad;
 }

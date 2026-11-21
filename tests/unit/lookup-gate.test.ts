@@ -3,7 +3,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LOOKUP_IMPORTERS, LOOKUP_SOURCE, importsOf, lookupReexports, wikidataMentions } from '../../scripts/release-patterns.mjs';
+import {
+  LOOKUP_APIS, LOOKUP_IMPORTERS, LOOKUP_SOURCE, importsOf, lookupApiMentions, lookupReexports, wikidataMentions,
+} from '../../scripts/release-patterns.mjs';
 import { LOOKUP_DIALOG_SENTENCE } from '../../src/ui/common/lookup';
 
 const root = join(import.meta.dirname, '..', '..');
@@ -46,15 +48,15 @@ describe('look-up gate', () => {
     expect(lookupReexports(p, "export * from './lookup-text';")).toEqual([]);
   });
   it('accepts the dialog sentence in the allowed importer, never a host there', () => {
-    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:');
+    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:');
     const dialog = 'src/ui/common/LookupDialog.tsx';
     const probe = [
       'export function LookupDialog() {',
       '  return (',
       '    <div>',
-      '      <p>Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:</p>',
-      `      <p>{'Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:'}</p>`,
-      `      <p title="Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:" />`,
+      '      <p>Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:</p>',
+      `      <p>{'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:'}</p>`,
+      `      <p title="Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:" />`,
       '    </div>',
       '  );',
       '}',
@@ -65,6 +67,40 @@ describe('look-up gate', () => {
     expect(wikidataMentions(dialog, "fetch('https://www.' + 'wikidata' + '.org')")).toEqual([`${dialog}:1`]);
     // Anywhere else the sentence in code is still refused (only comments may say the word).
     expect(wikidataMentions('src/ui/dashboard/X.tsx', probe)).toHaveLength(3);
+  });
+  it('src/ and public/ name a look-up API endpoint only in the client', () => {
+    const bad = [...walk(join(root, 'src')), ...walk(join(root, 'public'))]
+      .flatMap((f) => lookupApiMentions(rel(f), readFileSync(f).toString('latin1')));
+    expect(bad).toEqual([]);
+    // The client holds both endpoints, exactly as the dist check looks for them.
+    const client = readFileSync(join(root, LOOKUP_SOURCE), 'utf8');
+    expect(LOOKUP_APIS.map((a) => a.url)).toEqual(['https://www.wikidata.org/w/api.php', 'https://en.wikipedia.org/w/api.php']);
+    for (const a of LOOKUP_APIS) {
+      expect(client).toContain(a.url);
+      expect(a.re.test(a.url)).toBe(true);
+    }
+  });
+  it('flags the Wikipedia API endpoint outside the client, split or in any case, but not the word or page URLs', () => {
+    const p = 'src/ui/dashboard/X.tsx';
+    expect(lookupApiMentions(p, "fetch('https://en.wikipedia.org/w/api.php?action=query')")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "const u = 'HTTPS://EN.WIKIPEDIA.ORG/W/API.PHP';")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "fetch('https://en.wikipedia' + '.org/w/api.php')")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "fetch('https://en.wikipedia.org' + '/w/' + 'api.php')")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "const h = ['en', 'wikipedia', 'org', 'w', 'api'].join('.');")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "const path = '/w/api';")).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, '// see https://de.wikipedia.org/w/api.php')).toEqual([`${p}:1`]);
+    expect(lookupApiMentions(p, "a\nfetch(host + 'api.php')")).toEqual([`${p}:2`]);
+    expect(lookupApiMentions('public/hosts.json', '{"api": "https://en.wikipedia.org/w/api.php"}')).toEqual(['public/hosts.json:1']);
+    expect(lookupApiMentions('dist/assets/dashboard-x.js', 'const u="https://en.wikipedia.org/w/api.php"')).toEqual(['dist/assets/dashboard-x.js:1']);
+    // Wikidata's endpoint is held to the same rule.
+    expect(lookupApiMentions(p, "fetch('https://www.wikidata.org/w/api.php')")).toEqual([`${p}:1`]);
+    // Allowed: the word, Wikipedia page URLs and hosts (the name step matches Wikipedia tabs), and the client itself.
+    expect(lookupApiMentions(p, "const WIKI_SUFFIX = /\\s+[-–—]\\s+Wikipedia$/i;")).toEqual([]);
+    expect(lookupApiMentions(p, 'return /(^|\\.)wikipedia\\.org$/i.test(u.hostname);')).toEqual([]);
+    expect(lookupApiMentions(p, "const u = 'https://en.wikipedia.org/wiki/Anatomy_of_a_Fall';")).toEqual([]);
+    expect(lookupApiMentions('src/ui/mock/f.json', '"Anatomy of a Fall - Wikipedia — en.wikipedia.org wiki Anatomy of Fall"')).toEqual([]);
+    expect(lookupApiMentions('public/privacy.html', '<p>then to Wikipedia (Wikimedia Foundation).</p>')).toEqual([]);
+    expect(lookupApiMentions(LOOKUP_SOURCE, "const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';")).toEqual([]);
   });
   it('src/ and public/ name Wikidata only in the client, in prose, or in the name list notice', () => {
     const bad = [...walk(join(root, 'src')), ...walk(join(root, 'public'))]

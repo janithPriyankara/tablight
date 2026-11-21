@@ -1,17 +1,22 @@
 // The opt-in look-up (design Part 2): the only network request Tablight makes, and only after the user clicked
-// "Look it up" and confirmed the dialog. One cleaned text goes to Wikidata's public search API; the reply is
-// untrusted data. Nothing here logs the text or the reply. Only the confirm dialog may import this module
+// "Look it up" and confirmed the dialog. One cleaned text goes to Wikidata's public search API and, only when that
+// finds nothing with a topic, the same text goes once to English Wikipedia's search API (same click, same text). Every
+// reply is untrusted data. Nothing here logs the text or the reply. Only the confirm dialog may import this module
 // (LOOKUP_IMPORTERS in scripts/release-patterns.mjs; checked by a unit test and by verify-release).
 import { describeLabel } from '../../classify/describe';
 import { send, type LabelForTextReply } from '../../shared/rpc';
 import { cleanLookupText } from '../../shared/lookup-text';
 import { LOOKUP_CACHE_KEY } from '../../shared/types';
 
+/** Which site a hit came from. */
+export type LookupSource = 'wikidata' | 'wikipedia';
 export interface LookupHit {
-  /** Wikidata's label for the item (plain text: render with textContent, never as HTML). */
+  /** Wikidata's label or the Wikipedia page title (plain text: render with textContent, never as HTML). */
   label: string;
-  /** Wikidata's short description ('' when it had none). Plain text. */
+  /** The short description ('' when there was none). Plain text. */
   description: string;
+  /** The site that answered with this hit. */
+  source: LookupSource;
   /** The id of the existing group whose label is this hit's topic, or null. */
   group: string | null;
   /**
@@ -22,7 +27,9 @@ export interface LookupHit {
   topic: string | null;
 }
 export type LookupError = 'offline' | 'timeout' | 'http' | 'bad-reply';
-export type LookupResult = { hits: LookupHit[] } | { error: LookupError };
+/** `from: 'wikipedia'` when the error is Wikipedia's (Wikidata answered with nothing); absent for Wikidata's. */
+export type LookupFailure = { error: LookupError; from?: 'wikipedia' };
+export type LookupResult = { hits: LookupHit[] } | LookupFailure;
 export interface LookupDeps {
   fetch?: typeof fetch;
   now?: () => number;
@@ -33,8 +40,11 @@ export interface LookupDeps {
 }
 
 /** The dialog's opening sentence (design Part 2), shown every time before anything is sent. */
-export const LOOKUP_DIALOG_SENTENCE = 'Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:';
+export const LOOKUP_DIALOG_SENTENCE =
+  'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
+const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
+/** Deadline of each request (Wikidata's, and Wikipedia's when it is asked). */
 export const LOOKUP_TIMEOUT_MS = 10_000;
 /** Deadline of each on-device head fallback (labelForText); on expiry the hit has no topic. */
 export const LABEL_TIMEOUT_MS = 5_000;
@@ -45,16 +55,21 @@ export const LOOKUP_MAX_FIELD = 200;
 export const LOOKUP_MAX_HITS = 3;
 export const LOOKUP_CACHE_MAX = 500;
 
-/** The request URL: the fixed parameters plus `search`, encoded by URLSearchParams. */
-function lookupUrl(text: string): string {
-  const url = new URL(WIKIDATA_API);
-  const params: [string, string][] = [
-    ['action', 'wbsearchentities'], ['search', text], ['language', 'en'], ['uselang', 'en'], ['type', 'item'],
-    ['limit', '5'], ['format', 'json'], ['origin', '*'],
-  ];
+/** A request URL: the fixed parameters plus the text, encoded by URLSearchParams. */
+function apiUrl(base: string, params: [string, string][]): string {
+  const url = new URL(base);
   for (const [k, v] of params) url.searchParams.append(k, v);
   return url.href;
 }
+const wikidataUrl = (text: string): string => apiUrl(WIKIDATA_API, [
+  ['action', 'wbsearchentities'], ['search', text], ['language', 'en'], ['uselang', 'en'], ['type', 'item'],
+  ['limit', '5'], ['format', 'json'], ['origin', '*'],
+]);
+/** Full-text search of articles (namespace 0) with each page's short description; no snippets, so no HTML. */
+const wikipediaUrl = (text: string): string => apiUrl(WIKIPEDIA_API, [
+  ['action', 'query'], ['generator', 'search'], ['gsrsearch', text], ['gsrlimit', '5'], ['gsrnamespace', '0'],
+  ['prop', 'description'], ['format', 'json'], ['formatversion', '2'], ['origin', '*'],
+]);
 
 // C0/C1 controls, and the bidi embedding/override/isolate characters that could reorder the rendered text.
 // eslint-disable-next-line no-control-regex
@@ -65,8 +80,11 @@ function plain(s: string): string {
   return Array.from(t).slice(0, LOOKUP_MAX_FIELD).join('').trim();
 }
 
-/** What the cache keeps per hit: no group (that depends on the groups when it is read). */
-interface CachedHit { label: string; description: string; topic: string | null }
+/**
+ * What the cache keeps per hit: no group (that depends on the groups when it is read). `source` is absent in entries
+ * stored before the Wikipedia fallback existed; those were all Wikidata's.
+ */
+interface CachedHit { label: string; description: string; topic: string | null; source?: LookupSource }
 interface CacheEntry { at: number; hits: CachedHit[] }
 
 const isStrOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string';
@@ -76,7 +94,8 @@ function validEntry(v: unknown): v is CacheEntry {
   return typeof e.at === 'number' && Array.isArray(e.hits) && e.hits.every((h: unknown) => {
     if (typeof h !== 'object' || h === null) return false;
     const x = h as Record<string, unknown>;
-    return typeof x['label'] === 'string' && typeof x['description'] === 'string' && isStrOrNull(x['topic']);
+    return typeof x['label'] === 'string' && typeof x['description'] === 'string' && isStrOrNull(x['topic']) &&
+      (x['source'] === undefined || x['source'] === 'wikidata' || x['source'] === 'wikipedia');
   });
 }
 /** The stored cache as a Map (own keys only, so "constructor" or "__proto__" are ordinary texts). */
@@ -178,15 +197,19 @@ async function readBody(res: Response): Promise<string | null> {
   return new TextDecoder().decode(all);
 }
 
-/** label and description strings of the reply's `search` array (every other field is ignored); null if malformed. */
-function parseReply(body: string): { label: string; description: string }[] | null {
-  let data: unknown;
+interface RawHit { label: string; description: string }
+function parseJson(body: string): object | null {
   try {
-    data = JSON.parse(body);
+    const data: unknown = JSON.parse(body);
+    return typeof data === 'object' && data !== null ? data : null;
   } catch {
     return null;
   }
-  if (typeof data !== 'object' || data === null) return null;
+}
+/** label and description strings of Wikidata's `search` array (every other field is ignored); null if malformed. */
+function parseWikidata(body: string): RawHit[] | null {
+  const data = parseJson(body);
+  if (data === null) return null;
   const search = (data as { search?: unknown }).search;
   if (!Array.isArray(search)) return null;
   const out: { label: string; description: string }[] = [];
@@ -202,11 +225,39 @@ function parseReply(body: string): { label: string; description: string }[] | nu
   return out;
 }
 
-async function request(text: string, f: typeof fetch): Promise<{ label: string; description: string }[] | LookupError> {
+/**
+ * title and description strings of Wikipedia's `query.pages` array, in search order (`index` ascending; a page without
+ * a numeric index goes last). Every other field is ignored. No `query` (or no `pages`) is Wikipedia's "no results";
+ * an `error`, or a `query` / `pages` of the wrong type, is malformed (null).
+ */
+function parseWikipedia(body: string): RawHit[] | null {
+  const data = parseJson(body);
+  if (data === null || Array.isArray(data) || 'error' in data) return null;
+  const query = (data as { query?: unknown }).query;
+  if (query === undefined) return [];
+  if (typeof query !== 'object' || query === null || Array.isArray(query)) return null;
+  const pages = (query as { pages?: unknown }).pages;
+  if (pages === undefined) return [];
+  if (!Array.isArray(pages)) return null;
+  const ranked: { at: number; hit: RawHit }[] = [];
+  for (const page of pages) {
+    if (typeof page !== 'object' || page === null) continue;
+    const { title, description, index } = page as { title?: unknown; description?: unknown; index?: unknown };
+    if (typeof title !== 'string') continue;
+    const l = plain(title);
+    if (!l) continue;
+    const at = typeof index === 'number' && Number.isFinite(index) ? index : Number.POSITIVE_INFINITY;
+    ranked.push({ at, hit: { label: l, description: typeof description === 'string' ? plain(description) : '' } });
+  }
+  return ranked.sort((a, b) => a.at - b.at).slice(0, LOOKUP_MAX_HITS).map((r) => r.hit);
+}
+
+/** One GET to `url` (no cookies, no referrer, no cache, its own deadline and body cap), the reply read by `parse`. */
+async function request(url: string, parse: (body: string) => RawHit[] | null, f: typeof fetch): Promise<RawHit[] | LookupError> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
   try {
-    const res = await f(lookupUrl(text), {
+    const res = await f(url, {
       method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: controller.signal,
     });
     if (res.status !== 200) {
@@ -215,7 +266,7 @@ async function request(text: string, f: typeof fetch): Promise<{ label: string; 
     }
     const body = await readBody(res);
     if (body === null) return 'bad-reply';
-    return parseReply(body) ?? 'bad-reply';
+    return parse(body) ?? 'bad-reply';
   } catch {
     return controller.signal.aborted ? 'timeout' : 'offline';
   } finally {
@@ -236,25 +287,57 @@ async function headLabel(labelFor: (t: string) => Promise<string | null>, text: 
     clearTimeout(timer);
   }
 }
+/** Topics for one site's hits: the description's keyword label, else the head's label for "label — description". */
+function withTopics(raw: RawHit[], source: LookupSource, labelFor: (t: string) => Promise<string | null>): Promise<CachedHit[]> {
+  return Promise.all(raw.map(async ({ label, description }): Promise<CachedHit> => {
+    const topic = (description ? describeLabel(description) : null)
+      ?? (await headLabel(labelFor, description ? `${label} — ${description}` : label));
+    return { label, description, topic, source };
+  }));
+}
+/** The hits in the order given, only the first of each label (case-insensitive), at most LOOKUP_MAX_HITS. */
+function combine(...lists: CachedHit[][]): CachedHit[] {
+  const seen = new Set<string>();
+  const out: CachedHit[] = [];
+  for (const h of lists.flat()) {
+    const key = h.label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(h);
+    if (out.length >= LOOKUP_MAX_HITS) break;
+  }
+  return out;
+}
 /** Look-ups of this page in flight, by cleaned text: the same text is sent once even when asked twice at once. */
-const inFlight = new Map<string, Promise<CachedHit[] | LookupError>>();
-async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] | LookupError> {
+const inFlight = new Map<string, Promise<CachedHit[] | LookupFailure>>();
+/**
+ * Wikidata first. Only when it answered and no hit has a topic is the same text sent to Wikipedia; then Wikidata's
+ * topical hits (none, by that rule) come first, Wikipedia's next and Wikidata's topic-less ones last. A Wikidata error
+ * ends the look-up (Wikipedia is not asked). A Wikipedia error shows Wikidata's hits, or is the answer when Wikidata
+ * had none; either way nothing is cached, so asking again can still reach Wikipedia. A complete answer is cached under
+ * the cleaned text, so neither site is asked twice for it, unless a reset came in during either request.
+ */
+async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] | LookupFailure> {
   const startedIn = epoch;
   const cached = (await readCache()).get(clean);
   if (cached) return cached.hits;
-  const reply = await request(clean, deps.fetch ?? fetch.bind(globalThis));
-  if (typeof reply === 'string') return reply;
+  const f = deps.fetch ?? fetch.bind(globalThis);
+  const wd = await request(wikidataUrl(clean), parseWikidata, f);
+  if (typeof wd === 'string') return { error: wd };
   const labelFor = deps.labelForText ?? defaultLabelForText;
-  const hits = await Promise.all(reply.map(async ({ label, description }): Promise<CachedHit> => {
-    const topic = (description ? describeLabel(description) : null)
-      ?? (await headLabel(labelFor, description ? `${label} — ${description}` : label));
-    return { label, description, topic };
-  }));
+  const wdHits = await withTopics(wd, 'wikidata', labelFor);
+  let hits = wdHits;
+  if (!wdHits.some((h) => h.topic !== null)) {
+    const wp = await request(wikipediaUrl(clean), parseWikipedia, f);
+    if (typeof wp === 'string') return wdHits.length ? wdHits : { error: wp, from: 'wikipedia' };
+    const wpHits = await withTopics(wp, 'wikipedia', labelFor);
+    hits = combine(wdHits.filter((h) => h.topic !== null), wpHits, wdHits.filter((h) => h.topic === null));
+  }
   if (epoch === startedIn) await writeCache(clean, { at: (deps.now ?? Date.now)(), hits }, startedIn);
   return hits;
 }
 /**
- * Looks the text up on Wikidata (after the user confirmed it). The text is cleaned again (cleaning is idempotent);
+ * Looks the text up on Wikidata, then on Wikipedia if needed (after the user confirmed it). The text is cleaned again (cleaning is idempotent);
  * an empty result sends nothing and answers 'bad-reply'. An answer already in the cache is never sent again.
  * Never throws.
  */
@@ -265,17 +348,21 @@ export async function lookUp(text: string, deps: LookupDeps = {}): Promise<Looku
     if (!clean) return { error: 'bad-reply' };
     let pending = inFlight.get(clean);
     if (!pending) {
-      const p: Promise<CachedHit[] | LookupError> = fetchHits(clean, deps).finally(() => {
+      const p: Promise<CachedHit[] | LookupFailure> = fetchHits(clean, deps).finally(() => {
         if (inFlight.get(clean) === p) inFlight.delete(clean); // a reset may have cleared it and a new look-up begun
       });
       pending = p;
       inFlight.set(clean, pending);
     }
     const hits = await pending;
-    if (typeof hits === 'string') return { error: hits };
+    if (!Array.isArray(hits)) return hits.from ? { error: hits.error, from: hits.from } : { error: hits.error };
     const groupOf = (topic: string | null): string | null =>
       topic === null ? null : (deps.groups?.find((g) => g.id === topic)?.id ?? null);
-    return { hits: hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({ ...h, group: groupOf(h.topic) })) };
+    return {
+      hits: hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({
+        label: h.label, description: h.description, topic: h.topic, source: h.source ?? 'wikidata', group: groupOf(h.topic),
+      })),
+    };
   } catch {
     return { error: 'bad-reply' };
   }

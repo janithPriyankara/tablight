@@ -8,11 +8,12 @@ import { cleanLookupText, lookupText } from '../../shared/lookup-text';
 import { send } from '../../shared/rpc';
 import type { Item } from '../../shared/types';
 import { Modal } from '../dashboard/Modal';
-import { LOOKUP_DIALOG_SENTENCE, lookUp, type LookupError, type LookupHit } from './lookup';
+import { LOOKUP_DIALOG_SENTENCE, lookUp, type LookupFailure, type LookupHit } from './lookup';
 import { GlobeIcon } from './icons';
 
 /** The hint under the setting's toggle (Settings → General). */
-export const LOOKUP_SETTING_HINT = 'Sends only the text you confirm, to Wikidata. Nothing is sent unless you click.';
+export const LOOKUP_SETTING_HINT =
+  'Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata finds nothing). Nothing is sent unless you click.';
 const NEVER_SENT = 'Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.';
 const PRIVACY_POLICY = 'https://foundation.wikimedia.org/wiki/Policy:Privacy_policy';
 
@@ -40,18 +41,21 @@ type Phase =
   | { k: 'edit' }
   | { k: 'busy' }
   | { k: 'hits'; hits: LookupHit[] }
-  | { k: 'error'; error: LookupError }
+  | { k: 'error'; error: LookupFailure['error']; wikipedia: boolean }
   | { k: 'moving' }
   | { k: 'moveFailed' }
   | { k: 'gone' };
 
+/** A site's name, as JSX text (the release gate allows the word Wikidata here only as prose, never in a string). */
+const Site = (p: { wikipedia: boolean }) => (p.wikipedia ? <>Wikipedia</> : <>Wikidata</>);
 /** A starter group's name by id (the groups the interests step can create). */
 const starterName = (id: string): string | null => INTEREST_CHOICES.find((c) => c.id === id)?.name ?? null;
 
 /**
  * The confirm dialog, shown every time: the sentence, the editable cleaned text, what is never sent, Wikimedia's
  * privacy policy, Look up / Cancel. Only activating the "Look up" button sends (Enter in the box does nothing, so a
- * held or repeated Enter from the row button, or an IME's confirming Enter, can never send). Hits are plain text.
+ * held or repeated Enter from the row button, or an IME's confirming Enter, can never send). Hits are plain text,
+ * each tagged with the site it came from (Wikidata, or Wikipedia when Wikidata found nothing).
  * "Move to" is the user's own move (it teaches the group); a hit whose topic group does not exist offers to create
  * that one starter group first (groupCreateStarter: no other effect). After a move it closes.
  */
@@ -83,7 +87,9 @@ export function LookupDialog(props: {
     setText(sent); // the box shows exactly what is sent (and the "Will send" line already showed it)
     setPhase({ k: 'busy' });
     const r = await lookUp(sent, { groups });
-    if (mounted.current) setPhase('error' in r ? { k: 'error', error: r.error } : { k: 'hits', hits: r.hits });
+    if (!mounted.current) return;
+    if ('error' in r) setPhase({ k: 'error', error: r.error, wikipedia: r.from === 'wikipedia' });
+    else setPhase({ k: 'hits', hits: r.hits });
   };
   const move = async (hit: LookupHit) => {
     if (hit.group === null && hit.topic === null) return;
@@ -140,9 +146,9 @@ export function LookupDialog(props: {
         {phase.k === 'moveFailed' && <p>Couldn’t move the tab.</p>}
         {phase.k === 'gone' && <p>That tab is no longer open.</p>}
         {phase.k === 'error' && phase.error === 'offline' && <p>You seem to be offline.</p>}
-        {phase.k === 'error' && phase.error === 'timeout' && <p>Wikidata didn't answer in time.</p>}
-        {phase.k === 'error' && phase.error === 'http' && <p>Wikidata returned an error.</p>}
-        {phase.k === 'error' && phase.error === 'bad-reply' && <p>Couldn't read Wikidata's answer.</p>}
+        {phase.k === 'error' && phase.error === 'timeout' && <p><Site wikipedia={phase.wikipedia} /> didn't answer in time.</p>}
+        {phase.k === 'error' && phase.error === 'http' && <p><Site wikipedia={phase.wikipedia} /> returned an error.</p>}
+        {phase.k === 'error' && phase.error === 'bad-reply' && <p>Couldn't read <Site wikipedia={phase.wikipedia} />'s answer.</p>}
         {phase.k === 'hits' && phase.hits.length === 0 && <p>No matches</p>}
       </div>
       {phase.k === 'hits' && phase.hits.length > 0 && (
@@ -154,6 +160,7 @@ export function LookupDialog(props: {
                 <span class="lookup-hit-text">
                   <span class="lookup-hit-label">{hit.label}</span>
                   {hit.description && <span class="lookup-hit-desc">{hit.description}</span>}
+                  <span class="lookup-hit-source"><Site wikipedia={hit.source === 'wikipedia'} /></span>
                 </span>
                 {action && (
                   <button type="button" class="btn btn-sm" onClick={() => void move(hit)}>{action}</button>

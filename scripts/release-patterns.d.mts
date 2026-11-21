@@ -15,3 +15,5 @@ export const LOOKUP_IMPORTERS: string[];
 export function wikidataMentions(path: string, text: string): string[];
 export function importsOf(path: string, text: string): string[];
 export function lookupReexports(path: string, text: string): string[];
+export const LOOKUP_APIS: { name: string; url: string; re: RegExp }[];
+export function lookupApiMentions(path: string, text: string): string[];

@@ -700,6 +700,15 @@ button.item-main {
 .lookup-hit-desc {
   font-size: var(--text-sm);
 }
+.lookup-hit-source {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
 .setting-hint {
   margin: var(--space-1) 0 0;
   color: var(--text-muted);

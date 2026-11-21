@@ -1,0 +1,23 @@
+{
+  "batchcomplete": true,
+  "continue": { "gsroffset": 2, "continue": "gsroffset||" },
+  "query": {
+    "pages": [
+      {
+        "pageid": 999999002,
+        "ns": 0,
+        "title": "<i>Zorblax</i> (character)",
+        "index": 2,
+        "description": "fictional character"
+      },
+      {
+        "pageid": 999999001,
+        "ns": 0,
+        "title": "Zorblax Quintet",
+        "index": 1,
+        "description": "American television series",
+        "snippet": "<span class=\"searchmatch\">must not render</span>"
+      }
+    ]
+  }
+}

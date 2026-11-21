@@ -164,7 +164,9 @@ describe('where the button shows', () => {
 describe('the dialog', () => {
   it('says what is sent, what never is, and links Wikimedia’s privacy policy', () => {
     open();
-    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikidata (Wikimedia Foundation) and nothing else:');
+    expect(LOOKUP_DIALOG_SENTENCE).toBe(
+      'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:',
+    );
     const d = dialog();
     expect(d.getAttribute('aria-modal')).toBe('true');
     expect(within(d).getByText(LOOKUP_DIALOG_SENTENCE)).toBeTruthy();
@@ -266,7 +268,37 @@ describe('the dialog', () => {
     expect(within(hits[1]!).getByRole('button', { name: 'Create Anime & comics and move' })).toBeTruthy();
     // Neither group nor topic: no action.
     expect(within(hits[2]!).queryByRole('button')).toBeNull();
+    // Each hit says where it came from; a topical Wikidata hit means Wikipedia was not asked.
+    expect(hits.map((h) => h.querySelector('.lookup-hit-source')?.textContent)).toEqual(['Wikidata', 'Wikidata', 'Wikidata']);
     expect(moves()).toEqual([]);
+  });
+  it('Wikidata finds nothing: Wikipedia is asked with the same text, and its hits are tagged Wikipedia', async () => {
+    fetchSpy.mockImplementation(async (u: string) => (u.startsWith('https://en.wikipedia.org/')
+      ? new Response(JSON.stringify({ query: { pages: [
+        { title: 'Severance (TV series)', index: 1, description: 'American television series' },
+        { title: XSS, index: 2, description: '' },
+      ] } }), { status: 200 })
+      : reply([])));
+    open();
+    fireEvent.input(box(), { target: { value: 'Severance wiki' } });
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    const list = await within(dialog()).findByRole('list', { name: 'Matches' });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchSpy.mock.calls[0]![0])).searchParams.get('search')).toBe('Severance wiki');
+    expect(new URL(String(fetchSpy.mock.calls[1]![0])).searchParams.get('gsrsearch')).toBe('Severance wiki');
+    const hits = within(list).getAllByRole('listitem');
+    expect(hits.map((h) => h.querySelector('.lookup-hit-source')?.textContent)).toEqual(['Wikipedia', 'Wikipedia']);
+    expect(hits[1]!.textContent).toContain(XSS);
+    expect(dialog().querySelector('img')).toBeNull();
+    expect(within(hits[0]!).getByRole('button', { name: 'Move to TV Series' })).toBeTruthy();
+  });
+  it('a Wikipedia error after Wikidata found nothing names Wikipedia', async () => {
+    fetchSpy.mockImplementation(async (u: string) => (u.startsWith('https://en.wikipedia.org/') ? new Response('nope', { status: 503 }) : reply([])));
+    open();
+    fireEvent.input(box(), { target: { value: 'Severance wiki error' } });
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
+    expect(await within(dialog()).findByText('Wikipedia returned an error.')).toBeTruthy();
+    expect(within(dialog()).queryByRole('list', { name: 'Matches' })).toBeNull();
   });
   it('"Move to" moves the tab with the user move, then closes', async () => {
     const onClose = open();
@@ -380,7 +412,9 @@ describe('the setting', () => {
     );
     const toggle = screen.getByRole('checkbox', { name: 'Show the Look it up button' }) as HTMLInputElement;
     expect(toggle.checked).toBe(true);
-    expect(LOOKUP_SETTING_HINT).toBe('Sends only the text you confirm, to Wikidata. Nothing is sent unless you click.');
+    expect(LOOKUP_SETTING_HINT).toBe(
+      'Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata finds nothing). Nothing is sent unless you click.',
+    );
     const hint = screen.getByText(LOOKUP_SETTING_HINT);
     expect(hint.hidden).toBe(false);
     expect(toggle.closest('.setting-row')!.getAttribute('aria-describedby')).toContain(hint.id);

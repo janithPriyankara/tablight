@@ -35,4 +35,15 @@ describe('release gate patterns', () => {
     expect(urlScopeError(entry, 'assets/a.js', { urls: { app: {}, appIn: {}, lib: { [api]: ['evil-pkg'] } } })).toMatch(/library code/);
     expect(urlScopeError(entry, 'assets/a.js', { urls: { app: {}, appIn: {}, lib: {} } })).toMatch(/not attributable/);
   });
+  it('scopes the Wikipedia fallback API URL to the same one app module', () => {
+    const api = 'https://en.wikipedia.org/w/api.php';
+    const entry = { re: /^https:\/\/en\.wikipedia\.org\/w\/api\.php$/, app: ['src/ui/common/lookup.ts'] };
+    const chunk = (appIn: string[], lib: Record<string, string[]> = {}) => ({ urls: { app: { [api]: 1 }, appIn: { [api]: appIn }, lib } });
+    expect(urlScopeError(entry, 'assets/dashboard-x.js', chunk(['src/ui/common/lookup.ts']))).toBeNull();
+    expect(urlScopeError(entry, 'background.js', chunk(['src/ui/common/lookup.ts']))).toMatch(/service worker/);
+    expect(urlScopeError(entry, 'assets/a.js', chunk(['src/ui/common/LookupDialog.tsx']))).toMatch(/LookupDialog\.tsx/);
+    expect(urlScopeError(entry, 'assets/a.js', { urls: { app: {}, appIn: {}, lib: { [api]: ['evil-pkg'] } } })).toMatch(/library code/);
+    expect(entry.re.test('https://en.wikipedia.org/w/api.php?x=1')).toBe(false);
+    expect(entry.re.test('https://de.wikipedia.org/w/api.php')).toBe(false);
+  });
 });
