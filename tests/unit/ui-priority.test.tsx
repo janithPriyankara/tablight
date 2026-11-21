@@ -10,6 +10,8 @@ const { send } = await import('../../src/shared/rpc');
 const { Dashboard } = await import('../../src/ui/dashboard/Dashboard');
 const { SidePanel } = await import('../../src/ui/sidepanel/SidePanel');
 const { regularGroups } = await import('../../src/ui/dashboard/views');
+const { Popup } = await import('../../src/ui/popup/Popup');
+const { shortcutsPage } = await import('../../src/ui/dashboard/Settings');
 const sendMock = vi.mocked(send);
 const P = PRIORITY_GROUP_ID;
 
@@ -43,6 +45,7 @@ function serve(s: DashboardState, extra: (r: Req) => unknown = () => undefined):
 const sent = (t: string) => sendMock.mock.calls.map(([r]) => r as Req).filter((r) => r.t === t);
 
 const tabsCreate = vi.fn(async () => ({}));
+const localRemove = vi.fn(async () => undefined);
 const getAll = vi.fn(async () => [
   { name: 'open-dashboard', description: 'Open the Tablight dashboard', shortcut: 'Alt+Shift+T' },
   { name: 'prioritize-tab', description: 'Add the current tab to Priority', shortcut: 'Ctrl+Shift+9' },
@@ -58,7 +61,7 @@ beforeEach(() => {
     windows: { getCurrent: vi.fn(async () => ({ id: 1 })) },
     tabs: { query: vi.fn(async () => [{ id: 1, index: 0, active: true, windowId: 1 }, { id: 2, index: 1, windowId: 1 }]), onActivated: { addListener: vi.fn(), removeListener: vi.fn() }, create: tabsCreate },
     commands: { getAll },
-    storage: { session: { set: vi.fn(async () => undefined) } },
+    storage: { session: { set: vi.fn(async () => undefined) }, local: { remove: localRemove } },
   });
   history.replaceState(null, '', '/dashboard.html');
 });
@@ -141,6 +144,63 @@ describe('dashboard', () => {
     // Open, so it stays listed though empty.
     expect(groupEntries()[0]!.textContent).toMatch(/^Priority/);
   });
+  it('un-starring a row on the Priority page moves focus to the row that takes its place', async () => {
+    history.replaceState(null, '', `/dashboard.html#group=${P}`);
+    let s = state({ items: [item('i1', { groupId: P, groupSource: 'user' }), item('i2', { groupId: P, groupSource: 'user' })], groups: [priority(2)] });
+    sendMock.mockImplementation(async (req) => {
+      if (req.t === 'state') return s as never;
+      if (req.t === 'prioritize') {
+        s = state({ items: [item('i2', { groupId: P, groupSource: 'user' })], groups: [priority(1)] });
+        return 1 as never;
+      }
+      return undefined as never;
+    });
+    render(<Dashboard />);
+    await screen.findByRole('checkbox', { name: 'Select Title i1' });
+    const star = within(rowOf('Title i1')).getByRole('button', { name: 'Remove from Priority' });
+    star.focus();
+    fireEvent.click(star);
+    await waitFor(() => expect(screen.queryByRole('checkbox', { name: 'Select Title i1' })).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(rowOf('Title i2').querySelector('.item-main')));
+  });
+  it('a star that changes nothing shows no "0 tabs" message', async () => {
+    serve(state(), (r) => (r.t === 'prioritize' ? 0 : undefined));
+    render(<Dashboard />);
+    await screen.findByRole('checkbox', { name: 'Select Title i1' });
+    fireEvent.click(within(rowOf('Title i1')).getByRole('button', { name: 'Add to Priority' }));
+    await waitFor(() => expect(sent('prioritize')).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText(/0 tabs/)).toBeNull();
+  });
+  it('a saved row’s star names no shortcut (the keys act on the tab you are on)', async () => {
+    serve(state({ items: [item('i7', { state: 'stashed', tabId: undefined, groupId: null })] }));
+    render(<Dashboard />);
+    await screen.findByRole('checkbox', { name: 'Select Title i7' });
+    expect(within(rowOf('Title i7')).getByRole('button', { name: 'Add to Priority' }).getAttribute('title')).toBe('Add to Priority');
+  });
+  it('a group renamed for the built-in Priority group gets a one-time notice that can be dismissed', async () => {
+    serve(state({ priorityRenamed: ['Priority (yours)'] }));
+    render(<Dashboard />);
+    const notice = await screen.findByText('Your group “Priority” is now “Priority (yours)”: Priority is a built-in group you fill yourself.');
+    fireEvent.click(within(notice.closest('.callout')!).getByRole('button', { name: 'Dismiss' }));
+    expect(localRemove).toHaveBeenCalledWith('priorityRenamed');
+  });
+  it('the name dialog says at once that “Priority” is taken by the built-in group', async () => {
+    serve(state());
+    render(<Dashboard />);
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Select Title i1' }));
+    fireEvent.click(within(screen.getByRole('toolbar', { name: 'Selected tabs' })).getByRole('button', { name: 'New group' }));
+    const field = await screen.findByRole('textbox', { name: 'Name' });
+    fireEvent.input(field, { target: { value: ' priority ' } });
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', '“Priority” is the built-in group you fill yourself. Choose another name.');
+    expect(screen.getByRole('button', { name: 'Create group' })).toHaveProperty('disabled', true);
+    fireEvent.input(field, { target: { value: 'Urgent' } });
+    expect(screen.getByRole('button', { name: 'Create group' })).toHaveProperty('disabled', false);
+  });
+  it('the shortcuts page is Edge’s own in Edge and Chrome’s elsewhere', () => {
+    expect(shortcutsPage('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/130.0 Safari/537.36 Edg/130.0')).toBe('edge://extensions/shortcuts');
+    expect(shortcutsPage('Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/130.0 Safari/537.36')).toBe('chrome://extensions/shortcuts');
+  });
   it('Settings lists the current shortcuts and opens the browser’s shortcuts page', async () => {
     history.replaceState(null, '', '/dashboard.html#view=settings');
     serve(state());
@@ -151,6 +211,28 @@ describe('dashboard', () => {
     expect(within(keys).getByText('Not set')).toBeTruthy();
     fireEvent.click(within(keys).getByRole('button', { name: 'Open shortcuts page' }));
     expect(tabsCreate).toHaveBeenCalledWith({ url: 'chrome://extensions/shortcuts' });
+    expect(keys.textContent).toContain('On a Mac they are Option+P and Option+Shift+P');
+  });
+});
+
+describe('popup duplicate card', () => {
+  beforeEach(() => void vi.spyOn(window, 'close').mockImplementation(() => undefined));
+  const dup = (active: Item, other: Item) => state({ items: [active, other], activeDup: { item: active, others: [other] } });
+  it('never offers to close the tab you are on when it is in Priority; Switch is still there', async () => {
+    serve(dup(item('i1', { groupId: P, groupSource: 'user' }), item('i2')));
+    render(<Popup />);
+    const card = await screen.findByRole('region', { name: 'Duplicate tab' });
+    expect(within(card).getByText('This tab is open 2 times')).toBeTruthy();
+    expect(within(card).queryByRole('button', { name: /Close this one/ })).toBeNull();
+    expect(within(card).getByRole('button', { name: /Switch/ })).toBeTruthy();
+  });
+  it('offers Close this one when only the other copy is in Priority, and Switch goes to that copy', async () => {
+    serve(dup(item('i1'), item('i2', { groupId: P, groupSource: 'user' })));
+    render(<Popup />);
+    const card = await screen.findByRole('region', { name: 'Duplicate tab' });
+    expect(within(card).getByRole('button', { name: /Close this one/ })).toBeTruthy();
+    fireEvent.click(within(card).getByRole('button', { name: /Switch/ }));
+    await waitFor(() => expect(sent('open')).toEqual([{ t: 'open', id: 'i2' }]));
   });
 });
 

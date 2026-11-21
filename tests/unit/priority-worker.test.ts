@@ -68,11 +68,15 @@ describe('Priority in the service worker', () => {
     const settings = mock.tabs().find((t) => t.url === 'chrome://settings/')!;
     mock.focusWindow(settings.windowId!);
     mock.activateTab(settings.id!);
+    // The real listener: wait until it has looked the tab up and its command has run (no fixed delay).
+    const get = vi.spyOn(chrome.tabs, 'get');
     mock.fireCommand('prioritize-tab');
+    await vi.waitFor(() => expect(get).toHaveBeenCalledWith(settings.id));
+    await bg.whenCommandsDone();
+    expect(await db.groups.get(P)).toBeUndefined();
     expect(await bg.handleRequest({ t: 'priorityCommand', command: 'prioritize-tab', tabId: settings.id! })).toBe('none');
     const dash = mock.tabs().find((t) => (t.url ?? t.pendingUrl ?? '').includes('dashboard.html'));
     if (dash) expect(await bg.handleRequest({ t: 'priorityCommand', command: 'prioritize-tab', tabId: dash.id! })).toBe('none');
-    await new Promise((r) => setTimeout(r, 50));
     expect(await db.groups.get(P)).toBeUndefined();
     await expect(bg.handleRequest({ t: 'priorityCommand', command: 'bogus' as never, tabId: 1 })).rejects.toThrow(/invalid command/);
   });
@@ -93,7 +97,38 @@ describe('Priority in the service worker', () => {
     });
     await expect(bg.handleRequest({ t: 'prioritize', ids: [item.id], on: 'yes' as never })).rejects.toThrow(/invalid on/);
   });
-  it('the state lists the group with its count; Priority tabs are never offered as copies to close', async () => {
+  it('quick presses apply in the order pressed: Alt+P then Alt+Shift+P ends out of Priority', async () => {
+    const { mock, bg } = await boot([{ url: 'https://example.org/', title: 'E' }]);
+    const db = await bg.getDb();
+    const tab = mock.tabs().find((t) => t.url === 'https://example.org/')!;
+    const before = (await db.items.byTabId(tab.id!))!.groupId;
+    // Not awaited one by one: both are in flight together, as with two fast key presses.
+    const results = await Promise.all([
+      bg.handleRequest({ t: 'priorityCommand', command: 'prioritize-tab', tabId: tab.id! }),
+      bg.handleRequest({ t: 'priorityCommand', command: 'unprioritize-tab', tabId: tab.id! }),
+      bg.handleRequest({ t: 'priorityCommand', command: 'prioritize-tab', tabId: tab.id! }),
+      bg.handleRequest({ t: 'priorityCommand', command: 'unprioritize-tab', tabId: tab.id! }),
+    ]);
+    expect(results).toEqual(['added', 'removed', 'added', 'removed']);
+    expect((await db.items.byTabId(tab.id!))!.groupId).toBe(before);
+  });
+  it('Priority survives a worker restart; a badge left mid-flash by a stopped worker is repainted', async () => {
+    const { mock, bg } = await boot([{ url: 'https://example.org/', title: 'E', active: true }]);
+    const tab = mock.tabs().find((t) => t.url === 'https://example.org/')!;
+    expect(await bg.handleRequest({ t: 'priorityCommand', command: 'prioritize-tab', tabId: tab.id! })).toBe('added');
+    expect(mock.badgeText(tab.id)).toBe('★');
+    // The worker stops during the flash (its timer is lost) and a new one starts on the same data.
+    vi.resetModules();
+    const { resetBadgeCache } = await import('../../src/background/duplicates');
+    resetBadgeCache();
+    const bg2 = await import('../../src/background/index');
+    const db2 = await bg2.getDb();
+    // Well within the old worker's 2 s timer (still running in this test process): the new worker repainted it.
+    await vi.waitFor(() => expect(mock.badgeText(tab.id)).toBe(''), { timeout: 1000 });
+    expect((await db2.items.byTabId(tab.id!))!).toMatchObject({ groupId: P, beforePriority: { groupSource: 'auto' } });
+    expect(await db2.groups.get(P)).toBeDefined();
+  });
+  it('the state lists the group with its count; the duplicate card counts every copy and switches to the Priority one', async () => {
     const { mock, bg } = await boot([
       { url: 'https://dup.example.com/a', title: 'A', active: true }, { url: 'https://dup.example.com/a', title: 'A' },
     ]);
@@ -107,7 +142,9 @@ describe('Priority in the service worker', () => {
     await bg.handleRequest({ t: 'prioritize', ids: [item.id], on: true });
     const s = (await bg.handleRequest({ t: 'state' })) as S;
     expect(s.groups.find((g) => g.id === P)).toMatchObject({ name: PRIORITY_NAME, count: 1 });
-    expect(s.activeDup).toBeUndefined();
+    // The active tab is not in Priority: the card stays (Close this one is fine), and Switch goes to the Priority copy.
+    expect(s.activeDup?.item.tabId).toBe(first!.id);
+    expect(s.activeDup?.others.map((i) => i.id)).toEqual([item.id]);
   });
   it('Delete all data removes it; the starter groups still come back when Priority was made first', async () => {
     const { mock, bg } = await boot([{ url: 'https://example.org/', title: 'E', active: true }]);
@@ -129,6 +166,32 @@ describe('Priority in the service worker', () => {
     await flushTabEvents();
     await vi.waitFor(async () => expect((await db.groups.all()).length).toBeGreaterThan(10));
     expect((await db.groups.all()).filter((g) => g.id === P)).toHaveLength(1);
+  });
+  it('sync from an older version: a group of the user’s called Priority is renamed first; remote Priority means the built-in group', async () => {
+    const { mock, bg } = await boot([]);
+    void mock;
+    const db = await bg.getDb();
+    const { sha1hex } = await import('../../src/shared/hash');
+    const { encodeChunks, META_KEY } = await import('../../src/sync/sync-codec');
+    const { pullSync } = await import('../../src/background/sync');
+    // As an older version made it from sync: an ordinary group, with a saved tab in it.
+    await db.groups.put({ id: 'g-old', name: 'Priority', color: '#00959c', icon: '📁', builtIn: false, exemplars: [], centroid: [1], createdAt: 1 });
+    const urlOld = 'https://old.example.com/';
+    const at = Date.now();
+    await db.items.put({
+      id: await sha1hex(urlOld), url: urlOld, normUrl: urlOld, title: 'Old', domain: 'old.example.com', state: 'stashed',
+      groupId: 'g-old', groupSource: 'user', kind: 'read', createdAt: at, lastActiveAt: at, stashedAt: at, updatedAt: at, classifiable: true,
+    });
+    const url = 'https://saved.example.com/';
+    const { chunks } = encodeChunks([[await sha1hex(url), url, 'Saved', 'Priority', at, at]], []);
+    await chrome.storage.sync.set({ ...chunks, [META_KEY]: { chunks: Object.keys(chunks).length, updatedAt: 1 } });
+    await db.settings.set({ syncEnabled: true });
+    await pullSync(db);
+    expect((await db.groups.get('g-old'))!.name).toBe('Priority (yours)');
+    expect((await db.items.get(await sha1hex(urlOld)))!.groupId).toBe('g-old');
+    expect((await db.items.get(await sha1hex(url)))!.groupId).toBe(P);
+    type S = import('../../src/shared/types').DashboardState;
+    expect(((await bg.handleRequest({ t: 'state' })) as S).priorityRenamed).toEqual(['Priority (yours)']);
   });
   it('sync: a saved tab in Priority on another device lands in the built-in Priority group here', async () => {
     const { mock, bg } = await boot([]);

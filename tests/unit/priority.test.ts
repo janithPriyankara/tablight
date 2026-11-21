@@ -2,21 +2,28 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
-  createGroup, deleteGroup, mergeGroups, mirrorTabGroups, moveItems, regroupApply, regroupPreview, renameGroup,
+  acceptSuggestion, createGroup, deleteGroup, mergeGroups, mirrorTabGroups, moveItems, regroupApply, regroupPreview, renameGroup,
 } from '../../src/background/groups';
-import { ensurePriorityIn, prioritize, runPriorityCommand, unprioritize } from '../../src/background/priority';
-import { embeddingKey, neighbourPool, processQueue, reconcile } from '../../src/background/tab-index';
-import { autoSleep, closeExtras, stash } from '../../src/background/memory';
+import {
+  PRIORITY_RENAMED_KEY, ensurePriorityIn, migrateReservedName, prioritize, runPriorityCommand, unprioritize,
+} from '../../src/background/priority';
+import { embeddingKey, maybeSuggest, neighbourPool, processQueue, reconcile } from '../../src/background/tab-index';
+import { suggestGroups } from '../../src/classify/cluster';
+import { autoSleep, closeExtras, closeTabs, stash } from '../../src/background/memory';
 import { flashBadge, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
 import { applyImport, exportJson, parseImport } from '../../src/io/import-export';
 import { resetNameIndexForTests } from '../../src/background/names-load';
 import { classify, type Head } from '../../src/classify/assign';
 import { parseNames, setNameIndex } from '../../src/classify/names';
 import { neighbourGroup, pickGroup, type Neighbour } from '../../src/classify/pick';
-import { PRIORITY_COLOR, PRIORITY_GROUP_ID, PRIORITY_NAME, newPriorityGroup } from '../../src/shared/priority';
+import { PRIORITY_COLOR, PRIORITY_GROUP_ID, PRIORITY_NAME, RESERVED_NAME_MESSAGE, newPriorityGroup } from '../../src/shared/priority';
 import type { Group, Item } from '../../src/shared/types';
 import { normalize } from '../../src/shared/vec';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
+vi.mock('../../src/classify/cluster', async (orig) => {
+  const m = await orig<typeof import('../../src/classify/cluster')>();
+  return { ...m, suggestGroups: vi.fn(m.suggestGroups) };
+});
 
 const P = PRIORITY_GROUP_ID;
 let n = 0;
@@ -191,10 +198,12 @@ describe('prioritize / unprioritize', () => {
     const a = await addItem({ groupId: 'games', groupSource: 'user' });
     const b = await addItem({ groupId: null });
     const c = await addItem({ groupId: null, classifiable: false, url: 'chrome://settings' });
-    await prioritize(db, [a.id, b.id, c.id]);
+    // A browser page is never added (the same rule as the shortcut).
+    expect(await prioritize(db, [a.id, b.id, c.id])).toBe(2);
+    expect((await db.items.get(c.id))!.groupId).toBeNull();
     await deleteGroup(db, 'games');
-    expect(await unprioritize(db, [a.id, b.id, c.id])).toEqual({ removed: 3, queued: 2 });
-    for (const id of [a.id, b.id, c.id]) expect(await db.items.get(id)).toMatchObject({ groupId: null, groupSource: 'auto' });
+    expect(await unprioritize(db, [a.id, b.id, c.id])).toEqual({ removed: 2, queued: 2 });
+    for (const id of [a.id, b.id]) expect(await db.items.get(id)).toMatchObject({ groupId: null, groupSource: 'auto' });
     expect(await db.queue.take(10)).toEqual(expect.arrayContaining([a.id, b.id]));
   });
   it('a tab moved out of Priority with "Move to group" forgets its old group and teaches the new one', async () => {
@@ -227,20 +236,62 @@ describe('prioritize / unprioritize', () => {
     await expect(mergeGroups(db, P, 'games')).rejects.toThrow(/cannot be merged/);
     await expect(mergeGroups(db, 'games', P)).rejects.toThrow(/cannot be merged/);
     await expect(deleteGroup(db, P)).rejects.toThrow(/cannot be deleted/);
-    await expect(createGroup(db, 'priority', [])).rejects.toThrow(/Priority group/);
-    await expect(renameGroup(db, 'games', ' PRIORITY ')).rejects.toThrow(/Priority group/);
+    await expect(createGroup(db, 'priority', [])).rejects.toThrow(RESERVED_NAME_MESSAGE);
+    await expect(renameGroup(db, 'games', ' PRIORITY ')).rejects.toThrow(RESERVED_NAME_MESSAGE);
   });
-  it('a group of the user’s named Priority (made before) becomes the Priority group on first use', async () => {
-    await db.groups.put(group('g-old', { name: 'priority', builtIn: false, exemplars: [[1, 0]], lessons: [['x', 1]] }));
-    const a = await addItem({ groupId: 'g-old', groupSource: 'user' });
+  it('a group of the user’s called Priority is never taken over: it becomes “Priority (yours)”, with all it had', async () => {
+    const old = group('g-old', { name: 'priority', builtIn: false, exemplars: [[1, 0]], lessons: [['x', 1]], centroid: [1, 0] });
+    await db.groups.put(old);
+    const auto = await addItem({ groupId: 'g-old', groupSource: 'auto', placedBy: 'exemplar' });
+    const saved = await addItem({ groupId: 'g-old', groupSource: 'user', state: 'stashed', tabId: undefined });
     const b = await addItem();
     await prioritize(db, [b.id]);
-    expect(await db.groups.get('g-old')).toBeUndefined();
+    expect(await db.groups.get('g-old')).toEqual({ ...old, name: 'Priority (yours)' });
     expect(await db.groups.get(P)).toMatchObject({ name: PRIORITY_NAME, exemplars: [] });
-    expect(await db.items.get(a.id)).toMatchObject({ groupId: P, groupSource: 'user' });
-    expect((await db.items.get(a.id))!.beforePriority).toBeUndefined();
+    expect(await db.items.get(auto.id)).toEqual(auto); // the model's placement stays where it was
+    const s = (await db.items.get(saved.id))!;
+    expect(s.groupId).toBe('g-old');
+    expect(s.updatedAt).toBeGreaterThan(saved.updatedAt); // re-stamped: the new name wins on other devices
+    expect((await db.items.all()).filter((i) => i.groupId === P).map((i) => i.id)).toEqual([b.id]);
+    expect((await chrome.storage.local.get(PRIORITY_RENAMED_KEY))[PRIORITY_RENAMED_KEY]).toEqual(['Priority (yours)']);
     // Once it exists, ensuring it changes nothing.
-    expect(await db.tx(['items', 'groups'], (s) => ensurePriorityIn(s))).toBeNull();
+    expect(await db.tx(['items', 'groups'], (s2) => ensurePriorityIn(s2))).toEqual([]);
+  });
+  it('the migration renames on its own (numbered when the name is taken) and leaves the built-in group alone', async () => {
+    await db.groups.put(newPriorityGroup());
+    await db.groups.put(group('g-a', { name: 'Priority (yours)', builtIn: false }));
+    await db.groups.put(group('g-b', { name: 'PRIORITY', builtIn: false }));
+    await db.groups.put(group('sug', { name: 'Priority', builtIn: false, suggested: true }));
+    expect(await migrateReservedName(db)).toBe(1); // the suggestion is renamed too, but not announced
+    expect((await db.groups.get('g-b'))!.name).toBe('Priority (yours) 2');
+    expect((await db.groups.get('sug'))!.name).toBe('Priority (yours) 3');
+    expect((await db.groups.get(P))!.name).toBe(PRIORITY_NAME);
+    expect(await migrateReservedName(db)).toBe(0);
+    expect((await chrome.storage.local.get(PRIORITY_RENAMED_KEY))[PRIORITY_RENAMED_KEY]).toEqual(['Priority (yours) 2']);
+  });
+  it('accepting a suggestion named Priority (made before the name was reserved) renames it', async () => {
+    await db.groups.put(group('sug', { name: 'Priority', builtIn: false, suggested: true }));
+    await addItem({ groupId: 'sug' });
+    await acceptSuggestion(db, 'sug');
+    expect(await db.groups.get('sug')).toMatchObject({ name: 'Priority (yours)' });
+    expect((await db.groups.get('sug'))!.suggested).toBeUndefined();
+  });
+  it('topic discovery never names a suggestion Priority', async () => {
+    const tabs = await Promise.all([0, 1, 2, 3].map((k) => addItem({ url: `https://p${k}.example.com/` }, 'same')));
+    vi.mocked(suggestGroups).mockReturnValueOnce([{ name: 'Priority', itemIds: tabs.map((t) => t.id) }] as never);
+    await maybeSuggest(db);
+    const made = (await db.groups.all()).filter((g) => g.suggested);
+    expect(made.map((g) => g.name)).toEqual(['Priority 2']);
+  });
+  it('a merge keeps where a Priority tab came from (it goes back to the merged group)', async () => {
+    await db.groups.put(group('games', { builtIn: false }));
+    await db.groups.put(group('fun', { builtIn: false }));
+    const a = await addItem({ groupId: 'games', groupSource: 'user' });
+    await prioritize(db, [a.id]);
+    await mergeGroups(db, 'games', 'fun');
+    expect((await db.items.get(a.id))!.beforePriority!.groupId).toBe('fun');
+    await unprioritize(db, [a.id]);
+    expect(await db.items.get(a.id)).toMatchObject({ groupId: 'fun', groupSource: 'user' });
   });
 });
 
@@ -258,17 +309,38 @@ describe('Auto-pause and duplicate cleanup', () => {
     expect(await autoSleep(db, now)).toBe(1);
     expect(mock.tabs().filter((t) => t.discarded).map((t) => t.url)).toEqual(['https://old.com/']);
   });
-  it('Close duplicates keeps the copy in Priority, even over a pinned or more recent one', async () => {
+  it('Close duplicates never closes a Priority tab or a pinned one; only the other copies close', async () => {
     mock.uninstall();
     mock = installChromeMock({ windows: [{ tabs: [
       { url: 'https://dup.com/', pinned: true }, { url: 'https://dup.com/' }, { url: 'https://dup.com/', active: true },
     ] }] });
     await reconcile(db, await chrome.tabs.query({}));
-    const copies = await db.items.all();
-    const plain = copies.find((i) => i.tabId === mock.tabs()[1]!.id)!;
-    await prioritize(db, [plain.id]);
+    const [pinned, starred, active] = mock.tabs();
+    await prioritize(db, [(await db.items.byTabId(starred!.id!))!.id]);
     await closeExtras(db);
-    expect(mock.tabs().map((t) => t.id)).toEqual([plain.tabId]);
+    expect(mock.tabs().map((t) => t.id)).toEqual([pinned!.id, starred!.id]);
+    expect(active).toBeDefined();
+  });
+  it('two copies in Priority both stay; with no Priority or pinned copy the best one stays as before', async () => {
+    mock.uninstall();
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://two.com/' }, { url: 'https://two.com/' }, { url: 'https://plain.com/' }, { url: 'https://plain.com/', active: true },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [s1, s2, , keep] = mock.tabs();
+    await prioritize(db, [(await db.items.byTabId(s1!.id!))!.id, (await db.items.byTabId(s2!.id!))!.id]);
+    expect((await closeExtras(db)).closed).toBe(1);
+    expect(mock.tabs().map((t) => t.id)).toEqual([s1!.id, s2!.id, keep!.id]);
+  });
+  it('closing every copy from the Duplicates view keeps the Priority copy', async () => {
+    mock.uninstall();
+    mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://d.com/', active: true }, { url: 'https://d.com/' }] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [, starred] = mock.tabs();
+    await prioritize(db, [(await db.items.byTabId(starred!.id!))!.id]);
+    const r = await closeTabs(db, (await db.items.all()).map((i) => i.id), { keepOne: true });
+    expect(r.kept).toBe(1);
+    expect(mock.tabs().map((t) => t.id)).toEqual([starred!.id]);
   });
 });
 
@@ -314,6 +386,18 @@ describe('the Alt+P / Alt+Shift+P command handler', () => {
     expect(await db.groups.get(P)).toBeUndefined();
     expect(d.catchUp).not.toHaveBeenCalled();
   });
+  it('a record of another page holding the tab id (stale ids after a restart) is never starred: catch up first', async () => {
+    const [tab] = await setup([{ url: 'https://a.com/' }]);
+    const item = (await db.items.byTabId(tab!.id!))!;
+    await db.items.put({ ...item, url: 'https://old.com/', normUrl: 'https://old.com/' }); // last session's page
+    const d = deps();
+    expect(await runPriorityCommand(db, 'prioritize-tab', tab, d)).toBe('none');
+    expect(d.catchUp).toHaveBeenCalledTimes(1);
+    expect((await db.items.get(item.id))!.groupId).not.toBe(P);
+    const catchUp = vi.fn(async () => void (await reconcile(db, await chrome.tabs.query({}), { newSession: true })));
+    expect(await runPriorityCommand(db, 'prioritize-tab', tab, { catchUp, kick: vi.fn() })).toBe('added');
+    expect((await db.items.byTabId(tab!.id!))!).toMatchObject({ normUrl: 'https://a.com/', groupId: P });
+  });
   it('a tab not indexed yet is caught up first', async () => {
     const [tab] = await setup([{ url: 'https://a.com/' }]);
     const fresh = mock.addTab({ url: 'https://new.com/', windowId: tab!.windowId });
@@ -337,7 +421,7 @@ describe('the Alt+P / Alt+Shift+P command handler', () => {
 
 // ───────────────────────── persistence ─────────────────────────
 describe('persistence', () => {
-  it('survives a restart (the database is reopened)', async () => {
+  it('the data is in IndexedDB (a second connection reads it; the worker restart is in priority-worker.test.ts)', async () => {
     const name = `priority-reopen-${n++}`;
     const first = await openDb(name);
     await first.items.put({
@@ -371,6 +455,18 @@ describe('persistence', () => {
     expect(groups.filter((g) => g.name.toLowerCase() === 'priority').map((g) => g.id)).toEqual([P]);
     expect((await other.items.byState('stashed'))[0]).toMatchObject({ groupId: P, groupSource: 'user' });
     expect(await other.items.get('here')).toMatchObject({ groupId: P, groupSource: 'user', beforePriority: { groupId: 'games', groupSource: 'auto' } });
+  });
+  it('importing a backup never takes an open tab out of Priority, nor loses where it came from', async () => {
+    await db.groups.put(group('games', { name: 'Games', builtIn: false }));
+    await db.groups.put(group('news', { name: 'News', builtIn: false }));
+    const open = await addItem({ url: 'https://open.com/', groupId: 'news', groupSource: 'auto' });
+    await prioritize(db, [open.id]);
+    const json = JSON.stringify({ format: 'tab-organizer', version: 1, groups: [], items: [], snapshots: [],
+      tabs: [{ url: 'https://open.com/', title: 'Open', groupName: 'Games' }] });
+    const parsed = parseImport(json);
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect((await applyImport(db, parsed.data)).grouped).toBe(0);
+    expect(await db.items.get(open.id)).toMatchObject({ groupId: P, beforePriority: { groupId: 'news', groupSource: 'auto' } });
   });
   it('mirrors Priority as a yellow native tab group when mirroring is on', async () => {
     mock.uninstall();
