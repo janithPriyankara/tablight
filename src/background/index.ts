@@ -3,7 +3,12 @@
 import type { LabelForTextReply, Req } from '../shared/rpc';
 import { OTHER_GROUP_ID, buildStarterGroups, headTop } from '../classify/assign';
 import { openDb, type Db } from './db';
-import { findDuplicates, invalidateBadges, updateBadge } from './duplicates';
+import { findDuplicates, flashBadge, flashesLeftOver, invalidateBadges, updateBadge } from './duplicates';
+import {
+  COMMAND_BADGE, PRIORITY_RENAMED_KEY, isPriorityCommand, migrateReservedName, prioritize, runPriorityCommand, unprioritize,
+  type CommandResult,
+} from './priority';
+import { PRIORITY_GROUP_ID, isPriority, type PriorityCommand } from '../shared/priority';
 import { OFFSCREEN_IDLE_ALARM, closeIfIdle, embed, isWarm } from './embedder';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
@@ -38,7 +43,7 @@ import {
   KICK_ALARM,
   backfillEmbKeys,
   configureTabIndex,
-  flushIfPending, flushTabEvents,
+  flushIfPending, flushTabEvents, reconcileNow,
   acceptQuietly, maybeSuggest,
   onTabEvent,
   processQueue,
@@ -71,11 +76,14 @@ const embedSeeds = (texts: string[]): Promise<Float32Array[]> => {
   seedVecs ??= embed(texts).catch((e: unknown) => { seedVecs = undefined; throw e; });
   return seedVecs;
 };
+// The Priority group does not count: a shortcut used before the first seeding (or right after "Delete all data")
+// creates it, and the starter groups must still appear.
+const seeded = (groups: { id: string }[]) => groups.some((g) => g.id !== PRIORITY_GROUP_ID);
 async function ensureStarterGroups(db: Db): Promise<void> {
-  if ((await db.groups.all()).length > 0) return;
+  if (seeded(await db.groups.all())) return;
   const groups = await buildStarterGroups(embedSeeds);
   await db.tx(['groups'], async (s) => {
-    if ((await s.groups.all()).length > 0) return; // another run won the race
+    if (seeded(await s.groups.all())) return; // another run won the race
     for (const g of groups) await s.groups.put(g);
   });
 }
@@ -226,6 +234,11 @@ async function readLastSession(db: Db): Promise<Snapshot | undefined> {
   if (typeof id !== 'string') return undefined;
   return (await db.snapshots.all()).find((s) => s.id === id);
 }
+/** New names of user groups renamed because "Priority" became the built-in group's (the one-time notice). */
+async function readPriorityRenamed(): Promise<string[]> {
+  const v = (await chrome.storage.local.get(PRIORITY_RENAMED_KEY).catch(() => ({})) as Record<string, unknown>)[PRIORITY_RENAMED_KEY];
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, 20) : [];
+}
 /** The active tab of every window. */
 async function activeTabIds(): Promise<number[]> {
   const tabs = await chrome.tabs.query({ active: true }).catch(() => [] as chrome.tabs.Tab[]);
@@ -238,14 +251,18 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
   const item = items.find((i) => i.tabId === tab.id && i.state !== 'stashed');
   const copies = item ? dups.get(item.normUrl) : undefined;
   if (!item || !copies) return undefined;
-  return { item, others: copies.filter((i) => i.id !== item.id) };
+  // Every other copy (the card's count), copies in Priority first, so its Switch goes to the Priority copy. The popup
+  // hides "Close this one" when the tab itself is in Priority.
+  const others = copies.filter((i) => i.id !== item.id).sort((a, b) => Number(isPriority(b)) - Number(isPriority(a)));
+  return { item, others };
 }
 /**
  * The suspicious tabs among `items` (already clutter-filtered), or none when the setting is off. The one place
  * this is computed, so the dashboard list and the toolbar badge can never disagree.
  */
-async function currentSuspicious(items: Item[], settings: Settings): Promise<SuspiciousTab[]> {
+async function currentSuspicious(all: Item[], settings: Settings): Promise<SuspiciousTab[]> {
   if (!settings.suspiciousTabs) return [];
+  const items = all.filter((i) => !isPriority(i)); // tabs the user put in Priority are never flagged
   const live = items.filter((i) => i.tabId !== undefined).map((i) => ({ tabId: i.tabId!, windowId: i.windowId }));
   // A keep ends when its tab moves to another site: drop those now, so coming back flags the tab again.
   const onSite = items.filter((i) => i.tabId !== undefined && i.state !== 'stashed').map((i) => ({ tabId: i.tabId!, domain: i.domain }));
@@ -291,8 +308,8 @@ async function dashboardState(db: Db): Promise<DashboardState> {
   const dups = findDuplicates(items);
   let dupCount = 0;
   for (const list of dups.values()) dupCount += list.length - 1;
-  const [activeDup, activeIds, syncStatus, lastSession] = await Promise.all([
-    activeDuplicate(items, dups), activeTabIds(), readSyncStatus(), readLastSession(db),
+  const [activeDup, activeIds, syncStatus, lastSession, priorityRenamed] = await Promise.all([
+    activeDuplicate(items, dups), activeTabIds(), readSyncStatus(), readLastSession(db), readPriorityRenamed(),
   ]);
   const suspicious = await currentSuspicious(items, settings);
   return {
@@ -303,6 +320,7 @@ async function dashboardState(db: Db): Promise<DashboardState> {
     activeTabIds: activeIds,
     ...(activeDup ? { activeDup } : {}),
     ...(lastSession ? { lastSession } : {}),
+    ...(priorityRenamed.length ? { priorityRenamed } : {}),
   };
 }
 /** Activation/focus: a light path (lastActiveAt + that tab's badge), never a full reconcile. */
@@ -321,7 +339,7 @@ async function mirrorAll(db: Db): Promise<void> {
 /** RPCs that can change the stash or the group names its records carry: each schedules a sync push. */
 const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'stashWindow', 'stashDelete', 'open',
-  'undo', 'sessionAction', 'regroupApply', 'interests',
+  'undo', 'sessionAction', 'regroupApply', 'interests', 'prioritize',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
   'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens', 'suspiciousTabs',
@@ -410,6 +428,29 @@ async function labelForText(text: unknown): Promise<LabelForTextReply> {
   if (label === undefined || label === OTHER_GROUP_ID || !(score >= HEAD.threshold)) return { label: null, score }; // NaN too
   return { label, score };
 }
+/** Priority shortcuts run one at a time, in the order pressed (Alt+P then a quick Alt+Shift+P ends out of Priority). */
+let commandChain: Promise<unknown> = Promise.resolve();
+function serially<T>(fn: () => Promise<T>): Promise<T> {
+  const run = commandChain.then(fn, fn);
+  commandChain = run.catch(() => undefined);
+  return run;
+}
+/** Resolves once every Priority shortcut pressed so far has run (tests). */
+export async function whenCommandsDone(): Promise<void> {
+  for (let c = commandChain; ; c = commandChain) {
+    await c;
+    if (c === commandChain) return;
+  }
+}
+/** The Priority shortcuts on `tab` (the onCommand listener and the `priorityCommand` RPC): badge feedback on a change. */
+async function priorityCommand(db: Db, command: PriorityCommand, tab: chrome.tabs.Tab | undefined): Promise<CommandResult> {
+  const result = await runPriorityCommand(db, command, tab, { catchUp: reconcileNow, kick: (d) => void kickClassification(d) });
+  if (result !== 'none' && tab?.id !== undefined) {
+    const tabId = tab.id;
+    await flashBadge(tabId, COMMAND_BADGE[result], () => refreshBadge(db, tabId));
+  }
+  return result;
+}
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
   if (req.t === 'offscreenIdle') {
@@ -421,6 +462,18 @@ export async function handleRequest(req: Req): Promise<unknown> {
   let out: unknown;
   switch (req.t) {
     case 'moveItems': out = await moveItems(db, parseIds(req.ids), parseId(req.groupId), embed); break;
+    case 'prioritize': {
+      if (typeof req.on !== 'boolean') throw new Error('invalid on');
+      out = req.on ? await prioritize(db, parseIds(req.ids)) : (await unprioritize(db, parseIds(req.ids))).removed;
+      break;
+    }
+    case 'priorityCommand': {
+      if (!isPriorityCommand(req.command)) throw new Error('invalid command');
+      if (!Number.isSafeInteger(req.tabId) || req.tabId < 0) throw new Error('invalid tab');
+      const { command, tabId } = req;
+      out = await serially(async () => priorityCommand(db, command, await chrome.tabs.get(tabId).catch(() => undefined)));
+      break;
+    }
     case 'groupCreateStarter': out = await createStarterGroup(db, embed, req.id); break;
     case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids), embed); break;
     case 'groupRename': {
@@ -513,7 +566,9 @@ export async function handleRequest(req: Req): Promise<unknown> {
   }
   notifyChanged();
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
-  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete' || req.t === 'interests') void kickClassification(db);
+  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete' || req.t === 'interests' || req.t === 'prioritize') {
+    void kickClassification(db); // a tab taken out of Priority with no group to go back to waits in the queue
+  }
   await mirrorAll(db);
   return out;
 }
@@ -522,7 +577,11 @@ configureTabIndex({ db: getDb, after: pipeline });
 void flushIfPending();
 // Remote group names must match the built-in groups, so they are seeded before any sync.
 configureSync({
-  ready: ensureStarterGroups,
+  // A group called "Priority" (an older version's, or one the user made) is renamed before remote names are matched.
+  ready: async (db) => {
+    await migrateReservedName(db).catch((e: unknown) => console.error('Priority rename failed', e));
+    await ensureStarterGroups(db);
+  },
   applied: (db) => {
     notifyChanged();
     void kickClassification(db);
@@ -537,6 +596,13 @@ export const OPEN_DASHBOARD_COMMAND = 'open-dashboard';
 /** The manifest's `open-side-panel` command (Alt+Shift+S). */
 export const OPEN_SIDE_PANEL_COMMAND = 'open-side-panel';
 chrome.commands.onCommand.addListener((command, tab) => {
+  if (isPriorityCommand(command)) {
+    // The same path as the `priorityCommand` RPC. The tab given is the active one; without it, the focused window's.
+    void (tab ? Promise.resolve([tab]) : chrome.tabs.query({ active: true, lastFocusedWindow: true }))
+      .then(([t]) => (t?.id !== undefined ? handleRequest({ t: 'priorityCommand', command, tabId: t.id }) : undefined))
+      .catch((e: unknown) => console.error('priority shortcut failed', e));
+    return;
+  }
   if (command === OPEN_SIDE_PANEL_COMMAND) {
     // open() needs the shortcut's user gesture: call it right away, before anything is awaited.
     if (tab?.windowId !== undefined && typeof chrome.sidePanel?.open === 'function') {
@@ -547,6 +613,18 @@ chrome.commands.onCommand.addListener((command, tab) => {
   if (command !== OPEN_DASHBOARD_COMMAND) return;
   openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
 });
+// Every worker start (an update included): rename a user group called "Priority" (once; a no-op afterwards), and
+// repaint any badge a stopped worker left showing a shortcut's feedback.
+void getDb()
+  .then(async (db) => {
+    if (await migrateReservedName(db)) {
+      notifyChanged();
+      scheduleSync(db); // its saved tabs now in Priority: other devices hear it without waiting for the next pass
+      await mirrorAll(db).catch((e: unknown) => console.error('mirror failed', e)); // the native group's new title
+    }
+    for (const tabId of await flashesLeftOver()) await refreshBadge(db, tabId).catch(() => undefined);
+  })
+  .catch((e: unknown) => console.error('worker start tasks failed', e));
 void getDb()
   .then((db) => db.settings.get())
   .then((s) => applyToolbar(s.toolbarOpens))
@@ -668,6 +746,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
         // A fresh install shows the dashboard (its onboarding) at once instead of nothing.
         openDashboard().catch((e: unknown) => console.error('open dashboard failed', e));
       }
+      // An update: the worker-start task above renames a group of the user's called "Priority" (migrateReservedName).
       await ensureStarterGroups(db);
     })
     .catch((e: unknown) => console.error('starter groups failed; retried on the next pass', e))

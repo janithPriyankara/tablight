@@ -16,6 +16,8 @@ import { USER_COLORS, parseName } from './groups';
 import { forgetRemovedTrained, trainedGroupsForNames } from './grow';
 import { domainOf } from './tab-index';
 import { nextStamp } from '../shared/stamp';
+import { PRIORITY_GROUP_ID, isPriorityName } from '../shared/priority';
+import { priorityForName } from './priority';
 
 export type { SyncStatus };
 export const SYNC_RETRY_ALARM = 'sync-retry';
@@ -224,7 +226,7 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
   ).values()].slice(0, Math.min(MAX_NEW_GROUPS, room));
   // A name that matches a trained group becomes that group (its id, builtIn), so the classifier can fill it.
   const trained = await trainedGroupsForNames(db, unknown, embed);
-  const plain = unknown.filter((n) => !trained.has(n.toLowerCase()));
+  const plain = unknown.filter((n) => !trained.has(n.toLowerCase()) && !isPriorityName(n));
   const plainVecs = await centroids(plain);
   const madeTrained: string[] = [];
   await db.tx(['items', 'groups', 'queue', 'tombstones'], async (s) => {
@@ -235,6 +237,14 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
     const ids = new Set(groups.map((g) => g.id));
     for (const name of unknown) {
       if (byName.has(name.toLowerCase())) continue;
+      if (isPriorityName(name)) {
+        // Saved tabs in Priority on another device: they are in Priority here too (the built-in group, not a copy).
+        const p = priorityForName(groups);
+        if (!ids.has(p.id)) await s.groups.put(p);
+        byName.set(name.toLowerCase(), p);
+        ids.add(p.id);
+        continue;
+      }
       const t = trained.get(name.toLowerCase());
       if (t && !ids.has(t.id)) {
         await s.groups.put({ ...t, createdAt: Date.now() });
@@ -323,7 +333,7 @@ async function write(store: Record<string, unknown>, chunks: Record<string, stri
 function localLessons(groups: Group[]): LessonMap {
   const out: LessonMap = new Map();
   for (const g of groups) {
-    if (g.suggested || !g.lessons?.length) continue;
+    if (g.suggested || g.id === PRIORITY_GROUP_ID || !g.lessons?.length) continue;
     out.set(g.name.toLowerCase(), { name: g.name, lessons: g.lessons.map(([t, at]): Lesson => [t, at]) });
   }
   return out;
@@ -335,7 +345,8 @@ function localLessons(groups: Group[]): LessonMap {
  * is ever created from them. A model failure skips this pass and retries on the next.
  */
 async function applyLessons(db: Db, remote: LessonMap): Promise<void> {
-  const groups = (await db.groups.all()).filter((g) => !g.suggested);
+  // Priority never learns: lessons another device holds under its name are not applied here.
+  const groups = (await db.groups.all()).filter((g) => !g.suggested && g.id !== PRIORITY_GROUP_ID);
   const byName = new Map(groups.map((g) => [g.name.toLowerCase(), g]));
   const todo: { id: string; miss: Lesson[] }[] = [];
   for (const [key, r] of remote) {

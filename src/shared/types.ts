@@ -43,6 +43,12 @@ export interface Item {
    * Missing (older data, tabs whose past is unknown) counts as opened.
    */
   opened?: boolean;
+  /**
+   * Local only (never synced or exported): where the tab was when the user added it to Priority, so removing it from
+   * Priority puts it back (when that group still exists; else the pipeline places it as a new tab). Present only
+   * while the item is in Priority; any other placement by the user drops it (withoutPlacedBy).
+   */
+  beforePriority?: { groupId: string | null; groupSource: 'auto' | 'user'; placedBy?: PlacedBy };
 }
 export interface Group {
   id: string;
@@ -145,6 +151,11 @@ export interface DashboardState {
   syncStatus: SyncStatus;
   /** The previous browser session, when the startup check found it was not restored. */
   lastSession?: Snapshot;
+  /**
+   * New names of the user's groups that were called "Priority" before it became the built-in group's name (one-time
+   * notice until dismissed; chrome.storage.local "priorityRenamed").
+   */
+  priorityRenamed?: string[];
   /** Nothing waits for classification, or (with groups to classify into) the model produced a vector this session. */
   modelReady: boolean;
   /** Items waiting for classification (the queue size). */

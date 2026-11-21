@@ -12,6 +12,7 @@ import { embed } from './embedder';
 import { loadNameIndex } from './names-load';
 import { nextStamp } from '../shared/stamp';
 import { acceptSuggestion } from './groups';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME } from '../shared/priority';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -356,9 +357,7 @@ export function flushTabEvents(): Promise<void> {
     const seq = eventSeq;
     try {
       const db = await config.db();
-      const newSession = await sessionIsNew();
-      const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
-      if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+      const result = await snapshotReconcile(db);
       // Up to date, unless another event arrived meanwhile (its own update is still to come).
       if (seq === eventSeq && !timer) {
         marked = false;
@@ -373,6 +372,38 @@ export function flushTabEvents(): Promise<void> {
   return run;
 }
 
+/**
+ * Reconciles the index now, outside the debounced chain and without its `after` hook, so a caller (the Priority
+ * shortcut on a tab that just opened) never waits for a classification pass. A debounced full update follows, which
+ * classifies whatever this reconcile queued. Never rejects.
+ */
+export async function reconcileNow(): Promise<void> {
+  if (!config) return;
+  try {
+    await snapshotReconcile(await config.db());
+  } catch (e) {
+    console.error('tab index catch-up failed', e);
+  }
+  onTabEvent();
+}
+/**
+ * Reconciles snapshots one at a time: each reads the open tabs and commits its transaction before the next reads.
+ * Without it, a debounced flush could read the tabs before a new tab existed and commit after reconcileNow indexed
+ * (and the user starred) that tab, deleting the item; the next update would recreate it without its star. Only the
+ * read-and-write is serialized: the classification that follows a flush runs outside it, so reconcileNow never
+ * waits for the model.
+ */
+let snapshotLock: Promise<unknown> = Promise.resolve();
+function snapshotReconcile(db: Db): Promise<ReconcileResult> {
+  const run = snapshotLock.then(async () => {
+    const newSession = await sessionIsNew();
+    const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
+    if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+    return result;
+  });
+  snapshotLock = run.catch(() => undefined);
+  return run;
+}
 /** Runs the update a previous background left unfinished (see PENDING_KEY). Never rejects. */
 export async function flushIfPending(): Promise<void> {
   let pending: unknown;
@@ -528,12 +559,13 @@ export interface PoolTab extends Neighbour { id: string }
 const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
 /**
  * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
- * than Videos and Other, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
+ * than Videos, Other and Priority, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
  * older data, counts, except for a YouTube video: those were placed at the low video bar), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
  * (items without one are left out).
  */
 export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Promise<PoolTab[]> {
-  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID).map((g) => g.id));
+  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID &&
+    g.id !== PRIORITY_GROUP_ID).map((g) => g.id));
   const eligible = items
     .filter((i) => i.groupId !== null && ok.has(i.groupId))
     .filter((i) => i.groupSource === 'user' || (i.placedBy === undefined ? !isYouTubeVideo(i.url) : !NOT_EVIDENCE.has(i.placedBy)))
@@ -545,11 +577,15 @@ export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Pro
     return vec ? [{ id: i.id, vec, groupId: i.groupId!, normUrl: i.normUrl }] : [];
   });
 }
-/** The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies. */
+/**
+ * The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies,
+ * and neither does where it was before Priority (beforePriority: a placement elsewhere takes it out of Priority).
+ */
 export function withoutPlacedBy(i: Item): Item {
-  const { placedBy: _p, quietPick: _q, ...rest } = i;
+  const { placedBy: _p, quietPick: _q, beforePriority: _b, ...rest } = i;
   void _p;
   void _q;
+  void _b;
   return rest;
 }
 /** quietPick after an automatic write: set by a quiet change of group, kept while the group stays, else gone. */
@@ -727,8 +763,10 @@ async function suggestPass(db: Db): Promise<void> {
     if (!itemIds.length) continue;
     const id = `suggested-${crypto.randomUUID()}`;
     const color = SUGGEST_COLORS[(suggested.length + created.length) % SUGGEST_COLORS.length]!;
-    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2".
+    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2". "Priority"
+    // is always taken: it is the built-in group's name, even before that group exists.
     const taken = new Set([...groups, ...created.map((x) => x.group)].map((g) => g.name.toLowerCase()));
+    taken.add(PRIORITY_NAME.toLowerCase());
     let name = c.name;
     for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${c.name.slice(0, 56)} ${n}`;
     created.push({

@@ -12,6 +12,8 @@ import { forgetRemovedTrained, trainedGroupsForNames } from '../background/grow'
 import { restashTime, stashRecord } from '../background/memory';
 import { MAX_SNAPSHOTS, fingerprint } from '../background/snapshots';
 import { domainOf, withoutPlacedBy } from '../background/tab-index';
+import { PRIORITY_GROUP_ID, isPriority, isPriorityName } from '../shared/priority';
+import { migrateReservedName, priorityForName } from '../background/priority';
 export const FORMAT = 'tab-organizer';
 export const VERSION = 1;
 export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
@@ -169,6 +171,8 @@ export async function exportJson(db: Db): Promise<string> {
 export async function applyImport(
   db: Db, data: ImportData, embedFn?: (t: string[]) => Promise<Float32Array[]>,
 ): Promise<{ added: number; skipped: number; skippedSessions: number; grouped: number }> {
+  // A group of the user's called "Priority" is renamed first, so the backup's "Priority" means the built-in group.
+  await migrateReservedName(db);
   const now = Date.now();
   const seen = new Set<string>();
   const entries: { it: ImportItem; normUrl: string; id: string }[] = [];
@@ -209,6 +213,14 @@ export async function applyImport(
     let created = 0;
     for (const [key, name] of wanted) {
       if (byName.has(key) || created >= MAX_NEW_GROUPS) continue;
+      if (isPriorityName(name)) {
+        // The backup's Priority tabs go to the built-in Priority group (its name, colour and icon are fixed).
+        const p = priorityForName(existing);
+        await s.groups.put(p);
+        byName.set(key, p);
+        created++;
+        continue;
+      }
       const meta = given.get(key);
       const t = trained.get(key);
       if (t && !existing.some((g) => g.id === t.id) && !byId.has(t.id)) {
@@ -250,11 +262,20 @@ export async function applyImport(
     }
     if (tabGroup.size) {
       for (const cur of await s.items.all()) {
-        if (cur.state === 'stashed' || cur.groupSource === 'user') continue; // a group the user chose here wins
+        // A group the user chose here wins; a tab in Priority (always the user's choice) never leaves it on import.
+        if (cur.state === 'stashed' || cur.groupSource === 'user' || isPriority(cur)) continue;
         const name = tabGroup.get(cur.normUrl);
         const gid = name ? byName.get(name.toLowerCase())?.id : undefined;
         if (gid === undefined || gid === cur.groupId) continue;
-        await s.items.put({ ...withoutPlacedBy(cur), groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now) });
+        // Into Priority, the tab remembers where it was, as when the user stars it (taking it out puts it back). Only
+        // auto-placed tabs get here, so how it was placed (placedBy) is kept with it.
+        const before: Item['beforePriority'] = gid === PRIORITY_GROUP_ID
+          ? { groupId: cur.groupId, groupSource: cur.groupSource, ...(cur.placedBy !== undefined ? { placedBy: cur.placedBy } : {}) }
+          : undefined;
+        await s.items.put({
+          ...withoutPlacedBy(cur), groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now),
+          ...(before ? { beforePriority: before } : {}),
+        });
         await s.queue.remove([cur.id]);
         grouped++;
       }

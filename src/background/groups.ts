@@ -9,6 +9,8 @@ import { autoPick, cachedVectors, fingerprintOf, neighbourPool, recordDismissed,
 import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
+import { PRIORITY_GROUP_ID, RESERVED_NAME_MESSAGE, isPriorityName } from '../shared/priority';
+import { freeReservedName, prioritize, remapBeforePriority } from './priority';
 
 export const MAX_IDS = 5000;
 export { MAX_NAME, parseName } from '../shared/names';
@@ -115,8 +117,13 @@ async function mustGroup(db: Db, id: string): Promise<Group> {
  * Moves items into a group as a user decision (groupSource 'user') and teaches the group each
  * item's cached vector (newest MAX_EXEMPLARS kept). Unknown ids are ignored.
  */
-/** Moves the items into the group as the user's placement; returns how many still existed and were moved. */
+/**
+ * Moves the items into the group as the user's placement; returns how many still existed and were moved. Moving
+ * into Priority is adding to Priority (prioritize: remembers where each tab was, teaches nothing); moving out of
+ * Priority into another group is an ordinary move there (the remembered group is dropped).
+ */
 export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?: EmbedFn): Promise<number> {
+  if (groupId === PRIORITY_GROUP_ID) return prioritize(db, ids);
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
@@ -146,6 +153,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */
 /** Group names are unique (ignoring case): sync and tab-group mirroring match groups by name. */
 function assertFreeName(all: Group[], name: string, self?: string): void {
+  if (isPriorityName(name) && self !== PRIORITY_GROUP_ID) throw new Error(RESERVED_NAME_MESSAGE);
   const key = name.toLowerCase();
   if (all.some((g) => g.id !== self && !g.suggested && g.name.toLowerCase() === key)) {
     throw new Error(`A group called “${name}” already exists`);
@@ -190,6 +198,7 @@ export async function createGroup(db: Db, name: string, ids: string[], embedFn?:
 }
 
 export async function renameGroup(db: Db, id: string, name: string): Promise<void> {
+  if (id === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be renamed');
   const clean = parseName(name);
   await db.tx(['groups'], async (s) => {
     const g = await s.groups.get(id);
@@ -203,6 +212,8 @@ export async function renameGroup(db: Db, id: string, name: string): Promise<voi
 export async function mergeGroups(db: Db, from: string, into: string): Promise<void> {
   if (from === into) throw new Error('cannot merge a group into itself');
   if (from === OTHER_GROUP_ID) throw new Error('the Other group cannot be merged away');
+  // Priority holds only tabs the user starred one by one (each remembers where it came from): no merging either way.
+  if (from === PRIORITY_GROUP_ID || into === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be merged');
   await db.tx(['items', 'groups'], async (s) => {
     const src = await s.groups.get(from);
     const dst = await s.groups.get(into);
@@ -216,6 +227,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
       // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
       if (i.groupId === from) await s.items.put({ ...withoutPlacedBy(i), groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
     }
+    await remapBeforePriority(s, new Map([[from, into]])); // Priority tabs from `from` go back to `into`
     await s.groups.delete(from);
   });
 }
@@ -226,6 +238,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
  */
 export async function deleteGroup(db: Db, id: string): Promise<void> {
   if (id === OTHER_GROUP_ID) throw new Error('the Other group cannot be deleted');
+  if (id === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be deleted: remove its tabs instead');
   // A deleted group of the user's (or one created automatically) is remembered like a dismissed suggestion,
   // so topic discovery does not put the same tabs straight back into a new group.
   const g = await db.groups.get(id);
@@ -270,6 +283,8 @@ export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): P
     }
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;
+    // "Priority" is the built-in group's name: a suggestion named so (from before it was reserved) is renamed.
+    if (isPriorityName(rest.name)) rest.name = freeReservedName(await s.groups.all());
     await s.groups.put(rest);
     late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });
@@ -464,6 +479,8 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
       });
     if (!tabIds.length) continue;
     const mine = native.find((n) => ours.get(n.id) === g.id);
+    // A native group of ours follows its group's name (a rename, e.g. "Priority" → "Priority (yours)") at once.
+    if (mine && mine.title !== g.name) await chrome.tabGroups.update(mine.id, { title: g.name });
     const existing = mine ?? native.find((n) => n.title === g.name && !ours.has(n.id));
     const todo = existing ? tabIds.filter((id) => tabById.get(id)!.groupId !== existing.id) : tabIds;
     if (existing) ours.set(existing.id, g.id);
@@ -473,7 +490,8 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
       ? chrome.tabs.group({ tabIds: ids, groupId: existing.id })
       : chrome.tabs.group({ tabIds: ids, createProperties: { windowId } }))) as unknown as number;
     ours.set(nativeId, g.id);
-    await chrome.tabGroups.update(nativeId, { title: g.name, color: nearestChromeColor(g.color) });
+    const color = g.id === PRIORITY_GROUP_ID ? 'yellow' : nearestChromeColor(g.color);
+    await chrome.tabGroups.update(nativeId, { title: g.name, color });
   }
   await chrome.storage.session.set({ [MIRRORED_KEY]: Object.fromEntries(ours) }).catch(() => undefined);
 }

@@ -39,6 +39,11 @@ describe('manifest', () => {
   it('binds Alt+Shift+T to open the dashboard', () => {
     expect(manifest.commands['open-dashboard'].suggested_key.default).toBe('Alt+Shift+T');
   });
+  it('binds Alt+P / Alt+Shift+P to add the current tab to Priority and remove it; 4 suggested keys at most', () => {
+    expect(manifest.commands['prioritize-tab']).toEqual({ suggested_key: { default: 'Alt+P' }, description: 'Add the current tab to Priority' });
+    expect(manifest.commands['unprioritize-tab']).toEqual({ suggested_key: { default: 'Alt+Shift+P' }, description: 'Remove the current tab from Priority' });
+    expect(Object.values(manifest.commands).filter((c) => 'suggested_key' in c).length).toBeLessThanOrEqual(4);
+  });
   it('declares the service worker, popup and no web-accessible resources', () => {
     expect(manifest.background).toEqual({ service_worker: 'background.js', type: 'module' });
     expect(manifest.action.default_popup).toBe('popup.html');

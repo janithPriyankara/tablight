@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
 import { ago, plural } from '../common/format';
@@ -209,6 +209,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                   {sw('set-removeonopen', settings.removeOnOpen, saveOn('removeOnOpen'))}
                 </SettingRow>
               </Section>
+              <Shortcuts busy={busy} notify={notify} />
               <Section id="look" title="Appearance">
                 <SettingRow id="theme" name="Theme" group>
                   {segmented('theme', settings.theme, THEMES, (v) => void act(() => save({ theme: v })))}
@@ -324,6 +325,59 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
         </form>
       </div>
     </div>
+  );
+}
+/** Where the browser lets you change an extension's shortcuts (a link to it cannot open; chrome.tabs.create can). */
+export const SHORTCUTS_PAGE = 'chrome://extensions/shortcuts';
+export const EDGE_SHORTCUTS_PAGE = 'edge://extensions/shortcuts';
+/** The browser's shortcuts page: Edge's own address in Edge (its user agent says "Edg/"), Chrome's elsewhere. */
+export function shortcutsPage(ua: string = typeof navigator === 'undefined' ? '' : navigator.userAgent): string {
+  return ua.includes('Edg/') ? EDGE_SHORTCUTS_PAGE : SHORTCUTS_PAGE;
+}
+/** The default keys, shown until the browser reports the current ones (and in tests). */
+const DEFAULT_SHORTCUTS: { name: string; description: string; shortcut: string }[] = [
+  { name: 'open-dashboard', description: 'Open the Tablight dashboard', shortcut: 'Alt+Shift+T' },
+  { name: 'open-side-panel', description: 'Open Tablight in the side panel', shortcut: 'Alt+Shift+S' },
+  { name: 'prioritize-tab', description: 'Add the current tab to Priority', shortcut: 'Alt+P' },
+  { name: 'unprioritize-tab', description: 'Remove the current tab from Priority', shortcut: 'Alt+Shift+P' },
+];
+/**
+ * General → Keyboard shortcuts: each command with the key the browser has for it now (the user may have changed it,
+ * or another extension may hold it: then it reads "Not set"), and a button to the browser's shortcuts page.
+ */
+function Shortcuts({ busy, notify }: { busy: boolean; notify: (m: string) => void }) {
+  const [list, setList] = useState(DEFAULT_SHORTCUTS);
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || typeof chrome.commands?.getAll !== 'function') return;
+    chrome.commands.getAll().then((cmds) => {
+      const got = cmds.filter((c) => c.name && c.description).map((c) => ({ name: c.name!, description: c.description!, shortcut: c.shortcut ?? '' }));
+      if (got.length) setList(got);
+    }, () => undefined);
+  }, []);
+  const change = () => {
+    const url = shortcutsPage();
+    chrome.tabs.create({ url }).catch(() => notify(`Open ${url} to change the shortcuts.`));
+  };
+  return (
+    <Section id="keys" title="Keyboard shortcuts">
+      <div class="setting-row">
+        <dl class="shortcut-list">
+          {list.map((c) => (
+            <div key={c.name} class="shortcut">
+              <dt>{c.description}</dt>
+              <dd>{c.shortcut ? <kbd>{c.shortcut}</kbd> : <span class="muted">Not set</span>}</dd>
+            </div>
+          ))}
+        </dl>
+        <p class="setting-hint">
+          Alt+P and Alt+Shift+P work on the tab you are on, on any web page. On a Mac they are Option+P and Option+Shift+P.
+          You can change any shortcut on the browser’s shortcuts page.
+        </p>
+      </div>
+      <SettingRow id="set-keys" name="Change shortcuts" group>
+        <button type="button" class="btn btn-sm" disabled={busy} onClick={change}>Open shortcuts page</button>
+      </SettingRow>
+    </Section>
   );
 }
 /** A titled card of settings rows (the title is the region's name). */

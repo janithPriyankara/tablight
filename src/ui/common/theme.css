@@ -55,6 +55,7 @@
   --warn-border: #ecd9ae;
   --danger: #a83232;
   --danger-soft: #faeceb;
+  --priority: #94690a;      /* the Priority star: amber, 4.9:1 on paper */
   /* Group swatches: one muted tone, the group's own hue (color.ts groupTone). */
   --tone-l: 64%;
   --tone-c: 0.085;
@@ -92,6 +93,7 @@
     --warn-border: #4a3a1a;
     --danger: #f08c8c;
     --danger-soft: #2d1818;
+    --priority: #e2b54a;
     --tone-l: 74%;
     --tone-c: 0.08;
     --tone-neutral: #7d8589;
@@ -124,6 +126,7 @@
   --warn-border: #4a3a1a;
   --danger: #f08c8c;
   --danger-soft: #2d1818;
+  --priority: #e2b54a;
   --tone-l: 74%;
   --tone-c: 0.08;
   --tone-neutral: #7d8589;
@@ -532,6 +535,10 @@ button.item-main {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
 }
+.callout-info {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
 .callout-error {
   background: var(--danger-soft);
   color: var(--danger);
@@ -713,4 +720,13 @@ button.item-main {
   margin: var(--space-1) 0 0;
   color: var(--text-muted);
   font-size: var(--text-sm);
+}
+/* ---------- Priority ---------- */
+/* The star on rows and the Priority group's mark: amber, filled when the tab is in Priority. */
+.star-btn.is-on,
+.star-mark {
+  color: var(--priority);
+}
+.star-mark {
+  flex: none;
 }
