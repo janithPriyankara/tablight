@@ -7,7 +7,9 @@ import {
 import {
   PRIORITY_RENAMED_KEY, ensurePriorityIn, migrateReservedName, prioritize, runPriorityCommand, unprioritize,
 } from '../../src/background/priority';
-import { embeddingKey, maybeSuggest, neighbourPool, processQueue, reconcile } from '../../src/background/tab-index';
+import {
+  configureTabIndex, embeddingKey, flushTabEvents, maybeSuggest, neighbourPool, processQueue, reconcile, reconcileNow, whenTabIndexIdle,
+} from '../../src/background/tab-index';
 import { suggestGroups } from '../../src/classify/cluster';
 import { autoSleep, closeExtras, closeTabs, stash } from '../../src/background/memory';
 import { flashBadge, resetBadgeCache, updateBadge } from '../../src/background/duplicates';
@@ -239,7 +241,7 @@ describe('prioritize / unprioritize', () => {
     await expect(createGroup(db, 'priority', [])).rejects.toThrow(RESERVED_NAME_MESSAGE);
     await expect(renameGroup(db, 'games', ' PRIORITY ')).rejects.toThrow(RESERVED_NAME_MESSAGE);
   });
-  it('a group of the user’s called Priority is never taken over: it becomes “Priority (yours)”, with all it had', async () => {
+  it('a group of the user’s called Priority is never taken over: it becomes “Priority (yours)”; only its saved tabs go to Priority, unstamped', async () => {
     const old = group('g-old', { name: 'priority', builtIn: false, exemplars: [[1, 0]], lessons: [['x', 1]], centroid: [1, 0] });
     await db.groups.put(old);
     const auto = await addItem({ groupId: 'g-old', groupSource: 'auto', placedBy: 'exemplar' });
@@ -249,10 +251,14 @@ describe('prioritize / unprioritize', () => {
     expect(await db.groups.get('g-old')).toEqual({ ...old, name: 'Priority (yours)' });
     expect(await db.groups.get(P)).toMatchObject({ name: PRIORITY_NAME, exemplars: [] });
     expect(await db.items.get(auto.id)).toEqual(auto); // the model's placement stays where it was
-    const s = (await db.items.get(saved.id))!;
-    expect(s.groupId).toBe('g-old');
-    expect(s.updatedAt).toBeGreaterThan(saved.updatedAt); // re-stamped: the new name wins on other devices
-    expect((await db.items.all()).filter((i) => i.groupId === P).map((i) => i.id)).toEqual([b.id]);
+    // The saved tab syncs as "Priority" on every device: it moves into the built-in group with the same sync stamp,
+    // remembering the renamed group (taking it out of Priority here puts it back there).
+    expect(await db.items.get(saved.id)).toEqual({
+      ...saved, groupId: P, groupSource: 'user', beforePriority: { groupId: 'g-old', groupSource: 'user' },
+    });
+    expect((await db.items.all()).filter((i) => i.groupId === P).map((i) => i.id).sort()).toEqual([b.id, saved.id].sort());
+    await unprioritize(db, [saved.id]);
+    expect((await db.items.get(saved.id))!.groupId).toBe('g-old');
     expect((await chrome.storage.local.get(PRIORITY_RENAMED_KEY))[PRIORITY_RENAMED_KEY]).toEqual(['Priority (yours)']);
     // Once it exists, ensuring it changes nothing.
     expect(await db.tx(['items', 'groups'], (s2) => ensurePriorityIn(s2))).toEqual([]);
@@ -268,6 +274,35 @@ describe('prioritize / unprioritize', () => {
     expect((await db.groups.get(P))!.name).toBe(PRIORITY_NAME);
     expect(await migrateReservedName(db)).toBe(0);
     expect((await chrome.storage.local.get(PRIORITY_RENAMED_KEY))[PRIORITY_RENAMED_KEY]).toEqual(['Priority (yours) 2']);
+  });
+  it('numbering is stable: holders are renamed in id order', async () => {
+    await db.groups.put(group('g-z', { name: 'Priority', builtIn: false }));
+    await db.groups.put(group('g-a', { name: 'priority', builtIn: false }));
+    await migrateReservedName(db);
+    expect([(await db.groups.get('g-a'))!.name, (await db.groups.get('g-z'))!.name]).toEqual(['Priority (yours)', 'Priority (yours) 2']);
+  });
+  it('the migration creates the built-in group for saved tabs when it is missing', async () => {
+    await db.groups.put(group('g-old', { name: 'Priority', builtIn: false }));
+    const saved = await addItem({ groupId: 'g-old', groupSource: 'user', state: 'stashed', tabId: undefined });
+    expect(await migrateReservedName(db)).toBe(1);
+    expect(await db.groups.get(P)).toMatchObject({ name: PRIORITY_NAME });
+    expect((await db.items.get(saved.id))!.groupId).toBe(P);
+  });
+  it('mirroring: the renamed group’s native tab group is retitled on the next pass', async () => {
+    mock.uninstall();
+    mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.com/' }] }] });
+    mock.setPermission('tabGroups', true);
+    await db.settings.set({ mirrorTabGroups: true });
+    await db.groups.put(group('g-old', { name: 'Priority', builtIn: false }));
+    await reconcile(db, await chrome.tabs.query({}));
+    const [item] = await db.items.all();
+    await db.items.put({ ...item!, groupId: 'g-old', groupSource: 'user' });
+    const w = mock.tabs()[0]!.windowId!;
+    await mirrorTabGroups(db, w);
+    expect(mock.tabGroups().map((g) => g.title)).toEqual(['Priority']);
+    await migrateReservedName(db);
+    await mirrorTabGroups(db, w);
+    expect(mock.tabGroups().map((g) => g.title)).toEqual(['Priority (yours)']);
   });
   it('accepting a suggestion named Priority (made before the name was reserved) renames it', async () => {
     await db.groups.put(group('sug', { name: 'Priority', builtIn: false, suggested: true }));
@@ -397,6 +432,30 @@ describe('the Alt+P / Alt+Shift+P command handler', () => {
     const catchUp = vi.fn(async () => void (await reconcile(db, await chrome.tabs.query({}), { newSession: true })));
     expect(await runPriorityCommand(db, 'prioritize-tab', tab, { catchUp, kick: vi.fn() })).toBe('added');
     expect((await db.items.byTabId(tab!.id!))!).toMatchObject({ normUrl: 'https://a.com/', groupId: P });
+  });
+  it('the catch-up never races a debounced update (a new starred tab is not deleted) and never waits for classification', async () => {
+    const [first] = await setup([{ url: 'https://a.com/' }]);
+    let release!: () => void;
+    const blocked = new Promise<void>((r) => (release = r));
+    configureTabIndex({ db: async () => db, after: () => blocked }); // classification that never ends (until released)
+    // A debounced update reads the tabs before the new tab exists, and is slow to get its answer.
+    const before = await chrome.tabs.query({});
+    let answer!: (t: chrome.tabs.Tab[]) => void;
+    const query = vi.spyOn(chrome.tabs, 'query').mockImplementationOnce(() => new Promise((r) => (answer = r)) as never);
+    const flushing = flushTabEvents();
+    await vi.waitFor(() => expect(query).toHaveBeenCalledTimes(1));
+    const fresh = mock.addTab({ url: 'https://new.com/', windowId: first!.windowId });
+    // The stale snapshot arrives a moment later. Unserialized, the catch-up and the star would land first and the stale
+    // snapshot would then delete the new tab's item; serialized, the catch-up reads the tabs after it.
+    setTimeout(() => answer(before), 50);
+    expect(await runPriorityCommand(db, 'prioritize-tab', fresh, { catchUp: reconcileNow, kick: vi.fn() })).toBe('added');
+    // (classification is still blocked here: the catch-up did not wait for it)
+    expect((await db.items.byTabId(fresh.id!))!.groupId).toBe(P);
+    release();
+    await flushing;
+    await whenTabIndexIdle();
+    expect((await db.items.byTabId(fresh.id!))!.groupId).toBe(P);
+    configureTabIndex({ db: async () => db });
   });
   it('a tab not indexed yet is caught up first', async () => {
     const [tab] = await setup([{ url: 'https://a.com/' }]);

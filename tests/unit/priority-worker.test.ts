@@ -188,10 +188,61 @@ describe('Priority in the service worker', () => {
     await db.settings.set({ syncEnabled: true });
     await pullSync(db);
     expect((await db.groups.get('g-old'))!.name).toBe('Priority (yours)');
-    expect((await db.items.get(await sha1hex(urlOld)))!.groupId).toBe('g-old');
+    // Its saved tab syncs as "Priority": it is in the built-in group now, remembering the renamed one.
+    expect((await db.items.get(await sha1hex(urlOld)))!).toMatchObject({ groupId: P, beforePriority: { groupId: 'g-old' } });
     expect((await db.items.get(await sha1hex(url)))!.groupId).toBe(P);
     type S = import('../../src/shared/types').DashboardState;
     expect(((await bg.handleRequest({ t: 'state' })) as S).priorityRenamed).toEqual(['Priority (yours)']);
+  });
+  it('the rename at worker start schedules a sync push and tells open pages', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const { openDb } = await import('../../src/background/db');
+    const before = await openDb(); // the worker's database, as the previous version left it
+    await before.groups.put({ id: 'g-old', name: 'Priority', color: '#00959c', icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: 1 });
+    const bg = await import('../../src/background/index');
+    const db = await bg.getDb();
+    await vi.waitFor(async () => expect((await db.groups.get('g-old'))!.name).toBe('Priority (yours)'));
+    await vi.waitFor(() => expect(mock.alarms().map((a) => a.name)).toContain('sync-retry')); // scheduleSync's backstop
+    mock.uninstall();
+  });
+  it('staggered update across two devices: A updates first, B later; A’s saved Priority tab stays in Priority', async () => {
+    // One browser account (one storage.sync), two devices (two databases). No worker: the sync module directly.
+    const mock = installChromeMock({ windows: [] });
+    const { openDb } = await import('../../src/background/db');
+    const { pullSync, pushSync } = await import('../../src/background/sync');
+    const { prioritize, migrateReservedName } = await import('../../src/background/priority');
+    const { decodeChunks } = await import('../../src/sync/sync-codec');
+    const { sha1hex } = await import('../../src/shared/hash');
+    const a = await openDb('device-a');
+    const b = await openDb('device-b');
+    for (const d of [a, b]) await d.settings.set({ syncEnabled: true });
+    const url = 'https://read-later.example.com/';
+    const id = await sha1hex(url);
+    const now = Date.now();
+    // 1. A (this version): an open tab is starred, then saved for later. Its record syncs as "Priority".
+    await a.items.put({
+      id, url, normUrl: url, title: 'Read later', domain: 'read-later.example.com', state: 'stashed', groupId: 'games',
+      groupSource: 'user', kind: 'read', createdAt: now, lastActiveAt: now, stashedAt: now, updatedAt: now, classifiable: true,
+    });
+    await a.groups.put({ id: 'games', name: 'Games', color: '#000', icon: 'x', builtIn: true, exemplars: [], centroid: null, createdAt: 1 });
+    await prioritize(a, [id]);
+    const onA = (await a.items.get(id))!;
+    await pushSync(a);
+    expect(decodeChunks(await chrome.storage.sync.get(null)).recs.find((r) => r[0] === id)?.[3]).toBe('Priority');
+    // 2. B (older version) pulled it into an ordinary group called "Priority" (what the old apply did).
+    await b.groups.put({ id: 'g-b', name: 'Priority', color: '#00959c', icon: '📁', builtIn: false, exemplars: [], centroid: [1], createdAt: 1 });
+    await b.items.put({ ...onA, groupId: 'g-b', groupSource: 'user', beforePriority: undefined });
+    // 3. B updates: the rename runs (worker start), then B syncs.
+    expect(await migrateReservedName(b)).toBe(1);
+    expect((await b.groups.get('g-b'))!.name).toBe('Priority (yours)');
+    expect((await b.items.get(id))!).toMatchObject({ groupId: P, updatedAt: onA.updatedAt });
+    await pullSync(b);
+    expect(decodeChunks(await chrome.storage.sync.get(null)).recs.find((r) => r[0] === id)?.[3]).toBe('Priority');
+    // 4. A syncs again: its saved tab is still in Priority, and still remembers Games.
+    await pullSync(a);
+    expect((await a.items.get(id))!).toMatchObject({ groupId: P, beforePriority: { groupId: 'games' } });
+    expect((await a.groups.all()).some((g) => g.name === 'Priority (yours)')).toBe(false);
+    mock.uninstall();
   });
   it('sync: a saved tab in Priority on another device lands in the built-in Priority group here', async () => {
     const { mock, bg } = await boot([]);
