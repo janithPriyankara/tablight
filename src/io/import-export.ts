@@ -12,6 +12,8 @@ import { forgetRemovedTrained, trainedGroupsForNames } from '../background/grow'
 import { restashTime, stashRecord } from '../background/memory';
 import { MAX_SNAPSHOTS, fingerprint } from '../background/snapshots';
 import { domainOf, withoutPlacedBy } from '../background/tab-index';
+import { PRIORITY_GROUP_ID, isPriorityName } from '../shared/priority';
+import { priorityForName } from '../background/priority';
 export const FORMAT = 'tab-organizer';
 export const VERSION = 1;
 export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
@@ -209,6 +211,14 @@ export async function applyImport(
     let created = 0;
     for (const [key, name] of wanted) {
       if (byName.has(key) || created >= MAX_NEW_GROUPS) continue;
+      if (isPriorityName(name)) {
+        // The backup's Priority tabs go to the built-in Priority group (its name, colour and icon are fixed).
+        const p = priorityForName(existing);
+        await s.groups.put(p);
+        byName.set(key, p);
+        created++;
+        continue;
+      }
       const meta = given.get(key);
       const t = trained.get(key);
       if (t && !existing.some((g) => g.id === t.id) && !byId.has(t.id)) {
@@ -254,7 +264,14 @@ export async function applyImport(
         const name = tabGroup.get(cur.normUrl);
         const gid = name ? byName.get(name.toLowerCase())?.id : undefined;
         if (gid === undefined || gid === cur.groupId) continue;
-        await s.items.put({ ...withoutPlacedBy(cur), groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now) });
+        // Into Priority, the tab remembers where it was, as when the user stars it (taking it out puts it back).
+        const before: Item['beforePriority'] = gid === PRIORITY_GROUP_ID
+          ? { groupId: cur.groupId, groupSource: cur.groupSource, ...(cur.placedBy !== undefined ? { placedBy: cur.placedBy } : {}) }
+          : undefined;
+        await s.items.put({
+          ...withoutPlacedBy(cur), groupId: gid, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt, now),
+          ...(before ? { beforePriority: before } : {}),
+        });
         await s.queue.remove([cur.id]);
         grouped++;
       }

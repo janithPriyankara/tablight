@@ -5,6 +5,7 @@ import type { Group, Item } from '../shared/types';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
+import { PRIORITY_GROUP_ID } from '../shared/priority';
 
 /** chrome.storage.local: the embedding model the stored vectors (cache, exemplars, centroids) come from. */
 export const EMBED_MODEL_KEY = 'embedModel';
@@ -99,7 +100,8 @@ async function rebuild(db: Db, embedFn: EmbedFn): Promise<void> {
       abortIfDown(emb);
     }
   }
-  const named = untaught.filter((g) => !SEED_IDS.has(g.id));
+  // Priority keeps no centroid: nothing is ever placed there automatically.
+  const named = untaught.filter((g) => !SEED_IDS.has(g.id) && g.id !== PRIORITY_GROUP_ID);
   await embedAll(named.map((g) => g.name), embedFn, emb);
   // Nothing embedded at all: the embedder is down, so change nothing and let the caller retry.
   if (emb.tried > 0 && emb.ok === 0) throw emb.error instanceof Error ? emb.error : new Error('embedding failed');

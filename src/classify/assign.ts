@@ -1,6 +1,7 @@
 import type { Group } from '../shared/types';
 import { cosine, mean, normalize } from '../shared/vec';
 import { STARTER_GROUPS, type StarterGroup } from './seeds';
+import { withoutPriority } from '../shared/priority';
 
 export const MAX_EXEMPLARS = 50;
 /** Never assigned automatically: only the user puts tabs in "Other". */
@@ -123,9 +124,10 @@ export function classify(
   head: Head,
   opts: { threshold?: number; similarity?: number } = {},
 ): Assignment {
-  const near = exemplarPick(vec, groups, head, opts.similarity);
+  const candidates = withoutPriority(groups); // only the user puts tabs in Priority
+  const near = exemplarPick(vec, candidates, head, opts.similarity);
   if (near) return { ...near, by: 'exemplar' };
-  return headPick(vec, groups, head, opts.threshold);
+  return headPick(vec, candidates, head, opts.threshold);
 }
 /**
  * Step 1 of classify alone: the group of the single closest user-taught exemplar (never `other`) when its cosine is

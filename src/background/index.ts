@@ -3,7 +3,9 @@
 import type { LabelForTextReply, Req } from '../shared/rpc';
 import { OTHER_GROUP_ID, buildStarterGroups, headTop } from '../classify/assign';
 import { openDb, type Db } from './db';
-import { findDuplicates, invalidateBadges, updateBadge } from './duplicates';
+import { findDuplicates, flashBadge, invalidateBadges, updateBadge } from './duplicates';
+import { COMMAND_BADGE, isPriorityCommand, prioritize, runPriorityCommand, unprioritize, type CommandResult } from './priority';
+import { PRIORITY_GROUP_ID, isPriority, type PriorityCommand } from '../shared/priority';
 import { OFFSCREEN_IDLE_ALARM, closeIfIdle, embed, isWarm } from './embedder';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
@@ -71,11 +73,14 @@ const embedSeeds = (texts: string[]): Promise<Float32Array[]> => {
   seedVecs ??= embed(texts).catch((e: unknown) => { seedVecs = undefined; throw e; });
   return seedVecs;
 };
+// The Priority group does not count: a shortcut used before the first seeding (or right after "Delete all data")
+// creates it, and the starter groups must still appear.
+const seeded = (groups: { id: string }[]) => groups.some((g) => g.id !== PRIORITY_GROUP_ID);
 async function ensureStarterGroups(db: Db): Promise<void> {
-  if ((await db.groups.all()).length > 0) return;
+  if (seeded(await db.groups.all())) return;
   const groups = await buildStarterGroups(embedSeeds);
   await db.tx(['groups'], async (s) => {
-    if ((await s.groups.all()).length > 0) return; // another run won the race
+    if (seeded(await s.groups.all())) return; // another run won the race
     for (const g of groups) await s.groups.put(g);
   });
 }
@@ -238,14 +243,17 @@ async function activeDuplicate(items: Item[], dups: Map<string, Item[]>): Promis
   const item = items.find((i) => i.tabId === tab.id && i.state !== 'stashed');
   const copies = item ? dups.get(item.normUrl) : undefined;
   if (!item || !copies) return undefined;
-  return { item, others: copies.filter((i) => i.id !== item.id) };
+  // A copy in Priority is never offered for closing.
+  const others = copies.filter((i) => i.id !== item.id && !isPriority(i));
+  return others.length ? { item, others } : undefined;
 }
 /**
  * The suspicious tabs among `items` (already clutter-filtered), or none when the setting is off. The one place
  * this is computed, so the dashboard list and the toolbar badge can never disagree.
  */
-async function currentSuspicious(items: Item[], settings: Settings): Promise<SuspiciousTab[]> {
+async function currentSuspicious(all: Item[], settings: Settings): Promise<SuspiciousTab[]> {
   if (!settings.suspiciousTabs) return [];
+  const items = all.filter((i) => !isPriority(i)); // tabs the user put in Priority are never flagged
   const live = items.filter((i) => i.tabId !== undefined).map((i) => ({ tabId: i.tabId!, windowId: i.windowId }));
   // A keep ends when its tab moves to another site: drop those now, so coming back flags the tab again.
   const onSite = items.filter((i) => i.tabId !== undefined && i.state !== 'stashed').map((i) => ({ tabId: i.tabId!, domain: i.domain }));
@@ -321,7 +329,7 @@ async function mirrorAll(db: Db): Promise<void> {
 /** RPCs that can change the stash or the group names its records carry: each schedules a sync push. */
 const STASH_CHANGING: ReadonlySet<Req['t']> = new Set<Req['t']>([
   'moveItems', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion', 'stash', 'stashWindow', 'stashDelete', 'open',
-  'undo', 'sessionAction', 'regroupApply', 'interests',
+  'undo', 'sessionAction', 'regroupApply', 'interests', 'prioritize', 'priorityCommand',
 ]);
 const SETTING_KEYS: ReadonlySet<string> = new Set<keyof Settings>([
   'autoSleepMinutes', 'syncEnabled', 'mirrorTabGroups', 'removeOnOpen', 'theme', 'onboarded', 'autoCreateGroups', 'toolbarOpens', 'suspiciousTabs',
@@ -410,6 +418,15 @@ async function labelForText(text: unknown): Promise<LabelForTextReply> {
   if (label === undefined || label === OTHER_GROUP_ID || !(score >= HEAD.threshold)) return { label: null, score }; // NaN too
   return { label, score };
 }
+/** The Priority shortcuts on `tab` (the onCommand listener and the `priorityCommand` RPC): badge feedback on a change. */
+async function priorityCommand(db: Db, command: PriorityCommand, tab: chrome.tabs.Tab | undefined): Promise<CommandResult> {
+  const result = await runPriorityCommand(db, command, tab, { catchUp: flushTabEvents, kick: (d) => void kickClassification(d) });
+  if (result !== 'none' && tab?.id !== undefined) {
+    const tabId = tab.id;
+    await flashBadge(tabId, COMMAND_BADGE[result], () => refreshBadge(db, tabId));
+  }
+  return result;
+}
 /** Group RPCs. Payloads come from extension pages but are still validated. */
 export async function handleRequest(req: Req): Promise<unknown> {
   if (req.t === 'offscreenIdle') {
@@ -421,6 +438,18 @@ export async function handleRequest(req: Req): Promise<unknown> {
   let out: unknown;
   switch (req.t) {
     case 'moveItems': out = await moveItems(db, parseIds(req.ids), parseId(req.groupId), embed); break;
+    case 'prioritize': {
+      if (typeof req.on !== 'boolean') throw new Error('invalid on');
+      out = req.on ? await prioritize(db, parseIds(req.ids)) : (await unprioritize(db, parseIds(req.ids))).removed;
+      break;
+    }
+    case 'priorityCommand': {
+      if (!isPriorityCommand(req.command)) throw new Error('invalid command');
+      if (!Number.isSafeInteger(req.tabId) || req.tabId < 0) throw new Error('invalid tab');
+      const tab = await chrome.tabs.get(req.tabId).catch(() => undefined);
+      out = await priorityCommand(db, req.command, tab);
+      break;
+    }
     case 'groupCreateStarter': out = await createStarterGroup(db, embed, req.id); break;
     case 'groupCreate': out = await createGroup(db, parseName(req.name), parseIds(req.ids), embed); break;
     case 'groupRename': {
@@ -513,7 +542,9 @@ export async function handleRequest(req: Req): Promise<unknown> {
   }
   notifyChanged();
   if (STASH_CHANGING.has(req.t)) scheduleSync(db);
-  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete' || req.t === 'interests') void kickClassification(db);
+  if (req.t === 'import' || req.t === 'sessionAction' || req.t === 'groupDelete' || req.t === 'interests' || req.t === 'prioritize') {
+    void kickClassification(db); // a tab taken out of Priority with no group to go back to waits in the queue
+  }
   await mirrorAll(db);
   return out;
 }
@@ -537,6 +568,13 @@ export const OPEN_DASHBOARD_COMMAND = 'open-dashboard';
 /** The manifest's `open-side-panel` command (Alt+Shift+S). */
 export const OPEN_SIDE_PANEL_COMMAND = 'open-side-panel';
 chrome.commands.onCommand.addListener((command, tab) => {
+  if (isPriorityCommand(command)) {
+    // The same path as the `priorityCommand` RPC. The tab given is the active one; without it, the focused window's.
+    void (tab ? Promise.resolve([tab]) : chrome.tabs.query({ active: true, lastFocusedWindow: true }))
+      .then(([t]) => (t?.id !== undefined ? handleRequest({ t: 'priorityCommand', command, tabId: t.id }) : undefined))
+      .catch((e: unknown) => console.error('priority shortcut failed', e));
+    return;
+  }
   if (command === OPEN_SIDE_PANEL_COMMAND) {
     // open() needs the shortcut's user gesture: call it right away, before anything is awaited.
     if (tab?.windowId !== undefined && typeof chrome.sidePanel?.open === 'function') {

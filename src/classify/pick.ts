@@ -4,6 +4,7 @@ import { cosine } from '../shared/vec';
 import { exemplarPick, headPick, headTop, OTHER_GROUP_ID, type Head } from './assign';
 import { currentNameIndex, nameLabel } from './names';
 import { ruleGroup } from './rules';
+import { withoutPriority } from '../shared/priority';
 export type { PlacedBy };
 export const VIDEOS_GROUP_ID = 'videos';
 /**
@@ -62,7 +63,8 @@ export interface NeighbourOpts { similarity: number; min: number; k: number; ski
 export function neighbourGroup(
   vec: ArrayLike<number>, pool: Neighbour[], groups: Group[], opts: NeighbourOpts,
 ): string | null {
-  const known = new Set(groups.map((g) => g.id));
+  // Priority is the user's alone: its tabs are never evidence for placing another tab there.
+  const known = new Set(withoutPriority(groups).map((g) => g.id));
   // The closest tab of each page, at or above the similarity bar.
   const best = new Map<string, { s: number; groupId: string }>();
   for (const n of pool) {
@@ -98,15 +100,18 @@ export function neighbourGroup(
  * label, else the head's when the head is that sure of it (`threshold`, for pages and videos alike): the lower
  * YouTube bar only places a video into a group that already exists.
  * `groups` must exclude suggested groups; `skipId` is the item's own id, left out of `pool`.
+ * The Priority group is never a candidate (only the user puts tabs there): it is dropped from `groups` here, so no
+ * step can return it.
  */
 export function pickGroup(
   item: Pick<Item, 'url' | 'title'>,
   vec: ArrayLike<number>,
-  groups: Group[],
+  allGroups: Group[],
   head: Head,
   pool: Neighbour[] = [],
   skipId?: string,
 ): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  const groups = withoutPriority(allGroups);
   // A rule, an exemplar, the head or neighbours decided: nothing is wanted. `want` is only for tabs left Unsorted
   // or parked in Videos.
   const rule = ruleGroup(item.url, item.title);

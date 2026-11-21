@@ -56,8 +56,33 @@ export async function clearBadgeState(): Promise<void> {
   rewriteAll = true;
   await chrome.storage.session.remove(MODE_KEY).catch(() => undefined);
 }
+/** How long a shortcut's badge feedback (flashBadge) stays on the tab. */
+export const FLASH_MS = 2_000;
+/** Tabs showing a shortcut's feedback: updateBadge leaves them alone until the timer restores them. */
+const flashing = new Map<number, ReturnType<typeof setTimeout>>();
+/**
+ * Shows `text` on the tab's badge for FLASH_MS (the Priority shortcuts' feedback), then `restore` repaints what
+ * Tablight shows there (the copy count, "!" or nothing: refreshBadge with the tab). Updates in between are held back
+ * for that tab, so nothing Tablight shows is lost; a second flash on the same tab restarts the wait.
+ */
+export async function flashBadge(tabId: number, text: string, restore: () => Promise<void>, ms = FLASH_MS): Promise<void> {
+  const pending = flashing.get(tabId);
+  if (pending !== undefined) clearTimeout(pending);
+  flashing.set(tabId, setTimeout(() => {
+    flashing.delete(tabId);
+    shown.delete(tabId); // unknown: the restore sets it afresh
+    restore().catch(() => undefined);
+  }, ms));
+  try {
+    await chrome.action.setBadgeText({ tabId, text });
+  } catch {
+    // the tab closed meanwhile: the timer's restore finds nothing to do
+  }
+}
 /** For tests and a fresh worker. */
 export function resetBadgeCache(): void {
+  for (const t of flashing.values()) clearTimeout(t);
+  flashing.clear();
   rewriteAll = false;
   shown.clear();
   mode = undefined;
@@ -108,7 +133,7 @@ export async function updateBadge(db: Db, activeTabId?: number, suspiciousCount 
     targets = [...live].filter((id) => flipped || (shown.get(id) ?? '') !== textOf(id));
   }
   await Promise.all(
-    targets.map(async (tabId) => {
+    targets.filter((id) => !flashing.has(id)).map(async (tabId) => {
       const text = textOf(tabId);
       try {
         await chrome.action.setBadgeText({ tabId, text });

@@ -7,6 +7,7 @@ import { findDuplicates } from './duplicates';
 import { wasSynced } from './sync';
 import { withoutPlacedBy } from './tab-index';
 import { nextStamp } from '../shared/stamp';
+import { isPriority } from '../shared/priority';
 export const AUTO_SLEEP_ALARM = 'auto-sleep';
 export const UNDO_MS = 10_000;
 interface Closed {
@@ -82,12 +83,12 @@ export async function sleepTabs(db: Db, ids: string[]): Promise<{ slept: number;
   }
   return { slept, skipped };
 }
-/** Sleeps open tabs that were inactive for settings.autoSleepMinutes. Returns how many slept. */
+/** Sleeps open tabs that were inactive for settings.autoSleepMinutes (never tabs in Priority). Returns how many slept. */
 export async function autoSleep(db: Db, now: number): Promise<number> {
   const minutes = (await db.settings.get()).autoSleepMinutes;
   if (minutes === null) return 0;
   const cutoff = now - minutes * 60_000;
-  const stale = (await db.items.byState('open')).filter((i) => i.lastActiveAt < cutoff).map((i) => i.id);
+  const stale = (await db.items.byState('open')).filter((i) => i.lastActiveAt < cutoff && !isPriority(i)).map((i) => i.id);
   return stale.length ? (await sleepTabs(db, stale)).slept : 0;
 }
 /** Re-attaches a recreated tab to the item it came from, so the group survives undo/open. */
@@ -136,6 +137,8 @@ export function stashRecord(item: Item, prev: Item | undefined, stashId: string,
     lastActiveAt: item.lastActiveAt, stashedAt: Math.min(prev?.stashedAt ?? now, now), updatedAt: nextStamp(prev?.updatedAt, now),
     classifiable: item.classifiable,
     ...(item.embKey ?? prev?.embKey ? { embKey: (item.embKey ?? prev?.embKey)! } : {}),
+    // A tab saved from Priority still knows where it was before (removing it from Priority later puts it back).
+    ...(!keepGroup && isPriority(item) && item.beforePriority ? { beforePriority: item.beforePriority } : {}),
   };
 }
 /**
@@ -222,17 +225,17 @@ async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Close
   return done;
 }
 /**
- * The copy of a page to keep: a pinned copy, else the active one, else the most recently active.
- * `copies` must be non-empty.
+ * The copy of a page to keep: a copy in Priority, else a pinned copy, else the active one, else the most recently
+ * active. `copies` must be non-empty.
  */
 function bestCopy(copies: Item[], live: Map<number, chrome.tabs.Tab>): Item {
   const rank = (i: Item) => {
     const t = i.tabId === undefined ? undefined : live.get(i.tabId);
-    return [t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
+    return [isPriority(i) ? 1 : 0, t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
   };
   const better = (a: Item, b: Item) => {
     const [ra, rb] = [rank(a), rank(b)];
-    for (let k = 0; k < 3; k++) if (ra[k] !== rb[k]) return rb[k]! > ra[k]!;
+    for (let k = 0; k < ra.length; k++) if (ra[k] !== rb[k]) return rb[k]! > ra[k]!;
     return false;
   };
   return copies.reduce((a, b) => (better(a, b) ? b : a));

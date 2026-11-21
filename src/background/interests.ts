@@ -7,6 +7,7 @@ import type { Db } from './db';
 import { MIRRORED_KEY, loadMirrored, newUserGroup, parseIds, parseName } from './groups';
 import { forgetRemovedTrained } from './grow';
 import { remapUndoGroups } from './memory';
+import { isPriorityName } from '../shared/priority';
 
 /** chrome.storage.local: the last answer to the interests step, `{ picked: string[]; custom: string[] }`. */
 export const INTERESTS_KEY = 'interests';
@@ -86,7 +87,7 @@ export async function applyInterests(
       created.push(id);
     }
     for (const name of custom) {
-      if (named(name)) continue;
+      if (named(name) || isPriorityName(name)) continue; // Priority is the built-in group's name (it appears on first use)
       const g = newUserGroup(name, all.length);
       await s.groups.put(g);
       all.push(g);

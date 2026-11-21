@@ -6,6 +6,11 @@ export type Req =
   | { t: 'state' } // ui -> bg: returns DashboardState
   | { t: 'search'; q: string; semantic: boolean }
   | { t: 'moveItems'; ids: string[]; groupId: string }
+  // The star and the selection bar: add the items to Priority (on) or take them out (off). Returns how many changed.
+  | { t: 'prioritize'; ids: string[]; on: boolean }
+  // What the Alt+P / Alt+Shift+P shortcuts run on a tab (the worker's onCommand calls the same code). Returns
+  // 'added' | 'removed' | 'none'.
+  | { t: 'priorityCommand'; command: 'prioritize-tab' | 'unprioritize-tab'; tabId: number }
   | { t: 'sleep'; ids: string[] }
   | { t: 'stash'; ids: string[] }
   | { t: 'stashWindow'; windowId: number } // popup: stash a window, leaving the dashboard (with Undo) in it
@@ -44,7 +49,7 @@ const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'keepTab', 'settings', 'export', 'deleteAllData', 'import',
-  'interests', 'labelForText', 'groupCreateStarter',
+  'interests', 'labelForText', 'groupCreateStarter', 'prioritize', 'priorityCommand',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

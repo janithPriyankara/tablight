@@ -28,6 +28,10 @@ export const NAMES_SHA256 = 'ab527a25f6104247c2d0e3d2ec65243a3a4712867e516f0ff84
 /** names.txt cap in bytes (design Part 1); tests/unit/names-file.test.ts checks the same. */
 export const NAMES_LIMIT = 1_500_000;
 const PERMISSIONS = ['alarms', 'favicon', 'offscreen', 'sidePanel', 'storage', 'tabs', 'unlimitedStorage'];
+/** Keyboard commands and their suggested keys (Chrome allows at most 4 suggested keys; these are all 4). */
+const COMMANDS = {
+  'open-dashboard': 'Alt+Shift+T', 'open-side-panel': 'Alt+Shift+S', 'prioritize-tab': 'Alt+P', 'unprioritize-tab': 'Alt+Shift+P',
+};
 const ORT_FILES = ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'];
 const LICENSE_ALLOWLIST = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD'];
 /**
@@ -84,6 +88,10 @@ if (perms !== JSON.stringify(PERMISSIONS)) fail(`unexpected permissions: ${perms
 if (JSON.stringify(manifest.optional_permissions) !== '["tabGroups"]') fail('unexpected optional_permissions');
 for (const k of ['host_permissions', 'optional_host_permissions', 'content_scripts', 'externally_connectable']) {
   if (k in manifest) fail(`${k} must not be present`);
+}
+const commands = Object.fromEntries(Object.entries(manifest.commands ?? {}).map(([k, v]) => [k, v?.suggested_key?.default ?? null]));
+if (JSON.stringify(commands, Object.keys(commands).sort()) !== JSON.stringify(COMMANDS, Object.keys(COMMANDS).sort())) {
+  fail(`unexpected commands: ${JSON.stringify(commands)}`);
 }
 if ((manifest.web_accessible_resources ?? []).length > 0) fail('web_accessible_resources must be empty');
 if (manifest.incognito !== 'not_allowed') fail('incognito must be not_allowed');

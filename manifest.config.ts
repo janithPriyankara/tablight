@@ -35,6 +35,14 @@ export const manifest = {
       suggested_key: { default: 'Alt+Shift+S' },
       description: 'Open Tablight in the side panel',
     },
+    'prioritize-tab': {
+      suggested_key: { default: 'Alt+P' },
+      description: 'Add the current tab to Priority',
+    },
+    'unprioritize-tab': {
+      suggested_key: { default: 'Alt+Shift+P' },
+      description: 'Remove the current tab from Priority',
+    },
   },
   content_security_policy: { extension_pages: CSP },
   web_accessible_resources: [] as never[],

@@ -43,6 +43,12 @@ export interface Item {
    * Missing (older data, tabs whose past is unknown) counts as opened.
    */
   opened?: boolean;
+  /**
+   * Local only (never synced or exported): where the tab was when the user added it to Priority, so removing it from
+   * Priority puts it back (when that group still exists; else the pipeline places it as a new tab). Present only
+   * while the item is in Priority; any other placement by the user drops it (withoutPlacedBy).
+   */
+  beforePriority?: { groupId: string | null; groupSource: 'auto' | 'user'; placedBy?: PlacedBy };
 }
 export interface Group {
   id: string;

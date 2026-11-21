@@ -12,6 +12,7 @@ import { embed } from './embedder';
 import { loadNameIndex } from './names-load';
 import { nextStamp } from '../shared/stamp';
 import { acceptSuggestion } from './groups';
+import { PRIORITY_GROUP_ID } from '../shared/priority';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -528,12 +529,13 @@ export interface PoolTab extends Neighbour { id: string }
 const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
 /**
  * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
- * than Videos and Other, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
+ * than Videos, Other and Priority, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
  * older data, counts, except for a YouTube video: those were placed at the low video bar), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
  * (items without one are left out).
  */
 export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Promise<PoolTab[]> {
-  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID).map((g) => g.id));
+  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID &&
+    g.id !== PRIORITY_GROUP_ID).map((g) => g.id));
   const eligible = items
     .filter((i) => i.groupId !== null && ok.has(i.groupId))
     .filter((i) => i.groupSource === 'user' || (i.placedBy === undefined ? !isYouTubeVideo(i.url) : !NOT_EVIDENCE.has(i.placedBy)))
@@ -545,11 +547,15 @@ export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Pro
     return vec ? [{ id: i.id, vec, groupId: i.groupId!, normUrl: i.normUrl }] : [];
   });
 }
-/** The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies. */
+/**
+ * The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies,
+ * and neither does where it was before Priority (beforePriority: a placement elsewhere takes it out of Priority).
+ */
 export function withoutPlacedBy(i: Item): Item {
-  const { placedBy: _p, quietPick: _q, ...rest } = i;
+  const { placedBy: _p, quietPick: _q, beforePriority: _b, ...rest } = i;
   void _p;
   void _q;
+  void _b;
   return rest;
 }
 /** quietPick after an automatic write: set by a quiet change of group, kept while the group stays, else gone. */
