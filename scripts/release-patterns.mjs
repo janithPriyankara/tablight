@@ -103,6 +103,31 @@ export function lookupApiMentions(path, text) {
   });
   return bad;
 }
+/**
+ * http(s):// literals tolerated in shipped JS. Except the look-up APIs, none is ever fetched: each is a comment, an
+ * error-message hint, an XML namespace, or a default that src/offscreen overrides (and the e2e test proves no request
+ * is made). Each library entry (`pkgs`) is scoped to the package(s) it comes from: it may appear only in a chunk where
+ * the build record attributes it to one of those packages, never in app code and never in background.js. An app
+ * entry (`app`) may appear only where the build record attributes it to the source file it names.
+ * Anything else fails the gate. (verify-release applies it; the unit tests check the look-up entries.)
+ */
+export const URL_ALLOWLIST = [
+  { re: /^http:\/\/www\.w3\.org\/(2000\/svg|1999\/xhtml|1998\/Math\/MathML)$/, pkgs: ['preact'], why: 'XML namespace identifiers used by Preact when creating SVG/MathML elements; identifiers, not requests' },
+  { re: /^https:\/\/cdn\.jsdelivr\.net\/npm\/onnxruntime-web@/, pkgs: ['@huggingface/transformers'], why: 'Transformers.js default wasm location; overridden by env.backends.onnx.wasm.wasmPaths before any pipeline is built (asserted by the e2e bundle check and live network capture)' },
+  { re: /^https:\/\/huggingface\.co\/$/, pkgs: ['@huggingface/transformers'], why: 'Transformers.js default remote host string; remote models are disabled (allowRemoteModels=false) and the CSP forbids connections' },
+  { re: /^https:\/\/huggingface\.co\/docs\//, pkgs: ['@huggingface/transformers'], why: 'Transformers.js documentation link inside an error/warning message' },
+  { re: /^https:\/\/github\.com\/huggingface\/transformers\.js\/issues\//, pkgs: ['@huggingface/transformers'], why: 'Transformers.js bug-report link inside an error message' },
+  { re: /^https:\/\/gist\.github\.com\//, pkgs: ['@huggingface/transformers'], why: 'Transformers.js source comment referencing a gist' },
+  { re: /^https:\/\/developer\.mozilla\.org\//, pkgs: ['@huggingface/transformers', 'onnxruntime-web'], why: 'Transformers.js documentation link in a comment/message (MDN)' },
+  { re: /^https:\/\/web\.dev\//, pkgs: ['onnxruntime-web', '@huggingface/transformers'], why: 'ONNX Runtime/Transformers.js warning text linking to web.dev (cross-origin isolation)' },
+  { re: /^https:\/\/rolldown\.rs\//, pkgs: ['bundler-runtime'], why: 'Bundler runtime helper comment/message (Rolldown docs)' },
+  // The URLs the app itself fetches, and only after the user clicks "Look it up" and confirms (design Part 2).
+  { re: /^https:\/\/www\.wikidata\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikidata search API: the opt-in look-up, sent only after the user confirms the dialog' },
+  // The look-up's fallback, in the same confirmed click: the same text, only when Wikidata answered with no topical hit.
+  { re: /^https:\/\/en\.wikipedia\.org\/w\/api\.php$/, app: [LOOKUP_SOURCE], why: 'Wikipedia search API: the opt-in look-up\'s fallback when Wikidata finds nothing, same confirmed text and click' },
+  // A link the look-up dialog shows (opened in a new tab only if the user clicks it); never fetched by the app.
+  { re: /^https:\/\/foundation\.wikimedia\.org\/wiki\/Policy:Privacy_policy$/, app: ['src/ui/common/LookupDialog.tsx'], why: 'Wikimedia privacy-policy link in the look-up dialog; a link, not a request' },
+];
 /** The project-relative module (no extension, no query) an import specifier in `path` names; null for a package. */
 function resolveSpec(path, spec) {
   if (!spec.startsWith('.')) return null;

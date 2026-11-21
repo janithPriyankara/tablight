@@ -17,3 +17,7 @@ export function importsOf(path: string, text: string): string[];
 export function lookupReexports(path: string, text: string): string[];
 export const LOOKUP_APIS: { name: string; url: string; re: RegExp }[];
 export function lookupApiMentions(path: string, text: string): string[];
+export const URL_ALLOWLIST: (
+  | { re: RegExp; pkgs: string[]; app?: undefined; why: string }
+  | { re: RegExp; app: string[]; pkgs?: undefined; why: string }
+)[];
