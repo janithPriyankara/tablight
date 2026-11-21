@@ -25,7 +25,10 @@ export async function remapBeforePriority(s: Pick<StoreApis, 'items'>, moved: Re
 }
 
 export { PRIORITY_RENAMED_KEY };
-/** The name a user group called "Priority" (any case) gets: "Priority (yours)", then "Priority (yours) 2", … */
+/**
+ * The name a user group called "Priority" (any case) gets: "Priority (yours)", then "Priority (yours) 2", … The first
+ * one not taken (any case), so the same groups always give the same name.
+ */
 export function freeReservedName(groups: Pick<Group, 'name'>[]): string {
   const taken = new Set(groups.map((g) => g.name.toLowerCase()));
   const base = `${PRIORITY_NAME} (yours)`;
@@ -35,13 +38,17 @@ export function freeReservedName(groups: Pick<Group, 'name'>[]): string {
 }
 /**
  * Inside a transaction: renames every group other than the built-in Priority that is called "Priority" (any case),
- * suggestions included, to "Priority (yours)" (numbered when taken). Its id, examples, lessons and tabs stay as they
- * are; its saved tabs get a new sync stamp so the new name wins on other devices (as a rename does). Returns the
- * renames of groups the user had (not suggestions), for the one-time notice.
+ * suggestions included, to "Priority (yours)" (numbered when taken; holders in id order, so the numbering is stable).
+ * The group keeps its id, examples, lessons and open tabs. Its saved tabs move into the built-in Priority group
+ * (created when missing), with their sync stamps untouched: their name on the wire stays "Priority", which every
+ * device on this version reads as the built-in group (sync and import map it there). Bumping them under the new name
+ * would pull other devices' saved Priority tabs out of Priority when a device updates late (an older version had made
+ * an ordinary "Priority" group from them). Each remembers the renamed group, so taking it out of Priority here puts
+ * it back there. Returns the renames of groups the user had (not suggestions), for the one-time notice.
  */
 export async function renameReservedIn(s: Stores, now = Date.now()): Promise<{ id: string; name: string }[]> {
   const all = await s.groups.all();
-  const holders = all.filter((g) => g.id !== PRIORITY_GROUP_ID && isPriorityName(g.name));
+  const holders = all.filter((g) => g.id !== PRIORITY_GROUP_ID && isPriorityName(g.name)).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const out: { id: string; name: string }[] = [];
   for (const g of holders) {
     const name = freeReservedName(all);
@@ -50,8 +57,18 @@ export async function renameReservedIn(s: Stores, now = Date.now()): Promise<{ i
     await s.groups.put(next);
     if (g.suggested) continue; // unaccepted suggestions never sync and were never the user's
     out.push({ id: g.id, name });
-    for (const i of await s.items.byState('stashed')) {
-      if (i.groupId === g.id) await s.items.put({ ...i, updatedAt: nextStamp(i.updatedAt, now) });
+    const saved = (await s.items.byState('stashed')).filter((i) => i.groupId === g.id);
+    if (saved.length && !(await s.groups.get(PRIORITY_GROUP_ID))) {
+      const p = newPriorityGroup(now);
+      await s.groups.put(p);
+      all.push(p);
+    }
+    for (const i of saved) {
+      const before: NonNullable<Item['beforePriority']> = {
+        groupId: g.id, groupSource: i.groupSource, ...(i.groupSource === 'auto' && i.placedBy !== undefined ? { placedBy: i.placedBy } : {}),
+      };
+      // updatedAt unchanged: what syncs (the page and the group name "Priority") is exactly what it was.
+      await s.items.put({ ...withoutPlacedBy(i), groupId: PRIORITY_GROUP_ID, groupSource: 'user', beforePriority: before });
     }
   }
   return out;
@@ -80,13 +97,13 @@ export async function migrateReservedName(db: Db): Promise<number> {
 }
 
 /**
- * Creates the Priority group inside a transaction when it is missing (empty: nothing is moved into it). A group that
- * holds the name is renamed first (renameReservedIn). Returns those renames.
+ * Creates the Priority group inside a transaction when it is missing. A group that holds the name is renamed first
+ * (renameReservedIn: only its saved tabs move in). Returns those renames.
  */
 export async function ensurePriorityIn(s: Stores, now = Date.now()): Promise<{ id: string; name: string }[]> {
   if (await s.groups.get(PRIORITY_GROUP_ID)) return [];
   const renamed = await renameReservedIn(s, now);
-  await s.groups.put(newPriorityGroup(now));
+  if (!(await s.groups.get(PRIORITY_GROUP_ID))) await s.groups.put(newPriorityGroup(now));
   return renamed;
 }
 /** The Priority group as a name match for sync and import: the existing one, or a new one to store. */

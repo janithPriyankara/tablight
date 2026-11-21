@@ -479,6 +479,8 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
       });
     if (!tabIds.length) continue;
     const mine = native.find((n) => ours.get(n.id) === g.id);
+    // A native group of ours follows its group's name (a rename, e.g. "Priority" → "Priority (yours)") at once.
+    if (mine && mine.title !== g.name) await chrome.tabGroups.update(mine.id, { title: g.name });
     const existing = mine ?? native.find((n) => n.title === g.name && !ours.has(n.id));
     const todo = existing ? tabIds.filter((id) => tabById.get(id)!.groupId !== existing.id) : tabIds;
     if (existing) ours.set(existing.id, g.id);

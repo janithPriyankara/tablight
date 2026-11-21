@@ -357,9 +357,7 @@ export function flushTabEvents(): Promise<void> {
     const seq = eventSeq;
     try {
       const db = await config.db();
-      const newSession = await sessionIsNew();
-      const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
-      if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+      const result = await snapshotReconcile(db);
       // Up to date, unless another event arrived meanwhile (its own update is still to come).
       if (seq === eventSeq && !timer) {
         marked = false;
@@ -382,14 +380,29 @@ export function flushTabEvents(): Promise<void> {
 export async function reconcileNow(): Promise<void> {
   if (!config) return;
   try {
-    const db = await config.db();
-    const newSession = await sessionIsNew();
-    await reconcile(db, await chrome.tabs.query({}), { newSession });
-    if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+    await snapshotReconcile(await config.db());
   } catch (e) {
     console.error('tab index catch-up failed', e);
   }
   onTabEvent();
+}
+/**
+ * Reconciles snapshots one at a time: each reads the open tabs and commits its transaction before the next reads.
+ * Without it, a debounced flush could read the tabs before a new tab existed and commit after reconcileNow indexed
+ * (and the user starred) that tab, deleting the item; the next update would recreate it without its star. Only the
+ * read-and-write is serialized: the classification that follows a flush runs outside it, so reconcileNow never
+ * waits for the model.
+ */
+let snapshotLock: Promise<unknown> = Promise.resolve();
+function snapshotReconcile(db: Db): Promise<ReconcileResult> {
+  const run = snapshotLock.then(async () => {
+    const newSession = await sessionIsNew();
+    const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
+    if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+    return result;
+  });
+  snapshotLock = run.catch(() => undefined);
+  return run;
 }
 /** Runs the update a previous background left unfinished (see PENDING_KEY). Never rejects. */
 export async function flushIfPending(): Promise<void> {

@@ -617,7 +617,11 @@ chrome.commands.onCommand.addListener((command, tab) => {
 // repaint any badge a stopped worker left showing a shortcut's feedback.
 void getDb()
   .then(async (db) => {
-    await migrateReservedName(db);
+    if (await migrateReservedName(db)) {
+      notifyChanged();
+      scheduleSync(db); // its saved tabs now in Priority: other devices hear it without waiting for the next pass
+      await mirrorAll(db).catch((e: unknown) => console.error('mirror failed', e)); // the native group's new title
+    }
     for (const tabId of await flashesLeftOver()) await refreshBadge(db, tabId).catch(() => undefined);
   })
   .catch((e: unknown) => console.error('worker start tasks failed', e));
