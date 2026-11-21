@@ -1,0 +1,23 @@
+import type { Item } from '../../shared/types';
+import { isPriority } from '../../shared/priority';
+import { StarIcon } from './icons';
+
+/** Whether a row offers the star: web pages only (the shortcut also ignores browser pages). */
+export const canPrioritize = (item: Item): boolean => item.classifiable;
+/**
+ * The star on a row: adds the tab to Priority, or takes it out (back to the group it was in). The tooltip names the
+ * default shortcut (it can be changed at chrome://extensions/shortcuts).
+ */
+export function PriorityButton(props: { item: Item; tabIndex?: number; disabled?: boolean; onToggle: (item: Item, on: boolean) => void }) {
+  const on = isPriority(props.item);
+  return (
+    <button
+      type="button" class={on ? 'icon-btn star-btn is-on' : 'icon-btn star-btn'} tabIndex={props.tabIndex} disabled={props.disabled}
+      aria-label={on ? 'Remove from Priority' : 'Add to Priority'}
+      title={on ? 'Remove from Priority (Alt+Shift+P on the tab)' : 'Add to Priority (Alt+P on the tab)'}
+      onClick={() => props.onToggle(props.item, !on)}
+    >
+      <StarIcon filled={on} />
+    </button>
+  );
+}

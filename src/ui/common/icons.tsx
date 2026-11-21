@@ -107,6 +107,15 @@ export const PlayIcon = ({ size = 10, class: cls }: IconProps) => (
 export const HelpIcon = (p: IconProps) => (
   <Svg {...p}><circle cx="8" cy="8" r="6.25" /><path d="M6.25 6.25a1.85 1.85 0 0 1 3.6.6c0 1.25-1.85 1.6-1.85 2.65" /><path d="M8 11.6h.01" /></Svg>
 );
+/** A five-point star: the Priority group (filled when `filled`, e.g. on a tab that is in it). */
+export const StarIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+  <Svg {...p}>
+    <path
+      d="M8 1.9l1.85 3.86 4.2.52-3.08 2.92.79 4.17L8 11.3l-3.76 2.07.79-4.17L1.95 6.28l4.2-.52z"
+      fill={filled ? 'currentColor' : 'none'}
+    />
+  </Svg>
+);
 export const InfoIcon = (p: IconProps) => (
   <Svg {...p}><circle cx="8" cy="8" r="6.25" /><path d="M8 7.25v3.5" /><path d="M8 5.1h.01" /></Svg>
 );

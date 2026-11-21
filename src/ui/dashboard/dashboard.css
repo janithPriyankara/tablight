@@ -1025,7 +1025,8 @@ a.link {
 .tour-list li + li {
   margin-top: 4px;
 }
-.tour-body kbd {
+.tour-body kbd,
+.shortcut kbd {
   padding: 0 5px;
   border: 1px solid var(--border-strong);
   border-radius: 4px;
@@ -1078,4 +1079,23 @@ a.link {
 .about-links .link {
   padding: 0;
   font-weight: 500;
+}
+/* Settings → Keyboard shortcuts: each command and its current key, one per line. */
+.shortcut-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.shortcut {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.shortcut dt,
+.shortcut dd {
+  margin: 0;
+}
+.shortcut dd {
+  flex: none;
 }

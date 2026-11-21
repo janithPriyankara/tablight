@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import { openDashboard } from '../../shared/nav';
 import type { GroupSummary, Item } from '../../shared/types';
-import { GroupDot } from '../common/GroupChip';
 import { ItemRow } from '../common/ItemRow';
 import { LookItUpButton, LookupDialog, lookupOffer } from '../common/LookupDialog';
 import { displayTitle, plural } from '../common/format';
@@ -15,12 +14,17 @@ import { useGrownNotice } from '../common/useGrownNotice';
 import { hintOnce } from '../common/hints';
 import { InlineCloseConfirm, SUSPICIOUS_INTRO, SuspiciousRows } from '../common/Suspicious';
 import { SearchResultsView, totalsLine } from '../popup/Popup';
-import { windowNumbers } from '../dashboard/views';
+import { regularGroups, windowNumbers } from '../dashboard/views';
+import { GroupMark } from '../common/GroupChip';
+import { PriorityButton, canPrioritize } from '../common/PriorityButton';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME } from '../../shared/priority';
 
 /** Section ids that are expanded, kept per browser profile (a convenience: losing it is harmless). */
 const OPEN_KEY = 'sidepanel.open';
 const WINDOW_SECTION = 'window';
 const UNSORTED_SECTION = 'unsorted';
+/** The Priority group's section (listed first, open by default). */
+const PRIORITY_SECTION = `group:${PRIORITY_GROUP_ID}`;
 /** A section never renders more rows than this; the dashboard has the full list. */
 const MAX_ROWS = 300;
 /** Suspicious rows shown before "Show all (N)", so the window list stays in view. */
@@ -33,7 +37,7 @@ function loadOpen(): Set<string> {
   } catch {
     /* unavailable or corrupt: defaults */
   }
-  return new Set([WINDOW_SECTION]);
+  return new Set([WINDOW_SECTION, PRIORITY_SECTION]);
 }
 function saveOpen(open: Set<string>): void {
   try {
@@ -147,6 +151,11 @@ export function SidePanel() {
     });
   const close = (item: Item) => closeIds([item.id]);
   const keep = (item: Item) => act(async () => void (await send({ t: 'keepTab', id: item.id })));
+  const prioritize = (item: Item, on: boolean) =>
+    act(async () => {
+      const n = await send<number>({ t: 'prioritize', ids: [item.id], on });
+      if (n) notify(on ? `Added to ${PRIORITY_NAME}` : `Removed from ${PRIORITY_NAME}`);
+    });
 
   const items = state?.items ?? [];
   const groups = useMemo(() => new Map((state?.groups ?? []).map((g) => [g.id, g])), [state]);
@@ -156,7 +165,10 @@ export function SidePanel() {
       .sort((a, b) => (order.get(a.tabId!) ?? Infinity) - (order.get(b.tabId!) ?? Infinity)),
     [items, windowId, order],
   );
-  const shownGroups = (state?.groups ?? []).filter((g) => g.count > 0).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  // Priority first, above this window's tabs (shown while it has tabs); then the other groups by size.
+  const priorityGroup = regularGroups(state?.groups ?? []).find((g) => g.id === PRIORITY_GROUP_ID);
+  const shownGroups = (state?.groups ?? []).filter((g) => g.count > 0 && g.id !== PRIORITY_GROUP_ID)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const unsorted = items.filter((i) => i.groupId === null && hasTab(i)).sort(byUse);
   const suspicious = state?.suspicious ?? [];
   // Nothing left to close (closed elsewhere, or kept): drop a pending confirmation with the section.
@@ -228,6 +240,7 @@ export function SidePanel() {
         actions={
           <>
             {lookupOn && lookupOffer(i) !== null && <LookItUpButton item={i} disabled={busy} onClick={setLookupItem} />}
+            {canPrioritize(i) && <PriorityButton item={i} disabled={busy} onToggle={(it, on) => void prioritize(it, on)} />}
             {i.state === 'open' && i.classifiable && !active && (
               <button type="button" class="icon-btn" aria-label="Pause" title="Pause: frees its memory, stays in your tab strip" disabled={busy} onClick={() => void sleep([i.id])}>
                 <PauseIcon />
@@ -262,7 +275,7 @@ export function SidePanel() {
           <svg class="sp-chevron" viewBox="0 0 16 16" aria-hidden="true" style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}>
             <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          {opts.group && <GroupDot color={opts.group.color} />}
+          {opts.group && <GroupMark group={opts.group} />}
           <span class="sp-name">{title}</span>
           {opts.group && opts.group.watchCount > 0 && (
             <span class="watch" title={`${opts.group.watchCount} to watch`}><PlayIcon />{opts.group.watchCount}</span>
@@ -354,6 +367,8 @@ export function SidePanel() {
           ) : state ? (
             <>
               {suspiciousSection}
+              {priorityGroup && section(PRIORITY_SECTION, priorityGroup.name,
+                items.filter((i) => i.groupId === PRIORITY_GROUP_ID).sort(byUse), { group: priorityGroup, count: priorityGroup.count })}
               {section(WINDOW_SECTION, 'This window', thisWindow, { showGroup: true })}
               {shownGroups.map((g) =>
                 section(`group:${g.id}`, g.name, items.filter((i) => i.groupId === g.id).sort(byUse), { group: g, count: g.count }))}

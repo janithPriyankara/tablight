@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { CloseIcon, HelpIcon, MoveIcon, PauseIcon, PlayIcon, SparkIcon, StashIcon } from '../common/icons';
+import { CloseIcon, HelpIcon, MoveIcon, PauseIcon, PlayIcon, SparkIcon, StarIcon, StashIcon } from '../common/icons';
 
 export interface TourStep {
   /** CSS selector of the real element this step points at; none (or not on screen) = a centred card. */
@@ -44,6 +44,7 @@ export const TOUR_STEPS: TourStep[] = [
         <ul class="tour-list">
           <li><PauseIcon size={13} class="tour-inline" /> <strong>Pause</strong>: frees its memory. It stays in your tab strip and comes back when you click it.</li>
           <li><StashIcon size={13} class="tour-inline" /> <strong>Save for later</strong>: closes it and keeps it in your Saved for later list.</li>
+          <li><StarIcon size={13} class="tour-inline" /> <strong>Priority</strong>: puts it in your Priority group, listed first. Only you put tabs there. On any page, <kbd>Alt</kbd>+<kbd>P</kbd> adds the tab and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out.</li>
           <li><MoveIcon size={13} class="tour-inline" /> <strong>Move</strong> puts it in another group, and <CloseIcon size={13} class="tour-inline" /> closes it.</li>
         </ul>
       </>

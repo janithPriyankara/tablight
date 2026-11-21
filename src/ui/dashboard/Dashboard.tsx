@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { SuspiciousTab } from '../../shared/clues';
 import { send } from '../../shared/rpc';
 import { LAST_SESSION_KEY, type DashboardState, type GroupSummary, type Item, type Settings as SettingsT } from '../../shared/types';
-import { GroupDot } from '../common/GroupChip';
 import { displayTitle, plural } from '../common/format';
 import {
-  CloseIcon, CopyIcon, HelpIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StashIcon,
+  CloseIcon, CopyIcon, HelpIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StarIcon, StashIcon,
   SwitchIcon, TrashIcon,
 } from '../common/icons';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME, isPriority } from '../../shared/priority';
+import { canPrioritize } from '../common/PriorityButton';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
@@ -16,6 +17,7 @@ import { useGrownNotice } from '../common/useGrownNotice';
 import { hintOnce } from '../common/hints';
 import { CLOSE_ALL_BODY, SUSPICIOUS_INTRO, SuspiciousRows, closeAllTitle } from '../common/Suspicious';
 import { GroupList, ViewSelect } from './GroupList';
+import { GroupMark } from '../common/GroupChip';
 import { ItemGrid, type RowAction, type SelectMode } from './ItemGrid';
 import { ConfirmDialog, type ConfirmOptions, Modal, NameDialog } from './Modal';
 import { LookupDialog } from '../common/LookupDialog';
@@ -307,8 +309,15 @@ export function Dashboard() {
     notify(`Moved ${plural(ids.length, 'tab')}${g ? ` to ${g.name}` : ''}`);
     setSelected(new Set());
   };
+  /** The star and the selection bar: adds to Priority (on) or takes out, back to where each tab was. */
+  const prioritizeIds = async (ids: string[], on: boolean) => {
+    const n = await send<number>({ t: 'prioritize', ids, on });
+    notify(on ? `Added ${plural(n, 'tab')} to ${PRIORITY_NAME}` : `Removed ${plural(n, 'tab')} from ${PRIORITY_NAME}`);
+    setSelected(new Set());
+  };
   const onRowAction = (action: RowAction, item: Item) => {
     if (action === 'lookup') return openDialog({ kind: 'lookup', item });
+    if (action === 'priority') return void act(() => prioritizeIds([item.id], !isPriority(item)));
     if (action === 'move') {
       setSelected(new Set([item.id]));
       anchor.current = item.id;
@@ -564,12 +573,17 @@ export function Dashboard() {
       case 'unsorted': return 'Nothing unsorted: every tab has a group.';
       case 'duplicates': return 'No page is open more than once.';
       case 'stashed': return 'Nothing saved yet. “Save for later” closes a tab and keeps it here, so it uses no memory until you open it again.';
-      case 'group': return currentGroup ? 'No tabs in this group yet. Drag tabs here to teach it.' : 'This group no longer exists.';
+      case 'group':
+        if (currentGroup?.id === PRIORITY_GROUP_ID) return 'Nothing in Priority. Star a tab, or press Alt+P on it, to add it here.';
+        return currentGroup ? 'No tabs in this group yet. Drag tabs here to teach it.' : 'This group no longer exists.';
       default: return 'No tabs yet.';
     }
   })();
   const canGroupAct = !searching && (view.kind === 'group' || view.kind === 'unsorted');
   const moveTargets = groups.filter((g) => !g.suggested);
+  // The selection bar's star: takes the selection out of Priority when all of it is there, else adds it.
+  const starrable = selection.filter(canPrioritize);
+  const allStarred = starrable.length > 0 && starrable.every(isPriority);
 
   return (
     <>
@@ -664,7 +678,7 @@ export function Dashboard() {
 
           <div class="view-head">
             <div class="view-title-row">
-              {currentGroup && !searching && <GroupDot color={currentGroup.color} />}
+              {currentGroup && !searching && <GroupMark group={currentGroup} />}
               <h1 class="view-title" id="view-title" tabIndex={-1}>{title}</h1>
               {currentGroup?.suggested && !searching && <span class="status-pill">Suggested</span>}
             </div>
@@ -705,7 +719,7 @@ export function Dashboard() {
                   <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void dismissSuggestion(currentGroup.id)}>Dismiss</button>
                 </>
               )}
-              {currentGroup && !searching && !currentGroup.suggested && (
+              {currentGroup && !searching && !currentGroup.suggested && currentGroup.id !== PRIORITY_GROUP_ID && (
                 <>
                   <button type="button" class="icon-btn" disabled={busy} aria-label="Rename group" title="Rename" onClick={() => void renameGroup(currentGroup)}>
                     <PencilIcon />
@@ -741,6 +755,13 @@ export function Dashboard() {
                   <TrashIcon />Remove from Saved for later
                 </button>
               )}
+              <button
+                type="button" class="btn btn-sm" disabled={busy || !starrable.length}
+                title={allStarred ? 'Take the selected tabs out of Priority, back to their groups' : 'Add the selected tabs to Priority'}
+                onClick={() => void act(() => prioritizeIds(starrable.map((i) => i.id), !allStarred))}
+              >
+                <StarIcon filled={allStarred} />{allStarred ? 'Remove from Priority' : 'Prioritize'}
+              </button>
               <select
                 ref={moveSelect} class="field field-inline field-sm" aria-label="Move selected tabs to group" value="" disabled={busy}
                 onChange={(e) => {
@@ -845,7 +866,7 @@ export function Dashboard() {
       )}
       {dialog?.kind === 'merge' && (
         <MergeDialog
-          from={dialog.from} groups={moveTargets} onClose={() => setDialog(null)}
+          from={dialog.from} groups={moveTargets.filter((g) => g.id !== PRIORITY_GROUP_ID)} onClose={() => setDialog(null)}
           onMerge={(into) => {
             const from = dialog.from;
             setDialog(null);
