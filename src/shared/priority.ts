@@ -9,6 +9,13 @@ export const PRIORITY_NAME = 'Priority';
 /** An amber that maps to Chrome's yellow tab-group colour. */
 export const PRIORITY_COLOR = '#c99a00';
 export const PRIORITY_ICON = '⭐';
+/**
+ * chrome.storage.local: the new names of user groups renamed because "Priority" became the built-in group's name
+ * (string[]). The dashboard shows a one-time notice for them and removes the key when it is dismissed.
+ */
+export const PRIORITY_RENAMED_KEY = 'priorityRenamed';
+/** Shown when the user tries to give another group the name "Priority" (create, rename). */
+export const RESERVED_NAME_MESSAGE = '“Priority” is the built-in group you fill yourself. Choose another name.';
 /** The manifest's commands: add the current tab to Priority (Alt+P), remove it (Alt+Shift+P). */
 export const PRIORITIZE_COMMAND = 'prioritize-tab';
 export const UNPRIORITIZE_COMMAND = 'unprioritize-tab';

@@ -104,6 +104,8 @@ async function adopt(db: Db, item: Item, tab: chrome.tabs.Tab): Promise<void> {
         await s.items.put({
           ...withoutPlacedBy(existing), groupId: item.groupId, groupSource: item.groupSource,
           ...(item.groupSource === 'auto' && placedBy !== undefined ? { placedBy } : {}),
+          // A Priority tab brought back keeps where it was before Priority.
+          ...(isPriority(item) && item.beforePriority ? { beforePriority: item.beforePriority } : {}),
         });
       }
       return;
@@ -225,13 +227,13 @@ async function removeTabs(entries: (readonly [Closed, number])[]): Promise<Close
   return done;
 }
 /**
- * The copy of a page to keep: a copy in Priority, else a pinned copy, else the active one, else the most recently
- * active. `copies` must be non-empty.
+ * The copy of a page to keep: a pinned copy, else the active one, else the most recently active.
+ * `copies` must be non-empty.
  */
 function bestCopy(copies: Item[], live: Map<number, chrome.tabs.Tab>): Item {
   const rank = (i: Item) => {
     const t = i.tabId === undefined ? undefined : live.get(i.tabId);
-    return [isPriority(i) ? 1 : 0, t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
+    return [t?.pinned ? 1 : 0, t?.active ? 1 : 0, i.lastActiveAt];
   };
   const better = (a: Item, b: Item) => {
     const [ra, rb] = [rank(a), rank(b)];
@@ -239,6 +241,14 @@ function bestCopy(copies: Item[], live: Map<number, chrome.tabs.Tab>): Item {
     return false;
   };
   return copies.reduce((a, b) => (better(a, b) ? b : a));
+}
+/**
+ * The copies of a page that duplicate cleanup leaves open: every copy in Priority and every pinned copy, when there
+ * are any (those are never closed); otherwise the best copy (bestCopy). `copies` must be non-empty.
+ */
+function keepers(copies: Item[], live: Map<number, chrome.tabs.Tab>): Set<Item> {
+  const kept = copies.filter((i) => isPriority(i) || (i.tabId !== undefined && live.get(i.tabId)?.pinned === true));
+  return new Set(kept.length ? kept : [bestCopy(copies, live)]);
 }
 /**
  * Duplicate copies whose tab is open now, one record per tab, by page. The index is updated a moment after tab
@@ -256,7 +266,8 @@ function liveCopies(items: Item[], live: Map<number, chrome.tabs.Tab>): Item[][]
 /**
  * Closes the items' tabs; `closed` counts the tabs actually removed (already-gone tabs are skipped).
  * `keepOne` (closing from the Duplicates view, which lists every copy): when the ids cover every open copy of a
- * page, the best copy stays open; `kept` counts those pages.
+ * page, the copies cleanup keeps (keepers: Priority and pinned copies, else the best one) stay open; `kept` counts
+ * those pages.
  */
 export async function closeTabs(
   db: Db, ids: string[], opts: { keepOne?: boolean } = {},
@@ -267,7 +278,7 @@ export async function closeTabs(
   if (opts.keepOne) {
     for (const copies of liveCopies(await db.items.all(), live)) {
       if (copies.every((i) => wanted.has(i.id))) {
-        wanted.delete(bestCopy(copies, live).id);
+        for (const k of keepers(copies, live)) wanted.delete(k.id);
         kept++;
       }
     }
@@ -282,13 +293,16 @@ export async function closeTabs(
   const closed = await removeTabs(entries);
   return { token: remember({ closed }), closed: closed.length, kept };
 }
-/** Closes duplicate tabs, keeping the best copy of each page (see bestCopy). */
+/**
+ * Closes duplicate tabs. A tab in Priority and a pinned tab are never closed: when a page has such copies only the
+ * others close; otherwise the best copy of each page stays (see keepers).
+ */
 export async function closeExtras(db: Db): Promise<{ closed: number; token: string }> {
   const live = await liveTabs();
   const ids: string[] = [];
   for (const copies of liveCopies(await db.items.all(), live)) {
-    const keep = bestCopy(copies, live);
-    for (const i of copies) if (i !== keep) ids.push(i.id);
+    const keep = keepers(copies, live);
+    for (const i of copies) if (!keep.has(i)) ids.push(i.id);
   }
   const { token, closed } = await closeTabs(db, ids);
   return { closed, token };

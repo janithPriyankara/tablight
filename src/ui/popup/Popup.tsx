@@ -6,6 +6,7 @@ import { ItemRow } from '../common/ItemRow';
 import { ago, displayTitle, plural } from '../common/format';
 import { CloseIcon, CopyIcon, GridIcon, LogoMark, PanelIcon, PauseIcon, PlayIcon, SearchIcon, ShieldIcon, StashIcon, SwitchIcon } from '../common/icons';
 import { openDashboard } from '../../shared/nav';
+import { isPriority } from '../../shared/priority';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
 import { MAX_QUERY, useSearch } from '../common/useSearch';
@@ -157,9 +158,12 @@ export function Popup() {
             <button type="button" class="btn btn-sm" disabled={busy} onClick={() => void openItem(state.activeDup!.others[0]!)}>
               <SwitchIcon />Switch
             </button>
-            <button type="button" class="btn btn-sm btn-ghost" disabled={busy} onClick={() => void closeThis(state.activeDup!.item)}>
-              <CloseIcon />Close this one
-            </button>
+            {/* A tab in Priority is never offered for closing; Switch goes to a Priority copy first. */}
+            {!isPriority(state.activeDup.item) && (
+              <button type="button" class="btn btn-sm btn-ghost" disabled={busy} onClick={() => void closeThis(state.activeDup!.item)}>
+                <CloseIcon />Close this one
+              </button>
+            )}
           </div>
         </section>
       )}

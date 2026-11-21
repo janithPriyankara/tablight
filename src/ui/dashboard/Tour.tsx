@@ -44,7 +44,7 @@ export const TOUR_STEPS: TourStep[] = [
         <ul class="tour-list">
           <li><PauseIcon size={13} class="tour-inline" /> <strong>Pause</strong>: frees its memory. It stays in your tab strip and comes back when you click it.</li>
           <li><StashIcon size={13} class="tour-inline" /> <strong>Save for later</strong>: closes it and keeps it in your Saved for later list.</li>
-          <li><StarIcon size={13} class="tour-inline" /> <strong>Priority</strong>: puts it in your Priority group, listed first. Only you put tabs there. On any page, <kbd>Alt</kbd>+<kbd>P</kbd> adds the tab and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out.</li>
+          <li><StarIcon size={13} class="tour-inline" /> <strong>Priority</strong>: puts it in your Priority group, listed first. Only you put tabs there. On any page, <kbd>Alt</kbd>+<kbd>P</kbd> adds the tab and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out (Option on a Mac).</li>
           <li><MoveIcon size={13} class="tour-inline" /> <strong>Move</strong> puts it in another group, and <CloseIcon size={13} class="tour-inline" /> closes it.</li>
         </ul>
       </>

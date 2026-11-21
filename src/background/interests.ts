@@ -8,6 +8,7 @@ import { MIRRORED_KEY, loadMirrored, newUserGroup, parseIds, parseName } from '.
 import { forgetRemovedTrained } from './grow';
 import { remapUndoGroups } from './memory';
 import { isPriorityName } from '../shared/priority';
+import { remapBeforePriority } from './priority';
 
 /** chrome.storage.local: the last answer to the interests step, `{ picked: string[]; custom: string[] }`. */
 export const INTERESTS_KEY = 'interests';
@@ -117,6 +118,7 @@ export async function applyInterests(
       if (i.groupId !== null && suggested.has(i.groupId)) continue; // a pending suggestion stays as it is
       await s.queue.add(i.id);
     }
+    await remapBeforePriority(s, moved); // Priority tabs remember an adopted group under its new id
     await s.settings.set({ interestsAnswered: true, interestsFresh: false });
     return { created, removed };
   });

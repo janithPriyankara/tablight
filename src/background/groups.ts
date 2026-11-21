@@ -9,8 +9,8 @@ import { autoPick, cachedVectors, fingerprintOf, neighbourPool, recordDismissed,
 import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
-import { PRIORITY_GROUP_ID, PRIORITY_NAME, isPriorityName } from '../shared/priority';
-import { prioritize } from './priority';
+import { PRIORITY_GROUP_ID, RESERVED_NAME_MESSAGE, isPriorityName } from '../shared/priority';
+import { freeReservedName, prioritize, remapBeforePriority } from './priority';
 
 export const MAX_IDS = 5000;
 export { MAX_NAME, parseName } from '../shared/names';
@@ -153,7 +153,7 @@ export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */
 /** Group names are unique (ignoring case): sync and tab-group mirroring match groups by name. */
 function assertFreeName(all: Group[], name: string, self?: string): void {
-  if (isPriorityName(name) && self !== PRIORITY_GROUP_ID) throw new Error(`“${PRIORITY_NAME}” is the name of the Priority group`);
+  if (isPriorityName(name) && self !== PRIORITY_GROUP_ID) throw new Error(RESERVED_NAME_MESSAGE);
   const key = name.toLowerCase();
   if (all.some((g) => g.id !== self && !g.suggested && g.name.toLowerCase() === key)) {
     throw new Error(`A group called “${name}” already exists`);
@@ -227,6 +227,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
       // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
       if (i.groupId === from) await s.items.put({ ...withoutPlacedBy(i), groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
     }
+    await remapBeforePriority(s, new Map([[from, into]])); // Priority tabs from `from` go back to `into`
     await s.groups.delete(from);
   });
 }
@@ -282,6 +283,8 @@ export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): P
     }
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;
+    // "Priority" is the built-in group's name: a suggestion named so (from before it was reserved) is renamed.
+    if (isPriorityName(rest.name)) rest.name = freeReservedName(await s.groups.all());
     await s.groups.put(rest);
     late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });

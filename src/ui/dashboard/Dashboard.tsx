@@ -7,7 +7,7 @@ import {
   CloseIcon, CopyIcon, HelpIcon, LogoMark, MergeIcon, PauseIcon, PencilIcon, PlusIcon, SearchIcon, SparkIcon, StarIcon, StashIcon,
   SwitchIcon, TrashIcon,
 } from '../common/icons';
-import { PRIORITY_GROUP_ID, PRIORITY_NAME, isPriority } from '../../shared/priority';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME, PRIORITY_RENAMED_KEY, isPriority } from '../../shared/priority';
 import { canPrioritize } from '../common/PriorityButton';
 import { applyTheme } from '../common/theme';
 import { useDashboardState } from '../common/useDashboardState';
@@ -175,6 +175,25 @@ export function Dashboard() {
   // The selection only ever holds items still listed (live updates remove closed tabs).
   const selection = useMemo(() => list.filter((i) => selected.has(i.id)), [list, selected]);
   const currentGroup = view.kind === 'group' ? groupMap.get(view.id) : undefined;
+  /** The row index an un-starred row had on the Priority page; once it is gone, focus goes to the row now there. */
+  const focusAfterUnstar = useRef<{ id: string; idx: number } | null>(null);
+  useEffect(() => {
+    const pending = focusAfterUnstar.current;
+    if (pending === null || busy) return;
+    // Wait for the refresh that drops the row; while it is still listed nothing moves (dropped if focus is lost meanwhile).
+    if (list.some((i) => i.id === pending.id)) {
+      if (!(document.activeElement && document.activeElement !== document.body)) focusAfterUnstar.current = null;
+      return;
+    }
+    focusAfterUnstar.current = null;
+    const idx = pending.idx;
+    const row = document.querySelector<HTMLElement>(`.grid-row[data-index="${Math.min(idx, list.length - 1)}"] .item-main`);
+    (list.length && row ? row : document.getElementById('view-title'))?.focus();
+  }, [busy, list]);
+  /** Dismisses the one-time notice about a user group renamed for the built-in Priority group. */
+  const dismissRenamed = () => {
+    void Promise.resolve(chrome.storage.local.remove(PRIORITY_RENAMED_KEY)).catch(() => undefined).then(() => refresh());
+  };
 
   /** The control that started the running action: focus goes back to it if it was lost meanwhile. */
   const opener = useRef<HTMLElement | null>(null);
@@ -312,12 +331,18 @@ export function Dashboard() {
   /** The star and the selection bar: adds to Priority (on) or takes out, back to where each tab was. */
   const prioritizeIds = async (ids: string[], on: boolean) => {
     const n = await send<number>({ t: 'prioritize', ids, on });
-    notify(on ? `Added ${plural(n, 'tab')} to ${PRIORITY_NAME}` : `Removed ${plural(n, 'tab')} from ${PRIORITY_NAME}`);
+    if (n) notify(on ? `Added ${plural(n, 'tab')} to ${PRIORITY_NAME}` : `Removed ${plural(n, 'tab')} from ${PRIORITY_NAME}`);
     setSelected(new Set());
   };
   const onRowAction = (action: RowAction, item: Item) => {
     if (action === 'lookup') return openDialog({ kind: 'lookup', item });
-    if (action === 'priority') return void act(() => prioritizeIds([item.id], !isPriority(item)));
+    if (action === 'priority') {
+      // On the Priority page the row leaves with its star: focus moves to the row that takes its place.
+      if (isPriority(item) && view.kind === 'group' && view.id === PRIORITY_GROUP_ID && !searching) {
+        focusAfterUnstar.current = { id: item.id, idx: Math.max(0, list.findIndex((i) => i.id === item.id)) };
+      }
+      return void act(() => prioritizeIds([item.id], !isPriority(item)));
+    }
     if (action === 'move') {
       setSelected(new Set([item.id]));
       anchor.current = item.id;
@@ -654,6 +679,12 @@ export function Dashboard() {
               <button type="button" class="btn btn-ghost btn-sm" onClick={() => void refresh()}>Retry</button>
             </div>
           )}
+          {state?.priorityRenamed?.map((name) => (
+            <div key={name} class="callout callout-info page-callout" role="status">
+              <span>{`Your group “${PRIORITY_NAME}” is now “${name}”: ${PRIORITY_NAME} is a built-in group you fill yourself.`}</span>
+              <button type="button" class="btn btn-ghost btn-sm" onClick={dismissRenamed}>Dismiss</button>
+            </div>
+          ))}
           {error && state && (
             <div class="callout callout-error page-callout" role="alert">
               <span>{`Couldn’t refresh (${error}). Showing the last known tabs.`}</span>

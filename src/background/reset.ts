@@ -8,6 +8,7 @@ import { clearBadgeState } from './duplicates';
 import { MIRRORED_KEY } from './groups';
 import { REMOVED_TRAINED_KEY } from './grow';
 import { INTERESTS_KEY } from './interests';
+import { PRIORITY_RENAMED_KEY } from './priority';
 import { LAST_SESSION_KEY, LOOKUP_CACHE_KEY } from '../shared/types';
 /**
  * Deletes all extension data: every IndexedDB store (tab index, groups, stash, snapshots, embeddings,
@@ -26,7 +27,7 @@ export async function deleteAllData(db: Db): Promise<void> {
   await clearSyncData(async () => {
     await db.clearAll();
     await db.settings.set({ syncEnabled: false, interestsFresh: true }); // the interests step shows again, as on install
-    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY, LOOKUP_CACHE_KEY]);
+    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY, LOOKUP_CACHE_KEY, PRIORITY_RENAMED_KEY]);
   });
   await clearTabContext();
   await clearBadgeState();

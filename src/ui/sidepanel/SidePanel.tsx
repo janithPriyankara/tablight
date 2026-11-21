@@ -151,11 +151,18 @@ export function SidePanel() {
     });
   const close = (item: Item) => closeIds([item.id]);
   const keep = (item: Item) => act(async () => void (await send({ t: 'keepTab', id: item.id })));
-  const prioritize = (item: Item, on: boolean) =>
-    act(async () => {
+  const prioritize = (item: Item, on: boolean) => {
+    // Un-starring from the Priority section takes the row (and the focused star) away: focus its heading, or this
+    // window's once the section is gone.
+    const fromSection = !on && document.activeElement?.closest(`[aria-labelledby="sp-h-${PRIORITY_SECTION}"]`) != null;
+    return act(async () => {
       const n = await send<number>({ t: 'prioritize', ids: [item.id], on });
       if (n) notify(on ? `Added to ${PRIORITY_NAME}` : `Removed from ${PRIORITY_NAME}`);
+    }).then(() => {
+      if (!fromSection) return;
+      setTimeout(() => (document.getElementById(`sp-h-${PRIORITY_SECTION}`) ?? document.getElementById(`sp-h-${WINDOW_SECTION}`))?.focus(), 0);
     });
+  };
 
   const items = state?.items ?? [];
   const groups = useMemo(() => new Map((state?.groups ?? []).map((g) => [g.id, g])), [state]);

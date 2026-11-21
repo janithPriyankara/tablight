@@ -12,7 +12,7 @@ import { embed } from './embedder';
 import { loadNameIndex } from './names-load';
 import { nextStamp } from '../shared/stamp';
 import { acceptSuggestion } from './groups';
-import { PRIORITY_GROUP_ID } from '../shared/priority';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME } from '../shared/priority';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -374,6 +374,23 @@ export function flushTabEvents(): Promise<void> {
   return run;
 }
 
+/**
+ * Reconciles the index now, outside the debounced chain and without its `after` hook, so a caller (the Priority
+ * shortcut on a tab that just opened) never waits for a classification pass. A debounced full update follows, which
+ * classifies whatever this reconcile queued. Never rejects.
+ */
+export async function reconcileNow(): Promise<void> {
+  if (!config) return;
+  try {
+    const db = await config.db();
+    const newSession = await sessionIsNew();
+    await reconcile(db, await chrome.tabs.query({}), { newSession });
+    if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+  } catch (e) {
+    console.error('tab index catch-up failed', e);
+  }
+  onTabEvent();
+}
 /** Runs the update a previous background left unfinished (see PENDING_KEY). Never rejects. */
 export async function flushIfPending(): Promise<void> {
   let pending: unknown;
@@ -733,8 +750,10 @@ async function suggestPass(db: Db): Promise<void> {
     if (!itemIds.length) continue;
     const id = `suggested-${crypto.randomUUID()}`;
     const color = SUGGEST_COLORS[(suggested.length + created.length) % SUGGEST_COLORS.length]!;
-    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2".
+    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2". "Priority"
+    // is always taken: it is the built-in group's name, even before that group exists.
     const taken = new Set([...groups, ...created.map((x) => x.group)].map((g) => g.name.toLowerCase()));
+    taken.add(PRIORITY_NAME.toLowerCase());
     let name = c.name;
     for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${c.name.slice(0, 56)} ${n}`;
     created.push({

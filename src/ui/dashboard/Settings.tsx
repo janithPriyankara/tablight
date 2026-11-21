@@ -329,6 +329,11 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
 }
 /** Where the browser lets you change an extension's shortcuts (a link to it cannot open; chrome.tabs.create can). */
 export const SHORTCUTS_PAGE = 'chrome://extensions/shortcuts';
+export const EDGE_SHORTCUTS_PAGE = 'edge://extensions/shortcuts';
+/** The browser's shortcuts page: Edge's own address in Edge (its user agent says "Edg/"), Chrome's elsewhere. */
+export function shortcutsPage(ua: string = typeof navigator === 'undefined' ? '' : navigator.userAgent): string {
+  return ua.includes('Edg/') ? EDGE_SHORTCUTS_PAGE : SHORTCUTS_PAGE;
+}
 /** The default keys, shown until the browser reports the current ones (and in tests). */
 const DEFAULT_SHORTCUTS: { name: string; description: string; shortcut: string }[] = [
   { name: 'open-dashboard', description: 'Open the Tablight dashboard', shortcut: 'Alt+Shift+T' },
@@ -350,7 +355,8 @@ function Shortcuts({ busy, notify }: { busy: boolean; notify: (m: string) => voi
     }, () => undefined);
   }, []);
   const change = () => {
-    chrome.tabs.create({ url: SHORTCUTS_PAGE }).catch(() => notify(`Open ${SHORTCUTS_PAGE} to change the shortcuts.`));
+    const url = shortcutsPage();
+    chrome.tabs.create({ url }).catch(() => notify(`Open ${url} to change the shortcuts.`));
   };
   return (
     <Section id="keys" title="Keyboard shortcuts">
@@ -363,7 +369,10 @@ function Shortcuts({ busy, notify }: { busy: boolean; notify: (m: string) => voi
             </div>
           ))}
         </dl>
-        <p class="setting-hint">Alt+P and Alt+Shift+P work on the tab you are on, on any web page. You can change any shortcut on the browser’s shortcuts page.</p>
+        <p class="setting-hint">
+          Alt+P and Alt+Shift+P work on the tab you are on, on any web page. On a Mac they are Option+P and Option+Shift+P.
+          You can change any shortcut on the browser’s shortcuts page.
+        </p>
       </div>
       <SettingRow id="set-keys" name="Change shortcuts" group>
         <button type="button" class="btn btn-sm" disabled={busy} onClick={change}>Open shortcuts page</button>

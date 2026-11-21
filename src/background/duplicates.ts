@@ -71,13 +71,48 @@ export async function flashBadge(tabId: number, text: string, restore: () => Pro
   flashing.set(tabId, setTimeout(() => {
     flashing.delete(tabId);
     shown.delete(tabId); // unknown: the restore sets it afresh
+    void forgetFlash(tabId);
     restore().catch(() => undefined);
   }, ms));
+  await rememberFlash(tabId);
   try {
     await chrome.action.setBadgeText({ tabId, text });
   } catch {
     // the tab closed meanwhile: the timer's restore finds nothing to do
   }
+}
+/**
+ * chrome.storage.session: tab ids showing a shortcut's feedback (number[]). The timer lives in memory only, so a worker
+ * stopped during the flash would leave ★ on the tab; the next worker restores those tabs (flashesLeftOver).
+ */
+export const FLASH_KEY = 'badgeFlash';
+async function flashIds(): Promise<number[]> {
+  try {
+    const v = (await chrome.storage.session.get(FLASH_KEY))[FLASH_KEY];
+    return Array.isArray(v) ? v.filter((x): x is number => Number.isSafeInteger(x)) : [];
+  } catch {
+    return [];
+  }
+}
+async function rememberFlash(tabId: number): Promise<void> {
+  const ids = await flashIds();
+  if (!ids.includes(tabId)) await chrome.storage.session.set({ [FLASH_KEY]: [...ids, tabId] }).catch(() => undefined);
+}
+async function forgetFlash(tabId: number): Promise<void> {
+  const ids = await flashIds();
+  if (ids.includes(tabId)) await chrome.storage.session.set({ [FLASH_KEY]: ids.filter((x) => x !== tabId) }).catch(() => undefined);
+}
+/**
+ * Worker start: the tabs a stopped worker left showing a shortcut's feedback (not flashing in this worker). They are
+ * forgotten here; the caller repaints each (refreshBadge with the tab always sets its text).
+ */
+export async function flashesLeftOver(): Promise<number[]> {
+  const ids = (await flashIds()).filter((id) => !flashing.has(id));
+  if (!ids.length) return [];
+  for (const id of ids) shown.delete(id);
+  const keep = (await flashIds()).filter((id) => !ids.includes(id));
+  await chrome.storage.session.set({ [FLASH_KEY]: keep }).catch(() => undefined);
+  return ids;
 }
 /** For tests and a fresh worker. */
 export function resetBadgeCache(): void {
