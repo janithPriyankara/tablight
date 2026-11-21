@@ -324,7 +324,7 @@ describe('the dialog', () => {
     open();
     fireEvent.input(box(), { target: { value: 'Severance wiki down' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Look up' }));
-    expect(await within(dialog()).findByText('Wikipedia couldn’t be reached; these are Wikidata’s matches.')).toBeTruthy();
+    expect(await within(dialog()).findByText('Wikipedia didn’t answer; these are Wikidata’s matches.')).toBeTruthy();
     const hits = within(within(dialog()).getByRole('list', { name: 'Matches' })).getAllByRole('listitem');
     expect(hits.map((h) => h.querySelector('.lookup-hit-source')?.textContent)).toEqual(['Wikidata']);
   });

@@ -160,7 +160,7 @@ export function LookupDialog(props: {
         {phase.k === 'error' && phase.error === 'http' && <p><Site wikipedia={phase.wikipedia} /> returned an error.</p>}
         {phase.k === 'error' && phase.error === 'bad-reply' && <p>Couldn't read <Site wikipedia={phase.wikipedia} />'s answer.</p>}
         {phase.k === 'hits' && phase.hits.length === 0 && <p>No matches</p>}
-        {phase.k === 'hits' && phase.wikipediaFailed && <p class="lookup-note">Wikipedia couldn’t be reached; these are Wikidata’s matches.</p>}
+        {phase.k === 'hits' && phase.wikipediaFailed && <p class="lookup-note">Wikipedia didn’t answer; these are Wikidata’s matches.</p>}
       </div>
       {phase.k === 'hits' && phase.hits.length > 0 && (
         <ul class="lookup-hits" aria-label="Matches">
