@@ -28,7 +28,7 @@
       <ul>
         <li>Open the dashboard with <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>, or click the Tablight icon and choose Open dashboard.</li>
         <li>Open the side panel with <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>, or the Side panel button in the popup.</li>
-        <li>Add the tab you are on to Priority with <kbd>Alt</kbd>+<kbd>P</kbd>; <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out. To change any shortcut, open <code>chrome://extensions/shortcuts</code> (in Edge, <code>edge://extensions/shortcuts</code>), or Settings → Keyboard shortcuts.</li>
+        <li>Add the tab you are on to Priority with <kbd>Alt</kbd>+<kbd>P</kbd>; <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out. On a Mac these are <kbd>Option</kbd>+<kbd>P</kbd> and <kbd>Option</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>. To change any shortcut, open <code>chrome://extensions/shortcuts</code> (in Edge, <code>edge://extensions/shortcuts</code>), or Settings → Keyboard shortcuts.</li>
         <li>Take the guided tour with the <strong>?</strong> button at the top of the dashboard, or Settings → Help.</li>
         <li>Pin Tablight to your toolbar: click the puzzle-piece icon, then the pin next to Tablight.</li>
       </ul>
@@ -38,7 +38,11 @@
       <h3>A tab is in the wrong group.</h3>
       <p>Drag it to the right group, or select it and use Move. Tablight learns from this, so similar tabs follow next time. Tabs that fit no group stay in Unsorted.</p>
       <h3>What is the Priority group?</h3>
-      <p>A group only you fill. Star a tab in the dashboard or side panel, or press <kbd>Alt</kbd>+<kbd>P</kbd> on any web page, and it goes to Priority, which is listed first. The model never puts a tab there and learns nothing from what you put there. Auto-pause skips these tabs, and Close duplicates keeps the copy in Priority. Taking a tab out (the star again, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) puts it back in the group it was in; if that group is gone, Tablight sorts it like a new tab. The shortcuts do nothing on browser pages and in private windows.</p>
+      <p>A group only you fill. Star a tab in the dashboard or side panel, or press <kbd>Alt</kbd>+<kbd>P</kbd> on any web page, and it goes to Priority, which is listed first. The model never puts a tab there or takes one out, and learns nothing from what you put there. Auto-pause skips these tabs, and Close duplicates never closes a tab in Priority (or a pinned tab). Taking a tab out (the star again, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) puts it back in the group it was in, on the device where you added it; if that group is gone, or the tab came from another device or a backup, Tablight sorts it like a new tab. The shortcuts do nothing on browser pages and in private windows.</p>
+      <h3>My own group called “Priority” is now “Priority (yours)”.</h3>
+      <p>“Priority” is now the name of the built-in group you fill yourself, so a group you already had with that name was renamed. Nothing else changed: it keeps its tabs and what it learned. Rename it again in the dashboard if you like (any name but “Priority”).</p>
+      <h3>Alt+P or Alt+Shift+P does something else on a site.</h3>
+      <p>Some sites use Alt with a letter as their own keys (for example, Alt+Shift+P is “Show preview” on wiki sites). While Tablight holds these keys, the site does not get them. To give them back, set other keys at <code>chrome://extensions/shortcuts</code> (in Edge, <code>edge://extensions/shortcuts</code>). On a Mac, Option+P otherwise types “π”.</p>
       <h3>What is the difference between Pause and Save for later?</h3>
       <p>Pause frees a tab’s memory while it stays in your tab strip; click it to resume. Save for later closes the tab and keeps it in your Saved for later list, which syncs to your other devices.</p>
       <h3>What does “New” mean on a tab?</h3>
