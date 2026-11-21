@@ -108,6 +108,8 @@ again for a second suspicious tab (Close all needs two). A plain local address s
 | D-56 | In a group click **Save group for later**. | All its open tabs close into Saved for later ("Saved N tabs for later"); other tabs stay; the button greys out. | ui-dashboard.spec.ts › D-56 |
 | D-57 | Save two YouTube videos (one with `&t=754`) and an article into one group. | Sidebar shows "▶ 2" next to the group, the group says "3 items · 2 to watch", the first video says "from 12:34", the popup's group tile says "2 to watch". | ui-dashboard.spec.ts › D-57 |
 | D-58 | Open **Unsorted**. | Tabs without a group; **Save group for later** and **Pause group** work here too. | ui-dashboard.spec.ts › D-60..D-62 |
+| PR-01 | On a web page press **Alt+P**; open the dashboard; press **Alt+Shift+P** on the same page. | The badge shows ★ for about 2 s, then what it showed before. **Priority** is listed first in Groups with a star, holding the tab; it has no Rename, Merge or Delete. Alt+Shift+P puts the tab back in the group it was in (badge –); the empty Priority entry leaves the sidebar. Both keys do nothing on browser pages, Tablight's pages and in private windows. | priority.spec.ts › PR-01 (through the shortcut's message; the real key press is manual) |
+| PR-02 | Hover a row and click the star; click it again. | "Added 1 tab to Priority"; the tab is in Priority; the second click puts it back. The selection bar has **Prioritize** (or **Remove from Priority** when every selected tab is there). | priority.spec.ts › PR-02 |
 
 ## 6. Dashboard: suggested groups
 
