@@ -48,15 +48,15 @@ describe('look-up gate', () => {
     expect(lookupReexports(p, "export * from './lookup-text';")).toEqual([]);
   });
   it('accepts the dialog sentence in the allowed importer, never a host there', () => {
-    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:');
+    expect(LOOKUP_DIALOG_SENTENCE).toBe('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:');
     const dialog = 'src/ui/common/LookupDialog.tsx';
     const probe = [
       'export function LookupDialog() {',
       '  return (',
       '    <div>',
-      '      <p>Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:</p>',
-      `      <p>{'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:'}</p>`,
-      `      <p title="Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:" />`,
+      '      <p>Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:</p>',
+      `      <p>{'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:'}</p>`,
+      `      <p title="Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:" />`,
       '    </div>',
       '  );',
       '}',

@@ -23,6 +23,8 @@ const NO_HITS = JSON.stringify({ searchinfo: { search: '' }, search: [], success
 const QUERY = 'zorblax quintet';
 /** What the Wikidata route answers: the fixture, or NO_HITS for the test where Wikidata finds nothing. */
 let wikidataBody = FIXTURE;
+/** While set, the Wikidata route holds its answer until this resolves (a slow Wikidata). */
+let wikidataHold: Promise<void> | null = null;
 const googleUrl = (q: string) => `https://www.google.com/search?q=${q.replace(/ /g, '+')}`;
 const GOOGLE = googleUrl(QUERY);
 const googleHtml = (q: string) => `<!doctype html><html><head><meta charset="utf-8"><title>${q} - Google Search</title>` +
@@ -68,10 +70,13 @@ test.beforeAll(async () => {
     const req = route.request();
     seen.push({ url: req.url(), headers: await req.allHeaders() });
     order.push('wikidata');
+    const body = wikidataBody;
+    if (wikidataHold) await wikidataHold;
+    // The page may have aborted the request meanwhile (the user cancelled): then there is nothing to answer.
     await route.fulfill({
-      status: 200, contentType: 'application/json; charset=utf-8', body: wikidataBody,
+      status: 200, contentType: 'application/json; charset=utf-8', body,
       headers: { 'access-control-allow-origin': '*' },
-    });
+    }).catch(() => undefined);
   });
   await h.context.route(`${WP_API}?**`, async (route) => {
     const req = route.request();
@@ -91,6 +96,7 @@ test.beforeAll(async () => {
 });
 test.afterEach(() => {
   wikidataBody = FIXTURE;
+  wikidataHold = null;
   // Nothing may leave for anywhere else, from any page, the service worker or the offscreen document.
   expect(unexpected, 'requests the catch-all route aborted').toEqual([]);
   expect(everything().filter((r) => !allowed(r.url)), 'requests to anything but the extension, the stub and the fixtures').toEqual([]);
@@ -152,7 +158,7 @@ test('Look it up: nothing is sent until "Look up"; then one request with the sho
     const row = h.dash.getByRole('listitem').filter({ hasText: `${QUERY} - Google Search` });
     await lookupButtons(row).click();
     const dialog = h.dash.getByRole('dialog', { name: 'Look it up' });
-    await expect(dialog).toContainText('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:');
+    await expect(dialog).toContainText('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:');
     await expect(dialog).toContainText('Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.');
     const box = dialog.getByRole('textbox');
     await expect(box).toBeFocused();
@@ -208,7 +214,7 @@ test('Wikidata finds nothing: exactly two requests, Wikidata then Wikipedia, sam
   const row = h.dash.getByRole('listitem').filter({ hasText: `${QUERY} - Google Search` });
   await lookupButtons(row).click();
   const dialog = h.dash.getByRole('dialog', { name: 'Look it up' });
-  await expect(dialog).toContainText('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:');
+  await expect(dialog).toContainText('Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:');
   const shown = await dialog.getByRole('textbox').inputValue();
   expect(shown.length).toBeGreaterThan(0);
   expect([...seen, ...wpSeen]).toEqual([]);
@@ -252,6 +258,34 @@ test('Wikidata finds nothing: exactly two requests, Wikidata then Wikipedia, sam
   expect(wpSeen).toHaveLength(1);
 });
 
+test('Cancel while a slow Wikidata (no hits) is still answering: no Wikipedia request is ever made', async () => {
+  seen.length = 0;
+  wpSeen.length = 0;
+  order.length = 0;
+  traffic.length = 0;
+  cdp.requests.length = 0;
+  await h.reset();
+  wikidataBody = NO_HITS; // would trigger the fallback, had the user not cancelled (reset by afterEach)
+  let release!: () => void;
+  wikidataHold = new Promise<void>((res) => (release = res));
+  expect((await openGoogle()).groupId).toBeNull();
+  await navButton(h.dash, 'Unsorted').click();
+  const row = h.dash.getByRole('listitem').filter({ hasText: `${QUERY} - Google Search` });
+  await lookupButtons(row).click();
+  const dialog = h.dash.getByRole('dialog', { name: 'Look it up' });
+  await dialog.getByRole('button', { name: 'Look up' }).click();
+  await expect(dialog.getByText('Looking up…')).toBeVisible();
+  await expect.poll(() => seen.length).toBe(1); // Wikidata has the request and is holding its answer
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toHaveCount(0);
+  release();
+  // Give a fallback every chance to start: none may.
+  await h.dash.waitForTimeout(2000);
+  expect(order).toEqual(['wikidata']);
+  expect(wpSeen).toEqual([]);
+  expect(wikipediaRequests()).toEqual([]);
+  expect(wikidataRequests()).toHaveLength(1);
+});
 test('with the setting off there is no button, and Cancel / Escape send nothing', async () => {
   seen.length = 0;
   wpSeen.length = 0;
@@ -273,7 +307,7 @@ test('with the setting off there is no button, and Cancel / Escape send nothing'
   await navButton(h.dash, 'Settings').click();
   const toggle = h.dash.getByRole('checkbox', { name: 'Show the Look it up button' });
   await expect(toggle).toBeChecked();
-  await expect(h.dash.getByText('Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata finds nothing). Nothing is sent unless you click.')).toBeVisible();
+  await expect(h.dash.getByText('Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata has no usable match). Nothing is sent unless you click.')).toBeVisible();
   await toggle.click();
   await expect.poll(async () => (await h.state()).settings.lookupButton).toBe(false);
   await navButton(h.dash, 'Unsorted').click();

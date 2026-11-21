@@ -2,7 +2,7 @@
 // opens. This is the one module allowed to import the look-up client (LOOKUP_IMPORTERS in
 // scripts/release-patterns.mjs), and lookUp is called in exactly one place: the dialog's "Look up" click handler.
 // Nothing is sent before that click; what is sent is the text shown in the box, cleaned again.
-import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { INTEREST_CHOICES } from '../../classify/seeds';
 import { cleanLookupText, lookupText } from '../../shared/lookup-text';
 import { send } from '../../shared/rpc';
@@ -13,7 +13,7 @@ import { GlobeIcon } from './icons';
 
 /** The hint under the setting's toggle (Settings → General). */
 export const LOOKUP_SETTING_HINT =
-  'Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata finds nothing). Nothing is sent unless you click.';
+  'Sends only the text you confirm, to Wikidata (and to Wikipedia if Wikidata has no usable match). Nothing is sent unless you click.';
 const NEVER_SENT = 'Never sent: the page address, your other tabs or cookies. Wikimedia sees your IP address, as any website does.';
 const PRIVACY_POLICY = 'https://foundation.wikimedia.org/wiki/Policy:Privacy_policy';
 
@@ -40,7 +40,7 @@ export function LookItUpButton(props: { item: Item; onClick: (item: Item) => voi
 type Phase =
   | { k: 'edit' }
   | { k: 'busy' }
-  | { k: 'hits'; hits: LookupHit[] }
+  | { k: 'hits'; hits: LookupHit[]; wikipediaFailed: boolean }
   | { k: 'error'; error: LookupFailure['error']; wikipedia: boolean }
   | { k: 'moving' }
   | { k: 'moveFailed' }
@@ -76,9 +76,17 @@ export function LookupDialog(props: {
   /** A move in flight: the dialog cannot be cancelled until it settles (the move would still happen). */
   const moving = useRef(false);
   const mounted = useRef(true);
-  useEffect(() => () => void (mounted.current = false), []);
+  /** Aborted on Cancel, Escape or unmount: a look-up still running sends nothing more (no Wikipedia fallback). */
+  const stop = useRef<AbortController | null>(null);
+  // A layout effect: registered as soon as the dialog renders, so even an unmount right after "Look up" aborts.
+  useLayoutEffect(() => () => {
+    mounted.current = false;
+    stop.current?.abort();
+  }, []);
   const cancel = () => {
-    if (!moving.current) onClose(false);
+    if (moving.current) return;
+    stop.current?.abort();
+    onClose(false);
   };
 
   const onLookUp = async () => {
@@ -86,10 +94,12 @@ export function LookupDialog(props: {
     if (!sent || busy) return;
     setText(sent); // the box shows exactly what is sent (and the "Will send" line already showed it)
     setPhase({ k: 'busy' });
-    const r = await lookUp(sent, { groups });
-    if (!mounted.current) return;
+    const c = new AbortController();
+    stop.current = c;
+    const r = await lookUp(sent, { groups, signal: c.signal });
+    if (!mounted.current || c.signal.aborted) return;
     if ('error' in r) setPhase({ k: 'error', error: r.error, wikipedia: r.from === 'wikipedia' });
-    else setPhase({ k: 'hits', hits: r.hits });
+    else setPhase({ k: 'hits', hits: r.hits, wikipediaFailed: r.wikipediaFailed === true });
   };
   const move = async (hit: LookupHit) => {
     if (hit.group === null && hit.topic === null) return;
@@ -150,6 +160,7 @@ export function LookupDialog(props: {
         {phase.k === 'error' && phase.error === 'http' && <p><Site wikipedia={phase.wikipedia} /> returned an error.</p>}
         {phase.k === 'error' && phase.error === 'bad-reply' && <p>Couldn't read <Site wikipedia={phase.wikipedia} />'s answer.</p>}
         {phase.k === 'hits' && phase.hits.length === 0 && <p>No matches</p>}
+        {phase.k === 'hits' && phase.wikipediaFailed && <p class="lookup-note">Wikipedia couldn’t be reached; these are Wikidata’s matches.</p>}
       </div>
       {phase.k === 'hits' && phase.hits.length > 0 && (
         <ul class="lookup-hits" aria-label="Matches">

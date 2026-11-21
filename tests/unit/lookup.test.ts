@@ -372,7 +372,7 @@ describe('Wikipedia fallback', () => {
       () => wpReply(
         { title: 'ZORB', index: 2, description: 'video game' },
         { title: 'Zorb ball', index: 1, description: 'sphere' },
-        { title: 'zorb ball', index: 3, description: 'duplicate title' },
+        { title: 'zorb ball', index: 3, description: 'Sphere' },
       ),
     );
     const asked: string[] = [];
@@ -382,9 +382,9 @@ describe('Wikipedia fallback', () => {
       { label: 'Zorb ball', description: 'sphere', group: null, topic: null, source: 'wikipedia' },
       { label: 'ZORB', description: 'video game', group: null, topic: 'games', source: 'wikipedia' },
       { label: 'Other', description: '', group: null, topic: null, source: 'wikidata' },
-    ] }); // Wikidata's "Zorb" is the same label as Wikipedia's "ZORB"; Wikipedia's second "zorb ball" is dropped
+    ] }); // Wikidata's "Zorb" is the same label as Wikipedia's "ZORB"; Wikipedia's second "zorb ball" (same description) is dropped
     // The head is asked exactly like for Wikidata hits: "title — description", or the title alone.
-    expect(asked).toEqual(expect.arrayContaining(['Zorb — a thing', 'Other', 'Zorb ball — sphere', 'zorb ball — duplicate title']));
+    expect(asked).toEqual(expect.arrayContaining(['Zorb — a thing', 'Other', 'Zorb ball — sphere']));
   });
   it('caps the combined hits at 3, in Wikipedia\'s search order (index), pages without an index last', async () => {
     const f = fakeFetch(() => reply({ label: 'WD only', description: '' }), () => wpReply(
@@ -421,7 +421,9 @@ describe('Wikipedia fallback', () => {
   });
   it('a Wikipedia error shows Wikidata\'s hits, and caches nothing', async () => {
     const f = fakeFetch(() => reply({ label: 'Thing', description: 'unknown' }), () => json({}, { status: 503 }));
-    expect(await lookUp('thing', deps(f))).toEqual({ hits: [{ label: 'Thing', description: 'unknown', group: null, topic: null, source: 'wikidata' }] });
+    expect(await lookUp('thing', deps(f))).toEqual({
+      hits: [{ label: 'Thing', description: 'unknown', group: null, topic: null, source: 'wikidata' }], wikipediaFailed: true,
+    });
     expect(await chrome.storage.local.get(LOOKUP_CACHE_KEY)).toEqual({});
     await lookUp('thing', deps(f));
     expect(wpCalls(f)).toHaveLength(2); // asking again can still reach Wikipedia
@@ -528,6 +530,113 @@ describe('Wikipedia fallback', () => {
     answer();
     expect(await p).toEqual({ hits: [{ label: 'Secret Show', description: 'television series', group: null, topic: 'tv', source: 'wikipedia' }] });
     await new Promise((r) => setTimeout(r, 0));
+    expect(await chrome.storage.local.get(null)).toEqual({});
+  });
+});
+describe('dedupe on every path', () => {
+  it('Wikidata repeats are dropped whether or not Wikipedia is asked; same-named distinct items are kept', async () => {
+    const topical = fakeFetch(() => reply(
+      { label: 'Dune', description: '2021 film' }, { label: 'dune', description: '2021 Film' }, { label: 'Dune', description: 'novel' },
+    ));
+    expect(await lookUp('dune', deps(topical))).toEqual({ hits: [
+      { label: 'Dune', description: '2021 film', group: null, topic: 'movies', source: 'wikidata' },
+      { label: 'Dune', description: 'novel', group: null, topic: 'books', source: 'wikidata' },
+    ] });
+    expect(wpCalls(topical)).toHaveLength(0);
+    const failing = fakeFetch(() => reply({ label: 'Same', description: 'x' }, { label: 'SAME', description: 'X' }), () => json({}, { status: 500 }));
+    expect(await lookUp('same thing', deps(failing))).toEqual({
+      hits: [{ label: 'Same', description: 'x', group: null, topic: null, source: 'wikidata' }], wikipediaFailed: true,
+    });
+  });
+});
+describe('cancel and reset before the Wikipedia request', () => {
+  /** Wikidata answers (no hits) only when `answer` is called. */
+  function heldWikidata() {
+    let answer!: () => void;
+    const gate = new Promise<void>((res) => (answer = res));
+    const f = fakeFetch(async () => {
+      await gate;
+      return reply();
+    }, () => wpReply({ title: 'Should Not Be Asked', index: 1 }));
+    return { f, answer: () => answer() };
+  }
+  it('cancel while Wikidata is in flight: that request is aborted, Wikipedia is never asked, nothing is cached', async () => {
+    const { f, answer } = heldWikidata();
+    const c = new AbortController();
+    const p = lookUp('cancel me', deps(f, { signal: c.signal }));
+    await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(1));
+    const wdSignal = f.mock.calls[0]![1]!.signal!;
+    c.abort();
+    expect(await p).toEqual({ error: 'cancelled' });
+    expect(wdSignal.aborted).toBe(true);
+    answer();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(wpCalls(f)).toHaveLength(0);
+    expect(await chrome.storage.local.get(null)).toEqual({});
+  });
+  it('cancel during the head fallback (Wikidata answered, no topic yet): Wikipedia is never asked', async () => {
+    let label!: (v: string | null) => void;
+    const labelForText = () => new Promise<string | null>((res) => (label = res));
+    const f = fakeFetch(() => reply({ label: 'Thing', description: 'gizmo' }), () => wpReply({ title: 'X', index: 1 }));
+    const c = new AbortController();
+    const p = lookUp('head wait', deps(f, { signal: c.signal, labelForText }));
+    await vi.waitFor(() => expect(label).toBeTypeOf('function'));
+    c.abort();
+    label(null);
+    expect(await p).toEqual({ error: 'cancelled' });
+    await new Promise((r) => setTimeout(r, 10));
+    expect(wpCalls(f)).toHaveLength(0);
+  });
+  it('a signal aborted before the call sends nothing at all', async () => {
+    const f = fakeFetch(() => reply());
+    const c = new AbortController();
+    c.abort();
+    expect(await lookUp('never', deps(f, { signal: c.signal }))).toEqual({ error: 'cancelled' });
+    expect(f).not.toHaveBeenCalled();
+  });
+  it('two callers share one look-up: Wikipedia is asked while one still waits, not after both cancel', async () => {
+    const one = heldWikidata();
+    const a = new AbortController();
+    const b = new AbortController();
+    const pa = lookUp('shared', deps(one.f, { signal: a.signal }));
+    const pb = lookUp('shared', deps(one.f, { signal: b.signal }));
+    await vi.waitFor(() => expect(one.f).toHaveBeenCalledTimes(1));
+    a.abort();
+    one.answer();
+    expect(await pa).toEqual({ error: 'cancelled' });
+    expect(await pb).toEqual({ hits: [{ label: 'Should Not Be Asked', description: '', group: null, topic: null, source: 'wikipedia' }] });
+    expect(wpCalls(one.f)).toHaveLength(1);
+    const two = heldWikidata();
+    const c = new AbortController();
+    const d = new AbortController();
+    const pc = lookUp('shared two', deps(two.f, { signal: c.signal }));
+    const pd = lookUp('shared two', deps(two.f, { signal: d.signal }));
+    await vi.waitFor(() => expect(two.f).toHaveBeenCalledTimes(1));
+    c.abort();
+    d.abort();
+    two.answer();
+    expect(await pc).toEqual({ error: 'cancelled' });
+    expect(await pd).toEqual({ error: 'cancelled' });
+    await new Promise((r) => setTimeout(r, 10));
+    expect(wpCalls(two.f)).toHaveLength(0);
+    // The same text asked afresh after everyone cancelled is a new look-up, not the dead one.
+    const fresh = fakeFetch(() => reply({ label: 'Fresh', description: 'film' }));
+    expect(await lookUp('shared two', deps(fresh))).toEqual({ hits: [{ label: 'Fresh', description: 'film', group: null, topic: 'movies', source: 'wikidata' }] });
+  });
+  it('"Delete all data" during the Wikidata request: Wikipedia is never asked; Wikidata\'s answer is shown, not stored', async () => {
+    let answer!: () => void;
+    const gate = new Promise<void>((res) => (answer = res));
+    const f = fakeFetch(async () => {
+      await gate;
+      return reply({ label: 'Plain', description: 'thing' });
+    }, () => wpReply({ title: 'X', index: 1 }));
+    const p = lookUp('reset first', deps(f));
+    await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(1));
+    await mock.sendMessage({ target: 'ui', t: 'reset' });
+    answer();
+    expect(await p).toEqual({ hits: [{ label: 'Plain', description: 'thing', group: null, topic: null, source: 'wikidata' }] });
+    await new Promise((r) => setTimeout(r, 10));
+    expect(wpCalls(f)).toHaveLength(0);
     expect(await chrome.storage.local.get(null)).toEqual({});
   });
 });

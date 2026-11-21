@@ -26,11 +26,18 @@ export interface LookupHit {
    */
   topic: string | null;
 }
-export type LookupError = 'offline' | 'timeout' | 'http' | 'bad-reply';
+/** 'cancelled': the caller's signal was aborted (Cancel, Escape or the dialog closed) before the answer came. */
+export type LookupError = 'offline' | 'timeout' | 'http' | 'bad-reply' | 'cancelled';
 /** `from: 'wikipedia'` when the error is Wikipedia's (Wikidata answered with nothing); absent for Wikidata's. */
 export type LookupFailure = { error: LookupError; from?: 'wikipedia' };
-export type LookupResult = { hits: LookupHit[] } | LookupFailure;
+/** `wikipediaFailed`: Wikipedia was asked but could not answer, so these are Wikidata's hits only. */
+export type LookupResult = { hits: LookupHit[]; wikipediaFailed?: true } | LookupFailure;
 export interface LookupDeps {
+  /**
+   * Aborted when the user no longer wants the answer. No request starts after that (the Wikipedia fallback included)
+   * unless another caller of the same text still waits for it; when none does, the request in flight is aborted too.
+   */
+  signal?: AbortSignal;
   fetch?: typeof fetch;
   now?: () => number;
   /** The head's label for a text (the labelForText RPC by default); null when it has none. */
@@ -41,7 +48,7 @@ export interface LookupDeps {
 
 /** The dialog's opening sentence (design Part 2), shown every time before anything is sent. */
 export const LOOKUP_DIALOG_SENTENCE =
-  'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata finds nothing) and nothing else:';
+  'Tablight will send this text to Wikimedia (Wikidata, and Wikipedia if Wikidata has no usable match) and nothing else:';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
 /** Deadline of each request (Wikidata's, and Wikipedia's when it is asked). */
@@ -252,10 +259,18 @@ function parseWikipedia(body: string): RawHit[] | null {
   return ranked.sort((a, b) => a.at - b.at).slice(0, LOOKUP_MAX_HITS).map((r) => r.hit);
 }
 
-/** One GET to `url` (no cookies, no referrer, no cache, its own deadline and body cap), the reply read by `parse`. */
-async function request(url: string, parse: (body: string) => RawHit[] | null, f: typeof fetch): Promise<RawHit[] | LookupError> {
+/**
+ * One GET to `url` (no cookies, no referrer, no cache, its own deadline and body cap), the reply read by `parse`.
+ * Nothing is sent if `stop` is already aborted; aborting it later aborts the request ('cancelled').
+ */
+async function request(
+  url: string, parse: (body: string) => RawHit[] | null, f: typeof fetch, stop: AbortSignal,
+): Promise<RawHit[] | LookupError> {
+  if (stop.aborted) return 'cancelled';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
+  const onStop = () => controller.abort();
+  stop.addEventListener('abort', onStop);
   try {
     const res = await f(url, {
       method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: controller.signal,
@@ -268,9 +283,11 @@ async function request(url: string, parse: (body: string) => RawHit[] | null, f:
     if (body === null) return 'bad-reply';
     return parse(body) ?? 'bad-reply';
   } catch {
+    if (stop.aborted) return 'cancelled';
     return controller.signal.aborted ? 'timeout' : 'offline';
   } finally {
     clearTimeout(timer);
+    stop.removeEventListener('abort', onStop);
   }
 }
 
@@ -295,74 +312,113 @@ function withTopics(raw: RawHit[], source: LookupSource, labelFor: (t: string) =
     return { label, description, topic, source };
   }));
 }
-/** The hits in the order given, only the first of each label (case-insensitive), at most LOOKUP_MAX_HITS. */
+/**
+ * The hits in the order given, without repeats, at most LOOKUP_MAX_HITS. A hit repeats a kept one when the labels match
+ * (case-insensitive) and it is from the other site, or from the same site with the same description: one site's
+ * distinct items that share a name (a series and a film called "Dune") are both kept.
+ */
 function combine(...lists: CachedHit[][]): CachedHit[] {
-  const seen = new Set<string>();
   const out: CachedHit[] = [];
   for (const h of lists.flat()) {
-    const key = h.label.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const label = h.label.toLowerCase();
+    const repeat = out.some((k) => k.label.toLowerCase() === label &&
+      (k.source !== h.source || k.description.toLowerCase() === h.description.toLowerCase()));
+    if (repeat) continue;
     out.push(h);
     if (out.length >= LOOKUP_MAX_HITS) break;
   }
   return out;
 }
-/** Look-ups of this page in flight, by cleaned text: the same text is sent once even when asked twice at once. */
-const inFlight = new Map<string, Promise<CachedHit[] | LookupFailure>>();
+type Answer = { hits: CachedHit[]; wikipediaFailed?: true } | LookupFailure;
 /**
- * Wikidata first. Only when it answered and no hit has a topic is the same text sent to Wikipedia; then Wikidata's
- * topical hits (none, by that rule) come first, Wikipedia's next and Wikidata's topic-less ones last. A Wikidata error
- * ends the look-up (Wikipedia is not asked). A Wikipedia error shows Wikidata's hits, or is the answer when Wikidata
- * had none; either way nothing is cached, so asking again can still reach Wikipedia. A complete answer is cached under
- * the cleaned text, so neither site is asked twice for it, unless a reset came in during either request.
+ * A look-up of this page in flight. `wanting` counts the callers still waiting for it; when the last one cancels,
+ * `stop` is aborted: the request in flight is aborted and no further request starts.
  */
-async function fetchHits(clean: string, deps: LookupDeps): Promise<CachedHit[] | LookupFailure> {
+interface InFlight { p: Promise<Answer>; wanting: number; stop: AbortController }
+/** Look-ups of this page in flight, by cleaned text: the same text is sent once even when asked twice at once. */
+const inFlight = new Map<string, InFlight>();
+/**
+ * Wikidata first. Only when it answered and no hit has a topic is the same text sent to Wikipedia, and only if some
+ * caller still wants the answer and no reset came in meanwhile; then Wikidata's topical hits (none, by that rule) come
+ * first, Wikipedia's next and Wikidata's topic-less ones last. A Wikidata error ends the look-up (Wikipedia is not
+ * asked). A Wikipedia error shows Wikidata's hits (marked wikipediaFailed), or is the answer when Wikidata had none;
+ * either way nothing is cached, so asking again can still reach Wikipedia. A complete answer is cached under the
+ * cleaned text, so neither site is asked twice for it, unless a reset came in during either request.
+ */
+async function fetchHits(clean: string, deps: LookupDeps, stop: AbortSignal): Promise<Answer> {
   const startedIn = epoch;
   const cached = (await readCache()).get(clean);
-  if (cached) return cached.hits;
+  if (cached) return { hits: cached.hits };
   const f = deps.fetch ?? fetch.bind(globalThis);
-  const wd = await request(wikidataUrl(clean), parseWikidata, f);
+  const wd = await request(wikidataUrl(clean), parseWikidata, f, stop);
   if (typeof wd === 'string') return { error: wd };
   const labelFor = deps.labelForText ?? defaultLabelForText;
   const wdHits = await withTopics(wd, 'wikidata', labelFor);
-  let hits = wdHits;
+  let hits = combine(wdHits);
   if (!wdHits.some((h) => h.topic !== null)) {
-    const wp = await request(wikipediaUrl(clean), parseWikipedia, f);
-    if (typeof wp === 'string') return wdHits.length ? wdHits : { error: wp, from: 'wikipedia' };
+    // Nobody waits any more (Cancel, Escape, the dialog closed): the text is not sent to a second site.
+    if (stop.aborted) return { error: 'cancelled' };
+    // "Delete all data" came in: Wikidata's answer is shown (never stored) and nothing more is sent.
+    if (epoch !== startedIn) return { hits };
+    const wp = await request(wikipediaUrl(clean), parseWikipedia, f, stop);
+    if (wp === 'cancelled') return { error: 'cancelled' };
+    if (typeof wp === 'string') return hits.length ? { hits, wikipediaFailed: true } : { error: wp, from: 'wikipedia' };
     const wpHits = await withTopics(wp, 'wikipedia', labelFor);
     hits = combine(wdHits.filter((h) => h.topic !== null), wpHits, wdHits.filter((h) => h.topic === null));
   }
   if (epoch === startedIn) await writeCache(clean, { at: (deps.now ?? Date.now)(), hits }, startedIn);
-  return hits;
+  return { hits };
 }
 /**
- * Looks the text up on Wikidata, then on Wikipedia if needed (after the user confirmed it). The text is cleaned again (cleaning is idempotent);
- * an empty result sends nothing and answers 'bad-reply'. An answer already in the cache is never sent again.
- * Never throws.
+ * Looks the text up on Wikidata, then on Wikipedia if needed (after the user confirmed it). The text is cleaned again
+ * (cleaning is idempotent); an empty result sends nothing and answers 'bad-reply'. An answer already in the cache is
+ * never sent again. A caller whose `deps.signal` is aborted gets 'cancelled'. Never throws.
  */
 export async function lookUp(text: string, deps: LookupDeps = {}): Promise<LookupResult> {
   try {
     listenForReset();
     const clean = cleanLookupText(text);
     if (!clean) return { error: 'bad-reply' };
-    let pending = inFlight.get(clean);
-    if (!pending) {
-      const p: Promise<CachedHit[] | LookupFailure> = fetchHits(clean, deps).finally(() => {
-        if (inFlight.get(clean) === p) inFlight.delete(clean); // a reset may have cleared it and a new look-up begun
+    const signal = deps.signal;
+    if (signal?.aborted) return { error: 'cancelled' };
+    let entry = inFlight.get(clean);
+    if (!entry) {
+      const stop = new AbortController();
+      const e: InFlight = { wanting: 0, stop, p: fetchHits(clean, deps, stop.signal) };
+      e.p = e.p.finally(() => {
+        if (inFlight.get(clean) === e) inFlight.delete(clean); // a reset may have cleared it and a new look-up begun
       });
-      pending = p;
-      inFlight.set(clean, pending);
+      inFlight.set(clean, e);
+      entry = e;
     }
-    const hits = await pending;
-    if (!Array.isArray(hits)) return hits.from ? { error: hits.error, from: hits.from } : { error: hits.error };
+    const joined = entry;
+    joined.wanting++;
+    let left = false;
+    let gaveUp!: () => void;
+    const cancelled = new Promise<null>((res) => (gaveUp = () => res(null)));
+    const leave = () => {
+      if (left) return;
+      left = true;
+      gaveUp(); // this caller answers at once, without waiting for the request to wind down
+      if (--joined.wanting > 0) return;
+      joined.stop.abort();
+      if (inFlight.get(clean) === joined) inFlight.delete(clean); // the same text asked later is sent afresh
+    };
+    signal?.addEventListener('abort', leave, { once: true });
+    let answer: Answer | null;
+    try {
+      answer = await Promise.race([joined.p, cancelled]);
+    } finally {
+      signal?.removeEventListener('abort', leave);
+    }
+    if (answer === null || signal?.aborted) return { error: 'cancelled' };
+    if ('error' in answer) return answer.from ? { error: answer.error, from: answer.from } : { error: answer.error };
     const groupOf = (topic: string | null): string | null =>
       topic === null ? null : (deps.groups?.find((g) => g.id === topic)?.id ?? null);
-    return {
-      hits: hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({
-        label: h.label, description: h.description, topic: h.topic, source: h.source ?? 'wikidata', group: groupOf(h.topic),
-      })),
-    };
+    const hits = answer.hits.slice(0, LOOKUP_MAX_HITS).map((h) => ({
+      label: h.label, description: h.description, topic: h.topic, source: h.source ?? 'wikidata', group: groupOf(h.topic),
+    }));
+    return answer.wikipediaFailed ? { hits, wikipediaFailed: true } : { hits };
   } catch {
     return { error: 'bad-reply' };
   }
