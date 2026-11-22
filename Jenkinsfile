@@ -95,6 +95,21 @@ pipeline {
                 '''
             }
         }
+        stage('Supply chain') {
+            // Known vulnerabilities (any severity, shipped and dev packages) and registry signatures of every
+            // installed package. Light: two registry requests, no download. The JSON report is archived.
+            steps {
+                sh '''
+                    set +e
+                    npm audit --json > reports/npm-audit.json
+                    npm audit --audit-level=low
+                    audit=$?
+                    npm audit signatures
+                    sigs=$?
+                    [ "$audit" -eq 0 ] && [ "$sigs" -eq 0 ]
+                '''
+            }
+        }
         stage('Checks and unit tests') {
             // Independent of each other, so they run side by side.
             parallel {
