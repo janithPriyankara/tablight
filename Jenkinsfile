@@ -198,6 +198,8 @@ pipeline {
             steps {
                 // package runs a fresh build plus the existing release gates, including ZIP size.
                 sh 'npm run package'
+                // CycloneDX SBOM of the production dependency tree, next to the ZIP.
+                sh 'npm run sbom'
             }
         }
         stage('Browser tests') {
@@ -224,7 +226,7 @@ pipeline {
         }
         stage('Archive release') {
             steps {
-                archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+                archiveArtifacts artifacts: 'release/tablight-*.zip,release/tablight-*.sbom.cdx.json', fingerprint: true
             }
         }
         stage('Bump version') {
@@ -241,6 +243,7 @@ pipeline {
                         npm version "$RELEASE" -m "release %s"
                         # The ZIP was built before the bump; rebuild so its name and manifest carry the new version.
                         npm run package
+                        npm run sbom
                         tag="v$(node -p "require('./package.json').version")"
                         url="https://x-access-token:$GH_TOKEN@github.com/janithPriyankara/tablight.git"
                         # Fails (and releases nothing) if main moved on GitHub while this build ran.
@@ -248,7 +251,7 @@ pipeline {
                         echo "$tag" > release-tag.txt
                     '''
                 }
-                archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+                archiveArtifacts artifacts: 'release/tablight-*.zip,release/tablight-*.sbom.cdx.json', fingerprint: true
             }
         }
         stage('GitHub release') {
@@ -294,15 +297,23 @@ pipeline {
                         fi
                         id=$(node -p "require('./release.json').id")
                         page=$(node -p "require('./release.json').html_url")
-                        code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth" \\
-                            -H "Content-Type: application/zip" --data-binary "@$zip" \\
-                            "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=tablight-$version.zip" \\
-                            || echo curl-failed)
-                        if [ "$code" != 201 ]; then
-                            echo "Uploading $zip failed: HTTP $code" >&2
-                            sed -n 1,20p asset.json >&2
-                            exit 1
-                        fi
+                        # The ZIP, its CycloneDX SBOM, and SHA-256 sums of both (so a download can be checked).
+                        sbom="release/tablight-$version.sbom.cdx.json"
+                        (cd release && sha256sum "tablight-$version.zip" "tablight-$version.sbom.cdx.json" > SHA256SUMS)
+                        for f in "$zip:application/zip" "$sbom:application/vnd.cyclonedx+json" "release/SHA256SUMS:text/plain"; do
+                            path="${f%%:*}"
+                            type="${f#*:}"
+                            name="$(basename "$path")"
+                            code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth" \\
+                                -H "Content-Type: $type" --data-binary "@$path" \\
+                                "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=$name" \\
+                                || echo curl-failed)
+                            if [ "$code" != 201 ]; then
+                                echo "Uploading $path failed: HTTP $code" >&2
+                                sed -n 1,20p asset.json >&2
+                                exit 1
+                            fi
+                        done
                         echo "Released: $page"
                     '''
                 }
