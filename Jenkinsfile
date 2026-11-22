@@ -206,14 +206,20 @@ pipeline {
             }
         }
         stage('Sonar') {
-            // SonarCloud analysis with the unit coverage; the build waits for the quality gate and fails with it
-            // (sonar-project.properties). Needs a Jenkins "Secret text" credential with the id sonar-token. Until it
-            // exists, ordinary builds skip this stage with a notice; a release refuses to go out without it.
+            // Self-hosted SonarQube Community (sonar-project.properties) with the unit coverage; the build waits for the
+            // quality gate and fails with it. Community analyzes the main branch only, so it runs on main builds
+            // (RELEASE-button releases included) and the plain job, and pull request and tag builds skip it.
+            // Needs a Jenkins "Secret text" credential with the id sonar-token; until it exists, ordinary main builds
+            // skip with a notice and a release refuses to go out. The scanner JVM is kept small: the host has 4 GB.
+            when { expression { keepsWorkspace() } }
+            environment {
+                SONAR_SCANNER_JAVA_OPTS = '-Xmx512m'
+            }
             steps {
                 script {
                     try {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            sh 'npx --no-install sonar-scanner-npm -Dsonar.token="$SONAR_TOKEN"' + (env.CHANGE_ID ? " -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}" : (env.BRANCH_NAME ? " -Dsonar.branch.name=${env.BRANCH_NAME}" : ''))
+                            sh 'npx --no-install sonar-scanner-npm -Dsonar.token="$SONAR_TOKEN"'
                         }
                     } catch (org.jenkinsci.plugins.credentialsbinding.impl.CredentialNotFoundException e) {
                         if (isRelease()) error('Sonar: no sonar-token credential; a release needs the Sonar quality gate.')
