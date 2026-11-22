@@ -110,6 +110,34 @@ pipeline {
                 '''
             }
         }
+        stage('Secret scan') {
+            // gitleaks over every commit (so every tracked file, HEAD included; after git clean the rest is
+            // node_modules and build output). The pinned release is downloaded once, verified against that release's
+            // checksums file, and kept in /tmp. Findings are redacted in the report.
+            environment {
+                GITLEAKS_VERSION = '8.30.1'
+                TOOLS = '/tmp/tablight-tools'
+            }
+            steps {
+                sh '''
+                    set -eu
+                    bin="$TOOLS/gitleaks-$GITLEAKS_VERSION"
+                    if [ ! -x "$bin" ]; then
+                        tmp="$(mktemp -d)"
+                        base="https://github.com/gitleaks/gitleaks/releases/download/v$GITLEAKS_VERSION"
+                        tgz="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+                        curl -fsSL -o "$tmp/$tgz" "$base/$tgz"
+                        curl -fsSL -o "$tmp/sums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+                        (cd "$tmp" && grep " $tgz\\$" sums.txt | sha256sum -c -)
+                        tar -xzf "$tmp/$tgz" -C "$tmp" gitleaks
+                        mkdir -p "$TOOLS" && install -m 0755 "$tmp/gitleaks" "$bin"
+                        rm -rf "$tmp"
+                    fi
+                    "$bin" version
+                    "$bin" git --redact --no-banner --exit-code 1 --report-format json --report-path reports/gitleaks.json .
+                '''
+            }
+        }
         stage('Checks and unit tests') {
             // Independent of each other, so they run side by side.
             parallel {
