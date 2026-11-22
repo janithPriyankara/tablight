@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import noUnsanitized from 'eslint-plugin-no-unsanitized';
+import security from 'eslint-plugin-security';
 import tseslint from 'typescript-eslint';
 export default tseslint.config(
   { ignores: ['dist/**', 'release/**', 'node_modules/**', 'public/models/**', 'public/ort/**', 'test-results/**', 'playwright-report/**'] },
@@ -48,6 +49,21 @@ export default tseslint.config(
           message: 'insertAdjacentHTML is banned (string-literal form too).',
         },
       ],
+    },
+  },
+  // Static security analysis of the shipped code (ReDoS-prone and non-literal regexes, timing-unsafe compares,
+  // pseudo-random bytes, dynamic require, object injection, ...).
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { security },
+    rules: {
+      ...Object.fromEntries(Object.keys(security.configs.recommended.rules).map((r) => [r, 'error'])),
+      // ReDoS is decided by recheck in tests/unit/redos.test.ts (this rule's star-height heuristic flags safe regexes).
+      'security/detect-unsafe-regex': 'off',
+      // Flags every obj[key]; prototype pollution from untrusted keys is tested directly (tests/unit/security-*.test.ts).
+      'security/detect-object-injection': 'off',
+      // Only matches location.hash comparisons here; no secret is ever compared.
+      'security/detect-possible-timing-attacks': 'off',
     },
   },
   {

@@ -1,3 +1,4 @@
+import { clipText } from './clip';
 import type { Item, Kind } from './types';
 const TRACKING = new Set([
   'fbclid', 'gclid', 'dclid', 'msclkid', 'mc_eid', 'mc_cid', 'si', 'ref', 'ref_src',
@@ -129,6 +130,9 @@ export function readableSource(url: string): string {
   }
   return host;
 }
+// Built from a constant list of site names: no outside text shapes the pattern. Quadratic at worst on an unanchored
+// suffix, so cleanTitle clips the title first (shared/clip).
+// eslint-disable-next-line security/detect-non-literal-regexp
 const SITE_SUFFIX = new RegExp(
   `\\s+[-|\\u2013\\u2014]\\s+(?:${['YouTube', 'Netflix', 'GitHub', 'Twitch', 'Vimeo', 'Hulu', 'IMDb', 'Prime Video', 'Disney\\+', 'Max']
     .join('|')})\\s*$`,
@@ -155,7 +159,7 @@ function cap(s: string): string {
   return out.trimEnd();
 }
 export function cleanTitle(title: string, url: string): string {
-  let t = (title ?? '').trim();
+  let t = clipText(title ?? '').trim();
   t = t.replace(/^\(\d+\+?\)\s*/, '');
   const stripped = t.replace(SITE_SUFFIX, '').trim();
   if (stripped) t = stripped;

@@ -1,4 +1,5 @@
 // Session snapshots: web tabs (url + title) per window, kept local only. Separate from the stash.
+import { clipText } from '../shared/clip';
 import { sha1hex } from '../shared/hash';
 import { LAST_SESSION_KEY, type Item, type Snapshot } from '../shared/types';
 import { isSafeToOpen, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
@@ -38,7 +39,7 @@ export async function takeSnapshot(db: Db, now: number): Promise<Snapshot> {
     const url = tabUrl(t);
     if (!isWebUrl(url)) continue;
     const list = byWindow.get(t.windowId) ?? [];
-    list.push({ url, title: t.title ?? '' });
+    list.push({ url, title: clipText(t.title ?? '') });
     byWindow.set(t.windowId, list);
   }
   const snapshot: Snapshot = {

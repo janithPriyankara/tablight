@@ -1,3 +1,4 @@
+import { clipText } from '../shared/clip';
 import { cosine } from '../shared/vec';
 
 export interface Suggestion {
@@ -112,7 +113,7 @@ const STOP = new Set(
 );
 
 function tokens(title: string): string[] {
-  return (title.match(/[\p{L}\p{N}][\p{L}\p{N}+#.'-]*/gu) ?? [])
+  return (clipText(title).match(/[\p{L}\p{N}][\p{L}\p{N}+#.'-]*/gu) ?? [])
     .map((t) => t.replace(/[.'-]+$/, ''))
     .filter((t) => t.length >= 2 && /\p{L}/u.test(t) && !STOP.has(t.toLowerCase()));
 }

@@ -1,5 +1,11 @@
 // Commands run directly inside the existing Jenkins node/container.
 def workspaceStarted = false
+// main's workspace is the shared dependency source: kept between builds, and its node_modules seeds every other build.
+// Every other build (pull requests, tags) runs in a throwaway workspace, emptied before checkout and deleted at the end.
+// The plain (non-multibranch) job has no BRANCH_NAME and keeps its own workspace like main.
+def keepsWorkspace() {
+    return !env.BRANCH_NAME || env.BRANCH_NAME == 'main'
+}
 // True when the cron trigger started this build.
 def isNightly() {
     return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
@@ -69,6 +75,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
+                    // A throwaway workspace starts empty, even if an earlier build of it was killed before cleanup.
+                    if (!keepsWorkspace()) deleteDir()
                     workspaceStarted = true
                     env.GIT_COMMIT = checkout(scm).GIT_COMMIT
                     githubStatus('pending', "Build #${env.BUILD_NUMBER} running")
@@ -80,34 +88,142 @@ pipeline {
             }
         }
         stage('Install dependencies') {
+            environment {
+                MAIN_WORKSPACE = "${env.JENKINS_HOME}/jobs/tablight-cicd/branches/main/workspace"
+            }
             steps {
-                // npm ci only when the lockfile or Node changed since node_modules was installed. The stamp is
-                // written after a successful install, so a broken or partial install is never reused.
+                // The stamp (lockfile hash + Node version) is written last, after a complete install, so a broken,
+                // partial or in-progress install never has one and is never reused.
+                //   1. This workspace's node_modules matches the lockfile (main, plain job): nothing to do.
+                //   2. Another build whose lockfile matches main's: hard-link main's node_modules (cp -al: no download,
+                //      next to no disk, seconds). npm and the build replace files rather than edit them, and the stamp
+                //      is removed before it is rewritten, so nothing here can change main's copies. main's stamp is
+                //      read again after the copy: if main reinstalled meanwhile, the copy is discarded.
+                //   3. Otherwise (a changed lockfile, e.g. a Dependabot PR, or main not installed yet): npm ci.
                 sh '''
+                    set -eu
                     want="$(sha256sum package-lock.json | cut -c1-64) $(node --version)"
-                    if [ -d node_modules ] && [ "$(cat node_modules/.tablight-lock 2>/dev/null)" = "$want" ]; then
+                    stamp() { cat "$1/node_modules/.tablight-lock" 2>/dev/null || true; }
+                    if [ -d node_modules ] && [ "$(stamp .)" = "$want" ]; then
                         echo "node_modules is current for this lockfile; skipping npm ci"
-                    else
-                        rm -f node_modules/.tablight-lock
-                        npm ci --no-audit --no-fund
-                        echo "$want" > node_modules/.tablight-lock
+                        exit 0
                     fi
+                    rm -rf node_modules
+                    if [ "$(pwd -P)" != "$(cd "$MAIN_WORKSPACE" 2>/dev/null && pwd -P)" ] && [ "$(stamp "$MAIN_WORKSPACE")" = "$want" ]; then
+                        cp -al "$MAIN_WORKSPACE/node_modules" node_modules
+                        if [ "$(stamp "$MAIN_WORKSPACE")" = "$want" ]; then
+                            rm -rf node_modules/.vite node_modules/.cache
+                            rm -f node_modules/.tablight-lock
+                            echo "$want" > node_modules/.tablight-lock
+                            echo "node_modules hard-linked from main's workspace (same lockfile); skipping npm ci"
+                            exit 0
+                        fi
+                        echo "main's node_modules changed during the copy; installing instead"
+                        rm -rf node_modules
+                    fi
+                    npm ci --no-audit --no-fund
+                    rm -f node_modules/.tablight-lock
+                    echo "$want" > node_modules/.tablight-lock
                 '''
             }
         }
-        stage('Checks and unit tests') {
-            // Independent of each other, so they run side by side.
-            parallel {
-                // Both re-check only what changed since the last build (results kept in /tmp, keyed by file content).
-                stage('Lint') {
-                    steps { sh 'npm run lint -- --cache --cache-strategy content --cache-location /tmp/tablight-eslint-cache/' }
-                }
-                stage('Type check') {
-                    steps { sh 'npx --no-install tsc --noEmit --incremental --tsBuildInfoFile /tmp/tablight-tsc/tsbuildinfo' }
-                }
-                stage('Unit tests') {
-                    steps {
-                        sh 'npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+        stage('Supply chain') {
+            // Known vulnerabilities at any severity in every dependency manifest: the npm lockfile (shipped and dev)
+            // and the build-time Python requirements (fine-tuning; nothing of it ships), from OSV (GitHub advisories,
+            // PyPA, npm) and npm's own audit. Plus the registry signature of every installed npm package. OSV-Scanner
+            // is a pinned static binary, downloaded once and verified against its release checksums. Reports archived.
+            environment {
+                OSV_VERSION = '2.7.0'
+                TOOLS = '/tmp/tablight-tools'
+            }
+            steps {
+                sh '''
+                    set -eu
+                    bin="$TOOLS/osv-scanner-$OSV_VERSION"
+                    if [ ! -x "$bin" ]; then
+                        tmp="$(mktemp -d)"
+                        base="https://github.com/google/osv-scanner/releases/download/v$OSV_VERSION"
+                        curl -fsSL -o "$tmp/osv-scanner_linux_amd64" "$base/osv-scanner_linux_amd64"
+                        curl -fsSL -o "$tmp/sums" "$base/osv-scanner_SHA256SUMS"
+                        (cd "$tmp" && grep " osv-scanner_linux_amd64\\$" sums | sha256sum -c -)
+                        mkdir -p "$TOOLS" && install -m 0755 "$tmp/osv-scanner_linux_amd64" "$bin"
+                        rm -rf "$tmp"
+                    fi
+                    "$bin" --version
+                    set +e
+                    "$bin" scan source -L package-lock.json -L scripts/finetune/requirements.txt --format json --output reports/osv.json
+                    "$bin" scan source -L package-lock.json -L scripts/finetune/requirements.txt
+                    osv=$?
+                    npm audit --json > reports/npm-audit.json
+                    npm audit --audit-level=low
+                    audit=$?
+                    npm audit signatures
+                    sigs=$?
+                    [ "$osv" -eq 0 ] && [ "$audit" -eq 0 ] && [ "$sigs" -eq 0 ]
+                '''
+            }
+        }
+        stage('Secret scan') {
+            // gitleaks over every commit (so every tracked file, HEAD included; after git clean the rest is
+            // node_modules and build output). The pinned release is downloaded once, verified against that release's
+            // checksums file, and kept in /tmp. Findings are redacted in the report.
+            environment {
+                GITLEAKS_VERSION = '8.30.1'
+                TOOLS = '/tmp/tablight-tools'
+            }
+            steps {
+                sh '''
+                    set -eu
+                    bin="$TOOLS/gitleaks-$GITLEAKS_VERSION"
+                    if [ ! -x "$bin" ]; then
+                        tmp="$(mktemp -d)"
+                        base="https://github.com/gitleaks/gitleaks/releases/download/v$GITLEAKS_VERSION"
+                        tgz="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+                        curl -fsSL -o "$tmp/$tgz" "$base/$tgz"
+                        curl -fsSL -o "$tmp/sums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+                        (cd "$tmp" && grep " $tgz\\$" sums.txt | sha256sum -c -)
+                        tar -xzf "$tmp/$tgz" -C "$tmp" gitleaks
+                        mkdir -p "$TOOLS" && install -m 0755 "$tmp/gitleaks" "$bin"
+                        rm -rf "$tmp"
+                    fi
+                    "$bin" version
+                    "$bin" git --redact --no-banner --exit-code 1 --report-format json --report-path reports/gitleaks.json .
+                '''
+            }
+        }
+        // One after another, not side by side: the shared Jenkins host is small, and peak memory matters more than minutes.
+        // Lint and type check re-check only what changed since the last build (results kept in /tmp, keyed by content).
+        stage('Lint') {
+            steps { sh 'npm run lint -- --cache --cache-strategy content --cache-location /tmp/tablight-eslint-cache/' }
+        }
+        stage('Type check') {
+            steps { sh 'npx --no-install tsc --noEmit --incremental --tsBuildInfoFile /tmp/tablight-tsc/tsbuildinfo' }
+        }
+        stage('Unit tests') {
+            steps {
+                // --coverage: fails under the thresholds in vitest.config.ts; lcov/cobertura reports land in reports/coverage.
+                sh 'npm test -- --coverage --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+            }
+        }
+        stage('Sonar') {
+            // Self-hosted SonarQube Community (sonar-project.properties) with the unit coverage; the build waits for the
+            // quality gate and fails with it. Community analyzes the main branch only, so it runs on main builds
+            // (RELEASE-button releases included) and the plain job, and pull request and tag builds skip it.
+            // Needs a Jenkins "Secret text" credential with the id sonar-token; until it exists, ordinary main builds
+            // skip with a notice and a release refuses to go out. The scanner JVM is kept small: the host has 4 GB.
+            when { expression { keepsWorkspace() } }
+            environment {
+                SONAR_SCANNER_JAVA_OPTS = '-Xmx512m'
+            }
+            steps {
+                script {
+                    try {
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            sh 'npx --no-install sonar-scanner-npm -Dsonar.token="$SONAR_TOKEN"'
+                        }
+                    } catch (org.jenkinsci.plugins.credentialsbinding.impl.CredentialNotFoundException e) {
+                        if (isRelease()) error('Sonar: no sonar-token credential; a release needs the Sonar quality gate.')
+                        echo 'Sonar: no sonar-token credential yet; skipping (add it to enable the quality gate).'
                     }
                 }
             }
@@ -133,6 +249,8 @@ pipeline {
             steps {
                 // package runs a fresh build plus the existing release gates, including ZIP size.
                 sh 'npm run package'
+                // CycloneDX SBOM of the production dependency tree, next to the ZIP.
+                sh 'npm run sbom'
             }
         }
         stage('Browser tests') {
@@ -159,7 +277,7 @@ pipeline {
         }
         stage('Archive release') {
             steps {
-                archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+                archiveArtifacts artifacts: 'release/tablight-*.zip,release/tablight-*.sbom.cdx.json', fingerprint: true
             }
         }
         stage('Bump version') {
@@ -176,6 +294,7 @@ pipeline {
                         npm version "$RELEASE" -m "release %s"
                         # The ZIP was built before the bump; rebuild so its name and manifest carry the new version.
                         npm run package
+                        npm run sbom
                         tag="v$(node -p "require('./package.json').version")"
                         url="https://x-access-token:$GH_TOKEN@github.com/janithPriyankara/tablight.git"
                         # Fails (and releases nothing) if main moved on GitHub while this build ran.
@@ -183,7 +302,7 @@ pipeline {
                         echo "$tag" > release-tag.txt
                     '''
                 }
-                archiveArtifacts artifacts: 'release/tablight-*.zip', fingerprint: true
+                archiveArtifacts artifacts: 'release/tablight-*.zip,release/tablight-*.sbom.cdx.json', fingerprint: true
             }
         }
         stage('GitHub release') {
@@ -229,15 +348,23 @@ pipeline {
                         fi
                         id=$(node -p "require('./release.json').id")
                         page=$(node -p "require('./release.json').html_url")
-                        code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth" \\
-                            -H "Content-Type: application/zip" --data-binary "@$zip" \\
-                            "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=tablight-$version.zip" \\
-                            || echo curl-failed)
-                        if [ "$code" != 201 ]; then
-                            echo "Uploading $zip failed: HTTP $code" >&2
-                            sed -n 1,20p asset.json >&2
-                            exit 1
-                        fi
+                        # The ZIP, its CycloneDX SBOM, and SHA-256 sums of both (so a download can be checked).
+                        sbom="release/tablight-$version.sbom.cdx.json"
+                        (cd release && sha256sum "tablight-$version.zip" "tablight-$version.sbom.cdx.json" > SHA256SUMS)
+                        for f in "$zip:application/zip" "$sbom:application/vnd.cyclonedx+json" "release/SHA256SUMS:text/plain"; do
+                            path="${f%%:*}"
+                            type="${f#*:}"
+                            name="$(basename "$path")"
+                            code=$(curl -s -o asset.json -w '%{http_code}' -X POST -H "$auth" \\
+                                -H "Content-Type: $type" --data-binary "@$path" \\
+                                "https://uploads.github.com/repos/janithPriyankara/tablight/releases/$id/assets?name=$name" \\
+                                || echo curl-failed)
+                            if [ "$code" != 201 ]; then
+                                echo "Uploading $path failed: HTTP $code" >&2
+                                sed -n 1,20p asset.json >&2
+                                exit 1
+                            fi
+                        done
                         echo "Released: $page"
                     '''
                 }
@@ -261,7 +388,11 @@ pipeline {
         aborted { script { githubStatus('error', "Build #${env.BUILD_NUMBER} was stopped") } }
         cleanup {
             script {
-                if (workspaceStarted) {
+                if (!keepsWorkspace()) {
+                    // A pull request or tag build: its reports and release files are archived by now (post always and
+                    // the archive stages run first), so the whole throwaway workspace goes, passed or failed.
+                    deleteDir()
+                } else if (workspaceStarted) {
                     // Keep node_modules for the next build; everything else git does not track goes.
                     sh 'git clean -ffdx -e node_modules'
                 } else {

@@ -80,7 +80,7 @@ const wikipediaUrl = (text: string): string => apiUrl(WIKIPEDIA_API, [
 
 // C0/C1 controls, and the bidi embedding/override/isolate characters that could reorder the rendered text.
 // eslint-disable-next-line no-control-regex
-const CONTROL = /[\u0000-\u001f\u007f-\u009f‎‏‪-‮⁦-⁩]/g;
+const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
 /** A reply string as plain text: control characters removed, whitespace collapsed, at most 200 characters. */
 function plain(s: string): string {
   const t = s.replace(CONTROL, ' ').replace(/\s+/g, ' ').trim();
