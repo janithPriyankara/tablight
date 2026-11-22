@@ -7,7 +7,7 @@ import { clipText } from '../shared/clip';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
 import { cleanTitle, domainOf, embedText, isWebUrl, isYouTubeVideo, kindOf, normalizeUrl } from '../shared/url';
-import { mean, normalize } from '../shared/vec';
+import { isFiniteVector, mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
 import { loadNameIndex } from './names-load';
@@ -606,7 +606,7 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
   for (const [k, key] of keys.entries()) {
     if (vecs.has(key) || missing.has(key)) continue;
     const hit = await db.embeddings.get(key);
-    if (hit) vecs.set(key, hit);
+    if (hit && isFiniteVector(hit)) vecs.set(key, hit); // a non-finite cached vector (older version) is embedded again
     else missing.set(key, embedText(todo[k]!));
   }
   // The neighbour step's pool, read before the transaction (vector reads are not part of it).
@@ -615,6 +615,9 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () 
   if (missing.size) {
     const out = await embedFn([...missing.values()]);
     if (out.length !== missing.size) throw new Error('embedder returned the wrong number of vectors');
+    // A NaN or Infinity would poison the cache and any centroid it reaches: fail the batch, so the per-item retry
+    // isolates the tab whose text causes it and leaves that one Unsorted (processWithRetry, writeUnsorted).
+    if (!out.every(isFiniteVector)) throw new Error('embedder returned a non-finite vector');
     [...missing.keys()].forEach((key, k) => fresh.set(key, out[k]!));
   }
 

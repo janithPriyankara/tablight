@@ -1,5 +1,5 @@
 import type { Group } from '../shared/types';
-import { cosine, mean, normalize } from '../shared/vec';
+import { cosine, isFiniteVector, mean, normalize } from '../shared/vec';
 import { STARTER_GROUPS, type StarterGroup } from './seeds';
 import { withoutPriority } from '../shared/priority';
 
@@ -161,12 +161,15 @@ export function headPick(vec: ArrayLike<number>, groups: Group[], head: Head, th
   return { groupId: label, score, by: 'head' };
 }
 
-function centroidOf(exemplars: number[][]): number[] | null {
-  return exemplars.length ? normalize(mean(exemplars)) : null;
+/** The normalized mean of the finite exemplars (a non-finite one would make the centroid NaN for good); null if none. */
+export function centroidOf(exemplars: number[][]): number[] | null {
+  const ok = exemplars.filter(isFiniteVector);
+  return ok.length ? normalize(mean(ok)) : null;
 }
 
 /** Adds a user-taught exemplar (keeping the newest MAX_EXEMPLARS) and recomputes the centroid. Pure. */
 export function learn(group: Group, vec: number[]): Group {
+  if (!isFiniteVector(vec)) return group; // never teach a NaN or Infinity
   const exemplars = [...group.exemplars, vec.slice()].slice(-MAX_EXEMPLARS);
   return { ...group, exemplars, centroid: centroidOf(exemplars) };
 }
