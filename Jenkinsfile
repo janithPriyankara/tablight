@@ -171,7 +171,8 @@ pipeline {
                 }
                 stage('Unit tests') {
                     steps {
-                        sh 'npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+                        // --coverage: fails under the thresholds in vitest.config.ts; lcov/cobertura reports land in reports/coverage.
+                        sh 'npm test -- --coverage --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
                     }
                 }
             }
