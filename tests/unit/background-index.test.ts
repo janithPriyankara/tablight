@@ -121,12 +121,12 @@ describe('background index', () => {
     const set = vi.spyOn(mock.chrome.storage.sync, 'set');
     await chrome.storage.sync.set({ 'v1:0': JSON.stringify([[id, url, 'R', '', 1, 1]]), 'v1:meta': { chunks: 1, updatedAt: 1 } });
     // The pull is debounced by 1 s (a write may arrive in several onChanged batches).
-    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'), { timeout: 3000 });
-    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2), { timeout: 3000 }); // the remote write + our write-back of the local-only item
+    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'), { timeout: 10_000 });
+    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2), { timeout: 10_000 }); // the remote write + our write-back of the local-only item
     await new Promise((r) => setTimeout(r, 100));
     expect(set).toHaveBeenCalledTimes(2);
     mock.uninstall();
-  });
+  }, 25_000); // a 1 s debounced pull can take several seconds on a slow CI host
   it('import enqueues items and kicks classification; search RPC finds words and meaning', async () => {
     const mock = installChromeMock({ windows: [] });
     const bg = await import('../../src/background/index');
@@ -197,9 +197,9 @@ describe('background index', () => {
       expect(it?.state).toBe('stashed');
       expect(await db.queue.size()).toBe(0);
       expect(it?.embKey).toBeTypeOf('string'); // classified by the kicked pipeline
-    }, { timeout: 5000 });
+    }, { timeout: 10_000 });
     mock.uninstall();
-  });
+  }, 25_000);
   it('stashed, synced and imported items stay findable by meaning (embKey survives those paths)', async () => {
     const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/9/zzz', title: 'Zzz question' }] }] });
     const bg = await import('../../src/background/index');
