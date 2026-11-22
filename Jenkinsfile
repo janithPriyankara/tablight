@@ -1,5 +1,7 @@
 // Commands run directly inside the existing Jenkins node/container.
 def workspaceStarted = false
+// Set when a successful tag build removed its workspace (post success), so cleanup has nothing left to do.
+def workspaceDeleted = false
 // True when the cron trigger started this build.
 def isNightly() {
     return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
@@ -344,13 +346,26 @@ pipeline {
                 }
             }
         }
-        success { script { githubStatus('success', "Build #${env.BUILD_NUMBER} passed") } }
+        success {
+            script {
+                githubStatus('success', "Build #${env.BUILD_NUMBER} passed")
+                // A tag build's workspace (node_modules + model, ~1 GB) is never reused: each version tag gets its own
+                // and the shared host's disk fills up. Its reports and release files are archived by now, so it goes.
+                // main keeps its workspace, which is what lets the next main build skip npm ci.
+                if (env.TAG_NAME) {
+                    deleteDir()
+                    workspaceDeleted = true
+                }
+            }
+        }
         unstable { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} has failing tests") } }
         failure { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} failed") } }
         aborted { script { githubStatus('error', "Build #${env.BUILD_NUMBER} was stopped") } }
         cleanup {
             script {
-                if (workspaceStarted) {
+                if (workspaceDeleted) {
+                    echo 'Workspace deleted after this tag build; nothing to clean.'
+                } else if (workspaceStarted) {
                     // Keep node_modules for the next build; everything else git does not track goes.
                     sh 'git clean -ffdx -e node_modules'
                 } else {
