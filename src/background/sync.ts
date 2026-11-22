@@ -29,6 +29,8 @@ export const SYNCED_IDS_KEY = 'syncedIds';
 export const SYNC_WRITES_KEY = 'syncWrites';
 export const SYNC_DEBOUNCE_MS = 5_000;
 export const PULL_DEBOUNCE_MS = 1_000;
+/** A pass merges again when another device wrote during it, at most this many times in all. */
+const MERGE_ATTEMPTS = 3;
 /**
  * More than MAX_WRITES writes within WRITE_WINDOW_MS from passes a remote change triggered (pullSync)
  * means the devices keep answering each other: pause. Pushes of the user's own changes never count.
@@ -294,17 +296,27 @@ async function apply(db: Db, m: ReturnType<typeof merge>): Promise<void> {
 
 // ───────────────────────────── remote side ─────────────────────────────
 
+/** Whether any "v1:*" key differs between two reads of storage.sync. */
+function remoteChanged(before: Record<string, unknown>, after: Record<string, unknown>): boolean {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)].filter((k) => k.startsWith(SYNC_PREFIX)));
+  for (const k of keys) if (JSON.stringify(before[k]) !== JSON.stringify(after[k])) return true;
+  return false;
+}
+
 /**
  * Writes only what changed: stale chunk keys are removed first, then one `set` of the changed chunks
  * plus meta. More than MAX_WRITES writes in WRITE_WINDOW_MS → 'paused' (devices keep disagreeing).
+ * 'stale': another device wrote after `store` was read, so nothing is written (the caller merges again);
+ * writing would replace that device's records with ones merged without them.
  */
 async function write(store: Record<string, unknown>, chunks: Record<string, string>, now: number, counted: boolean):
-  Promise<'none' | 'wrote' | 'paused'> {
+  Promise<'none' | 'wrote' | 'paused' | 'stale'> {
   const n = Object.keys(chunks).length;
   const changed = Object.fromEntries(Object.entries(chunks).filter(([k, v]) => store[k] !== v));
   const stale = Object.keys(store).filter((k) => (chunkIndex(k) ?? -1) >= n);
   const meta = store[META_KEY] as { chunks?: unknown } | undefined;
   if (!Object.keys(changed).length && !stale.length && meta?.chunks === n) return 'none';
+  if (remoteChanged(store, await chrome.storage.sync.get(null))) return 'stale';
   if (counted) {
     const log = await localGet(SYNC_WRITES_KEY);
     const recent = (Array.isArray(log) ? log : [])
@@ -419,26 +431,35 @@ async function run(db: Db, counted: boolean): Promise<SyncStatus> {
     // (or offline) for a month has never been sent, and pruning it would let the remote copy come back.
     const lastSyncAt = (await readSyncStatus()).lastSyncAt;
     await db.tombstones.prune(Math.min(now, lastSyncAt ?? now) - TOMB_TTL_MS);
-    const store = await chrome.storage.sync.get(null);
-    const decoded = decodeChunks(store);
-    const remote = await verifyIds(decoded.recs);
-    const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
-    const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
-    await apply(db, m);
-    if (m.upserts.length || m.deletes.length) hooks.applied?.(db);
-    const remoteLessons = decodeLessons(store, now);
-    await applyLessons(db, remoteLessons);
-    const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
-    // Before the write: an item opened right after it is pushed must already count as synced.
-    await rememberSynced(db, remote, enc.included, m.tombs);
-    if ((await write(store, enc.chunks, now, counted)) === 'paused') {
-      console.warn(`sync paused: more than ${MAX_WRITES} writes in 10 minutes; retrying in ${PAUSE_RETRY_MINUTES} min`);
-      await retryIn(PAUSE_RETRY_MINUTES);
-      return await fail('rate', 'sync paused: devices disagree');
+    // Read, merge, write. Another device may write while this runs: then the merge starts again from its data
+    // (MERGE_ATTEMPTS at most; after that its onChanged pull merges it).
+    for (let attempt = 1; ; attempt++) {
+      const store = await chrome.storage.sync.get(null);
+      const decoded = decodeChunks(store);
+      const remote = await verifyIds(decoded.recs);
+      const localTombs = new Map((await db.tombstones.all()).map((t) => [t.id, t.deletedAt]));
+      const m = merge(await localRecords(db), [...localTombs], remote, decoded.tombs);
+      await apply(db, m);
+      if (m.upserts.length || m.deletes.length) hooks.applied?.(db);
+      const remoteLessons = decodeLessons(store, now);
+      await applyLessons(db, remoteLessons);
+      const enc = encodeChunks(mergedView(await localRecords(db), remote), m.tombs, SYNC_BUDGET, CHUNK_MAX, now);
+      // Before the write: an item opened right after it is pushed must already count as synced.
+      await rememberSynced(db, remote, enc.included, m.tombs);
+      const wrote = await write(store, enc.chunks, now, counted);
+      if (wrote === 'stale') {
+        if (attempt < MERGE_ATTEMPTS) continue;
+        return await readSyncStatus();
+      }
+      if (wrote === 'paused') {
+        console.warn(`sync paused: more than ${MAX_WRITES} writes in 10 minutes; retrying in ${PAUSE_RETRY_MINUTES} min`);
+        await retryIn(PAUSE_RETRY_MINUTES);
+        return await fail('rate', 'sync paused: devices disagree');
+      }
+      await writeLessons(db, store, remoteLessons);
+      await Promise.resolve(chrome.alarms.clear(SYNC_RETRY_ALARM)).catch(() => undefined);
+      return await save({ ok: true, synced: enc.included.length, localOnly: enc.localOnly.length, lastSyncAt: now });
     }
-    await writeLessons(db, store, remoteLessons);
-    await Promise.resolve(chrome.alarms.clear(SYNC_RETRY_ALARM)).catch(() => undefined);
-    return await save({ ok: true, synced: enc.included.length, localOnly: enc.localOnly.length, lastSyncAt: now });
   } catch (e) {
     const reason = reasonOf(e);
     if (reason === 'rate') await retryIn(RATE_RETRY_MINUTES);
