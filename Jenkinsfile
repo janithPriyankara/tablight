@@ -96,17 +96,38 @@ pipeline {
             }
         }
         stage('Supply chain') {
-            // Known vulnerabilities (any severity, shipped and dev packages) and registry signatures of every
-            // installed package. Light: two registry requests, no download. The JSON report is archived.
+            // Known vulnerabilities at any severity in every dependency manifest: the npm lockfile (shipped and dev)
+            // and the build-time Python requirements (fine-tuning; nothing of it ships), from OSV (GitHub advisories,
+            // PyPA, npm) and npm's own audit. Plus the registry signature of every installed npm package. OSV-Scanner
+            // is a pinned static binary, downloaded once and verified against its release checksums. Reports archived.
+            environment {
+                OSV_VERSION = '2.7.0'
+                TOOLS = '/tmp/tablight-tools'
+            }
             steps {
                 sh '''
+                    set -eu
+                    bin="$TOOLS/osv-scanner-$OSV_VERSION"
+                    if [ ! -x "$bin" ]; then
+                        tmp="$(mktemp -d)"
+                        base="https://github.com/google/osv-scanner/releases/download/v$OSV_VERSION"
+                        curl -fsSL -o "$tmp/osv-scanner_linux_amd64" "$base/osv-scanner_linux_amd64"
+                        curl -fsSL -o "$tmp/sums" "$base/osv-scanner_SHA256SUMS"
+                        (cd "$tmp" && grep " osv-scanner_linux_amd64\\$" sums | sha256sum -c -)
+                        mkdir -p "$TOOLS" && install -m 0755 "$tmp/osv-scanner_linux_amd64" "$bin"
+                        rm -rf "$tmp"
+                    fi
+                    "$bin" --version
                     set +e
+                    "$bin" scan source -L package-lock.json -L scripts/finetune/requirements.txt --format json --output reports/osv.json
+                    "$bin" scan source -L package-lock.json -L scripts/finetune/requirements.txt
+                    osv=$?
                     npm audit --json > reports/npm-audit.json
                     npm audit --audit-level=low
                     audit=$?
                     npm audit signatures
                     sigs=$?
-                    [ "$audit" -eq 0 ] && [ "$sigs" -eq 0 ]
+                    [ "$osv" -eq 0 ] && [ "$audit" -eq 0 ] && [ "$sigs" -eq 0 ]
                 '''
             }
         }
