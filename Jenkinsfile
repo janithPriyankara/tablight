@@ -159,20 +159,33 @@ pipeline {
                 '''
             }
         }
-        stage('Checks and unit tests') {
-            // Independent of each other, so they run side by side.
-            parallel {
-                // Both re-check only what changed since the last build (results kept in /tmp, keyed by file content).
-                stage('Lint') {
-                    steps { sh 'npm run lint -- --cache --cache-strategy content --cache-location /tmp/tablight-eslint-cache/' }
-                }
-                stage('Type check') {
-                    steps { sh 'npx --no-install tsc --noEmit --incremental --tsBuildInfoFile /tmp/tablight-tsc/tsbuildinfo' }
-                }
-                stage('Unit tests') {
-                    steps {
-                        // --coverage: fails under the thresholds in vitest.config.ts; lcov/cobertura reports land in reports/coverage.
-                        sh 'npm test -- --coverage --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+        // One after another, not side by side: the shared Jenkins host is small, and peak memory matters more than minutes.
+        // Lint and type check re-check only what changed since the last build (results kept in /tmp, keyed by content).
+        stage('Lint') {
+            steps { sh 'npm run lint -- --cache --cache-strategy content --cache-location /tmp/tablight-eslint-cache/' }
+        }
+        stage('Type check') {
+            steps { sh 'npx --no-install tsc --noEmit --incremental --tsBuildInfoFile /tmp/tablight-tsc/tsbuildinfo' }
+        }
+        stage('Unit tests') {
+            steps {
+                // --coverage: fails under the thresholds in vitest.config.ts; lcov/cobertura reports land in reports/coverage.
+                sh 'npm test -- --coverage --reporter=default --reporter=junit --outputFile.junit=reports/unit.xml'
+            }
+        }
+        stage('Sonar') {
+            // SonarCloud analysis with the unit coverage; the build waits for the quality gate and fails with it
+            // (sonar-project.properties). Needs a Jenkins "Secret text" credential with the id sonar-token. Until it
+            // exists, ordinary builds skip this stage with a notice; a release refuses to go out without it.
+            steps {
+                script {
+                    try {
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            sh 'npx --no-install sonar-scanner-npm -Dsonar.token="$SONAR_TOKEN"' + (env.CHANGE_ID ? " -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}" : (env.BRANCH_NAME ? " -Dsonar.branch.name=${env.BRANCH_NAME}" : ''))
+                        }
+                    } catch (org.jenkinsci.plugins.credentialsbinding.impl.CredentialNotFoundException e) {
+                        if (isRelease()) error('Sonar: no sonar-token credential; a release needs the Sonar quality gate.')
+                        echo 'Sonar: no sonar-token credential yet; skipping (add it to enable the quality gate).'
                     }
                 }
             }

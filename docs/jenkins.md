@@ -27,6 +27,22 @@ Successful builds expose `release/tablight-<version>.zip` under **Artifacts**. J
 
 Allow outbound access to image registries, npm and Debian mirrors during image construction, plus GitHub, npm and optional Playwright browser downloads during builds (Hugging Face is no longer needed: the bundled model is committed). Start with 2 CPUs and 4 GB RAM; allow more for quality/browser suites. Keep the Dockerfile's Playwright dependency-install version aligned with `@playwright/test` when upgrading it.
 
+## Security gates
+Every build (main, pull requests, tags, releases) runs these stages one after another, so the shared host never carries more than one at a time. Any finding fails the build, so a release cannot go out with one.
+| Stage | What it checks | Cost |
+|---|---|---|
+| Supply chain | OSV-Scanner over `package-lock.json` and `scripts/finetune/requirements.txt`; `npm audit` at any severity; `npm audit signatures` | One static binary (cached in `/tmp/tablight-tools`), a few registry requests |
+| Secret scan | gitleaks over the whole git history (redacted report) | One static binary (cached) |
+| Lint | ESLint, including `eslint-plugin-security` on `src/` and the DOM-injection bans | Incremental cache in `/tmp` |
+| Type check | `tsc --noEmit` | Incremental cache in `/tmp` |
+| Unit tests | The unit suite with v8 coverage thresholds (`vitest.config.ts`), including the security suites: `redos`, `security-model`, `security-rpc` | Coverage adds little |
+| Sonar | SonarCloud analysis with coverage; the build waits for the quality gate | The scanner downloads a Java runtime (~50 MB) once into `~/.sonar` |
+| Build and package | `verify-release` (permissions, CSP, URL allowlist, licenses, hashes, size), the ZIP, and a CycloneDX SBOM | — |
+Binaries are pinned by version and checked against their release's published checksums before first use.
+1. Sign in at [sonarcloud.io](https://sonarcloud.io) with GitHub and import `janithPriyankara/tablight`. If its organization or project key differ from `sonar-project.properties`, update that file.
+2. Turn off SonarCloud's *Automatic Analysis* for the project (Administration → Analysis Method), so Jenkins' analysis with coverage is the only one.
+3. Create a token (My Account → Security) and add it in Jenkins as a **Secret text** credential with the id `sonar-token`.
+Until the credential exists, ordinary builds skip the Sonar stage with a notice; a release build fails instead.
 ## Troubleshooting
 
 - **node/npm not found:** check that the NodeJS plugin is enabled, the tool is named exactly `nodejs22.23.5`, and its automatic download succeeds.
