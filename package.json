@@ -18,7 +18,8 @@
     "preview:vectors": "node scripts/make-preview-vectors.mjs",
     "package": "node scripts/package.mjs",
     "postbuild": "node scripts/verify-release.mjs",
-    "names:build": "node scripts/names/build.mjs"
+    "names:build": "node scripts/names/build.mjs",
+    "sbom": "node scripts/sbom.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",
