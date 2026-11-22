@@ -1,9 +1,10 @@
 import type { ComponentChildren } from 'preact';
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { send } from '../../shared/rpc';
 import type { Settings as SettingsT, SyncStatus } from '../../shared/types';
 import { ago, plural } from '../common/format';
 import { DownloadIcon, InfoIcon, ShieldIcon, TrashIcon, UploadIcon } from '../common/icons';
+import { LOOKUP_SETTING_HINT } from '../common/LookupDialog';
 import { SETTINGS_TABS, type SettingsTab, isoDate, syncStatusLine } from './views';
 
 /** Same limit the background's import enforces; checked before the file is read. */
@@ -141,7 +142,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
       ))}
     </span>
   );
-  const saveOn = (key: 'autoCreateGroups' | 'removeOnOpen' | 'syncEnabled' | 'suspiciousTabs') => (on: boolean) =>
+  const saveOn = (key: 'autoCreateGroups' | 'removeOnOpen' | 'syncEnabled' | 'suspiciousTabs' | 'lookupButton') => (on: boolean) =>
     void act(() => save({ [key]: on }));
   return (
     <div class="page-scroll">
@@ -182,6 +183,9 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                     <button type="button" class="btn btn-sm" disabled={busy} onClick={onInterests}>Choose…</button>
                   </SettingRow>
                 )}
+                <SettingRow id="set-lookup" name="Show the Look it up button" hint={LOOKUP_SETTING_HINT}>
+                  {sw('set-lookup', settings.lookupButton, saveOn('lookupButton'))}
+                </SettingRow>
               </Section>
               <Section id="memory" title="Tabs and memory">
                 <SettingRow
@@ -205,6 +209,7 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                   {sw('set-removeonopen', settings.removeOnOpen, saveOn('removeOnOpen'))}
                 </SettingRow>
               </Section>
+              <Shortcuts busy={busy} notify={notify} />
               <Section id="look" title="Appearance">
                 <SettingRow id="theme" name="Theme" group>
                   {segmented('theme', settings.theme, THEMES, (v) => void act(() => save({ theme: v })))}
@@ -272,10 +277,10 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
                 <div class="setting-row">
                   <ul class="privacy-points">
                     <li><ShieldIcon />Sees only each tab’s title and address: never passwords, cookies, what you type or what is on a page.</li>
-                    <li><ShieldIcon />Grouping runs on your computer. No servers, no analytics.</li>
+                    <li><ShieldIcon />Grouping runs on your computer. No servers, no analytics. The only network requests are the optional Look it up, to Wikimedia, after you confirm the text.</li>
                     <li>
-                      <ShieldIcon />Nothing leaves your device except saved tabs and the examples you taught your groups, which sync
-                      through your browser account while sync is on.
+                      <ShieldIcon />Nothing leaves your device except saved tabs and taught examples (synced through your browser account while sync is on) and, only when you click
+                      Look it up and confirm, the text you saw.
                     </li>
                   </ul>
                   <a class="link privacy-link" href="privacy.html" target="_blank" rel="noopener">Read the privacy policy</a>
@@ -322,6 +327,59 @@ export function Settings({ settings, syncStatus, busy, save, act, notify, onDele
     </div>
   );
 }
+/** Where the browser lets you change an extension's shortcuts (a link to it cannot open; chrome.tabs.create can). */
+export const SHORTCUTS_PAGE = 'chrome://extensions/shortcuts';
+export const EDGE_SHORTCUTS_PAGE = 'edge://extensions/shortcuts';
+/** The browser's shortcuts page: Edge's own address in Edge (its user agent says "Edg/"), Chrome's elsewhere. */
+export function shortcutsPage(ua: string = typeof navigator === 'undefined' ? '' : navigator.userAgent): string {
+  return ua.includes('Edg/') ? EDGE_SHORTCUTS_PAGE : SHORTCUTS_PAGE;
+}
+/** The default keys, shown until the browser reports the current ones (and in tests). */
+const DEFAULT_SHORTCUTS: { name: string; description: string; shortcut: string }[] = [
+  { name: 'open-dashboard', description: 'Open the Tablight dashboard', shortcut: 'Alt+Shift+T' },
+  { name: 'open-side-panel', description: 'Open Tablight in the side panel', shortcut: 'Alt+Shift+S' },
+  { name: 'prioritize-tab', description: 'Add the current tab to Priority', shortcut: 'Alt+P' },
+  { name: 'unprioritize-tab', description: 'Remove the current tab from Priority', shortcut: 'Alt+Shift+P' },
+];
+/**
+ * General → Keyboard shortcuts: each command with the key the browser has for it now (the user may have changed it,
+ * or another extension may hold it: then it reads "Not set"), and a button to the browser's shortcuts page.
+ */
+function Shortcuts({ busy, notify }: { busy: boolean; notify: (m: string) => void }) {
+  const [list, setList] = useState(DEFAULT_SHORTCUTS);
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || typeof chrome.commands?.getAll !== 'function') return;
+    chrome.commands.getAll().then((cmds) => {
+      const got = cmds.filter((c) => c.name && c.description).map((c) => ({ name: c.name!, description: c.description!, shortcut: c.shortcut ?? '' }));
+      if (got.length) setList(got);
+    }, () => undefined);
+  }, []);
+  const change = () => {
+    const url = shortcutsPage();
+    chrome.tabs.create({ url }).catch(() => notify(`Open ${url} to change the shortcuts.`));
+  };
+  return (
+    <Section id="keys" title="Keyboard shortcuts">
+      <div class="setting-row">
+        <dl class="shortcut-list">
+          {list.map((c) => (
+            <div key={c.name} class="shortcut">
+              <dt>{c.description}</dt>
+              <dd>{c.shortcut ? <kbd>{c.shortcut}</kbd> : <span class="muted">Not set</span>}</dd>
+            </div>
+          ))}
+        </dl>
+        <p class="setting-hint">
+          Alt+P and Alt+Shift+P work on the tab you are on, on any web page. On a Mac they are Option+P and Option+Shift+P.
+          You can change any shortcut on the browser’s shortcuts page.
+        </p>
+      </div>
+      <SettingRow id="set-keys" name="Change shortcuts" group>
+        <button type="button" class="btn btn-sm" disabled={busy} onClick={change}>Open shortcuts page</button>
+      </SettingRow>
+    </Section>
+  );
+}
 /** A titled card of settings rows (the title is the region's name). */
 function Section(props: { id: string; title: string; danger?: boolean; children: ComponentChildren }) {
   return (
@@ -335,10 +393,13 @@ function Section(props: { id: string; title: string; danger?: boolean; children:
  * One setting: its name and its control on one line. The explanation is not on screen until the ⓘ button next to
  * the name is pressed (it stays in the page, hidden, and describes the control for screen readers).
  * `group`: the control is a radio group or buttons, so the name labels the row instead of one input.
+ * `hint`: a short line always shown under the row (and read with the control).
  */
-function SettingRow(props: { id: string; name: string; help?: string; group?: boolean; children: ComponentChildren }) {
+function SettingRow(props: { id: string; name: string; help?: string; hint?: string; group?: boolean; children: ComponentChildren }) {
   const [open, setOpen] = useState(false);
   const helpId = `${props.id}-help`;
+  const hintId = `${props.id}-hint`;
+  const described = [props.hint ? hintId : '', props.help ? helpId : ''].filter(Boolean).join(' ');
   const nameId = `${props.id}-name`;
   const name = props.group
     ? <span class="setting-name" id={nameId}>{props.name}</span>
@@ -346,7 +407,7 @@ function SettingRow(props: { id: string; name: string; help?: string; group?: bo
   return (
     <div
       class="setting-row" role={props.group ? 'group' : undefined}
-      aria-labelledby={props.group ? nameId : undefined} aria-describedby={props.help ? helpId : undefined}
+      aria-labelledby={props.group ? nameId : undefined} aria-describedby={described || undefined}
     >
       <div class="setting">
         <span class="setting-text">
@@ -363,6 +424,7 @@ function SettingRow(props: { id: string; name: string; help?: string; group?: bo
         </span>
         {props.children}
       </div>
+      {props.hint && <p class="setting-hint" id={hintId}>{props.hint}</p>}
       {props.help && <p class="setting-help" id={helpId} hidden={!open}>{props.help}</p>}
     </div>
   );

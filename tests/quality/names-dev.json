@@ -1,0 +1,767 @@
+[
+  {
+    "url": "https://www.google.com/search?q=breaking+bad",
+    "title": "breaking bad - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=better+call+saul",
+    "title": "better call saul - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=stranger+things+season+4",
+    "title": "stranger things season 4 - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=the+sopranos",
+    "title": "the sopranos - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=squid+game+cast",
+    "title": "squid game cast - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=crash+landing+on+you",
+    "title": "crash landing on you - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=game+of+thrones",
+    "title": "game of thrones - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=peaky+blinders",
+    "title": "peaky blinders - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=the+mandalorian",
+    "title": "the mandalorian - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.google.com/search?q=succession+season+3",
+    "title": "succession season 3 - Google Search",
+    "group": "tv"
+  },
+  {
+    "url": "https://www.bing.com/search?q=the+shawshank+redemption",
+    "title": "the shawshank redemption - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=pulp+fiction",
+    "title": "pulp fiction - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=the+dark+knight+rises",
+    "title": "the dark knight rises - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=oppenheimer+trailer",
+    "title": "oppenheimer trailer - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=everything+everywhere+all+at+once",
+    "title": "everything everywhere all at once - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=the+grand+budapest+hotel",
+    "title": "the grand budapest hotel - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.bing.com/search?q=spirited+away+full+movie",
+    "title": "spirited away full movie - Search",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.google.com/search?q=elden+ring",
+    "title": "elden ring - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=baldurs+gate+3",
+    "title": "baldurs gate 3 - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=red+dead+redemption+2",
+    "title": "red dead redemption 2 - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=hollow+knight",
+    "title": "hollow knight - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=stardew+valley",
+    "title": "stardew valley - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=the+witcher+3+wild+hunt",
+    "title": "the witcher 3 wild hunt - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=counter+strike+2",
+    "title": "counter strike 2 - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://www.google.com/search?q=minecraft",
+    "title": "minecraft - Google Search",
+    "group": "games"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=radiohead&ia=web",
+    "title": "radiohead at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=kendrick+lamar&ia=web",
+    "title": "kendrick lamar at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=arctic+monkeys&ia=web",
+    "title": "arctic monkeys at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=fleetwood+mac+rumours&ia=web",
+    "title": "fleetwood mac rumours at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=daft+punk&ia=web",
+    "title": "daft punk at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=the+dark+side+of+the+moon&ia=web",
+    "title": "the dark side of the moon at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=red+hot+chili+peppers&ia=web",
+    "title": "red hot chili peppers at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://duckduckgo.com/?q=billie+eilish&ia=web",
+    "title": "billie eilish at DuckDuckGo",
+    "group": "music"
+  },
+  {
+    "url": "https://www.google.com/search?q=jujutsu+kaisen",
+    "title": "jujutsu kaisen - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=one+punch+man",
+    "title": "one punch man - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=fullmetal+alchemist+brotherhood",
+    "title": "fullmetal alchemist brotherhood - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=demon+slayer+kimetsu+no+yaiba",
+    "title": "demon slayer kimetsu no yaiba - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=neon+genesis+evangelion",
+    "title": "neon genesis evangelion - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=chainsaw+man",
+    "title": "chainsaw man - Google Search",
+    "group": "anime"
+  },
+  {
+    "url": "https://www.google.com/search?q=to+kill+a+mockingbird",
+    "title": "to kill a mockingbird - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.google.com/search?q=the+great+gatsby",
+    "title": "the great gatsby - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.google.com/search?q=nineteen+eighty+four",
+    "title": "nineteen eighty four - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.google.com/search?q=the+catcher+in+the+rye",
+    "title": "the catcher in the rye - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.google.com/search?q=pride+and+prejudice",
+    "title": "pride and prejudice - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.google.com/search?q=a+song+of+ice+and+fire",
+    "title": "a song of ice and fire - Google Search",
+    "group": "books"
+  },
+  {
+    "url": "https://www.bing.com/search?q=toyota+corolla",
+    "title": "toyota corolla - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.bing.com/search?q=ford+mustang",
+    "title": "ford mustang - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.bing.com/search?q=porsche+911",
+    "title": "porsche 911 - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.bing.com/search?q=volkswagen+golf",
+    "title": "volkswagen golf - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.bing.com/search?q=lamborghini",
+    "title": "lamborghini - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.bing.com/search?q=tesla+model+3",
+    "title": "tesla model 3 - Search",
+    "group": "cars"
+  },
+  {
+    "url": "https://www.google.com/search?q=manchester+united",
+    "title": "manchester united - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=real+madrid",
+    "title": "real madrid - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=los+angeles+lakers",
+    "title": "los angeles lakers - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=premier+league",
+    "title": "premier league - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=lionel+messi",
+    "title": "lionel messi - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=serena+williams",
+    "title": "serena williams - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=mumbai+indians",
+    "title": "mumbai indians - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=new+england+patriots",
+    "title": "new england patriots - Google Search",
+    "group": "sports"
+  },
+  {
+    "url": "https://www.google.com/search?q=raspberry+pi+4",
+    "title": "raspberry pi 4 - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=esp32+devkit",
+    "title": "esp32 devkit - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=i7+8700",
+    "title": "i7 8700 - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=rtx+3080",
+    "title": "rtx 3080 - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=stm32f103",
+    "title": "stm32f103 - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=ACS770KCB-150B",
+    "title": "ACS770KCB-150B - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=nvidia",
+    "title": "nvidia - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=texas+instruments",
+    "title": "texas instruments - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=arduino+uno",
+    "title": "arduino uno - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=ryzen+7+5800x",
+    "title": "ryzen 7 5800x - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=espressif+systems",
+    "title": "espressif systems - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://www.google.com/search?q=atmega328p",
+    "title": "atmega328p - Google Search",
+    "group": "hardware"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/The_Wire",
+    "title": "The Wire - Wikipedia",
+    "group": "tv"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Fleabag",
+    "title": "Fleabag - Wikipedia",
+    "group": "tv"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Severance_(TV_series)",
+    "title": "Severance (TV series) - Wikipedia",
+    "group": "tv"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Mad_Men",
+    "title": "Mad Men - Wikipedia",
+    "group": "tv"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Parasite_(2019_film)",
+    "title": "Parasite (2019 film) - Wikipedia",
+    "group": "movies"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Goodfellas",
+    "title": "Goodfellas - Wikipedia",
+    "group": "movies"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/The_Godfather_Part_II",
+    "title": "The Godfather Part II - Wikipedia",
+    "group": "movies"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Blade_Runner_2049",
+    "title": "Blade Runner 2049 - Wikipedia",
+    "group": "movies"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Portal_2",
+    "title": "Portal 2 - Wikipedia",
+    "group": "games"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Hades_(video_game)",
+    "title": "Hades (video game) - Wikipedia",
+    "group": "games"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Super_Mario_Odyssey",
+    "title": "Super Mario Odyssey - Wikipedia",
+    "group": "games"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Pink_Floyd",
+    "title": "Pink Floyd - Wikipedia",
+    "group": "music"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/OK_Computer",
+    "title": "OK Computer - Wikipedia",
+    "group": "music"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Kanye_West",
+    "title": "Kanye West - Wikipedia",
+    "group": "music"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Coldplay",
+    "title": "Coldplay - Wikipedia",
+    "group": "music"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Cowboy_Bebop",
+    "title": "Cowboy Bebop - Wikipedia",
+    "group": "anime"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Death_Note",
+    "title": "Death Note - Wikipedia",
+    "group": "anime"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/My_Hero_Academia",
+    "title": "My Hero Academia - Wikipedia",
+    "group": "anime"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/One_Hundred_Years_of_Solitude",
+    "title": "One Hundred Years of Solitude - Wikipedia",
+    "group": "books"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/The_Hobbit",
+    "title": "The Hobbit - Wikipedia",
+    "group": "books"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Brave_New_World",
+    "title": "Brave New World - Wikipedia",
+    "group": "books"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Honda_Civic",
+    "title": "Honda Civic - Wikipedia",
+    "group": "cars"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Subaru",
+    "title": "Subaru - Wikipedia",
+    "group": "cars"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/FC_Barcelona",
+    "title": "FC Barcelona - Wikipedia",
+    "group": "sports"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Golden_State_Warriors",
+    "title": "Golden State Warriors - Wikipedia",
+    "group": "sports"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Roger_Federer",
+    "title": "Roger Federer - Wikipedia",
+    "group": "sports"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Analog_Devices",
+    "title": "Analog Devices - Wikipedia",
+    "group": "hardware"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/STMicroelectronics",
+    "title": "STMicroelectronics - Wikipedia",
+    "group": "hardware"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/GeForce",
+    "title": "GeForce - Wikipedia",
+    "group": "hardware"
+  },
+  {
+    "title": "Better Call Saul | Netflix",
+    "url": "https://www.netflix.com/title/80021955",
+    "group": "tv"
+  },
+  {
+    "title": "Arctic Monkeys | Spotify",
+    "url": "https://open.spotify.com/artist/7Ln80lUS6He07XvHI8qqHH",
+    "group": "music"
+  },
+  {
+    "title": "Elden Ring on Steam",
+    "url": "https://store.steampowered.com/app/1245620/ELDEN_RING/",
+    "group": "games"
+  },
+  {
+    "title": "Chainsaw Man - Crunchyroll",
+    "url": "https://www.crunchyroll.com/series/GVDHX8QNW/chainsaw-man",
+    "group": "anime"
+  },
+  {
+    "title": "Blade Runner 2049 (2017) - IMDb",
+    "url": "https://www.imdb.com/title/tt1856101/",
+    "group": "movies"
+  },
+  {
+    "url": "https://www.google.com/search?q=friends",
+    "title": "friends - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=up",
+    "title": "up - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=her",
+    "title": "her - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=cars",
+    "title": "cars - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=home",
+    "title": "home - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=news",
+    "title": "news - Google Search",
+    "group": "news",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=games",
+    "title": "games - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=music",
+    "title": "music - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=weather+tomorrow",
+    "title": "weather tomorrow - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=how+to+boil+eggs",
+    "title": "how to boil eggs - Google Search",
+    "group": "food",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=cheap+flights+to+lisbon",
+    "title": "cheap flights to lisbon - Google Search",
+    "group": "travel",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=python+list+comprehension",
+    "title": "python list comprehension - Google Search",
+    "group": "programming",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=mortgage+calculator",
+    "title": "mortgage calculator - Google Search",
+    "group": "finance",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=symptoms+of+flu",
+    "title": "symptoms of flu - Google Search",
+    "group": "health",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=sarah+perera",
+    "title": "sarah perera - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=john+fernando+linkedin",
+    "title": "john fernando linkedin - Google Search",
+    "group": "jobs",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=nimal+silva",
+    "title": "nimal silva - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=best+pizza+near+me",
+    "title": "best pizza near me - Google Search",
+    "group": "food",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=translate+hello+to+spanish",
+    "title": "translate hello to spanish - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=joker",
+    "title": "joker - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=titanic",
+    "title": "titanic - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=avatar",
+    "title": "avatar - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=queen",
+    "title": "queen - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=halo",
+    "title": "halo - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=doom",
+    "title": "doom - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=frozen",
+    "title": "frozen - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=arrival",
+    "title": "arrival - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=alien",
+    "title": "alien - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=mercury",
+    "title": "mercury - Google Search",
+    "group": "science",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=apple",
+    "title": "apple - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=jaguar",
+    "title": "jaguar - Google Search",
+    "group": "pets",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=amazon",
+    "title": "amazon - Google Search",
+    "group": "shopping",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=is+breaking+bad+worth+watching+reddit",
+    "title": "is breaking bad worth watching reddit - Google Search",
+    "group": "tv",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=best+laptop+for+students+2024",
+    "title": "best laptop for students 2024 - Google Search",
+    "group": "shopping",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=how+tall+is+lionel+messi",
+    "title": "how tall is lionel messi - Google Search",
+    "group": "sports",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=the+office",
+    "title": "the office - Google Search",
+    "group": "other",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=inbox",
+    "title": "inbox - Google Search",
+    "group": "work",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=dashboard",
+    "title": "dashboard - Google Search",
+    "group": "work",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=meeting+notes",
+    "title": "meeting notes - Google Search",
+    "group": "work",
+    "negative": true
+  },
+  {
+    "url": "https://www.google.com/search?q=untitled+document",
+    "title": "untitled document - Google Search",
+    "group": "docs",
+    "negative": true
+  }
+]

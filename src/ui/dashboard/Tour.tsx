@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { CloseIcon, HelpIcon, MoveIcon, PauseIcon, PlayIcon, SparkIcon, StashIcon } from '../common/icons';
+import { CloseIcon, HelpIcon, MoveIcon, PauseIcon, PlayIcon, SparkIcon, StarIcon, StashIcon } from '../common/icons';
 
 export interface TourStep {
   /** CSS selector of the real element this step points at; none (or not on screen) = a centred card. */
@@ -44,6 +44,7 @@ export const TOUR_STEPS: TourStep[] = [
         <ul class="tour-list">
           <li><PauseIcon size={13} class="tour-inline" /> <strong>Pause</strong>: frees its memory. It stays in your tab strip and comes back when you click it.</li>
           <li><StashIcon size={13} class="tour-inline" /> <strong>Save for later</strong>: closes it and keeps it in your Saved for later list.</li>
+          <li><StarIcon size={13} class="tour-inline" /> <strong>Priority</strong>: puts it in your Priority group, listed first. Only you put tabs there. On any page, <kbd>Alt</kbd>+<kbd>P</kbd> adds the tab and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> takes it out (Option on a Mac).</li>
           <li><MoveIcon size={13} class="tour-inline" /> <strong>Move</strong> puts it in another group, and <CloseIcon size={13} class="tour-inline" /> closes it.</li>
         </ul>
       </>
@@ -103,7 +104,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="settings"]',
     title: 'Settings',
-    body: <p>Turn on Auto-pause and automatic groups, choose what the toolbar icon opens, manage sync and backups, or delete everything. Your data stays yours: there are no servers and no tracking.</p>,
+    body: <p>Turn on Auto-pause and automatic groups, choose what the toolbar icon opens, manage sync and backups, or delete everything. Your data stays yours: there are no servers and no tracking, and Tablight uses the network only if you confirm Look it up.</p>,
   },
   {
     title: 'You’re all set',

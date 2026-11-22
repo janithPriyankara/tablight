@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import fixture from './fixture.json';
 import holdout from './holdout.json';
@@ -10,8 +8,8 @@ import youtubeMessy from './youtube-messy.json';
 import trainA from '../../training/train-a.json';
 import trainB from '../../training/train-b.json';
 import trainC from '../../training/train-c.json';
-import { loadEmbedder } from './model';
-import { buildStarterGroups, buildTrainedGroup, classify, TRAINED_IDS, type Head } from '../../src/classify/assign';
+import { loadProductModel, type QualityHead } from './model';
+import { buildStarterGroups, buildTrainedGroup, classify, TRAINED_IDS } from '../../src/classify/assign';
 import { pickGroup } from '../../src/classify/pick';
 import { ruleGroup } from '../../src/classify/rules';
 import { embedText } from '../../src/shared/url';
@@ -22,15 +20,15 @@ const blind = holdout as Row[];
 const blind2 = holdout2 as Row[];
 const blind3 = holdout3 as Row[];
 // HEAD_PATH / MODEL_PATH let model experiments run without touching the bundled files.
-const headPath = process.env.HEAD_PATH ?? resolve(import.meta.dirname, '../../src/classify/head.json');
-let head: Head & { pooling?: 'mean' | 'cls'; val?: { acc: number; otherAssigned: number } };
+let head: QualityHead;
 /** The caller pipeline with the installed (starter) groups, or with `all` groups (starter plus every on-demand one). */
 let run: (rows: Row[], set?: 'installed' | 'all') => Promise<(string | null)[]>;
 /** The product pipeline with the installed (starter) groups: pickGroup, which adds the Videos fallback. */
 let runProduct: (rows: Row[], set?: 'installed' | 'all') => Promise<(string | null)[]>;
 beforeAll(async () => {
-  head = JSON.parse(await readFile(headPath, 'utf8'));
-  const embed = await loadEmbedder({ model: head.model, pooling: head.pooling, path: process.env.MODEL_PATH });
+  const model = await loadProductModel();
+  head = model.head;
+  const embed = model.embed;
   const groups: Group[] = await buildStarterGroups(embed);
   const allGroups: Group[] = [...groups, ...(await Promise.all([...TRAINED_IDS].map((id) => buildTrainedGroup(id, embed))))];
   // Caller pipeline: (user group) > ruleGroup > classify > Unsorted (null).
@@ -153,11 +151,11 @@ describe('classifier accuracy', () => {
   // youtube-topics.json: synthetic YouTube videos written blind from training/LABELING.md, never trained on.
   // A video about a subject belongs in that subject's group; one with no clear subject belongs in `videos`.
   // TOPIC_MIN is the rate measured with the YouTube bar (pickGroup's YOUTUBE_THRESHOLD) after the retrain for the
-  // hashtag-as-words input (2026-11-19): 81/90 (77/90 before it). The bar was tuned on this set, so it is no longer
+  // retrain with the messy-title set (2026-11-19): 84/90 (81/90 before it). The bar was tuned on this set, so it is no longer
   // blind for the bar; youtube-messy.json below is the honest score. Scored with the installed groups, so a video
   // the head gives an on-demand label (say, a shopping haul it reads as fashion) falls back to Videos and counts as a
   // miss here.
-  const TOPIC_MIN = 81 / 90;
+  const TOPIC_MIN = 84 / 90;
   const NO_TOPIC_MIN = 0.7;
   /** Product pipeline over YouTube rows: topic videos in their topic group, no-topic videos in Videos. Aggregates only. */
   async function youtubeRates(name: string, rows: Row[], set: 'installed' | 'all' = 'installed') {
@@ -180,7 +178,7 @@ describe('classifier accuracy', () => {
     );
     return { topic: topicHit / topic, plain: plainHit / plain };
   }
-  it(`youtube topic first: ≥ 81/90 (${pc(TOPIC_MIN)}) of topic videos in their topic group, ≥ ${pc(NO_TOPIC_MIN)} of no-topic videos in Videos`, async () => {
+  it(`youtube topic first: ≥ 84/90 (${pc(TOPIC_MIN)}) of topic videos in their topic group, ≥ ${pc(NO_TOPIC_MIN)} of no-topic videos in Videos`, async () => {
     const r = await youtubeRates('YOUTUBE', youtubeTopics as Row[]);
     expect(r.topic).toBeGreaterThanOrEqual(TOPIC_MIN);
     expect(r.plain).toBeGreaterThanOrEqual(NO_TOPIC_MIN);
@@ -188,10 +186,10 @@ describe('classifier accuracy', () => {
   // youtube-messy.json: 221 YouTube videos (159 about a subject, 62 with none) with the titles real tabs carry:
   // notification counters "(1157) ", hashtag-heavy Shorts, clickbait and "Talk — Speaker (Conf)" talks. Written
   // blind from training/LABELING.md and never trained or tuned on. MESSY_TOPIC_MIN is the rate first measured with the
-  // YouTube bar (2026-11-19): 73/159 (70/159 before it). 66 of the 159 have an on-demand label, so with the installed
+  // YouTube bar after the retrain with the messy-title set (2026-11-19): 83/159 (73/159 before it). 66 of the 159 have an on-demand label, so with the installed
   // groups they can only be parked in Videos; the all-groups line is printed for them and not gated.
-  const MESSY_TOPIC_MIN = 73 / 159;
-  it(`youtube messy titles: ≥ 73/159 (${pc(MESSY_TOPIC_MIN)}) of topic videos in their topic group, ≥ ${pc(NO_TOPIC_MIN)} of no-topic videos in Videos`, async () => {
+  const MESSY_TOPIC_MIN = 83 / 159;
+  it(`youtube messy titles: ≥ 83/159 (${pc(MESSY_TOPIC_MIN)}) of topic videos in their topic group, ≥ ${pc(NO_TOPIC_MIN)} of no-topic videos in Videos`, async () => {
     const r = await youtubeRates('YOUTUBE MESSY', youtubeMessy as Row[]);
     await youtubeRates('YOUTUBE MESSY (all groups, not gated)', youtubeMessy as Row[], 'all');
     expect(r.topic).toBeGreaterThanOrEqual(MESSY_TOPIC_MIN);

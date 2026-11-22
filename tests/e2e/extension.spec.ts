@@ -202,6 +202,11 @@ test('offscreen bundle points Transformers.js at bundled files before building t
   for (const f of ['ort/ort-wasm-simd-threaded.mjs', 'ort/ort-wasm-simd-threaded.wasm', `models/${MODEL_ID}/onnx/model_quantized.onnx`]) {
     expect(existsSync(join(DIST, f)), f).toBe(true);
   }
+  // Exactly one model ships: Tablight's fine-tuned tablight/bge-small-tabs-v1, nothing left of an older one.
+  expect(MODEL_ID).toBe('tablight/bge-small-tabs-v1');
+  const dirs = (d: string) => readdirSync(d, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  const bundled = dirs(join(DIST, 'models')).flatMap((org) => dirs(join(DIST, 'models', org)).map((m) => `${org}/${m}`));
+  expect(bundled).toEqual([MODEL_ID]);
 });
 
 test('flows: groups, duplicates, stash/open, sleep, search, export → import', async () => {
@@ -306,6 +311,10 @@ test('flows: groups, duplicates, stash/open, sleep, search, export → import', 
   const offscreenUrls = ext.cdp.requests.map((r) => r.url);
   expect(offscreenUrls.some((u) => u.endsWith('/offscreen.html'))).toBe(true);
   expect(offscreenUrls.some((u) => u.includes('/models/') && u.endsWith('.onnx'))).toBe(true);
+  // The groups above came from the bundled fine-tuned model, loaded from the extension's own files.
+  const modelUrl = `chrome-extension://${ext.id}/models/${MODEL_ID}/onnx/model_quantized.onnx`;
+  expect(offscreenUrls, modelUrl).toContain(modelUrl);
+  expect(offscreenUrls.filter((u) => u.includes('/models/') && !u.includes(`/models/${MODEL_ID}/`))).toEqual([]);
   expect(offscreenUrls.some((u) => u.includes('/ort/') && u.endsWith('.wasm'))).toBe(true);
   // ...and that service-worker traffic reaches the recorder.
   await ext.sw.evaluate(() => fetch(chrome.runtime.getURL('manifest.json')).then((r) => r.status));

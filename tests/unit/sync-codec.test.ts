@@ -35,6 +35,11 @@ describe('toRecord', () => {
     expect(long[2]).toBe('a'.repeat(79));
     expect(toRecord(item({ title: 'z'.repeat(300) }), '')[2]).toHaveLength(80);
   });
+  it('carries nothing local: how a tab was placed and the wanted topic stay on this device', () => {
+    const r = toRecord(item({ groupId: 'news', placedBy: 'neighbour', want: 'hardware' }), 'News');
+    expect(r).toEqual([hex(1), 'https://a.com/x', 'A', 'News', 5, 7]);
+    expect(JSON.stringify(encodeChunks([r], []))).not.toMatch(/placedBy|neighbour|hardware/);
+  });
 });
 
 describe('encodeChunks', () => {

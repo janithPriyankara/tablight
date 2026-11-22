@@ -22,20 +22,30 @@
     </header>
     <main class="page">
       <h1>Privacy policy</h1>
-      <p class="lede">Tablight is built so that your browsing stays on your device. Nothing leaves it except the optional sync of tabs you save for later and of the examples you teach your groups, which goes through your own browser account.</p>
-      <p class="meta">Last updated 17 November 2026. Applies to the Tablight browser extension for Microsoft Edge and Google Chrome.</p>
+      <p class="lede">Tablight is built so that your browsing stays on your device. Nothing leaves it except the optional sync of tabs you save for later and of the examples you teach your groups, which goes through your own browser account, and the text you choose to look up with “Look it up”, described below.</p>
+      <p class="meta">Last updated 20 November 2026. Applies to the Tablight browser extension for Microsoft Edge and Google Chrome.</p>
       <h2>Who we are</h2>
       <p>Tablight is made by The Moonstone (Pvt) Ltd, Sanasuma, Wawlagala, Baddegama, Sri Lanka (“we”). For any privacy question or request, email <a href="mailto:priyankarajanith71@gmail.com">priyankarajanith71@gmail.com</a>.</p>
       <div class="note">We do not receive, collect or store any of your data. Everything described below stays on your device or in your own browser account, where we cannot see it.</div>
-      <h2>No network, no analytics</h2>
-      <p>The extension makes no network requests. It has no servers, no accounts, no analytics, no tracking and no ads. Site icons are read from the browser’s own icon cache, never downloaded from websites.</p>
+      <h2>When Tablight uses the network</h2>
+      <p>Tablight makes no network requests, with one exception that you control: the “Look it up” button on Unsorted tabs. It has no servers, no accounts, no analytics, no tracking and no ads, and it asks for no host permissions. Site icons are read from the browser’s own icon cache, never downloaded from websites.</p>
+      <h2>Look it up (optional)</h2>
+      <p>On an Unsorted tab, “Look it up” can ask Wikidata, a public database run by the Wikimedia Foundation, what a name is (and, if Wikidata has no usable match, Wikipedia, also run by the Wikimedia Foundation), so the tab can be suggested a group. Nothing is sent until you press “Look up” in the dialog. The dialog first shows the exact text that would be sent, cleaned of email addresses, links, @handles, phone and card-style numbers, long numbers and token-like strings, and you can edit it. For a search page, the text is the words you searched.</p>
+      <ul>
+        <li>One request goes to Wikidata’s public search API. Only if Wikidata has no usable match (no hits, or none Tablight can place in a group) does a second request, with the same text, go to English Wikipedia’s public search API, in the same look-up; nothing else is ever sent there, and nothing more is sent once you press Cancel or close the dialog. Each request carries only that text: no cookies, no referrer, no tab address, no account and no personal ID.</li>
+        <li>Look it up is refused for tabs that are not ordinary web pages, local or private addresses, and sensitive tabs such as banking, payments, sign-in, medical, legal, salary or tax pages, and mail, calendar and document sites.</li>
+        <li>Answers are kept on your device (up to 500) so the same text is not asked twice (of either site). They are never synced, and “Delete all data” removes them.</li>
+        <li>Like any website, Wikimedia sees your IP address and browser type, and a fixed extension identifier that is the same for every Tablight user. It does not see a personal ID. What it does with requests is set by the <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</a>; we cannot see it.</li>
+        <li>You can hide the button with Settings → “Show the Look it up button”. When it is hidden, or when you never press it, Tablight makes no network requests.</li>
+      </ul>
       <h2>What Tablight cannot see</h2>
       <p>Tablight has no access to websites themselves. It cannot read your <strong>passwords</strong>, <strong>cookies</strong>, sign-ins, payment details, form entries, anything you type, or the contents of any page. It does not read your browsing history. All it receives from the browser is the title and address of each open tab.</p>
       <p>When you install it, the browser describes the “tabs” permission as being able to read your browsing history, because tab addresses show which sites are open. Tablight uses them only to list and group your tabs on your device.</p>
       <h2>Grouping runs on your computer</h2>
       <p>Tabs are grouped by an AI model that ships inside the extension and runs on your device. It only uses each tab’s title and address. Page contents are never read.</p>
+      <p>The extension also carries a list of about 60,000 well-known names (films, series, games, music, anime, books, cars, sports, hardware), built from Wikidata (CC0) and read only on your device. It is checked only against the search words of a search-engine results page or the title of a Wikipedia page, never against ordinary page titles, and checking it makes no network request.</p>
       <h2>What is stored on your device</h2>
-      <p>The list of your tabs (address, title, group, and whether it is open, paused, saved for later or not yet opened), your groups and what you taught them, saved tabs, saved sessions, settings, the on-device model’s numeric summaries (embeddings) of tab titles and addresses, and a few local backup copies of your saved tabs. These are kept in the extension’s local storage. Private (incognito) windows are never recorded.</p>
+      <p>The list of your tabs (address, title, group, and whether it is open, paused, saved for later or not yet opened), your groups and what you taught them, saved tabs, saved sessions, settings, the saved answers of Look it up, the on-device model’s numeric summaries (embeddings) of tab titles and addresses, and a few local backup copies of your saved tabs. These are kept in the extension’s local storage. Private (incognito) windows are never recorded.</p>
       <p>To spot tabs that open in the background and look like ads or scams, Tablight also keeps a few things in the browser’s session memory (<code>chrome.storage.session</code>): which site opened a tab, whether a window is a pop-up, the tabs you chose to Keep (so they are not flagged again), and whether the toolbar badge is currently showing its warning. This is kept only until the browser closes, and it is never sent anywhere.</p>
       <h2>Sync through your browser account (optional)</h2>
       <p>If sync is on (the default), tabs you save for later are synced through your browser’s own extension sync storage, which is tied to your Microsoft account in Edge or your Google account in Chrome. Only the address, a short title, the group name and the date are synced, with the record ids, timestamps and deletion markers needed to keep your devices in step.</p>

@@ -303,6 +303,57 @@ describe('ruleGroup', () => {
   });
 });
 
+describe('drama rules', () => {
+  const yt = 'https://www.youtube.com/watch?v=abc';
+  it.each([
+    ['https://kisskh.co/Drama/Fight-For-My-Way/Episode-3?id=1', 'Fight For My Way Episode 3', 'tv'],
+    ['https://kisskh.me/Drama/Some-Film?id=2', 'Some Film (2019) Full Movie', 'movies'],
+    ['https://kisskh.me/Drama/Some-Film?id=2', 'Some Film The Movie', 'movies'],
+    ['https://kisskh.me/Drama/Some-Film?id=2', 'Some Film Movie Eng Sub', 'movies'],
+    ['https://kisskh.me/Drama/Some-Film?id=2', 'Moviegoers Episode 2', 'tv'],
+    ['https://en.mydramalist.com/123-x', 'X - MyDramaList', 'tv'],
+    ['https://www.viki.com/tv/123-x', 'Watch X', 'tv'],
+    ['https://en.viki.com/tv/123-x', 'Watch X', 'tv'],
+    ['https://iq.com/play/x', 'X', 'tv'],
+    ['https://www.iq.com/play/x', 'X', 'tv'],
+    ['https://wetv.vip/play/x', 'X', 'tv'],
+    [yt, 'Scene #koreandrama - YouTube', 'tv'],
+    [yt, 'Scene #chinesedrama - YouTube', 'tv'],
+    [yt, 'Scene #japanesedrama - YouTube', 'tv'],
+    [yt, 'Scene #twdrama - YouTube', 'tv'],
+    [yt, 'Scene #asiandrama - YouTube', 'tv'],
+    [yt, 'Scene #jdrama - YouTube', 'tv'],
+    [yt, 'Scene #kdrama_edit - YouTube', 'tv'],
+    [yt, 'Scene #kdramaedits - YouTube', 'tv'],
+    [yt, 'Scene #cdramaclips - YouTube', 'tv'],
+    [yt, 'Scene #kdramas - YouTube', 'tv'],
+    ['https://www.viki.com/tv/123-x', 'Watch X', 'tv'],
+    ['https://mydramalist.com/123-x', 'X - MyDramaList', 'tv'],
+    ['https://kisskh.co/', 'KissKH', 'tv'],
+    ['https://dramacool9.ru/x', 'X', 'tv'],
+    ['https://www.youtube.com/shorts/abc', 'He caught her\u2026 #cdrama #shorts - YouTube', 'tv'],
+    [yt, 'Best scenes #kdramaedit - YouTube', 'tv'],
+    ['https://youtu.be/abc', 'Scene #thaidrama - YouTube', 'tv'],
+  ])('%s -> %s', (url, title, expected) => {
+    expect(ruleGroup(url, title)).toBe(expected);
+  });
+  it.each([
+    [yt, 'Drama in the parliament today - YouTube'],
+    [yt, 'Cooking #dramatic reveal - YouTube'],
+    [yt, 'Fan #dramaqueen - YouTube'],
+    [yt, 'Influencer exposed #drama #tea - YouTube'],
+    [yt, 'Gossip #dramas - YouTube'],
+    [yt, 'Tea time #dramaalert - YouTube'],
+    ['https://notviki.com/x', 'X'],
+    ['https://wetv.example.com/x', 'X'],
+    ['https://aiq.com/x', 'X'],
+    ['https://iq.com.evil.net/x', 'X'],
+    ['https://www.youtube.com/@chan', 'X #kdrama - YouTube'],
+    ['https://example.com/a', 'X #kdrama'],
+  ])('%s %s -> null', (url, title) => {
+    expect(ruleGroup(url, title)).toBeNull();
+  });
+});
 describe('classify: neighbour blend', () => {
   // 2-d toy: the head alone can't separate (all weights 0, so a uniform guess), the neighbours can.
   const toInt8 = (rows: number[][]) => btoa(String.fromCharCode(...rows.flat().map((x) => Math.round(x * 127) & 0xff)));

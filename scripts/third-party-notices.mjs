@@ -1,6 +1,6 @@
 // Writes public/third-party-notices.txt: every third-party package that ships in the extension (the production
 // dependencies and what they pull in, minus Transformers.js's Node-only runtime) with its licence text, plus the
-// bundled AI model. Run: npm run notices (also run by npm run build).
+// bundled AI model and the Wikidata name list. Run: npm run notices (also run by npm run build).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,12 +39,14 @@ const RULE = '='.repeat(78);
 const out = [
   'Tablight - third-party software notices',
   '',
-  'Tablight includes the open-source software and the AI model listed below. Each is used under its own licence,',
-  'reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.',
+  'Tablight includes the open-source software, the AI model and the data listed below. Each is used under its own',
+  'licence, reproduced here. Tablight itself is (c) The Moonstone (Pvt) Ltd.',
   '',
 ];
-out.push(RULE, `${MODEL_ID} (AI model, ONNX conversion by Xenova)`, 'Licence: MIT',
-  'Source: https://huggingface.co/BAAI/bge-small-en-v1.5', RULE, '',
+out.push(RULE, `${MODEL_ID} (AI model)`, 'Licence: MIT',
+  'Base model: BAAI/bge-small-en-v1.5, https://huggingface.co/BAAI/bge-small-en-v1.5',
+  'Fine-tuned by Tablight on its own synthetic labelled tabs and converted to ONNX (int8); the base model\'s',
+  'licence below applies.', RULE, '',
   'MIT License', '', 'Copyright (c) Beijing Academy of Artificial Intelligence (BAAI)', '',
   'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated',
   'documentation files (the "Software"), to deal in the Software without restriction, including without limitation',
@@ -57,6 +59,11 @@ out.push(RULE, `${MODEL_ID} (AI model, ONNX conversion by Xenova)`, 'Licence: MI
   'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF',
   'CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS',
   'IN THE SOFTWARE.', '');
+out.push(RULE, 'Wikidata (name list, names/names.txt)', 'Licence: CC0 1.0 Universal (public domain dedication)',
+  'Source: https://www.wikidata.org', RULE, '',
+  'The offline name list (names of well-known films, series, games, bands, albums, books, cars, sports clubs,',
+  'hardware and their makers) was built from Wikidata. Wikidata\'s structured data is available under the',
+  'Creative Commons CC0 1.0 Universal Public Domain Dedication: https://creativecommons.org/publicdomain/zero/1.0/', '');
 for (const [name, pj] of [...seen].sort((a, b) => a[0].localeCompare(b[0]))) {
   out.push(RULE, `${name} ${pj.version}`, `Licence: ${licenceOf(pj)}`);
   const repo = repoOf(pj);

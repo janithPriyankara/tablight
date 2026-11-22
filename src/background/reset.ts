@@ -8,10 +8,11 @@ import { clearBadgeState } from './duplicates';
 import { MIRRORED_KEY } from './groups';
 import { REMOVED_TRAINED_KEY } from './grow';
 import { INTERESTS_KEY } from './interests';
-import { LAST_SESSION_KEY } from '../shared/types';
+import { PRIORITY_RENAMED_KEY } from './priority';
+import { LAST_SESSION_KEY, LOOKUP_CACHE_KEY } from '../shared/types';
 /**
  * Deletes all extension data: every IndexedDB store (tab index, groups, stash, snapshots, embeddings,
- * backups, settings), our chrome.storage.local keys, our "v1:*" chrome.storage.sync keys and the chrome.storage.session
+ * backups, settings), our chrome.storage.local keys (the look-up cache among them), our "v1:*" chrome.storage.sync keys and the chrome.storage.session
  * records: suspicious-tab clues (which site opened each tab, pop-up windows, tabs the user kept), the badge mode,
  * the native groups we made, the startup check's verdict and the index's session marker (so the open tabs are
  * re-indexed as at browser start: no tab counts as "never viewed" because the wipe forgot it). Closes no tab.
@@ -26,7 +27,7 @@ export async function deleteAllData(db: Db): Promise<void> {
   await clearSyncData(async () => {
     await db.clearAll();
     await db.settings.set({ syncEnabled: false, interestsFresh: true }); // the interests step shows again, as on install
-    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY]);
+    await chrome.storage.local.remove([DISMISSED_KEY, REMOVED_TRAINED_KEY, INTERESTS_KEY, LOOKUP_CACHE_KEY, PRIORITY_RENAMED_KEY]);
   });
   await clearTabContext();
   await clearBadgeState();

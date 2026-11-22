@@ -1,40 +1,155 @@
-import type { Group, Item } from '../shared/types';
+import type { Group, Item, PlacedBy } from '../shared/types';
 import { isYouTubeVideo } from '../shared/url';
-import { classify, headTop, OTHER_GROUP_ID, type Head } from './assign';
+import { cosine } from '../shared/vec';
+import { exemplarPick, headPick, headTop, OTHER_GROUP_ID, type Head } from './assign';
+import { currentNameIndex, nameLabel } from './names';
 import { ruleGroup } from './rules';
+import { withoutPriority } from '../shared/priority';
+export type { PlacedBy };
 export const VIDEOS_GROUP_ID = 'videos';
 /**
  * The lower bar a YouTube video's top topic must reach (head.threshold for pages). A video's title is short and
  * often messy ("#cdrama #shorts", clickbait, "Talk — Speaker (Conf)"), so its topic scores lower than a page's,
  * and without a topic it would only be parked in Videos. Chosen on tests/quality/youtube-topics.json with the head
- * trained 2026-11-19 (pool 5002): the highest bar of the plateau where right − 2 × wrong peaks (81/90 topic videos
- * in their group, 58/59 no-topic in Videos, 1 wrong, the same as any bar down to 0; 78/90 at 0.36).
- * youtube-messy.json is the honest score. Re-measure it when the head is retrained.
+ * retrained 2026-11-19 (pool 6202, with the messy-title set, so Videos means a video with no subject): the highest bar
+ * of the plateau where right − 2 × wrong peaks (84/90 topic videos in their group, 59/59 no-topic in Videos, 0 wrong,
+ * the same at every bar down to 0 and up to 0.27; 83/90 at 0.28). 0.26 sits on that plateau (0 to 0.27) of the
+ * tuning set; 0.27 is as good there and differed only by noise-sized amounts elsewhere (one video parked, a few
+ * points on the tuning sessions), so 0.26 was kept. youtube-messy.json is not a tuning input: it is the honest
+ * score. Re-measure it when the head is retrained. A head may carry its own `youtubeThreshold` (an encoder with
+ * another score scale, scripts/tune-youtube-bar.mjs); the shipped head for tablight/bge-small-tabs-v1 does (0.13), so
+ * this constant is the fallback for a head without a valid one (youtubeBar).
  */
 export const YOUTUBE_THRESHOLD = 0.26;
 /**
- * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
- * (trained head + user-taught exemplars) > for a YouTube video, the head's top topic at the lower
- * YOUTUBE_THRESHOLD, else Videos (when it exists) > null.
- * `want` is the head's topic when no group exists for it yet (at `threshold`, or at the YouTube bar for a video).
- * `groups` must exclude suggested groups.
+ * The bar a YouTube video's top topic must reach: the head's own `youtubeThreshold` when it is a finite number in
+ * [0, 1] (anything else, such as a missing, NaN, negative or string value, falls back to YOUTUBE_THRESHOLD), never
+ * above head.threshold.
+ */
+export function youtubeBar(head: Pick<Head, 'threshold' | 'youtubeThreshold'>): number {
+  const own: unknown = head.youtubeThreshold;
+  const bar = typeof own === 'number' && Number.isFinite(own) && own >= 0 && own <= 1 ? own : YOUTUBE_THRESHOLD;
+  return Math.min(bar, head.threshold);
+}
+/** One of the owner's grouped tabs that an unsure tab may follow (tab-index neighbourPool builds the pool). */
+export interface Neighbour {
+  /** The item's id, so a caller can leave the tab it is picking for out (NeighbourOpts.skipId). */
+  id?: string;
+  vec: ArrayLike<number>;
+  groupId: string;
+  normUrl: string;
+}
+/**
+ * The neighbour step: an unsure tab goes where its closest grouped tabs are. Of the NEIGHBOUR_K pool tabs closest
+ * to it at cosine ≥ head.similarity (one vote per page), a group with at least NEIGHBOUR_MIN votes and strictly
+ * more than any other wins. It never runs for a tab the head reads as `other`.
+ * The bar is head.similarity, the cosine scripts/train-head.mjs validates for the learned-exemplar override: a single
+ * nearest pool item at that cosine is in the right group at least 95% of the time (head.similarity is read from head.json). Two agreeing
+ * tabs at that bar are stronger evidence still. The bar was not tuned on the synthetic sessions: lower bars chosen
+ * there did not hold up blind (tests/quality/README.md). On those sessions the step rarely fires at this bar, but
+ * real profiles repeat pages and sites far more, and that is where it helps. tests/quality/neighbours.test.ts checks
+ * it does no harm.
+ */
+export const NEIGHBOUR_MIN = 2;
+export const NEIGHBOUR_K = 10;
+/** The pool holds at most this many tabs (most recently active first): 100 picks against it stay well under 1.5 s. */
+export const NEIGHBOUR_POOL_MAX = 2000;
+export interface NeighbourOpts { similarity: number; min: number; k: number; skipId?: string }
+/**
+ * The group the closest pool tabs agree on, or null. Tabs in a group missing from `groups` (or in Other / Videos)
+ * and vectors of another length are skipped. pickGroup passes head.similarity, NEIGHBOUR_MIN and NEIGHBOUR_K; other
+ * values are for the diagnostic sweep (tests/quality/sessions-sim.ts).
+ */
+export function neighbourGroup(
+  vec: ArrayLike<number>, pool: Neighbour[], groups: Group[], opts: NeighbourOpts,
+): string | null {
+  // Priority is the user's alone: its tabs are never evidence for placing another tab there.
+  const known = new Set(withoutPriority(groups).map((g) => g.id));
+  // The closest tab of each page, at or above the similarity bar.
+  const best = new Map<string, { s: number; groupId: string }>();
+  for (const n of pool) {
+    if (opts.skipId !== undefined && n.id === opts.skipId) continue;
+    if (n.vec.length !== vec.length || !known.has(n.groupId)) continue;
+    if (n.groupId === OTHER_GROUP_ID || n.groupId === VIDEOS_GROUP_ID) continue;
+    const s = cosine(vec, n.vec);
+    if (s < opts.similarity) continue;
+    const had = best.get(n.normUrl);
+    if (!had || s > had.s) best.set(n.normUrl, { s, groupId: n.groupId });
+  }
+  const votes = new Map<string, number>();
+  for (const { groupId } of [...best.values()].sort((a, b) => b.s - a.s).slice(0, opts.k)) {
+    votes.set(groupId, (votes.get(groupId) ?? 0) + 1);
+  }
+  let top: string | null = null;
+  let most = 0;
+  let tie = false;
+  for (const [g, n] of votes) {
+    if (n > most) [top, most, tie] = [g, n, false];
+    else if (n === most) tie = true;
+  }
+  return top !== null && !tie && most >= opts.min ? top : null;
+}
+/**
+ * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > user-taught exemplars >
+ * the name step (names.ts nameLabel with the installed name list, currentNameIndex; off while none is installed;
+ * only into an existing group) >
+ * the trained head at its threshold > the neighbour step over `pool` (never for a tab whose head top label is
+ * `other`) > for a YouTube video, the head's top topic at the lower YOUTUBE_THRESHOLD, else Videos (when it exists)
+ * > null. `by` says which.
+ * `want` is the topic of a tab left Unsorted or parked in Videos whose group does not exist yet: the name step's
+ * label, else the head's when the head is that sure of it (`threshold`, for pages and videos alike): the lower
+ * YouTube bar only places a video into a group that already exists.
+ * `groups` must exclude suggested groups; `skipId` is the item's own id, left out of `pool`.
+ * The Priority group is never a candidate (only the user puts tabs there): it is dropped from `groups` here, so no
+ * step can return it.
  */
 export function pickGroup(
   item: Pick<Item, 'url' | 'title'>,
   vec: ArrayLike<number>,
+  allGroups: Group[],
+  head: Head,
+  pool: Neighbour[] = [],
+  skipId?: string,
+): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  const groups = withoutPriority(allGroups);
+  // A rule, an exemplar, the head or neighbours decided: nothing is wanted. `want` is only for tabs left Unsorted
+  // or parked in Videos.
+  const rule = ruleGroup(item.url, item.title);
+  if (rule !== null && groups.some((g) => g.id === rule)) return { groupId: rule, want: null, by: 'rule' };
+  const taught = exemplarPick(vec, groups, head);
+  if (taught !== null) return { groupId: taught.groupId, want: null, by: 'exemplar' };
+  // A name from the list (a show, a film, a band ...), a Wikipedia disambiguator or a part number. With its group
+  // missing, the rest of the pipeline still runs; the name only decides what an Unsorted or Videos tab wants. Until
+  // the list is loaded (names-load.ts) the whole step is off, so the pipeline is exactly what it was without it.
+  const index = currentNameIndex();
+  const named = index !== null ? nameLabel(item.url, item.title, index) : null;
+  const name = named !== null && named !== OTHER_GROUP_ID && named !== VIDEOS_GROUP_ID ? named : null;
+  if (name !== null && groups.some((g) => g.id === name)) return { groupId: name, want: null, by: 'name' };
+  const rest = afterName(item, vec, groups, head, pool, skipId);
+  return name !== null && (rest.groupId === null || rest.groupId === VIDEOS_GROUP_ID) ? { ...rest, want: name } : rest;
+}
+/** pickGroup after the rule, exemplar and name steps: the head, neighbours, the YouTube bar, Videos. */
+function afterName(
+  item: Pick<Item, 'url' | 'title'>,
+  vec: ArrayLike<number>,
   groups: Group[],
   head: Head,
-): { groupId: string | null; want: string | null } {
-  // A rule or an exemplar decided: nothing is wanted. `want` is only for tabs left Unsorted or parked in Videos.
-  const rule = ruleGroup(item.url, item.title);
-  if (rule !== null && groups.some((g) => g.id === rule)) return { groupId: rule, want: null };
-  const picked = classify(vec, groups, head).groupId;
-  if (picked !== null) return { groupId: picked, want: null };
-  const video = isYouTubeVideo(item.url);
-  const bar = video ? Math.min(YOUTUBE_THRESHOLD, head.threshold) : head.threshold;
+  pool: Neighbour[],
+  skipId?: string,
+): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  const picked = headPick(vec, groups, head);
+  if (picked.groupId !== null) return { groupId: picked.groupId, want: null, by: 'head' };
   const top = headTop(vec, head);
+  // A tab the head reads as `other` is never pulled into a group by its neighbours: only the user files those.
+  const near = pool.length && top?.label !== OTHER_GROUP_ID
+    ? neighbourGroup(vec, pool, groups, { similarity: head.similarity, min: NEIGHBOUR_MIN, k: NEIGHBOUR_K, skipId })
+    : null;
+  if (near !== null) return { groupId: near, want: null, by: 'neighbour' };
+  const video = isYouTubeVideo(item.url);
+  const bar = video ? youtubeBar(head) : head.threshold;
   const label = top?.label !== undefined && top.label !== OTHER_GROUP_ID && top.score >= bar ? top.label : null;
-  if (label !== null && groups.some((g) => g.id === label)) return { groupId: label, want: null };
-  if (video && groups.some((g) => g.id === VIDEOS_GROUP_ID)) return { groupId: VIDEOS_GROUP_ID, want: label };
-  return { groupId: null, want: label };
+  if (label !== null && groups.some((g) => g.id === label)) return { groupId: label, want: null, by: video ? 'youtube' : 'head' };
+  const wanted = label !== null && top !== null && top.score >= head.threshold ? label : null;
+  if (video && groups.some((g) => g.id === VIDEOS_GROUP_ID)) return { groupId: VIDEOS_GROUP_ID, want: wanted, by: 'videos' };
+  return { groupId: null, want: wanted, by: null };
 }

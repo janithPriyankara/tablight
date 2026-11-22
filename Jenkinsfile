@@ -114,11 +114,13 @@ pipeline {
         }
         stage('Prepare model assets') {
             steps {
-                // The model (~33 MB) is kept between builds; fetch-model re-downloads only files whose
-                // SHA-256 does not match the pinned manifest.
-                sh 'mkdir -p "$MODEL_CACHE" public/models && cp -R "$MODEL_CACHE"/. public/models/'
+                // model-cache.mjs removes any other model from public/models (only the bundled one may reach
+                // dist). The bundled model (MODEL_REVISION `local-…`) is committed, so the cache is neither read
+                // nor written for it: prepare:assets only verifies its SHA-256s. A downloaded model's pinned files
+                // are kept in $MODEL_CACHE between builds and never copied over files the workspace has.
+                sh 'node scripts/model-cache.mjs restore "$MODEL_CACHE"'
                 sh 'npm run prepare:assets'
-                sh 'cp -R public/models/. "$MODEL_CACHE"/'
+                sh 'node scripts/model-cache.mjs save "$MODEL_CACHE"'
             }
         }
         stage('Quality tests') {

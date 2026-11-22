@@ -78,15 +78,17 @@ export const PAGES: TestPage[] = [
 ];
 
 /**
- * Pages on a topic none of the starter groups covers (beekeeping): opened together they stay Unsorted and
- * become a suggested group (tests/e2e/ui-dashboard.spec.ts). Served under /p/<slug> like PAGES.
+ * Pages on a topic none of the starter groups covers (genealogy): opened together they stay Unsorted and
+ * become a suggested group (tests/e2e/ui-dashboard.spec.ts). Served under /p/<slug> like PAGES. (Beekeeping served
+ * here until the fine-tuned tablight/bge-small-tabs-v1, whose head files beekeeping under Home & garden; the bundled
+ * head reads these as `other` or below its threshold.)
  */
 export const TOPIC_PAGES: TestPage[] = [
-  { slug: 'bees-first-hive', title: 'Beekeeping for beginners: setting up your first beehive' },
-  { slug: 'bees-honey-harvest', title: 'How to harvest honey from a beehive without upsetting the bees' },
-  { slug: 'bees-queen-bee', title: 'Beekeeping: how to spot the queen bee in a hive' },
-  { slug: 'bees-swarm', title: 'Why honey bees swarm and how beekeepers catch a swarm' },
-  { slug: 'bees-varroa', title: 'Varroa mites in beehives: beekeeping treatments that work' },
+  { slug: 'gen-family-tree', title: 'Genealogy for beginners: building your family tree' },
+  { slug: 'gen-census', title: 'How to find ancestors in old census records' },
+  { slug: 'gen-parish', title: 'Reading old parish registers for genealogy research' },
+  { slug: 'gen-dna', title: 'Genealogy DNA tests compared for finding relatives' },
+  { slug: 'gen-notes', title: 'Organising genealogy notes and family tree sources' },
 ];
 /** A second uncovered topic (knitting): its suggestion appearing proves a suggestion pass ran (ui-dashboard D-62). */
 export const TOPIC_PAGES_2: TestPage[] = [

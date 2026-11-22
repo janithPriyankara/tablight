@@ -1,5 +1,6 @@
 // Dashboard routing (location.hash) and the pure filters behind each view.
 import type { GroupSummary, Item, SyncStatus } from '../../shared/types';
+import { PRIORITY_GROUP_ID } from '../../shared/priority';
 
 export const SPECIAL_VIEWS = ['all', 'unsorted', 'duplicates', 'suspicious', 'stashed', 'sessions', 'settings'] as const;
 export type SpecialView = (typeof SPECIAL_VIEWS)[number];
@@ -48,6 +49,17 @@ export function sameView(a: View, b: View): boolean {
   return a.kind === b.kind && (a.kind !== 'group' || a.id === (b as { id: string }).id);
 }
 
+/**
+ * The user's groups as every list shows them (dashboard sidebar and View menu, side panel): Priority first, then by
+ * size, then by name. Priority is left out while it is empty, unless it is the group on screen (`openId`).
+ * Suggestions are not included.
+ */
+export function regularGroups(groups: GroupSummary[], openId?: string): GroupSummary[] {
+  const rank = (g: GroupSummary) => (g.id === PRIORITY_GROUP_ID ? 0 : 1);
+  return groups
+    .filter((g) => !g.suggested && (g.id !== PRIORITY_GROUP_ID || g.count > 0 || g.id === openId))
+    .sort((a, b) => rank(a) - rank(b) || b.count - a.count || a.name.localeCompare(b.name));
+}
 /** Every copy of a page open more than once (same rule as the background's findDuplicates). */
 export function duplicateItems(items: Item[]): Item[] {
   const by = new Map<string, Item[]>();

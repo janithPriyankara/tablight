@@ -877,50 +877,7 @@ a.link {
   }
 }
 
-/* ---------- Modal ---------- */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background: rgb(10 10 16 / 40%);
-}
-.modal {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: min(420px, 100%);
-  max-height: calc(100vh - 32px);
-  padding: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-md);
-  outline: none;
-}
-.modal-wide {
-  width: min(560px, 100%);
-}
-.modal-title {
-  font-size: var(--text-lg);
-  font-weight: 650;
-}
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-height: 0;
-  overflow-y: auto;
-  color: var(--text-muted);
-}
-.modal-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
+/* ---------- Modal (the .modal rules live in common/theme.css: the side panel shows dialogs too) ---------- */
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -1068,7 +1025,8 @@ a.link {
 .tour-list li + li {
   margin-top: 4px;
 }
-.tour-body kbd {
+.tour-body kbd,
+.shortcut kbd {
   padding: 0 5px;
   border: 1px solid var(--border-strong);
   border-radius: 4px;
@@ -1121,4 +1079,23 @@ a.link {
 .about-links .link {
   padding: 0;
   font-weight: 500;
+}
+/* Settings → Keyboard shortcuts: each command and its current key, one per line. */
+.shortcut-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.shortcut {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.shortcut dt,
+.shortcut dd {
+  margin: 0;
+}
+.shortcut dd {
+  flex: none;
 }

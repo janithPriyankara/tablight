@@ -46,21 +46,22 @@ beforeEach(async () => {
 afterEach(() => mock.uninstall());
 
 describe('growGroups', () => {
-  it('GROW_MIN is 2 and hardware is a trained on-demand id', () => {
-    expect(GROW_MIN).toBe(2);
+  it('GROW_MIN is 3 and hardware is a trained on-demand id', () => {
+    expect(GROW_MIN).toBe(3);
     expect(TRAINED_IDS.has('hardware')).toBe(true);
   });
 
-  it('creates the wanted trained group once two auto tabs want it, and moves them in', async () => {
+  it('creates the wanted trained group once three auto tabs want it, and moves them in', async () => {
     const a = await addItem({ groupId: 'videos', want: 'hardware', url: 'https://www.youtube.com/watch?v=x' });
     const b = await addItem({ want: 'hardware' });
+    const c = await addItem({ want: 'hardware' });
     const other = await addItem({ want: 'sports' }); // only one: stays
     const made = await growGroups(db, fakeEmbed, 5000);
     expect(made.map((g) => g.id)).toEqual(['hardware']);
     const g = (await db.groups.get('hardware'))!;
     expect(g).toMatchObject({ id: 'hardware', name: 'Hardware & making', builtIn: true, grownAt: 5000 });
     expect(g.centroid).not.toBeNull();
-    for (const id of [a.id, b.id]) {
+    for (const id of [a.id, b.id, c.id]) {
       const i = (await db.items.get(id))!;
       expect(i.groupId).toBe('hardware');
       expect(i.groupSource).toBe('auto');
@@ -75,7 +76,15 @@ describe('growGroups', () => {
     expect(embedCalls).toEqual([]);
   });
 
-  it('does nothing for one auto tab plus one user-placed tab, and never moves the user-placed one', async () => {
+  it('does not create a group for only two wanting tabs', async () => {
+    await addItem({ want: 'hardware' });
+    await addItem({ want: 'hardware' });
+    expect(await growGroups(db, fakeEmbed)).toEqual([]);
+    expect(await db.groups.get('hardware')).toBeUndefined();
+    expect(embedCalls).toEqual([]);
+  });
+  it('does nothing for two auto tabs plus one user-placed tab, and never moves the user-placed one', async () => {
+    await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
     const u = await addItem({ want: 'hardware', groupSource: 'user', groupId: 'videos' });
     expect(await growGroups(db, fakeEmbed)).toEqual([]);
@@ -100,12 +109,14 @@ describe('growGroups', () => {
     await chrome.storage.local.set({ [REMOVED_TRAINED_KEY]: ['hardware'] });
     await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
+    await addItem({ want: 'hardware' });
     expect(await growGroups(db, fakeEmbed)).toEqual([]);
     expect(await db.groups.get('hardware')).toBeUndefined();
   });
 
   it('does not grow a group whose name a user group already has', async () => {
     await db.groups.put(group('g-mine', { name: 'hardware & MAKING', builtIn: false }));
+    await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
     expect(await growGroups(db, fakeEmbed)).toEqual([]);
@@ -115,13 +126,14 @@ describe('growGroups', () => {
   it('skips items taken meanwhile and an existing group (re-checked inside the write)', async () => {
     const a = await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
+    await addItem({ want: 'hardware' });
     const racing = async (texts: string[]): Promise<Float32Array[]> => {
       const out = await fakeEmbed(texts);
       // While the seeds embed, the user moves one of the tabs.
       await db.items.put({ ...(await db.items.get(a.id))!, groupId: 'videos', groupSource: 'user' });
       return out;
     };
-    expect(await growGroups(db, racing)).toEqual([]); // one tab left: below GROW_MIN, nothing created
+    expect(await growGroups(db, racing)).toEqual([]); // two tabs left: below GROW_MIN, nothing created
     expect(await db.groups.get('hardware')).toBeUndefined();
     expect((await db.items.get(a.id))!.groupSource).toBe('user');
   });
@@ -131,9 +143,10 @@ describe('deleteGroup of a trained on-demand group', () => {
   it('records its id; its tabs go back to the classifier and the next pass does not re-grow it', async () => {
     await addItem({ want: 'hardware' });
     await addItem({ want: 'hardware' });
+    await addItem({ want: 'hardware' });
     await growGroups(db, fakeEmbed);
     const members = (await db.items.all()).filter((i) => i.groupId === 'hardware');
-    expect(members).toHaveLength(2);
+    expect(members).toHaveLength(3);
     await deleteGroup(db, 'hardware');
     expect(await loadRemovedTrained()).toEqual(['hardware']);
     expect((await db.queue.take(10)).sort()).toEqual(members.map((i) => i.id).sort()); // re-classified

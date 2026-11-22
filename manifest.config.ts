@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 /** package.json is the single source of the version; verify-release asserts the built manifest matches. */
 export const VERSION: string = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
 export const CSP =
-  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https://www.wikidata.org https://en.wikipedia.org; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 export const manifest = {
   manifest_version: 3,
   name: 'Tablight: Private AI Tab Organizer',
@@ -34,6 +34,14 @@ export const manifest = {
     'open-side-panel': {
       suggested_key: { default: 'Alt+Shift+S' },
       description: 'Open Tablight in the side panel',
+    },
+    'prioritize-tab': {
+      suggested_key: { default: 'Alt+P' },
+      description: 'Add the current tab to Priority',
+    },
+    'unprioritize-tab': {
+      suggested_key: { default: 'Alt+Shift+P' },
+      description: 'Remove the current tab from Priority',
     },
   },
   content_security_policy: { extension_pages: CSP },

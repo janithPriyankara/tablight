@@ -1,6 +1,7 @@
 import type { Group } from '../shared/types';
 import { cosine, mean, normalize } from '../shared/vec';
 import { STARTER_GROUPS, type StarterGroup } from './seeds';
+import { withoutPriority } from '../shared/priority';
 
 export const MAX_EXEMPLARS = 50;
 /** Never assigned automatically: only the user puts tabs in "Other". */
@@ -9,6 +10,8 @@ export const OTHER_GROUP_ID = 'other';
 export interface Assignment {
   groupId: string | null;
   score: number;
+  /** What decided, when a group was picked: a user-taught exemplar or the head. */
+  by?: 'exemplar' | 'head';
 }
 
 /**
@@ -35,6 +38,12 @@ export interface Head {
    * item i's index into `labels`. Absent: head only.
    */
   knn?: { k: number; alpha: number; sharp: number; labels: number[]; vecs: string };
+  /**
+   * The YouTube bar for this head's score scale (pickGroup youtubeBar), chosen on calibration rows by
+   * scripts/tune-youtube-bar.mjs (0.13 for the shipped tablight/bge-small-tabs-v1 head). Absent or not a number in
+   * [0, 1]: pickGroup's YOUTUBE_THRESHOLD.
+   */
+  youtubeThreshold?: number;
 }
 interface Neighbours { vecs: Int8Array; labels: Int32Array; n: number }
 const decoded = new WeakMap<Head, Neighbours | null>();
@@ -115,8 +124,22 @@ export function classify(
   head: Head,
   opts: { threshold?: number; similarity?: number } = {},
 ): Assignment {
-  const similarity = opts.similarity ?? head.similarity;
-  let near: Assignment = { groupId: null, score: -Infinity };
+  const candidates = withoutPriority(groups); // only the user puts tabs in Priority
+  const near = exemplarPick(vec, candidates, head, opts.similarity);
+  if (near) return { ...near, by: 'exemplar' };
+  return headPick(vec, candidates, head, opts.threshold);
+}
+/**
+ * Step 1 of classify alone: the group of the single closest user-taught exemplar (never `other`) when its cosine is
+ * at least `similarity` (head.similarity by default), else null.
+ */
+export function exemplarPick(
+  vec: ArrayLike<number>,
+  groups: Group[],
+  head: Pick<Head, 'similarity'>,
+  similarity = head.similarity,
+): { groupId: string; score: number } | null {
+  let near: { groupId: string | null; score: number } = { groupId: null, score: -Infinity };
   for (const g of groups) {
     if (g.id === OTHER_GROUP_ID) continue;
     for (const e of g.exemplars) {
@@ -124,15 +147,18 @@ export function classify(
       if (s > near.score) near = { groupId: g.id, score: s };
     }
   }
-  if (near.groupId !== null && near.score >= similarity) return near;
-
+  return near.groupId !== null && near.score >= similarity ? { groupId: near.groupId, score: near.score } : null;
+}
+/** Step 2 of classify alone: the head's top label at `threshold`, when that group exists and is not `other`. */
+export function headPick(vec: ArrayLike<number>, groups: Group[], head: Head, threshold = head.threshold): Assignment {
   const top = headTop(vec, head);
   if (!top) return { groupId: null, score: 0 };
   const { label, score } = top;
-  const ok =
-    label !== undefined && label !== OTHER_GROUP_ID && score >= (opts.threshold ?? head.threshold) &&
-    groups.some((g) => g.id === label);
-  return { groupId: ok ? label : null, score };
+  if (
+    label === undefined || label === OTHER_GROUP_ID || score < threshold ||
+    !groups.some((g) => g.id === label)
+  ) return { groupId: null, score };
+  return { groupId: label, score, by: 'head' };
 }
 
 function centroidOf(exemplars: number[][]): number[] | null {

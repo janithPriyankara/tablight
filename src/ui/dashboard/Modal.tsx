@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useId, useRef, useState } from 'preact/hooks';
+import { useId, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ConfirmTitles } from '../common/Suspicious';
+import { RESERVED_NAME_MESSAGE, isPriorityName } from '../../shared/priority';
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -23,7 +24,9 @@ export function Modal(props: {
   // Read while rendering, before this render commits: the page behind turns inert with it, and the browser then
   // blurs the control that opened the dialog, so an effect would only find <body>.
   const [before] = useState(() => document.activeElement as HTMLElement | null);
-  useEffect(() => {
+  // A layout effect: focus is inside before the first paint, so a key pressed as soon as the dialog shows (Esc, Tab)
+  // already reaches it.
+  useLayoutEffect(() => {
     const box = ref.current;
     const first = box?.querySelector<HTMLElement>('[data-autofocus]') ?? box?.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? box)?.focus();
@@ -97,7 +100,10 @@ export function ConfirmDialog({ opts, onDone }: { opts: ConfirmOptions; onDone: 
 export function NameDialog(props: { title: string; initial?: string; confirmLabel: string; onDone: (name: string | null) => void }) {
   const { title, initial = '', confirmLabel, onDone } = props;
   const [name, setName] = useState(initial);
-  const ok = name.trim().length > 0;
+  // "Priority" belongs to the built-in group: said here at once rather than refused after Create.
+  const reserved = isPriorityName(name);
+  const ok = name.trim().length > 0 && !reserved;
+  const errorId = useId();
   return (
     <Modal title={title} onClose={() => onDone(null)}>
       <form
@@ -111,9 +117,11 @@ export function NameDialog(props: { title: string; initial?: string; confirmLabe
           Name
           <input
             class="field" value={name} maxLength={60} data-autofocus spellcheck={false} autocomplete="off"
+            aria-invalid={reserved || undefined} aria-describedby={reserved ? errorId : undefined}
             onInput={(e) => setName(e.currentTarget.value)}
           />
         </label>
+        {reserved && <p class="callout callout-error" id={errorId} role="alert">{RESERVED_NAME_MESSAGE}</p>}
         <div class="modal-foot">
           <button type="button" class="btn" onClick={() => onDone(null)}>Cancel</button>
           <button type="submit" class="btn btn-primary" disabled={!ok}>{confirmLabel}</button>

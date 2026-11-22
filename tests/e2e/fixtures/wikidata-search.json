@@ -1,0 +1,19 @@
+{
+  "searchinfo": { "search": "zorblax quintet" },
+  "search": [
+    {
+      "id": "Q999999001",
+      "title": "Q999999001",
+      "label": "Zorblax Quintet",
+      "description": "American television series",
+      "match": { "type": "label", "language": "en", "text": "Zorblax Quintet" }
+    },
+    {
+      "id": "Q999999002",
+      "title": "Q999999002",
+      "label": "<b>Zorblax</b>",
+      "description": "fictional character"
+    }
+  ],
+  "success": 1
+}

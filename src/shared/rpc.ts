@@ -6,6 +6,11 @@ export type Req =
   | { t: 'state' } // ui -> bg: returns DashboardState
   | { t: 'search'; q: string; semantic: boolean }
   | { t: 'moveItems'; ids: string[]; groupId: string }
+  // The star and the selection bar: add the items to Priority (on) or take them out (off). Returns how many changed.
+  | { t: 'prioritize'; ids: string[]; on: boolean }
+  // What the Alt+P / Alt+Shift+P shortcuts run on a tab (the worker's onCommand calls the same code). Returns
+  // 'added' | 'removed' | 'none'.
+  | { t: 'priorityCommand'; command: 'prioritize-tab' | 'unprioritize-tab'; tabId: number }
   | { t: 'sleep'; ids: string[] }
   | { t: 'stash'; ids: string[] }
   | { t: 'stashWindow'; windowId: number } // popup: stash a window, leaving the dashboard (with Undo) in it
@@ -30,14 +35,21 @@ export type Req =
   | { t: 'export' }
   | { t: 'deleteAllData' } // Settings: wipe everything this extension stored, then re-seed
   | { t: 'interests'; picked: string[]; custom: string[] } // the interests step's Continue: creates the picked groups
-  | { t: 'import'; json: string };
+  | { t: 'import'; json: string }
+  // The look-up dialog's "Create <starter> and move": creates that one starter group (no other effect); returns the
+  // id to move the tab to (the starter's, or a same-named user group's).
+  | { t: 'groupCreateStarter'; id: string }
+  // The look-up dialog: the head's label for "<label> — <description>" from Wikidata, embedded on this device.
+  // Returns LabelForTextReply; label is null below the head's threshold or for `other`.
+  | { t: 'labelForText'; text: string };
+export interface LabelForTextReply { label: string | null; score: number }
 export type ReqType = Req['t'];
 export type Target = 'background' | 'offscreen';
 const REQ_TYPES: ReadonlySet<string> = new Set<ReqType>([
   'embed', 'offscreenIdle', 'state', 'search', 'moveItems', 'sleep', 'stash', 'stashWindow', 'stashDelete', 'open', 'close', 'closeExtras',
   'undo', 'groupCreate', 'groupRename', 'groupMerge', 'groupDelete', 'acceptSuggestion',
   'dismissSuggestion', 'regroupPreview', 'regroupApply', 'snapshotNow', 'sessions', 'sessionAction', 'keepTab', 'settings', 'export', 'deleteAllData', 'import',
-  'interests',
+  'interests', 'labelForText', 'groupCreateStarter', 'prioritize', 'priorityCommand',
 ]);
 // chrome.runtime.sendMessage broadcasts to every extension page, so the envelope names its receiver.
 export type Envelope = Req & { target?: Target };

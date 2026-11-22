@@ -199,13 +199,15 @@ describe('open tabs and their groups', () => {
       await fresh.queue.add(it.id);
       return it;
     };
-    const a = await put('https://a.com/x?utm_source=1', null, 'auto');
+    const a = { ...(await put('https://a.com/x?utm_source=1', 'g-auto', 'auto')), placedBy: 'neighbour' as const };
+    await fresh.items.put(a);
     const b = await put('https://b.com/', 'mine', 'user');
     const r = await applyImport(fresh, ok(json));
     expect(r).toMatchObject({ added: 0, grouped: 1 });
     const work = (await fresh.groups.all()).find((g) => g.name === 'Work')!;
     expect(work).toMatchObject({ color: '#30a46c', icon: '💼' });
     expect(await fresh.items.get(a.id)).toMatchObject({ groupId: work.id, groupSource: 'user', state: 'open' });
+    expect((await fresh.items.get(a.id))!.placedBy).toBeUndefined(); // the file's group is a user choice
     expect((await fresh.items.get(a.id))!.updatedAt).toBeGreaterThan(1);
     expect(await fresh.items.get(b.id)).toEqual(b);
     expect(await fresh.queue.take(10)).toEqual([b.id]); // a is placed, so it no longer waits for the classifier
@@ -322,5 +324,16 @@ describe('trained group names', () => {
     } finally {
       mock.uninstall();
     }
+  });
+});
+describe('local-only fields', () => {
+  it('never exports how a tab was placed (placedBy) or the wanted topic', async () => {
+    await db.groups.put(group('g1', 'Work'));
+    await db.items.put({ ...(await stashed('https://a.com/', 'g1', 'auto')), placedBy: 'neighbour', want: 'hardware' });
+    const t = await stashed('https://b.com/', 'g1', 'auto');
+    await db.items.put({ ...t, id: 'open-b', state: 'open', tabId: 2, placedBy: 'head' });
+    const json = await exportJson(db);
+    expect(JSON.parse(json).tabs).toHaveLength(1);
+    expect(json).not.toMatch(/placedBy|neighbour|"head"|want|hardware/);
   });
 });

@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { basename, resolve } from 'node:path';
+import { basename, relative, resolve, sep } from 'node:path';
 import preact from '@preact/preset-vite';
 import { defaultClientConditions, defineConfig, type Plugin } from 'vite';
 import { manifest } from './manifest.config.ts';
@@ -41,20 +41,31 @@ function extensionPlugin(): Plugin {
 interface ChunkRecord {
   app: Record<string, number>;
   lib: Record<string, number>;
-  urls: { app: Record<string, number>; lib: Record<string, string[]> };
+  /** appIn: for each app URL, the app modules (paths relative to the project root) it appears in. */
+  urls: { app: Record<string, number>; appIn: Record<string, string[]>; lib: Record<string, string[]> };
+  /** The app's own modules in this chunk (paths relative to the project root). */
+  appModules: string[];
 }
+/** The look-up client: the gate allows only listed importers (LOOKUP_IMPORTERS in scripts/verify-release.mjs). */
+const LOOKUP_MODULE = 'src/ui/common/lookup.ts';
+/** A module id as a project-relative path: no query (`?raw`, `?url`…), no virtual-module `\0` prefix. */
+const rel = (id: string): string =>
+  relative(import.meta.dirname, id.replace(/^\0+/, '').split(/[?#]/)[0]!).split(sep).join('/');
 function buildRecordPlugin(): Plugin {
   const modules = new Set<string>();
   const chunks: Record<string, ChunkRecord> = {};
+  /** Who imports the look-up client: direct importers, and every module from which an import chain reaches it. */
+  let lookup: { ids: string[]; importers: string[]; ancestors: string[] } | null = null;
   return {
     name: 'tab-organizer-build-record',
     generateBundle(_options, bundle) {
       for (const file of Object.values(bundle)) {
         if (file.type !== 'chunk') continue;
-        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, lib: {} } };
+        const entry: ChunkRecord = { app: {}, lib: {}, urls: { app: {}, appIn: {}, lib: {} }, appModules: [] };
         for (const [id, mod] of Object.entries(file.modules)) {
           modules.add(id);
           const pkg = packageOf(id);
+          if (!pkg) entry.appModules.push(rel(id));
           const side = pkg ? entry.lib : entry.app;
           for (const m of mod.code?.matchAll(BANNED_CODE) ?? []) {
             const name = bannedName(m[0]);
@@ -62,17 +73,43 @@ function buildRecordPlugin(): Plugin {
           }
           for (const m of mod.code?.matchAll(URL_LITERAL) ?? []) {
             const url = cleanUrl(m[0]);
-            if (!pkg) entry.urls.app[url] = (entry.urls.app[url] ?? 0) + 1;
+            if (!pkg) {
+              entry.urls.app[url] = (entry.urls.app[url] ?? 0) + 1;
+              entry.urls.appIn[url] = [...new Set([...(entry.urls.appIn[url] ?? []), rel(id)])];
+            }
             else entry.urls.lib[url] = [...new Set([...(entry.urls.lib[url] ?? []), pkg])];
           }
         }
+        entry.appModules.sort();
         chunks[file.fileName] = entry;
       }
+      // The module graph, not just the chunks: an importer that was tree-shaken away still counts. Every module id that
+      // resolves to the client counts, query variants included (`lookup.ts?raw` is the same file).
+      const lookupIds = [...this.getModuleIds()].filter((id) => rel(id) === LOOKUP_MODULE);
+      const importersOf = (id: string): string[] => {
+        const info = this.getModuleInfo(id);
+        return [...(info?.importers ?? []), ...(info?.dynamicImporters ?? [])];
+      };
+      const ancestors = new Set<string>();
+      const queue = [...lookupIds];
+      while (queue.length) {
+        for (const imp of importersOf(queue.pop()!)) {
+          if (!ancestors.has(imp)) {
+            ancestors.add(imp);
+            queue.push(imp);
+          }
+        }
+      }
+      lookup = {
+        ids: lookupIds.map((id) => relative(import.meta.dirname, id.replace(/^\0+/, '')).split(sep).join('/')).sort(),
+        importers: [...new Set(lookupIds.flatMap(importersOf).map(rel))].filter((m) => m !== LOOKUP_MODULE).sort(),
+        ancestors: [...ancestors].map(rel).filter((m) => m !== LOOKUP_MODULE).sort(),
+      };
     },
     closeBundle() {
       const dir = resolve(import.meta.dirname, '.build');
       mkdirSync(dir, { recursive: true });
-      writeFileSync(resolve(dir, 'build-record.json'), JSON.stringify({ modules: [...modules].sort(), chunks }, null, 2));
+      writeFileSync(resolve(dir, 'build-record.json'), JSON.stringify({ modules: [...modules].sort(), chunks, lookup }, null, 2));
     },
   };
 }

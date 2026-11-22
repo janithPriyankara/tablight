@@ -11,12 +11,14 @@
     "site": "node scripts/third-party-notices.mjs && node scripts/build-site.mjs",
     "test": "vitest run tests/unit",
     "test:quality": "vitest run tests/quality --reporter=verbose",
+    "test:benchmark": "BENCHMARK=1 vitest run tests/benchmark --reporter=verbose",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "preview:ui": "vite --config vite.preview.config.ts",
     "preview:vectors": "node scripts/make-preview-vectors.mjs",
     "package": "node scripts/package.mjs",
-    "postbuild": "node scripts/verify-release.mjs"
+    "postbuild": "node scripts/verify-release.mjs",
+    "names:build": "node scripts/names/build.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",

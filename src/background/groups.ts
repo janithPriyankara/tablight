@@ -1,13 +1,16 @@
 import { MAX_EXEMPLARS, OTHER_GROUP_ID, learn } from '../classify/assign';
-import type { Group, Item } from '../shared/types';
+import type { Group, Item, PlacedBy } from '../shared/types';
 import { embedText } from '../shared/url';
 import { lessonText } from '../sync/lesson-codec';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
-import { autoGroup, cachedVectors, fingerprintOf, recordDismissed } from './tab-index';
-import { recordRemovedTrained } from './grow';
+import { loadNameIndex } from './names-load';
+import { autoPick, cachedVectors, fingerprintOf, neighbourPool, recordDismissed, withoutPlacedBy } from './tab-index';
+import { growGroups, recordRemovedTrained } from './grow';
 import { nextStamp } from '../shared/stamp';
 import { parseName } from '../shared/names';
+import { PRIORITY_GROUP_ID, RESERVED_NAME_MESSAGE, isPriorityName } from '../shared/priority';
+import { freeReservedName, prioritize, remapBeforePriority } from './priority';
 
 export const MAX_IDS = 5000;
 export { MAX_NAME, parseName } from '../shared/names';
@@ -30,20 +33,70 @@ export function parseId(v: unknown): string {
 
 // ───────────────────────────── helpers ─────────────────────────────
 
+export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
+/** How long a late teaching step waits for the model to embed items that had no cached vector. */
+export const TEACH_EMBED_TIMEOUT_MS = 5_000;
 /** Cached vectors of items (current key, else the pre-upgrade `embKey`); items without one are left out. */
 async function vectorsOf(db: Db, items: Item[]): Promise<Map<string, number[]>> {
   const got = await cachedVectors(db, items);
   return new Map([...got].map(([id, v]) => [id, Array.from(v)]));
 }
-
-interface Taught { vec: number[]; text: string }
+/**
+ * The vector read for `snap` before a teaching transaction, if it still belongs to `cur` (the item read inside it).
+ * A model migration that commits in between drops every embKey; a vector read through the old embKey is then the
+ * old model's and must not become an exemplar, so the item is taught late (embedded again) instead.
+ */
+function stillCurrent(vecs: Map<string, number[]>, snap: Item, cur: Item): number[] | undefined {
+  return cur.embKey === snap.embKey ? vecs.get(cur.id) : undefined;
+}
+const teaching = new Set<Promise<void>>();
+/** Resolves once every late teaching step started so far has finished (tests, and nothing else, wait on it). */
+export async function whenTeachingDone(): Promise<void> {
+  while (teaching.size) await Promise.all([...teaching]);
+}
+/**
+ * The late half of teaching, for taught items that had no cached vector (e.g. right after a model change emptied
+ * the cache): the placement and the lesson are already committed; this embeds the texts (waiting at most
+ * TEACH_EMBED_TIMEOUT_MS) and, in a transaction of its own that touches only the group, adds each vector as an
+ * exemplar while its lesson is still there. It never changes where any item is. Never rejects; on a cold or failing
+ * model the lessons alone remain (synced, and learned by the next model migration's rebuild).
+ */
+function teachLater(db: Db, groupId: string, texts: string[], embedFn: EmbedFn | undefined): void {
+  if (!embedFn || !texts.length) return;
+  const run = (async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const vecs = await Promise.race([
+        embedFn(texts),
+        new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error('timed out')), TEACH_EMBED_TIMEOUT_MS))),
+      ]);
+      if (vecs.length !== texts.length) return;
+      await db.tx(['groups'], async (s) => {
+        const g = await s.groups.get(groupId);
+        if (!g) return;
+        const lessons = new Set((g.lessons ?? []).map(([t]) => t));
+        const fresh = texts.flatMap((t, k) => (lessons.has(lessonText(t)) ? [Array.from(vecs[k]!)] : []));
+        if (fresh.length) await s.groups.put(fresh.reduce((acc, v) => learn(acc, v), g));
+      });
+    } catch {
+      // cold or failing model: the lessons stay without exemplars
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
+  teaching.add(run);
+  void run.finally(() => teaching.delete(run));
+}
+/** An example the user taught: its text always, its vector when there is one. */
+interface Taught { vec?: number[]; text: string }
 /**
  * Teaches `g` each example: its vector becomes an exemplar, and its text (what the model read) a lesson, so
- * the lesson can sync and be learned again by the same model on the user's other devices.
+ * the lesson can sync and be learned again by the same model on the user's other devices. An example without a
+ * vector still records its lesson (synced, and learned by the next model migration's rebuild).
  */
 function withExemplars(g: Group, taught: Taught[]): Group {
   const now = Date.now();
-  const learned = taught.reduce((acc, t) => learn(acc, t.vec), g);
+  const learned = taught.reduce((acc, t) => (t.vec ? learn(acc, t.vec) : acc), g);
   if (!taught.length) return learned;
   taught = taught.map((t) => ({ ...t, text: lessonText(t.text) }));
   const texts = new Set(taught.map((t) => t.text));
@@ -64,11 +117,19 @@ async function mustGroup(db: Db, id: string): Promise<Group> {
  * Moves items into a group as a user decision (groupSource 'user') and teaches the group each
  * item's cached vector (newest MAX_EXEMPLARS kept). Unknown ids are ignored.
  */
-export async function moveItems(db: Db, ids: string[], groupId: string): Promise<void> {
+/**
+ * Moves the items into the group as the user's placement; returns how many still existed and were moved. Moving
+ * into Priority is adding to Priority (prioritize: remembers where each tab was, teaches nothing); moving out of
+ * Priority into another group is an ordinary move there (the remembered group is dropped).
+ */
+export async function moveItems(db: Db, ids: string[], groupId: string, embedFn?: EmbedFn): Promise<number> {
+  if (groupId === PRIORITY_GROUP_ID) return prioritize(db, ids);
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
   const vecs = await vectorsOf(db, items);
+  const late: string[] = [];
+  let moved = 0;
   await db.tx(['items', 'groups'], async (s) => {
     const g = await s.groups.get(groupId);
     if (!g) throw new Error('unknown group');
@@ -76,18 +137,23 @@ export async function moveItems(db: Db, ids: string[], groupId: string): Promise
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
       if (!cur) continue;
+      moved++;
       const already = cur.groupId === groupId && cur.groupSource === 'user';
-      await s.items.put({ ...cur, groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
-      const v = vecs.get(cur.id);
-      if (v && !already) taught.push({ vec: v, text: embedText(cur) });
+      await s.items.put({ ...withoutPlacedBy(cur), groupId, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+      if (!already && cur.classifiable) taught.push({ vec: stillCurrent(vecs, snap, cur), text: embedText(cur) });
     }
     if (taught.length) await s.groups.put(withExemplars(g, taught));
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });
+  // The move is committed without waiting on the model; items it had no vector for are taught afterwards.
+  teachLater(db, groupId, late, embedFn);
+  return moved;
 }
 
 /** Creates a user group whose exemplars are the cached vectors of `ids`, and moves those items into it. */
 /** Group names are unique (ignoring case): sync and tab-group mirroring match groups by name. */
 function assertFreeName(all: Group[], name: string, self?: string): void {
+  if (isPriorityName(name) && self !== PRIORITY_GROUP_ID) throw new Error(RESERVED_NAME_MESSAGE);
   const key = name.toLowerCase();
   if (all.some((g) => g.id !== self && !g.suggested && g.name.toLowerCase() === key)) {
     throw new Error(`A group called “${name}” already exists`);
@@ -100,27 +166,39 @@ export function newUserGroup(name: string, count: number): Group {
     icon: '📁', builtIn: false, exemplars: [], centroid: null, createdAt: Date.now(),
   };
 }
-export async function createGroup(db: Db, name: string, ids: string[]): Promise<Group> {
+export async function createGroup(db: Db, name: string, ids: string[], embedFn?: EmbedFn): Promise<Group> {
   const clean = parseName(name);
   const items = (await Promise.all([...new Set(ids)].map((id) => db.items.get(id)))).filter(
     (i): i is Item => i !== undefined,
   );
   const vecs = await vectorsOf(db, items);
-  return db.tx(['items', 'groups'], async (s) => {
+  const late: string[] = [];
+  const made = await db.tx(['items', 'groups'], async (s) => {
     const all = await s.groups.all();
     assertFreeName(all, clean);
     const base = newUserGroup(clean, all.length);
-    const group = withExemplars(base, items.flatMap((i) => (vecs.has(i.id) ? [{ vec: vecs.get(i.id)!, text: embedText(i) }] : [])));
-    await s.groups.put(group);
+    const taught: Taught[] = [];
+    const moved: Item[] = [];
     for (const snap of items) {
       const cur = await s.items.get(snap.id);
-      if (cur) await s.items.put({ ...cur, groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+      if (!cur) continue;
+      moved.push(cur);
+      if (cur.classifiable) taught.push({ vec: stillCurrent(vecs, snap, cur), text: embedText(cur) });
     }
+    const group = withExemplars(base, taught);
+    await s.groups.put(group);
+    for (const cur of moved) {
+      await s.items.put({ ...withoutPlacedBy(cur), groupId: group.id, groupSource: 'user', updatedAt: nextStamp(cur.updatedAt) });
+    }
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
     return group;
   });
+  teachLater(db, made.id, late, embedFn);
+  return made;
 }
 
 export async function renameGroup(db: Db, id: string, name: string): Promise<void> {
+  if (id === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be renamed');
   const clean = parseName(name);
   await db.tx(['groups'], async (s) => {
     const g = await s.groups.get(id);
@@ -134,6 +212,8 @@ export async function renameGroup(db: Db, id: string, name: string): Promise<voi
 export async function mergeGroups(db: Db, from: string, into: string): Promise<void> {
   if (from === into) throw new Error('cannot merge a group into itself');
   if (from === OTHER_GROUP_ID) throw new Error('the Other group cannot be merged away');
+  // Priority holds only tabs the user starred one by one (each remembers where it came from): no merging either way.
+  if (from === PRIORITY_GROUP_ID || into === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be merged');
   await db.tx(['items', 'groups'], async (s) => {
     const src = await s.groups.get(from);
     const dst = await s.groups.get(into);
@@ -145,8 +225,9 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
     for (const i of await s.items.all()) {
       // A merge is the user's decision for every item in it: auto-sorting must not pull them back out
       // (the merged-away group no longer exists, so the classifier would drop them to Unsorted).
-      if (i.groupId === from) await s.items.put({ ...i, groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
+      if (i.groupId === from) await s.items.put({ ...withoutPlacedBy(i), groupId: into, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
     }
+    await remapBeforePriority(s, new Map([[from, into]])); // Priority tabs from `from` go back to `into`
     await s.groups.delete(from);
   });
 }
@@ -157,6 +238,7 @@ export async function mergeGroups(db: Db, from: string, into: string): Promise<v
  */
 export async function deleteGroup(db: Db, id: string): Promise<void> {
   if (id === OTHER_GROUP_ID) throw new Error('the Other group cannot be deleted');
+  if (id === PRIORITY_GROUP_ID) throw new Error('the Priority group cannot be deleted: remove its tabs instead');
   // A deleted group of the user's (or one created automatically) is remembered like a dismissed suggestion,
   // so topic discovery does not put the same tabs straight back into a new group.
   const g = await db.groups.get(id);
@@ -183,11 +265,12 @@ export async function deleteGroup(db: Db, id: string): Promise<void> {
  * Accepts a suggested group: it becomes a normal group. Its items are now the user's decision
  * (groupSource 'user') and teach the group, so a later regroup does not undo the acceptance.
  */
-export async function acceptSuggestion(db: Db, id: string): Promise<void> {
+export async function acceptSuggestion(db: Db, id: string, embedFn?: EmbedFn): Promise<void> {
   const g = await mustGroup(db, id);
   if (!g.suggested) throw new Error('not a suggestion');
   const members = (await db.items.all()).filter((i) => i.groupId === id);
   const vecs = await vectorsOf(db, members);
+  const late: string[] = [];
   await db.tx(['items', 'groups'], async (s) => {
     const cur = await s.groups.get(id);
     if (!cur?.suggested) throw new Error('not a suggestion');
@@ -195,14 +278,17 @@ export async function acceptSuggestion(db: Db, id: string): Promise<void> {
     for (const m of members) {
       const i = await s.items.get(m.id);
       if (!i || i.groupId !== id) continue;
-      await s.items.put({ ...i, groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
-      const v = vecs.get(i.id);
-      if (v) taught.push({ vec: v, text: embedText(i) });
+      await s.items.put({ ...withoutPlacedBy(i), groupSource: 'user', updatedAt: nextStamp(i.updatedAt) });
+      if (i.classifiable) taught.push({ vec: stillCurrent(vecs, m, i), text: embedText(i) });
     }
     const { suggested: _s, ...rest } = withExemplars(cur, taught);
     void _s;
+    // "Priority" is the built-in group's name: a suggestion named so (from before it was reserved) is renamed.
+    if (isPriorityName(rest.name)) rest.name = freeReservedName(await s.groups.all());
     await s.groups.put(rest);
+    late.push(...taught.filter((t) => !t.vec).map((t) => t.text));
   });
+  teachLater(db, id, late, embedFn);
 }
 
 /** Dismisses a suggestion: items return to Unsorted and the cluster is remembered so it is not re-suggested. */
@@ -225,10 +311,11 @@ export async function dismissSuggestion(db: Db, id: string): Promise<void> {
 
 // ───────────────────────────── regroup ─────────────────────────────
 
-interface Move { itemId: string; from: string | null; to: string | null }
+interface Move { itemId: string; from: string | null; to: string | null; want: string | null; by: PlacedBy | null }
 
 /** What the automatic pipeline would now do with each auto item that has a cached vector. */
 async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; items: Item[] }> {
+  const names = await loadNameIndex(); // the name step runs here too, or a regroup would undo its placements
   const [groups, items] = await Promise.all([db.groups.all(), db.items.all()]);
   const regular = groups.filter((g) => !g.suggested);
   const suggestedIds = new Set(groups.filter((g) => g.suggested).map((g) => g.id));
@@ -237,11 +324,18 @@ async function planRegroup(db: Db): Promise<{ moves: Move[]; groups: Group[]; it
     (i) => i.classifiable && i.groupSource === 'auto' && !(i.groupId !== null && suggestedIds.has(i.groupId)), // pending suggestions stay as they are
   );
   const vecs = await cachedVectors(db, candidates);
+  const pool = await neighbourPool(db, items, groups);
   for (const i of candidates) {
+    // The list did not load, so the name step is off: tabs it placed stay where it put them.
+    if (names === null && i.placedBy === 'name') continue;
     const v = vecs.get(i.id);
     if (!v) continue; // no cached vector: unchanged
-    const to = autoGroup(i, v, regular);
-    if (to !== i.groupId) moves.push({ itemId: i.id, from: i.groupId, to });
+    const { groupId: to, want, by } = autoPick(i, v, regular, pool, i.id);
+    // A changed group, or only a changed wanted topic or placement record (local, so grown groups can appear for
+    // older tabs too, and a tab now placed by its neighbours stops counting as one).
+    if (to !== i.groupId || want !== (i.want ?? null) || by !== (i.placedBy ?? null)) {
+      moves.push({ itemId: i.id, from: i.groupId, to, want, by });
+    }
   }
   return { moves, groups, items };
 }
@@ -253,6 +347,7 @@ export async function regroupPreview(db: Db): Promise<{ groupId: string | null; 
   for (const i of items) before.set(i.groupId, (before.get(i.groupId) ?? 0) + 1);
   const after = new Map(before);
   for (const m of moves) {
+    if (m.to === m.from) continue; // only the wanted topic changes
     after.set(m.from, (after.get(m.from) ?? 0) - 1);
     after.set(m.to, (after.get(m.to) ?? 0) + 1);
   }
@@ -262,23 +357,41 @@ export async function regroupPreview(db: Db): Promise<{ groupId: string | null; 
     .filter((r) => r.before !== r.after);
 }
 
-/** Applies the regroup to auto items only; returns how many items changed group. */
-export async function regroupApply(db: Db): Promise<number> {
-  const { moves } = await planRegroup(db);
-  if (!moves.length) return 0;
-  return db.tx(['items', 'groups'], async (s) => {
-    const known = new Set((await s.groups.all()).map((g) => g.id));
-    let n = 0;
-    for (const m of moves) {
-      const cur = await s.items.get(m.itemId);
-      // Skip anything the user or another pass touched since the plan was made.
-      if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
-      if (m.to !== null && !known.has(m.to)) continue;
-      await s.items.put({ ...cur, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });
-      n++;
-    }
-    return n;
-  });
+/**
+ * Applies the regroup to auto items only and records each tab's wanted topic (local, no sync stamp). With `embedFn`
+ * it then creates the trained groups that tabs now need (growGroups), as the automatic pipeline does. Returns how
+ * many items changed group, including those moved into a grown group.
+ */
+export async function regroupApply(db: Db, embedFn?: (t: string[]) => Promise<Float32Array[]>): Promise<number> {
+  const { moves, items: before } = await planRegroup(db);
+  let n = 0;
+  if (moves.length) {
+    n = await db.tx(['items', 'groups'], async (s) => {
+      const known = new Set((await s.groups.all()).map((g) => g.id));
+      let changed = 0;
+      for (const m of moves) {
+        const cur = await s.items.get(m.itemId);
+        // Skip anything the user or another pass touched since the plan was made.
+        if (!cur || cur.groupSource !== 'auto' || cur.groupId !== m.from) continue;
+        if (m.to !== null && !known.has(m.to)) continue;
+        const { want: _oldWant, placedBy: _oldBy, ...rest } = cur;
+        void _oldWant;
+        void _oldBy;
+        const next: Item = { ...rest, ...(m.want !== null ? { want: m.want } : {}), ...(m.by !== null ? { placedBy: m.by } : {}) };
+        if (m.to === m.from) {
+          await s.items.put(next); // only the wanted topic or placement record: local, no updatedAt bump
+          continue;
+        }
+        await s.items.put({ ...next, groupId: m.to, updatedAt: nextStamp(cur.updatedAt) });
+        changed++;
+      }
+      return changed;
+    });
+  }
+  if (!embedFn || !(await growGroups(db, embedFn)).length) return n;
+  // Tabs that went to a grown group (some may have moved twice): count each tab whose group changed once.
+  const was = new Map(before.map((i) => [i.id, i.groupId]));
+  return (await db.items.all()).filter((i) => was.has(i.id) && was.get(i.id) !== i.groupId).length;
 }
 
 // ───────────────────────────── native tab groups ─────────────────────────────
@@ -366,6 +479,8 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
       });
     if (!tabIds.length) continue;
     const mine = native.find((n) => ours.get(n.id) === g.id);
+    // A native group of ours follows its group's name (a rename, e.g. "Priority" → "Priority (yours)") at once.
+    if (mine && mine.title !== g.name) await chrome.tabGroups.update(mine.id, { title: g.name });
     const existing = mine ?? native.find((n) => n.title === g.name && !ours.has(n.id));
     const todo = existing ? tabIds.filter((id) => tabById.get(id)!.groupId !== existing.id) : tabIds;
     if (existing) ours.set(existing.id, g.id);
@@ -375,7 +490,8 @@ export async function mirrorTabGroups(db: Db, windowId: number): Promise<void> {
       ? chrome.tabs.group({ tabIds: ids, groupId: existing.id })
       : chrome.tabs.group({ tabIds: ids, createProperties: { windowId } }))) as unknown as number;
     ours.set(nativeId, g.id);
-    await chrome.tabGroups.update(nativeId, { title: g.name, color: nearestChromeColor(g.color) });
+    const color = g.id === PRIORITY_GROUP_ID ? 'yellow' : nearestChromeColor(g.color);
+    await chrome.tabGroups.update(nativeId, { title: g.name, color });
   }
   await chrome.storage.session.set({ [MIRRORED_KEY]: Object.fromEntries(ours) }).catch(() => undefined);
 }

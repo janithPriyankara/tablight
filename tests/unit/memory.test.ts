@@ -149,12 +149,17 @@ describe('undo safety', () => {
     vi.spyOn(chrome.tabs, 'create').mockImplementation(async (p) => {
       const tab = await create(p);
       await reconcile(db, await chrome.tabs.query({})); // the debounced reconcile wins the race
+      // …and the classifier placed it by its neighbours before adopt ran.
+      const raced = (await db.items.all()).find((i) => i.state === 'open')!;
+      await db.items.put({ ...raced, groupId: 'g2', placedBy: 'neighbour' });
       return tab;
     });
     await undo(db, token);
     const all = await db.items.all();
     expect(all.filter((i) => i.state !== 'stashed')).toHaveLength(1);
-    expect(all.find((i) => i.state === 'open')).toMatchObject({ groupId: 'g1', groupSource: 'user' });
+    const open = all.find((i) => i.state === 'open')!;
+    expect(open).toMatchObject({ groupId: 'g1', groupSource: 'user' });
+    expect(open.placedBy).toBeUndefined(); // the user's group: no record of an automatic placement
   });
 });
 describe('minor behaviors', () => {

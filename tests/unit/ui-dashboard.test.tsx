@@ -609,17 +609,17 @@ describe('dashboard', () => {
     await screen.findByRole('heading', { level: 1, name: 'Rust · async' });
     expect(screen.getByRole('button', { name: 'Accept group' })).toBeTruthy();
   });
-  it('in-app privacy text names the one exception: browser-account sync of stashed tabs', async () => {
+  it('in-app privacy text names the exceptions: sync, and Look it up after you confirm', async () => {
     serve(state({ settings: ANSWERED }));
     render(<Dashboard />);
     const onboarding = await screen.findByRole('region', { name: 'Welcome to Tablight' });
-    expect(onboarding.textContent).toMatch(/Nothing leaves your device except tabs you save for later and the examples you teach your groups/);
+    expect(onboarding.textContent).toMatch(/Nothing leaves your device except saved tabs and taught examples \(synced through your browser account while sync is on\) and, only when you click Look it up and confirm, the text you saw/);
     act(() => {
       location.hash = '#view=settings&tab=privacy';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
     const privacy = await screen.findByRole('region', { name: 'Privacy' });
-    expect(privacy.textContent).toMatch(/except saved tabs and the examples you taught your groups, which sync/);
+    expect(privacy.textContent).toMatch(/except saved tabs and taught examples \(synced through your browser account while sync is on\) and, only when you click\s+Look it up and confirm, the text you saw/);
   });
   it('Undo works while another action is still running', async () => {
     let release!: () => void;

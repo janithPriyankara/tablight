@@ -3,6 +3,8 @@ import type { GroupSummary, Item } from '../../shared/types';
 import { ItemRow } from '../common/ItemRow';
 import { displayTitle } from '../common/format';
 import { CloseIcon, MoveIcon, PauseIcon, StashIcon, SwitchIcon, TrashIcon } from '../common/icons';
+import { LookItUpButton, lookupOffer } from '../common/LookupDialog';
+import { PriorityButton, canPrioritize } from '../common/PriorityButton';
 
 /** Fixed row height (px): keeps windowing a matter of arithmetic. Matches .grid-row in dashboard.css. */
 export const ROW_HEIGHT = 52;
@@ -11,7 +13,7 @@ export const OVERSCAN = 10;
 /** Viewport height assumed before the scroller is laid out (and in tests, where nothing is). */
 const FALLBACK_HEIGHT = 800;
 
-export type RowAction = 'sleep' | 'stash' | 'close' | 'move' | 'remove';
+export type RowAction = 'sleep' | 'stash' | 'close' | 'move' | 'remove' | 'lookup' | 'priority';
 export type SelectMode = 'toggle' | 'range' | 'only';
 
 export interface ItemGridProps {
@@ -31,6 +33,8 @@ export interface ItemGridProps {
   onSelect: (id: string, mode: SelectMode) => void;
   onClearSelection: () => void;
   onAction: (action: RowAction, item: Item) => void;
+  /** The "Look it up" setting is on: Unsorted rows that may be looked up get the action. */
+  lookup?: boolean;
   /** Delete key: close the selection, or the focused item when nothing is selected. */
   onDelete: (focused: Item) => void;
   onDragStart: (item: Item, e: DragEvent) => void;
@@ -226,6 +230,12 @@ export function ItemGrid(props: ItemGridProps) {
               <button type="button" class="icon-btn" tabIndex={tab} aria-label="Save for later" title="Save for later: closes the tab and keeps it in Saved for later" onClick={() => props.onAction('stash', item)}>
                 <StashIcon />
               </button>
+            )}
+            {props.lookup && lookupOffer(item) !== null && (
+              <LookItUpButton item={item} tabIndex={tab} onClick={(it) => props.onAction('lookup', it)} />
+            )}
+            {canPrioritize(item) && (
+              <PriorityButton item={item} tabIndex={tab} onToggle={(it) => props.onAction('priority', it)} />
             )}
             <button type="button" class="icon-btn" tabIndex={tab} aria-label="Move to group" title="Move to group" onClick={() => props.onAction('move', item)}>
               <MoveIcon />

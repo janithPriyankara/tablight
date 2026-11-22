@@ -121,12 +121,12 @@ describe('background index', () => {
     const set = vi.spyOn(mock.chrome.storage.sync, 'set');
     await chrome.storage.sync.set({ 'v1:0': JSON.stringify([[id, url, 'R', '', 1, 1]]), 'v1:meta': { chunks: 1, updatedAt: 1 } });
     // The pull is debounced by 1 s (a write may arrive in several onChanged batches).
-    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'), { timeout: 3000 });
-    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2), { timeout: 3000 }); // the remote write + our write-back of the local-only item
+    await vi.waitFor(async () => expect((await db.items.get(id))?.state).toBe('stashed'), { timeout: 10_000 });
+    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(2), { timeout: 10_000 }); // the remote write + our write-back of the local-only item
     await new Promise((r) => setTimeout(r, 100));
     expect(set).toHaveBeenCalledTimes(2);
     mock.uninstall();
-  });
+  }, 25_000); // a 1 s debounced pull can take several seconds on a slow CI host
   it('import enqueues items and kicks classification; search RPC finds words and meaning', async () => {
     const mock = installChromeMock({ windows: [] });
     const bg = await import('../../src/background/index');
@@ -197,9 +197,9 @@ describe('background index', () => {
       expect(it?.state).toBe('stashed');
       expect(await db.queue.size()).toBe(0);
       expect(it?.embKey).toBeTypeOf('string'); // classified by the kicked pipeline
-    }, { timeout: 5000 });
+    }, { timeout: 10_000 });
     mock.uninstall();
-  });
+  }, 25_000);
   it('stashed, synced and imported items stay findable by meaning (embKey survives those paths)', async () => {
     const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/9/zzz', title: 'Zzz question' }] }] });
     const bg = await import('../../src/background/index');
@@ -223,7 +223,8 @@ describe('background index', () => {
       'v1:0': JSON.stringify([[stashed.id, stashed.normUrl, stashed.title, '', stashed.stashedAt, stashed.updatedAt + 100000]]),
       'v1:meta': { chunks: 1, updatedAt: 1 },
     });
-    await vi.waitFor(async () => expect((await db.items.get(stashed.id))!.updatedAt).toBe(stashed.updatedAt + 100000), { timeout: 4000 });
+    // A pull waits PULL_DEBOUNCE_MS (1 s) before applying; 10 s leaves room for a slow CI host (build 24 needed > 4 s).
+    await vi.waitFor(async () => expect((await db.items.get(stashed.id))!.updatedAt).toBe(stashed.updatedAt + 100000), { timeout: 10_000 });
     expect((await db.items.get(stashed.id))!.embKey).toBe(stashed.embKey);
     // 3. an imported item with a group (never queued by import) gets its key through the backfill.
     const json = JSON.stringify({
@@ -236,7 +237,7 @@ describe('background index', () => {
     });
     expect(await search('unrelated')).toContain('Imported trip');
     mock.uninstall();
-  });
+  }, 20_000); // the sync step alone may take most of 10 s on a slow CI host
   it('state RPC returns totals, group counts without vectors, the active duplicate and statuses', async () => {
     const mock = installChromeMock({
       windows: [
@@ -355,6 +356,49 @@ describe('background index', () => {
     expect((await db.items.get('st1'))?.state).toBe('stashed');
     mock.uninstall();
   });
+  it('labelForText embeds on the device and answers the head label, null below the threshold, for other or a bad vector', async () => {
+    const mock = installChromeMock({ windows: [] });
+    const bg = await import('../../src/background/index');
+    const { embed } = await import('../../src/background/embedder');
+    const { HEAD } = await import('../../src/classify/head');
+    const { headTop } = await import('../../src/classify/assign');
+    // A vector the head scores confidently: the head's own weight row for a label that is not `other`.
+    const c = HEAD.labels.findIndex((l) => l !== 'other');
+    const unit = (row: number[]) => {
+      const n = Math.hypot(...row);
+      return Float32Array.from(row, (x) => x / n);
+    };
+    const strong = unit(HEAD.W[c]!);
+    const top = headTop(strong, HEAD)!;
+    vi.mocked(embed).mockClear();
+    vi.mocked(embed).mockResolvedValueOnce([strong]);
+    const r = (await bg.handleRequest({ t: 'labelForText', text: 'Gizmo — a gadget' })) as { label: string | null; score: number };
+    expect(embed).toHaveBeenCalledWith(['Gizmo — a gadget']);
+    expect(r.score).toBeCloseTo(top.score);
+    expect(r.label).toBe(top.score >= HEAD.threshold && top.label !== 'other' ? top.label : null);
+    expect(r.label).not.toBeNull();
+    // Below the threshold: null.
+    const weak = new Float32Array(HEAD.dim);
+    vi.mocked(embed).mockResolvedValueOnce([weak]);
+    const w = (await bg.handleRequest({ t: 'labelForText', text: 'x' })) as { label: string | null; score: number };
+    if (headTop(weak, HEAD)!.score < HEAD.threshold) expect(w.label).toBeNull();
+    // `other` is never answered.
+    const o = HEAD.labels.indexOf('other');
+    if (o >= 0) {
+      vi.mocked(embed).mockResolvedValueOnce([unit(HEAD.W[o]!)]);
+      expect(((await bg.handleRequest({ t: 'labelForText', text: 'x' })) as { label: string | null }).label).toBeNull();
+    }
+    // A vector of the wrong size: null.
+    vi.mocked(embed).mockResolvedValueOnce([new Float32Array(3)]);
+    expect(await bg.handleRequest({ t: 'labelForText', text: 'x' })).toEqual({ label: null, score: 0 });
+    // Invalid input is refused before anything is embedded.
+    vi.mocked(embed).mockClear();
+    for (const text of ['', '   ', 'x'.repeat(501), 42]) {
+      await expect(bg.handleRequest({ t: 'labelForText', text } as never)).rejects.toThrow(/invalid text/);
+    }
+    expect(embed).not.toHaveBeenCalled();
+    mock.uninstall();
+  });
   it('deleteAllData wipes our IndexedDB, local and v1:* sync data only, keeps tabs open, then re-seeds', async () => {
     const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://a.example/', title: 'A' }, { url: 'https://b.example/', title: 'B' }] }] });
     const bg = await import('../../src/background/index');
@@ -372,6 +416,11 @@ describe('background index', () => {
     await db.tombstones.put({ id: 'gone', deletedAt: 1 });
     await chrome.storage.sync.set({ 'v1:meta': { x: 1 }, 'v1:0': 'chunk', 'other-ext-key': 1 });
     await chrome.storage.local.set({ syncStatus: { ok: true }, syncedIds: ['x'], dismissedSuggestions: [['a']], removedTrainedGroups: ['hardware'], interests: { picked: ['ai'], custom: [] }, foreign: 1 });
+    // The look-up cache is local only: the export never carries it, and the wipe removes it.
+    await chrome.storage.local.set({ lookupCache: { 'secret look-up text': { at: 1, hits: [{ label: 'Hit label', description: 'd', topic: null }] } } });
+    const exported = (await bg.handleRequest({ t: 'export' })) as string;
+    expect(exported).not.toContain('secret look-up text');
+    expect(exported).not.toContain('lookupCache');
     // Session records: suspicious-tab clues, the user's Keep choices, badge mode, mirrored groups, startup verdict.
     const tabB = mock.tabs()[0]!.id!; // the tab still open (a.example was stashed)
     await chrome.storage.session.set({
@@ -379,8 +428,11 @@ describe('background index', () => {
       badgeMode: 'alert', mirroredGroups: { 5: 'news' }, lastSession: { snapshotId: 'gone' },
     });
     const openTabs = mock.tabs().length;
+    const sentBefore = mock.broadcasts().length;
     await bg.handleRequest({ t: 'deleteAllData' });
     expect(mock.tabs()).toHaveLength(openTabs); // nothing closed
+    // Open pages hear about it, so a look-up still in flight there does not write its answer back.
+    expect(mock.broadcasts().slice(sentBefore)).toContainEqual({ target: 'ui', t: 'reset' });
     const session = await chrome.storage.session.get(null);
     for (const k of ['suspOpeners', 'suspKept', 'mirroredGroups', 'lastSession']) expect(session[k], k).toBeUndefined();
     // The re-index looks the open windows up again and repaints the badge: only fresh values come back.
@@ -396,7 +448,10 @@ describe('background index', () => {
     expect(Object.keys(await chrome.storage.sync.get(null))).toEqual(['other-ext-key']);
     // Only a fresh "sync is off" status is written back (the old one, and every other key of ours, is gone).
     const local = await chrome.storage.local.get(null);
-    expect(Object.keys(local).sort()).toEqual(['foreign', 'syncStatus']);
+    // embedModel stays: what is stored afterwards (the re-seeded groups) comes from the bundled model.
+    expect(Object.keys(local).sort()).toEqual(['embedModel', 'foreign', 'syncStatus']);
+    expect(local).not.toHaveProperty('lookupCache');
+    expect(local['embedModel']).toBe((await import('../../src/classify/model')).EMBED_MODEL);
     expect(local['syncStatus']).toEqual({ ok: false, reason: 'disabled', message: 'Sync is turned off', lastSyncAt: null });
     expect((await db.groups.all()).length).toBeGreaterThan(10); // starter groups re-seeded
     await vi.waitFor(async () => {

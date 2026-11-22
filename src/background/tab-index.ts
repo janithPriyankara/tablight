@@ -1,15 +1,18 @@
 import { suggestGroups } from '../classify/cluster';
 import { HEAD } from '../classify/head';
 import { EMBED_MODEL } from '../classify/model';
-import { pickGroup } from '../classify/pick';
+import { NEIGHBOUR_POOL_MAX, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type PlacedBy } from '../classify/pick';
+import { OTHER_GROUP_ID } from '../classify/assign';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
-import { cleanTitle, domainOf, embedText, isWebUrl, kindOf, normalizeUrl } from '../shared/url';
+import { cleanTitle, domainOf, embedText, isWebUrl, isYouTubeVideo, kindOf, normalizeUrl } from '../shared/url';
 import { mean, normalize } from '../shared/vec';
 import type { Db } from './db';
 import { embed } from './embedder';
+import { loadNameIndex } from './names-load';
 import { nextStamp } from '../shared/stamp';
 import { acceptSuggestion } from './groups';
+import { PRIORITY_GROUP_ID, PRIORITY_NAME } from '../shared/priority';
 
 export type EmbedFn = (texts: string[]) => Promise<Float32Array[]>;
 
@@ -354,9 +357,7 @@ export function flushTabEvents(): Promise<void> {
     const seq = eventSeq;
     try {
       const db = await config.db();
-      const newSession = await sessionIsNew();
-      const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
-      if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+      const result = await snapshotReconcile(db);
       // Up to date, unless another event arrived meanwhile (its own update is still to come).
       if (seq === eventSeq && !timer) {
         marked = false;
@@ -371,6 +372,38 @@ export function flushTabEvents(): Promise<void> {
   return run;
 }
 
+/**
+ * Reconciles the index now, outside the debounced chain and without its `after` hook, so a caller (the Priority
+ * shortcut on a tab that just opened) never waits for a classification pass. A debounced full update follows, which
+ * classifies whatever this reconcile queued. Never rejects.
+ */
+export async function reconcileNow(): Promise<void> {
+  if (!config) return;
+  try {
+    await snapshotReconcile(await config.db());
+  } catch (e) {
+    console.error('tab index catch-up failed', e);
+  }
+  onTabEvent();
+}
+/**
+ * Reconciles snapshots one at a time: each reads the open tabs and commits its transaction before the next reads.
+ * Without it, a debounced flush could read the tabs before a new tab existed and commit after reconcileNow indexed
+ * (and the user starred) that tab, deleting the item; the next update would recreate it without its star. Only the
+ * read-and-write is serialized: the classification that follows a flush runs outside it, so reconcileNow never
+ * waits for the model.
+ */
+let snapshotLock: Promise<unknown> = Promise.resolve();
+function snapshotReconcile(db: Db): Promise<ReconcileResult> {
+  const run = snapshotLock.then(async () => {
+    const newSession = await sessionIsNew();
+    const result = await reconcile(db, await chrome.tabs.query({}), { newSession });
+    if (newSession) await chrome.storage.session.set({ [SESSION_KEY]: Date.now() }).catch(() => undefined);
+    return result;
+  });
+  snapshotLock = run.catch(() => undefined);
+  return run;
+}
 /** Runs the update a previous background left unfinished (see PENDING_KEY). Never rejects. */
 export async function flushIfPending(): Promise<void> {
   let pending: unknown;
@@ -443,9 +476,21 @@ async function drain(db: Db, embedFn: EmbedFn): Promise<number> {
   }
 }
 
+/** The neighbour pool, read from the database at most once, on first use. A failed read is not kept: the next call re-reads. */
+export function lazyPool(db: Db): () => Promise<PoolTab[]> {
+  let pool: Promise<PoolTab[]> | undefined;
+  return () => (pool ??= (async () => neighbourPool(db, await db.items.all(), await db.groups.all()))().catch((e: unknown) => {
+    pool = undefined;
+    throw e;
+  }));
+}
 async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+  // The name step's list (read once; a failed read leaves the step off for this batch and is retried by the next).
+  await loadNameIndex();
+  // One pool per batch, shared by the per-item retries below (a batch's own placements join the next batch's pool).
+  const pool = lazyPool(db);
   try {
-    return await processBatch(db, ids, embedFn);
+    return await processBatch(db, ids, embedFn, pool);
   } catch (e) {
     const attempts = Math.max(0, ...(await db.queue.fail(ids)));
     if (attempts < MAX_ATTEMPTS) throw e;
@@ -455,7 +500,7 @@ async function processWithRetry(db: Db, ids: string[], embedFn: EmbedFn): Promis
     let lastError: unknown = e;
     for (const id of ids) {
       try {
-        written += await processBatch(db, [id], embedFn);
+        written += await processBatch(db, [id], embedFn, pool);
       } catch (err) {
         failed.push(id);
         lastError = err;
@@ -475,11 +520,18 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
   const now = Date.now();
   return db.tx(['items', 'queue'], async (s) => {
     let n = 0;
+    const quiet = await s.queue.quiet(ids);
     for (const id of ids) {
       const cur = await s.items.get(id);
       if (!cur) continue;
       if (cur.groupSource === 'auto') {
-        await s.items.put({ ...cur, groupId: null, embGaveUpAt: now, updatedAt: cur.groupId === null ? cur.updatedAt : nextStamp(cur.updatedAt) });
+        const same = cur.groupId === null || quiet.has(id);
+        const { quietPick: _q, ...base } = withoutPlacedBy(cur);
+        void _q;
+        await s.items.put({
+          ...base, ...quietPickAfter(cur, null, quiet.has(id)), groupId: null, embGaveUpAt: now,
+          updatedAt: same ? cur.updatedAt : nextStamp(cur.updatedAt),
+        });
         n++;
       } else await s.items.put({ ...cur, embGaveUpAt: now }); // local-only stamp: no updatedAt bump
     }
@@ -489,13 +541,59 @@ async function writeUnsorted(db: Db, ids: string[]): Promise<number> {
 }
 
 /**
- * The automatic pipeline for one embedded item: ruleGroup (only when that group exists) > classify
- * (trained head + user-taught exemplars) > null. `groups` must exclude suggested groups.
+ * The automatic pipeline's decision: the group, the trained topic wanted when its group is missing, and what
+ * decided. `skipId` is the item's own id: its entry in `pool` (neighbourPool) is left out.
  */
-export function autoGroup(item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[]): string | null {
-  return pickGroup(item, vec, groups, HEAD).groupId;
+export function autoPick(
+  item: Pick<Item, 'url' | 'title'>, vec: ArrayLike<number>, groups: Group[], pool?: Neighbour[], skipId?: string,
+): { groupId: string | null; want: string | null; by: PlacedBy | null } {
+  return pickGroup(item, vec, groups, HEAD, pool, skipId);
 }
-async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<number> {
+/** A pool tab with the id of its item, so a caller can leave the item it is picking for out. */
+export interface PoolTab extends Neighbour { id: string }
+/**
+ * Placements that are themselves guesses: they never count as evidence for the neighbour step. A name-step placement
+ * ('name') is evidence: an exact match of a search query or a Wikipedia title (or a part-number pattern there), as sure as
+ * the head.
+ */
+const NOT_EVIDENCE: ReadonlySet<PlacedBy> = new Set<PlacedBy>(['neighbour', 'youtube', 'videos']);
+/**
+ * The tabs an unsure tab may follow (pickGroup's neighbour step): items in an existing, non-suggested group other
+ * than Videos, Other and Priority, placed by the user or by a rule, an exemplar, the name step or the head (a missing `placedBy`, from
+ * older data, counts, except for a YouTube video: those were placed at the low video bar), most recently active first, at most NEIGHBOUR_POOL_MAX, each with its cached vector
+ * (items without one are left out).
+ */
+export async function neighbourPool(db: Db, items: Item[], groups: Group[]): Promise<PoolTab[]> {
+  const ok = new Set(groups.filter((g) => !g.suggested && g.id !== VIDEOS_GROUP_ID && g.id !== OTHER_GROUP_ID &&
+    g.id !== PRIORITY_GROUP_ID).map((g) => g.id));
+  const eligible = items
+    .filter((i) => i.groupId !== null && ok.has(i.groupId))
+    .filter((i) => i.groupSource === 'user' || (i.placedBy === undefined ? !isYouTubeVideo(i.url) : !NOT_EVIDENCE.has(i.placedBy)))
+    .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
+    .slice(0, NEIGHBOUR_POOL_MAX);
+  const vecs = await cachedVectors(db, eligible);
+  return eligible.flatMap((i) => {
+    const vec = vecs.get(i.id);
+    return vec ? [{ id: i.id, vec, groupId: i.groupId!, normUrl: i.normUrl }] : [];
+  });
+}
+/**
+ * The item as the user placed it: how the automatic pipeline once placed it (placedBy, quietPick) no longer applies,
+ * and neither does where it was before Priority (beforePriority: a placement elsewhere takes it out of Priority).
+ */
+export function withoutPlacedBy(i: Item): Item {
+  const { placedBy: _p, quietPick: _q, beforePriority: _b, ...rest } = i;
+  void _p;
+  void _q;
+  void _b;
+  return rest;
+}
+/** quietPick after an automatic write: set by a quiet change of group, kept while the group stays, else gone. */
+function quietPickAfter(cur: Item, groupId: string | null, quiet: boolean): { quietPick?: true } {
+  if (groupId !== cur.groupId) return quiet ? { quietPick: true } : {};
+  return cur.quietPick ? { quietPick: true } : {};
+}
+async function processBatch(db: Db, ids: string[], embedFn: EmbedFn, poolOf: () => Promise<PoolTab[]>): Promise<number> {
   const read = await Promise.all(ids.map((id) => db.items.get(id)));
   const drop = ids.filter((id, k) => !read[k]?.classifiable);
   const todo = read.filter((i): i is Item => !!i?.classifiable);
@@ -510,6 +608,8 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
     if (hit) vecs.set(key, hit);
     else missing.set(key, embedText(todo[k]!));
   }
+  // The neighbour step's pool, read before the transaction (vector reads are not part of it).
+  const pool = todo.some((i) => i.groupSource !== 'user') ? await poolOf() : [];
   const fresh = new Map<string, Float32Array>();
   if (missing.size) {
     const out = await embedFn([...missing.values()]);
@@ -520,12 +620,16 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
   return db.tx(['items', 'queue', 'embeddings', 'groups'], async (s) => {
     // Read the groups here so a group deleted meanwhile is never assigned.
     const groups = (await s.groups.all()).filter((g) => !g.suggested);
+    const known = new Set(groups.map((g) => g.id));
+    const live = pool.filter((p) => known.has(p.groupId));
     for (const [key, v] of fresh) {
       await s.embeddings.put(key, v);
       vecs.set(key, v);
     }
     let written = 0;
     const done = [...drop];
+    // Queued by the model migration (model-change.ts): a re-pick is this device's own business, see below.
+    const quiet = await s.queue.quiet(todo.map((i) => i.id));
     for (const [k, snap] of todo.entries()) {
       const cur = await s.items.get(snap.id);
       if (!cur || !cur.classifiable) {
@@ -537,16 +641,26 @@ async function processBatch(db: Db, ids: string[], embedFn: EmbedFn): Promise<nu
       const vec = vecs.get(keys[k]!)!;
       let groupId = cur.groupId;
       let want: string | null = null;
+      let by: PlacedBy | null = null;
       if (cur.groupSource !== 'user') {
-        ({ groupId, want } = pickGroup(cur, vec, groups, HEAD));
+        ({ groupId, want, by } = autoPick(cur, vec, groups, live, cur.id));
       }
-      const { embGaveUpAt: _cleared, want: _oldWant, ...rest } = cur; // a success lifts any earlier give-up stamp
+      // A success lifts any earlier give-up stamp; want and placedBy are rewritten below.
+      const { embGaveUpAt: _cleared, want: _oldWant, placedBy: _oldBy, quietPick: _oldQuiet, ...rest } = cur;
       void _cleared;
       void _oldWant;
+      void _oldBy;
+      void _oldQuiet;
       // updatedAt is the sync clock: only a real group change is newer than what other devices hold.
       // (Re-stamping an unchanged item made devices bounce it forever and could beat a user's move elsewhere.)
-      const updatedAt = groupId === cur.groupId ? cur.updatedAt : nextStamp(cur.updatedAt);
-      await s.items.put({ ...rest, groupId, embKey: keys[k]!, updatedAt, ...(want !== null ? { want } : {}) }); // want: local-only, no updatedAt bump
+      // A re-pick from the model migration is written locally only, like want/placedBy: stamped, it would reach
+      // other devices as a group name and be pinned there as the user's choice (sync applyRemote).
+      const updatedAt = groupId === cur.groupId || quiet.has(cur.id) ? cur.updatedAt : nextStamp(cur.updatedAt);
+      // want and placedBy: local-only, no updatedAt bump.
+      await s.items.put({
+        ...rest, groupId, embKey: keys[k]!, updatedAt, ...quietPickAfter(cur, groupId, quiet.has(cur.id)),
+        ...(want !== null ? { want } : {}), ...(by !== null ? { placedBy: by } : {}),
+      });
       done.push(snap.id);
       written++;
     }
@@ -649,8 +763,10 @@ async function suggestPass(db: Db): Promise<void> {
     if (!itemIds.length) continue;
     const id = `suggested-${crypto.randomUUID()}`;
     const color = SUGGEST_COLORS[(suggested.length + created.length) % SUGGEST_COLORS.length]!;
-    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2".
+    // Names stay unique (sync and tab-group mirroring match by name): "Rust · async" → "Rust · async 2". "Priority"
+    // is always taken: it is the built-in group's name, even before that group exists.
     const taken = new Set([...groups, ...created.map((x) => x.group)].map((g) => g.name.toLowerCase()));
+    taken.add(PRIORITY_NAME.toLowerCase());
     let name = c.name;
     for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${c.name.slice(0, 56)} ${n}`;
     created.push({

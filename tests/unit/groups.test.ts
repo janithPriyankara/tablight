@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openDb, type Db } from '../../src/background/db';
 import {
   acceptSuggestion, createGroup, deleteGroup, dismissSuggestion, mergeGroups, mirrorTabGroups, moveItems,
@@ -8,7 +8,9 @@ import {
 import {
   MAX_DISMISSED, embeddingKey, loadDismissed, maybeSuggest, processQueue, reconcile, recordDismissed,
 } from '../../src/background/tab-index';
-import { cosine } from '../../src/shared/vec';
+import { cosine, normalize } from '../../src/shared/vec';
+import { HEAD } from '../../src/classify/head';
+import { resetNameIndexForTests } from '../../src/background/names-load';
 import type { Group, Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 const DIM = 384;
@@ -166,6 +168,123 @@ describe('regroup', () => {
     expect((await db.items.get(user.id))).toMatchObject({ groupId: 'taught', groupSource: 'user' });
     expect((await db.items.get(noVec.id))!.groupId).toBeNull(); // no cached vector: unchanged
     expect(await regroupApply(db)).toBe(0);
+  });
+  describe('topics that have no group yet', () => {
+    // A vector the bundled head reads as Hardware & making, an on-demand group that is not installed.
+    const hardware = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+    const video = async (k: string, over: Partial<Item> = {}) => {
+      const i = await addItem({ url: `https://www.youtube.com/watch?v=${k.padEnd(11, 'x')}`, title: `Lathe ${k}`, ...over });
+      await db.embeddings.put(await embeddingKey(i), hardware);
+      return i;
+    };
+    it('re-grouping records the topic a tab wants, without counting it as a change', async () => {
+      await db.groups.put(group('videos'));
+      const v = await video('a', { groupId: 'videos' });
+      expect(await regroupApply(db)).toBe(0); // it stays in Videos
+      const after = (await db.items.get(v.id))!;
+      expect(after.want).toBe('hardware');
+      expect(after.updatedAt).toBe(v.updatedAt); // local only: no sync stamp
+    });
+    it('re-grouping creates the group three tabs want and moves them in', async () => {
+      await db.groups.put(group('videos'));
+      const a = await video('a', { groupId: 'videos' });
+      const b = await video('b', { groupId: null });
+      const c = await video('c', { groupId: null });
+      const embed = async (t: string[]) => t.map(() => hardware);
+      expect(await regroupApply(db, embed)).toBe(3);
+      expect((await db.groups.get('hardware'))?.name).toBe('Hardware & making');
+      // The head was sure of the topic: they count as neighbours for later tabs.
+      for (const id of [a.id, b.id, c.id]) expect(await db.items.get(id)).toMatchObject({ groupId: 'hardware', placedBy: 'head' });
+    });
+    it('a user-placed tab never counts or moves', async () => {
+      await db.groups.put(group('videos'));
+      await db.groups.put(group('mine', { builtIn: false }));
+      await video('a', { groupId: 'videos' });
+      await video('c', { groupId: 'videos' });
+      const u = await video('b', { groupId: 'mine', groupSource: 'user' });
+      await regroupApply(db, async (t) => t.map(() => hardware));
+      expect(await db.groups.get('hardware')).toBeUndefined();
+      expect((await db.items.get(u.id))!.groupId).toBe('mine');
+    });
+  });
+  describe('neighbours', () => {
+    // Every topic at once: the bundled head's top topic (not `other`) is below its threshold, so only neighbours can
+    // place it.
+    const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+    const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
+    const at = async (over: Partial<Item>) => {
+      const i = await addItem(over);
+      await db.embeddings.put(await embeddingKey(i), unsure);
+      return i;
+    };
+    it('an unsure tab follows two tabs the user placed, recorded locally', async () => {
+      await db.groups.put(group('programming'));
+      await at({ groupId: 'programming', groupSource: 'user' });
+      await at({ groupId: 'programming', groupSource: 'user' });
+      const i = await at({ groupId: null });
+      expect(await regroupApply(db)).toBe(1);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'programming', placedBy: 'neighbour' });
+    });
+    it('a re-picked tab is not its own neighbour', async () => {
+      await db.groups.put(group('programming'));
+      await at({ groupId: 'programming', groupSource: 'user' });
+      // With itself as a second vote it would stay; alone with one neighbour it goes back to Unsorted.
+      const i = await at({ groupId: 'programming', placedBy: 'head' });
+      expect(await regroupApply(db)).toBe(1);
+      expect((await db.items.get(i.id))!.groupId).toBeNull();
+      expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
+    });
+    it('a tab placed by its neighbours moves to the head’s group once the head is sure, and says so', async () => {
+      await db.groups.put(group('programming'));
+      await db.groups.put(group('hardware'));
+      const sure = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+      const i = await addItem({ groupId: 'programming', placedBy: 'neighbour' });
+      await db.embeddings.put(await embeddingKey(i), sure);
+      expect(await regroupApply(db)).toBe(1);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'hardware', placedBy: 'head' });
+    });
+    it('a user move removes the record of how a tab was placed', async () => {
+      await db.groups.put(group('programming'));
+      await db.groups.put(group('games'));
+      const i = await at({ groupId: 'programming', placedBy: 'neighbour' });
+      await moveItems(db, [i.id], 'games');
+      expect((await db.items.get(i.id))!.placedBy).toBeUndefined();
+    });
+  });
+  describe('tabs the name step placed', () => {
+    // A Wikipedia title the name list files under TV, with a vector the head is sure is hardware.
+    const hardware = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('hardware')]!]));
+    const named = async () => {
+      await db.groups.put(group('tv'));
+      await db.groups.put(group('hardware'));
+      const i = await addItem({
+        url: 'https://en.wikipedia.org/wiki/Breaking_Bad', title: 'Breaking Bad - Wikipedia', groupId: 'tv', placedBy: 'name',
+      });
+      await db.embeddings.put(await embeddingKey(i), hardware);
+      return i;
+    };
+    beforeEach(() => {
+      resetNameIndexForTests();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      resetNameIndexForTests();
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+    it('stay where the name step put them when the name list loads', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('#tv\nbreaking bad\n')));
+      const i = await named();
+      expect(await regroupApply(db)).toBe(0);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'tv', placedBy: 'name' });
+    });
+    it('are left alone when the name list fails to load (the head does not take them over)', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('unreadable'); }));
+      const i = await named();
+      expect(await regroupPreview(db)).toEqual([]);
+      expect(await regroupApply(db)).toBe(0);
+      expect(await db.items.get(i.id)).toMatchObject({ groupId: 'tv', placedBy: 'name' });
+    });
   });
   it('leaves items in pending suggestions alone', async () => {
     await db.groups.put(group('tv'));

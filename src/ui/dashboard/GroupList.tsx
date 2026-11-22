@@ -1,10 +1,10 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import type { GroupSummary } from '../../shared/types';
-import { GroupDot } from '../common/GroupChip';
+import { GroupMark } from '../common/GroupChip';
 import { ClockIcon, CloseIcon, CopyIcon, GearIcon, InboxIcon, ListIcon, PlayIcon, ShieldIcon, StashIcon } from '../common/icons';
 import { Suggestions } from './Suggestions';
-import { type SpecialView, type View, sameView } from './views';
+import { type SpecialView, type View, regularGroups, sameView } from './views';
 
 export interface ViewCounts { all: number; unsorted: number; duplicates: number; suspicious: number; stashed: number }
 const SPECIAL: { kind: SpecialView; label: string; icon: (p: { class?: string }) => JSX.Element }[] = [
@@ -37,7 +37,7 @@ export interface GroupListProps {
 export function GroupList(props: GroupListProps) {
   const { view, groups, counts, onView, dragging } = props;
   const [over, setOver] = useState<string | null>(null);
-  const regular = groups.filter((g) => !g.suggested).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  const regular = regularGroups(groups, view.kind === 'group' ? view.id : undefined);
   const suggested = groups.filter((g) => g.suggested);
   const countOf = (k: SpecialView) => (k in counts ? counts[k as keyof ViewCounts] : undefined);
   const current = (v: View) => (sameView(view, v) ? 'page' : undefined);
@@ -83,7 +83,7 @@ export function GroupList(props: GroupListProps) {
                 type="button" class={g.count ? 'nav-item' : 'nav-item is-empty'} aria-current={current(v)}
                 title={g.name} onClick={() => onView(v)}
               >
-                <GroupDot color={g.color} />
+                <GroupMark group={g} />
                 <span class="nav-name">{g.name}</span>
                 {g.watchCount > 0 && (
                   <span class="nav-watch" title={`${g.watchCount} to watch`} aria-label={`${g.watchCount} to watch`}><PlayIcon />{g.watchCount}</span>
@@ -127,7 +127,7 @@ export function ViewSelect({ view, groups, onView, suspicious }: {
   suspicious: number;
 }) {
   const value = view.kind === 'group' ? `group:${view.id}` : view.kind;
-  const regular = groups.filter((g) => !g.suggested).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  const regular = regularGroups(groups, view.kind === 'group' ? view.id : undefined);
   const suggested = groups.filter((g) => g.suggested);
   const option = (g: GroupSummary) => (
     <option key={g.id} value={`group:${g.id}`}>

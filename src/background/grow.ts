@@ -6,8 +6,8 @@ import { nextStamp } from '../shared/stamp';
 import type { Group, Item } from '../shared/types';
 import type { Db } from './db';
 
-/** A trained group is created on the fly once this many auto-placed tabs want it. */
-export const GROW_MIN = 2;
+/** A trained group is created on the fly once this many auto-placed tabs want it (two alike tabs are a coincidence). */
+export const GROW_MIN = 3;
 /** chrome.storage.local: ids of trained on-demand groups the user deleted (string[]); never re-created on the fly. */
 export const REMOVED_TRAINED_KEY = 'removedTrainedGroups';
 
@@ -95,7 +95,9 @@ export async function growGroups(
       for (const cur of fresh) {
         const { want: _w, ...rest } = cur;
         void _w;
-        await s.items.put({ ...rest, groupId: group.id, updatedAt: nextStamp(cur.updatedAt, now) });
+        // The head was sure of this topic (want needs head.threshold): the tab counts as a neighbour. A placement
+        // from a model migration's quiet re-pick stays local (quietPick): unstamped, it never syncs.
+        await s.items.put({ ...rest, groupId: group.id, placedBy: 'head', updatedAt: cur.quietPick ? cur.updatedAt : nextStamp(cur.updatedAt, now) });
       }
       ids.add(group.id);
       names.add(group.name.toLowerCase());

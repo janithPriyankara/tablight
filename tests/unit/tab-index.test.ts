@@ -9,9 +9,11 @@ import {
   BACKOFF_MINUTES,
   embeddingKey,
   flushTabEvents,
+  lazyPool,
   flushIfPending,
   PENDING_KEY,
   maybeSuggest,
+  neighbourPool,
   RETITLE_INTERVAL_MS,
   SESSION_KEY,
   sweepEmbeddings,
@@ -23,6 +25,8 @@ import {
 } from '../../src/background/tab-index';
 import type { Group, Item } from '../../src/shared/types';
 import { HEAD } from '../../src/classify/head';
+import { NEIGHBOUR_POOL_MAX } from '../../src/classify/pick';
+import { resetNameIndexForTests } from '../../src/background/names-load';
 import { normalize } from '../../src/shared/vec';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
 
@@ -425,6 +429,138 @@ describe('want (local-only wanted topic)', () => {
     expect((await db.items.get(first!.id))!.want).toBeUndefined();
   });
 });
+describe('name step', () => {
+  const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+  const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
+  afterEach(() => {
+    resetNameIndexForTests();
+    vi.unstubAllGlobals();
+  });
+  it('a batch loads the bundled name list and files a bare-name search by it', async () => {
+    const fetchMock = vi.fn(async () => new Response('#tv\nbreaking bad\n'));
+    vi.stubGlobal('fetch', fetchMock);
+    await db.groups.put(group('tv'));
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://www.google.com/search?q=breaking+bad', title: 'breaking bad - Google Search' },
+      { url: 'https://zzz.example.net/a', title: 'a' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    await processQueue(db, async (texts: string[]) => texts.map(() => unsure));
+    const items = await db.items.all();
+    expect(items.find((i) => i.url.includes('google'))).toMatchObject({ groupId: 'tv', groupSource: 'auto', placedBy: 'name' });
+    expect(items.find((i) => i.url.includes('zzz'))!.groupId).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith('chrome-extension://mock-extension-id/names/names.txt');
+    // A name placement is evidence for the neighbour step.
+    const pool = await neighbourPool(db, items, await db.groups.all());
+    expect(pool.map((p) => p.groupId)).toEqual(['tv']);
+  });
+});
+describe('neighbour step', () => {
+  // Every topic at once: the bundled head's top topic (not `other`) is below its threshold, so only neighbours can
+  // place it.
+  const topics = HEAD.labels.flatMap((l, c) => (l === 'other' ? [] : [HEAD.W[c]!]));
+  const unsure = Float32Array.from(normalize(topics[0]!.map((_, d) => topics.reduce((t, w) => t + w[d]!, 0))));
+  it('a tab placed by its neighbours records it, and is left out of the pool; user-placed tabs are in it', async () => {
+    await db.groups.put(group('programming'));
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://zzz.example.net/a', title: 'a' },
+      { url: 'https://zzz.example.net/b', title: 'b' },
+      { url: 'https://zzz.example.net/c', title: 'c' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [a, b, c] = (await db.items.all()).sort((x, y) => x.url.localeCompare(y.url));
+    for (const u of [a!, b!]) {
+      await db.items.put({ ...u, groupId: 'programming', groupSource: 'user' });
+      await db.embeddings.put(await embeddingKey(u), unsure);
+    }
+    const before = (await db.items.get(c!.id))!.updatedAt;
+    await processQueue(db, async (texts: string[]) => texts.map(() => unsure));
+    const placed = (await db.items.get(c!.id))!;
+    expect(placed).toMatchObject({ groupId: 'programming', groupSource: 'auto', placedBy: 'neighbour' });
+    expect(placed.updatedAt).toBeGreaterThan(before); // a real group change is still stamped for sync
+    for (const id of [a!.id, b!.id]) expect((await db.items.get(id))!.placedBy).toBeUndefined();
+    const pool = await neighbourPool(db, await db.items.all(), await db.groups.all());
+    expect(pool.map((p) => p.id).sort()).toEqual([a!.id, b!.id].sort());
+    expect(pool[0]).toMatchObject({ groupId: 'programming', vec: unsure });
+  });
+  it('never pulls a tab the head reads as `other` into a group', async () => {
+    const other = Float32Array.from(normalize([...HEAD.W[HEAD.labels.indexOf('other')]!]));
+    await db.groups.put(group('programming'));
+    mock = installChromeMock({ windows: [{ tabs: [
+      { url: 'https://zzz.example.net/a', title: 'a' },
+      { url: 'https://zzz.example.net/b', title: 'b' },
+      { url: 'https://zzz.example.net/c', title: 'c' },
+    ] }] });
+    await reconcile(db, await chrome.tabs.query({}));
+    const [a, b, c] = (await db.items.all()).sort((x, y) => x.url.localeCompare(y.url));
+    for (const u of [a!, b!]) {
+      await db.items.put({ ...u, groupId: 'programming', groupSource: 'user' });
+      await db.embeddings.put(await embeddingKey(u), other);
+    }
+    await processQueue(db, async (texts: string[]) => texts.map(() => other));
+    const left = (await db.items.get(c!.id))!;
+    expect(left.groupId).toBeNull();
+    expect(left.placedBy).toBeUndefined();
+  });
+  it('the pool: rule, exemplar, head and older auto placements and user tabs; never guesses, Videos, Other or suggestions', async () => {
+    await db.groups.put(group('programming'));
+    await db.groups.put(group('videos'));
+    await db.groups.put(group('other'));
+    await db.groups.put(group('s1', { suggested: true }));
+    const add = async (id: string, over: Partial<Item>) => {
+      const it: Item = {
+        id, url: `https://${id}.example.com/`, normUrl: `https://${id}.example.com/`, title: id, domain: 'x', state: 'open',
+        groupId: 'programming', groupSource: 'auto', kind: 'read', createdAt: 1, lastActiveAt: 1, updatedAt: 1,
+        classifiable: true, ...over,
+      };
+      await db.items.put(it);
+      await db.embeddings.put(await embeddingKey(it), unsure);
+    };
+    await add('rule', { placedBy: 'rule' });
+    await add('exemplar', { placedBy: 'exemplar', state: 'stashed' });
+    await add('head', { placedBy: 'head', state: 'sleeping' });
+    await add('old', {});
+    await add('user', { groupSource: 'user', placedBy: 'neighbour' });
+    await add('neighbour', { placedBy: 'neighbour' });
+    await add('youtube', { placedBy: 'youtube' });
+    await add('videos', { groupId: 'videos', groupSource: 'user' });
+    await add('other', { groupId: 'other', groupSource: 'user' });
+    await add('suggested', { groupId: 's1' });
+    await add('gone', { groupId: 'deleted', groupSource: 'user' });
+    await add('unsorted', { groupId: null });
+    const ids = (await neighbourPool(db, await db.items.all(), await db.groups.all())).map((p) => p.id).sort();
+    expect(ids).toEqual(['exemplar', 'head', 'old', 'rule', 'user']);
+  });
+  it('the pool leaves out YouTube videos with no placedBy but keeps other legacy items', async () => {
+    await db.groups.put(group('programming'));
+    const base = {
+      domain: 'x', state: 'open' as const, groupId: 'programming', groupSource: 'auto' as const, kind: 'read' as const,
+      createdAt: 1, lastActiveAt: 1, updatedAt: 1, classifiable: true,
+    };
+    const urls: Record<string, string> = {
+      watch: 'https://www.youtube.com/watch?v=aaa', short: 'https://www.youtube.com/shorts/bbb', be: 'https://youtu.be/ccc',
+      page: 'https://example.com/page',
+    };
+    const items: Item[] = Object.entries(urls).map(([id, url]) => ({ ...base, id, url, normUrl: url, title: id }));
+    items.push({ ...base, id: 'ytHead', url: 'https://www.youtube.com/watch?v=ddd', normUrl: 'https://www.youtube.com/watch?v=ddd', title: 'ytHead', placedBy: 'head' });
+    for (const it of items) await db.embeddings.put(await embeddingKey(it), unsure);
+    const ids = (await neighbourPool(db, items, await db.groups.all())).map((p) => p.id).sort();
+    expect(ids).toEqual(['page', 'ytHead']);
+  });
+  it(`keeps the ${NEIGHBOUR_POOL_MAX} most recently active tabs`, async () => {
+    await db.groups.put(group('programming'));
+    const items: Item[] = Array.from({ length: NEIGHBOUR_POOL_MAX + 2 }, (_, k) => ({
+      id: `p${k}`, url: `https://p${k}.example.com/`, normUrl: `https://p${k}.example.com/`, title: `p${k}`, domain: 'x',
+      state: 'open', groupId: 'programming', groupSource: 'user', kind: 'read', createdAt: 1, lastActiveAt: k, updatedAt: 1,
+      classifiable: true,
+    }));
+    for (const it of items) await db.embeddings.put(await embeddingKey(it), unsure);
+    const pool = await neighbourPool(db, items, await db.groups.all());
+    expect(pool).toHaveLength(NEIGHBOUR_POOL_MAX);
+    expect(pool[0]!.id).toBe(`p${NEIGHBOUR_POOL_MAX + 1}`);
+    expect(pool.map((p) => p.id)).not.toContain('p0');
+  });
+});
 describe('embedding cache hygiene (review 1.3)', () => {
   it('sweeps keys no item uses any more, keeps shared ones', async () => {
     mock = installChromeMock({ windows: [{ tabs: [web(1), web(1), web(2)] }] });
@@ -514,12 +650,45 @@ describe('queue failures (review 1.4)', () => {
     });
     await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
     await expect(processQueue(db, fakeEmbed)).rejects.toThrow('bad input');
+    const reads = vi.spyOn(db.items, 'all');
     await expect(processQueue(db, fakeEmbed)).resolves.toBe(40); // 39 classified + the poison item
+    // The neighbour pool is read once per batch (two batches), not again for each item retried alone.
+    expect(reads).toHaveBeenCalledTimes(2);
+    reads.mockRestore();
     expect(await db.queue.size()).toBe(0);
     const items = await db.items.all();
     expect(items.filter((i) => i.groupId === 'programming')).toHaveLength(39);
     expect(items.find((i) => i.title === 'Q 5')!.groupId).toBeNull();
     expect(mock.alarms()).toEqual([]);
+  });
+  it('a given-up auto item loses its placedBy', async () => {
+    await setup(40);
+    const poison = (await db.items.all()).find((i) => i.title === 'Q 5')!;
+    await db.items.put({ ...poison, groupId: 'programming', groupSource: 'auto', placedBy: 'head' });
+    fakeEmbed.mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.startsWith('Q 5 '))) throw new Error('bad input');
+      return texts.map(vecFor);
+    });
+    for (let k = 0; k < 2; k++) await expect(processQueue(db, fakeEmbed)).rejects.toThrow();
+    await processQueue(db, fakeEmbed);
+    const gone = (await db.items.get(poison.id))!;
+    expect(gone.groupId).toBeNull();
+    expect(gone.embGaveUpAt).toBeTypeOf('number');
+    expect(gone.placedBy).toBeUndefined();
+  });
+  it('lazyPool reads once, and a failed read is not cached', async () => {
+    await db.groups.put(group('programming'));
+    const spy = vi.spyOn(db.items, 'all');
+    const pool = lazyPool(db);
+    await pool();
+    await pool();
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+    const retry = lazyPool(db);
+    const fail = vi.spyOn(db.items, 'all').mockRejectedValueOnce(new Error('idb down'));
+    await expect(retry()).rejects.toThrow('idb down');
+    await expect(retry()).resolves.toEqual([]);
+    fail.mockRestore();
   });
   it('a given-up item is stamped, not re-queued by backfill within 24 h, and success clears the stamp', async () => {
     await setup(40);

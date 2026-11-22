@@ -244,6 +244,26 @@ describe('pullSync', () => {
   });
 });
 
+describe('placedBy (local only)', () => {
+  it('is never pushed', async () => {
+    await db.groups.put(group('news', 'News'));
+    await stashed('https://a.com/', { groupId: 'news', placedBy: 'neighbour', want: 'hardware' });
+    await pushSync(db);
+    expect(JSON.stringify(await syncStore())).not.toMatch(/placedBy|neighbour|hardware/);
+  });
+  it('a pulled record keeps this device’s record of an auto placement it leaves alone; a user choice clears it', async () => {
+    await db.groups.put(group('news', 'News'));
+    const past = Date.now() - 60_000;
+    const a = await stashed('https://a.com/', { groupId: 'news', placedBy: 'head', updatedAt: past });
+    const b = await stashed('https://b.com/', { groupId: 'news', placedBy: 'neighbour', updatedAt: past });
+    await remote([await remoteRec('https://a.com/'), await remoteRec('https://b.com/', { group: 'News' })]);
+    await pullSync(db);
+    expect(await db.items.get(a.id)).toMatchObject({ groupId: 'news', groupSource: 'auto', placedBy: 'head' });
+    const pulled = (await db.items.get(b.id))!;
+    expect(pulled).toMatchObject({ groupId: 'news', groupSource: 'user' });
+    expect(pulled.placedBy).toBeUndefined();
+  });
+});
 describe('touchStashedInGroup', () => {
   it('bumps updatedAt of stashed items in the group so a rename wins LWW elsewhere', async () => {
     const a = await stashed('https://a.com/', { groupId: 'g1', updatedAt: 5 });

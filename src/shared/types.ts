@@ -1,6 +1,8 @@
 import type { SuspiciousTab } from './clues';
 export type ItemState = 'open' | 'sleeping' | 'stashed';
 export type Kind = 'watch' | 'read' | 'other';
+/** How the automatic pipeline placed a tab (classify/pick.ts). */
+export type PlacedBy = 'rule' | 'exemplar' | 'name' | 'head' | 'neighbour' | 'youtube' | 'videos';
 export interface Item {
   id: string;
   url: string;
@@ -25,10 +27,28 @@ export interface Item {
   /** Local only (never synced or exported, no updatedAt bump): the topic the classifier wanted but no group existed for. */
   want?: string;
   /**
+   * Local only (never synced or exported, no updatedAt bump): how the automatic pipeline placed the tab, written with
+   * every automatic pick and removed when the user places it. Tabs placed by a neighbour, the YouTube bar or Videos
+   * never count as neighbours themselves (tab-index neighbourPool), so a guess never feeds more guesses.
+   */
+  placedBy?: PlacedBy;
+  /**
+   * Local only (never synced or exported, no updatedAt bump): the current automatic placement came from a re-pick after
+   * a model change (model-change.ts quiet queue entries) and was never stamped, so it stays on this device: growGroups
+   * keeps it unstamped too. Removed by any user placement (withoutPlacedBy) and by a stamped automatic move.
+   */
+  quietPick?: true;
+  /**
    * Local only: false while the tab has never been the active tab since it appeared ("New"); true once it has.
    * Missing (older data, tabs whose past is unknown) counts as opened.
    */
   opened?: boolean;
+  /**
+   * Local only (never synced or exported): where the tab was when the user added it to Priority, so removing it from
+   * Priority puts it back (when that group still exists; else the pipeline places it as a new tab). Present only
+   * while the item is in Priority; any other placement by the user drops it (withoutPlacedBy).
+   */
+  beforePriority?: { groupId: string | null; groupSource: 'auto' | 'user'; placedBy?: PlacedBy };
 }
 export interface Group {
   id: string;
@@ -77,6 +97,12 @@ export interface Settings {
    * so an install upgraded from an older version (stored settings lack the key) only adds groups. Not a user setting.
    */
   interestsFresh: boolean;
+  /**
+   * Show the "Look it up" action on Unsorted rows (dashboard and side panel). On by default; stored settings from
+   * before it lack the key and read as on (db.readSettings merges DEFAULT_SETTINGS). Nothing is sent without the
+   * confirm dialog either way.
+   */
+  lookupButton: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   autoSleepMinutes: null,
@@ -90,6 +116,7 @@ export const DEFAULT_SETTINGS: Settings = {
   suspiciousTabs: true,
   interestsAnswered: false,
   interestsFresh: false,
+  lookupButton: true,
 };
 /**
  * Outcome of the last stash sync, kept in chrome.storage.local under "syncStatus" for the UI.
@@ -124,6 +151,11 @@ export interface DashboardState {
   syncStatus: SyncStatus;
   /** The previous browser session, when the startup check found it was not restored. */
   lastSession?: Snapshot;
+  /**
+   * New names of the user's groups that were called "Priority" before it became the built-in group's name (one-time
+   * notice until dismissed; chrome.storage.local "priorityRenamed").
+   */
+  priorityRenamed?: string[];
   /** Nothing waits for classification, or (with groups to classify into) the model produced a vector this session. */
   modelReady: boolean;
   /** Items waiting for classification (the queue size). */
@@ -132,5 +164,12 @@ export interface DashboardState {
 }
 /** chrome.storage.session key of the startup check's result: `{ snapshotId: string | null }`. */
 export const LAST_SESSION_KEY = 'lastSession';
+/**
+ * chrome.storage.local key of the opt-in look-up's answers (src/ui/common/lookup.ts): cleaned text -> { at, hits }.
+ * Local only: never synced or exported, removed by "Delete all data".
+ */
+export const LOOKUP_CACHE_KEY = 'lookupCache';
 /** The background's broadcast to open extension pages after data changed (debounced). */
 export interface ChangedMessage { target: 'ui'; t: 'changed' }
+/** The worker's broadcast after "Delete all data": open pages drop what they would still write (the look-up cache). */
+export interface ResetMessage { target: 'ui'; t: 'reset' }

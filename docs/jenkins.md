@@ -21,11 +21,11 @@ Required Jenkins plugins: **Pipeline** (including Declarative), **Git**, **NodeJ
 
 Save and run **Build Now**. After the first run registers parameters, **Build with Parameters** offers `RUN_QUALITY_TESTS` and `RUN_E2E_TESTS`, both off by default.
 
-The pipeline cleans its workspace, checks out code, installs lockfile dependencies, runs ESLint, TypeScript and unit tests, prepares the checksum-verified model assets, and packages the extension. Optional model-quality tests run after asset preparation; optional browser tests run against the built extension. Command failures stop the build and prevent release archiving.
+The pipeline cleans its workspace, checks out code, installs lockfile dependencies, runs ESLint, TypeScript and unit tests, prepares the checksum-verified model assets (the bundled model is committed in the repository and only verified; `scripts/model-cache.mjs` removes any other model left in `public/models` and does not use the `/tmp/tablight-model-cache` cache for a committed model), and packages the extension. Optional model-quality tests run after asset preparation; optional browser tests run against the built extension. Command failures stop the build and prevent release archiving.
 
 Successful builds expose `release/tablight-<version>.zip` under **Artifacts**. JUnit reports and Playwright failure traces are archived before workspace cleanup. The timeout is 60 minutes; Jenkins retains 20 build records and artifacts from the latest 5 builds. Browser store publishing remains manual.
 
-Allow outbound access to image registries, npm and Debian mirrors during image construction, plus GitHub, npm, Hugging Face model/CDN endpoints and optional Playwright browser downloads during builds. Start with 2 CPUs and 4 GB RAM; allow more for quality/browser suites. Keep the Dockerfile's Playwright dependency-install version aligned with `@playwright/test` when upgrading it.
+Allow outbound access to image registries, npm and Debian mirrors during image construction, plus GitHub, npm and optional Playwright browser downloads during builds (Hugging Face is no longer needed: the bundled model is committed). Start with 2 CPUs and 4 GB RAM; allow more for quality/browser suites. Keep the Dockerfile's Playwright dependency-install version aligned with `@playwright/test` when upgrading it.
 
 ## Troubleshooting
 
