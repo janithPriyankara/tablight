@@ -4,6 +4,8 @@
  * are decided here; everything else returns null and goes to the model.
  */
 
+import { clipText } from '../shared/clip';
+
 /** Title says it is a series/season/episode (IMDb type hints, streaming titles). */
 const TV_HINT =
   /\b(?:TV (?:Series|Mini[- ]Series|Episode|Special)|Mini[- ]?Series|Limited Series|Season \d+|S\d{1,2}\s*:?\s*E\d{1,3}|Episode \d+)\b/i;
@@ -146,7 +148,8 @@ function byHost(host: string, path: string): string | null {
   }
   return null;
 }
-export function ruleGroup(url: string, title: string): string | null {
+export function ruleGroup(url: string, rawTitle: string): string | null {
+  const title = clipText(rawTitle);
   const u = parse(url);
   if (!u) return null;
   const host = hostOf(u);

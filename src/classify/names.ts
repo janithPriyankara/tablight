@@ -1,6 +1,7 @@
 // The offline name matcher: whole-core lookups of a tab's search query or title in a bundled name list, plus explicit
 // hardware part-number patterns. Pure; no chrome APIs.
 /** Normalized name -> label id. */
+import { clipText } from '../shared/clip';
 export type NameIndex = ReadonlyMap<string, string>;
 export type CoreSource = 'search' | 'wikipedia' | 'title';
 /** Lowercase, diacritics stripped, anything that is not a letter or digit becomes a space, collapsed and trimmed. */
@@ -87,7 +88,8 @@ const SITE_SUFFIX = /\s+[-|—–·•]\s+[^-|—–·•]{1,40}$/u;
 const STEAM_SUFFIX = /\s+on Steam$/;
 const STEAM_SALE = /^Save \d{1,3}% on\s+/;
 /** A release year in brackets at the end: "Oppenheimer (2023)", IMDb's "Dark (TV Series 2017–2020)". */
-const YEAR_BRACKET = /\s*\((?:TV (?:Mini[ -])?Series |TV Movie |Video Game |Video )?(?:19|20)\d{2}(?:\s*[–—-]\s*(?:(?:19|20)\d{2})?)?\s*\)$/i;
+// No leading \s*: on an unanchored suffix pattern it made matching cubic (4 s on a 4K title); the caller trims instead.
+const YEAR_BRACKET = /\((?:TV (?:Mini[ -])?Series |TV Movie |Video Game |Video )?(?:19|20)\d{2}(?:\s*[–—-]\s*(?:(?:19|20)\d{2})?)?\s*\)$/i;
 const WIKI_SUFFIX = /\s+[-–—]\s+Wikipedia$/i;
 const WIKI_BRACKET = /\s*\(([^()]+)\)\s*$/;
 function isWikipedia(u: URL): boolean {
@@ -133,7 +135,8 @@ function wikiDisambig(url: string, title: string): string | null {
  * What a tab is "about": the search query, the Wikipedia title, or the title without its site suffix; noise words and
  * years trimmed at both ends. `core` is normalized, `raw` is the same text with its case and dashes kept.
  */
-export function tabCore(url: string, title: string): { core: string; raw: string; source: CoreSource } | null {
+export function tabCore(url: string, rawTitle: string): { core: string; raw: string; source: CoreSource } | null {
+  const title = clipText(rawTitle);
   const u = parse(url);
   let text: string;
   let source: CoreSource;
@@ -149,7 +152,7 @@ export function tabCore(url: string, title: string): { core: string; raw: string
     text = STEAM_SUFFIX.test(t) ? t.replace(STEAM_SUFFIX, '').replace(STEAM_SALE, '') : t.replace(SITE_SUFFIX, '');
     source = 'title';
   }
-  text = text.trim().replace(YEAR_BRACKET, '');
+  text = text.trim().replace(YEAR_BRACKET, '').trimEnd();
   const raw = stripNoise(text);
   const core = normName(raw);
   return core ? { core, raw, source } : null;

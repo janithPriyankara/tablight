@@ -3,6 +3,7 @@ import { HEAD } from '../classify/head';
 import { EMBED_MODEL } from '../classify/model';
 import { NEIGHBOUR_POOL_MAX, pickGroup, VIDEOS_GROUP_ID, type Neighbour, type PlacedBy } from '../classify/pick';
 import { OTHER_GROUP_ID } from '../classify/assign';
+import { clipText } from '../shared/clip';
 import { sha1hex } from '../shared/hash';
 import type { Group, Item } from '../shared/types';
 import { cleanTitle, domainOf, embedText, isWebUrl, isYouTubeVideo, kindOf, normalizeUrl } from '../shared/url';
@@ -183,7 +184,7 @@ function itemFor(
 ): { item: Item; enqueue: boolean; navigated: boolean } {
   const url = tabUrl(t);
   const normUrl = normalizeUrl(url);
-  const title = t.title ?? '';
+  const title = clipText(t.title ?? ''); // pages set any length; see shared/clip
   const classifiable = isWebUrl(url);
   // tabs.Tab.lastAccessed is Chrome 121+; onActivated (touchTab) keeps lastActiveAt current too.
   const lastActiveAt = Math.max(t.lastAccessed ?? 0, prev?.lastActiveAt ?? 0) || now;
