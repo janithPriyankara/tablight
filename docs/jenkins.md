@@ -28,21 +28,32 @@ Successful builds expose `release/tablight-<version>.zip` under **Artifacts**. J
 Allow outbound access to image registries, npm and Debian mirrors during image construction, plus GitHub, npm and optional Playwright browser downloads during builds (Hugging Face is no longer needed: the bundled model is committed). Start with 2 CPUs and 4 GB RAM; allow more for quality/browser suites. Keep the Dockerfile's Playwright dependency-install version aligned with `@playwright/test` when upgrading it.
 
 ## Security gates
+
 Every build (main, pull requests, tags, releases) runs these stages one after another, so the shared host never carries more than one at a time. Any finding fails the build, so a release cannot go out with one.
+
 | Stage | What it checks | Cost |
 |---|---|---|
 | Supply chain | OSV-Scanner over `package-lock.json` and `scripts/finetune/requirements.txt`; `npm audit` at any severity; `npm audit signatures` | One static binary (cached in `/tmp/tablight-tools`), a few registry requests |
 | Secret scan | gitleaks over the whole git history (redacted report) | One static binary (cached) |
 | Lint | ESLint, including `eslint-plugin-security` on `src/` and the DOM-injection bans | Incremental cache in `/tmp` |
 | Type check | `tsc --noEmit` | Incremental cache in `/tmp` |
-| Unit tests | The unit suite with v8 coverage thresholds (`vitest.config.ts`), including the security suites: `redos`, `security-model`, `security-rpc` | Coverage adds little |
-| Sonar | SonarCloud analysis with coverage; the build waits for the quality gate | The scanner downloads a Java runtime (~50 MB) once into `~/.sonar` |
+| Unit tests | The unit suite with v8 coverage thresholds (`vitest.config.ts`), including the security suites `redos`, `security-model` and `security-rpc` | Coverage adds little |
+| Sonar | Self-hosted SonarQube Community with coverage, on main and release builds only (Community analyzes main alone); the build waits for the quality gate | Scanner JVM capped at 512 MB; the server runs separately |
 | Build and package | `verify-release` (permissions, CSP, URL allowlist, licenses, hashes, size), the ZIP, and a CycloneDX SBOM | — |
+
 Binaries are pinned by version and checked against their release's published checksums before first use.
-1. Sign in at [sonarcloud.io](https://sonarcloud.io) with GitHub and import `janithPriyankara/tablight`. If its organization or project key differ from `sonar-project.properties`, update that file.
-2. Turn off SonarCloud's *Automatic Analysis* for the project (Administration → Analysis Method), so Jenkins' analysis with coverage is the only one.
-3. Create a token (My Account → Security) and add it in Jenkins as a **Secret text** credential with the id `sonar-token`.
-Until the credential exists, ordinary builds skip the Sonar stage with a notice; a release build fails instead.
+
+Pull request and tag builds run in a throwaway workspace: emptied before checkout, deleted at the end (passed or failed) after reports and release files are archived. When their lockfile matches main's, `node_modules` is hard-linked from main's workspace (`/var/jenkins_home/jobs/tablight-cicd/branches/main/workspace`) instead of installed; main keeps its workspace as that shared source.
+
+### Sonar setup (once)
+
+SonarQube Community runs on the Jenkins host in the container `sonarqube`, on Jenkins' Docker network `web` (restart: unless-stopped), so the pipeline reaches it at `http://sonarqube:9000`; the UI is public at https://sonar.theteapotlk.com. Memory is tight (4 GB host, SonarQube capped at 1.8 GB), so the scanner runs alone, after the unit tests, with a 512 MB JVM.
+
+1. In SonarQube, create the project with the key `tablight` and main branch `main` (or let the first analysis create it).
+2. Create a project analysis token and add it in Jenkins as a **Secret text** credential with the id `sonar-token`.
+
+Pull request and tag builds skip the stage (Community has no branch or pull request analysis). Until the credential exists, main builds skip it with a notice; a release build fails instead.
+
 ## Troubleshooting
 
 - **node/npm not found:** check that the NodeJS plugin is enabled, the tool is named exactly `nodejs22.23.5`, and its automatic download succeeds.
