@@ -1,5 +1,6 @@
 import type { Clue, SuspiciousTab, TabContext } from '../shared/clues';
 import type { Item } from '../shared/types';
+import { clipText } from '../shared/clip';
 import { domainOf, isWebUrl } from '../shared/url';
 const CLICK_SEGMENTS = new Set(['click', 'redirect', 'go', 'r', 'out']);
 const CLICK_KEYS = new Set(['key', 'visitor_id', 'clickid', 'click_id', 'zoneid', 'campaign_id', 'subid', 'cid', 'pubid', 'bid']);
@@ -52,7 +53,8 @@ const TITLE_PATTERNS: RegExp[] = [
 ];
 /** A scam-style phrase in the raw tab title. */
 export function titleClue(title: string): boolean {
-  return TITLE_PATTERNS.some((re) => re.test(title));
+  const t = clipText(title);
+  return TITLE_PATTERNS.some((re) => re.test(t));
 }
 export function cluesFor(item: Item, ctx: TabContext | undefined): Clue[] {
   const out: Clue[] = [];

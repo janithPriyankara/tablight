@@ -18,6 +18,8 @@ const TABLE: ReadonlyArray<readonly [string, readonly string[]]> = [
 ];
 const compiled = TABLE.map(([label, phrases]) => ({
   label,
+  // Built from the constant TABLE, every phrase escaped: no outside text shapes the pattern.
+  // eslint-disable-next-line security/detect-non-literal-regexp
   res: phrases.map((p) => new RegExp(`(?<![a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-z0-9])`)),
 }));
 export function describeLabel(description: string): string | null {

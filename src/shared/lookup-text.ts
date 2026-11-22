@@ -1,4 +1,5 @@
 import { tabCore } from '../classify/names';
+import { clipText } from './clip';
 /**
  * Terms that stop a tab from ever being offered for look-up. Matched case-insensitively on word boundaries against the
  * title, the core and the host (on the host, terms of 4+ letters also match inside a name, e.g. "mybank.example").
@@ -42,6 +43,8 @@ const termPattern = (t: string): string => esc(t).replace(/[ -]/g, '[\\s-]+');
 // Only these compound-prone terms match inside a word (MyBank, NetBanking); all others need word boundaries, with plurals.
 const COMPOUND = ['bank', 'banking', 'password', 'login', 'signin', 'invoice', 'payroll', 'payslip', 'checkout', 'paypal'];
 const REST = SENSITIVE_TERMS.filter((t) => !COMPOUND.includes(t));
+// Built from the constant term lists (escaped by termPattern): no outside text shapes the pattern.
+// eslint-disable-next-line security/detect-non-literal-regexp
 const TEXT_SENSITIVE = new RegExp(
   `(?:${COMPOUND.join('|')})|(?<![a-z0-9])(?:${REST.map(termPattern).join('|')})(?:e?s)?(?![a-z0-9])`,
   'i',
@@ -124,7 +127,7 @@ function asciiDigit(ch: string): string {
  * nothing changes, so cleaning the cleaned text gives the same text. Also applied to the user's edit.
  */
 export function cleanLookupText(input: string): string {
-  let s = input.normalize('NFKC').replace(/\p{Cf}/gu, '').replace(/\p{Nd}/gu, asciiDigit);
+  let s = clipText(input).normalize('NFKC').replace(/\p{Cf}/gu, '').replace(/\p{Nd}/gu, asciiDigit);
   for (let i = 0; i < 10; i++) {
     const next = cleanOnce(s);
     if (next === s) break;
