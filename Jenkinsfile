@@ -1,7 +1,11 @@
 // Commands run directly inside the existing Jenkins node/container.
 def workspaceStarted = false
-// Set when a successful tag build removed its workspace (post success), so cleanup has nothing left to do.
-def workspaceDeleted = false
+// main's workspace is the shared dependency source: kept between builds, and its node_modules seeds every other build.
+// Every other build (pull requests, tags) runs in a throwaway workspace, emptied before checkout and deleted at the end.
+// The plain (non-multibranch) job has no BRANCH_NAME and keeps its own workspace like main.
+def keepsWorkspace() {
+    return !env.BRANCH_NAME || env.BRANCH_NAME == 'main'
+}
 // True when the cron trigger started this build.
 def isNightly() {
     return !currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()
@@ -71,6 +75,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
+                    // A throwaway workspace starts empty, even if an earlier build of it was killed before cleanup.
+                    if (!keepsWorkspace()) deleteDir()
                     workspaceStarted = true
                     env.GIT_COMMIT = checkout(scm).GIT_COMMIT
                     githubStatus('pending', "Build #${env.BUILD_NUMBER} running")
@@ -82,18 +88,42 @@ pipeline {
             }
         }
         stage('Install dependencies') {
+            environment {
+                MAIN_WORKSPACE = "${env.JENKINS_HOME}/jobs/tablight-cicd/branches/main/workspace"
+            }
             steps {
-                // npm ci only when the lockfile or Node changed since node_modules was installed. The stamp is
-                // written after a successful install, so a broken or partial install is never reused.
+                // The stamp (lockfile hash + Node version) is written last, after a complete install, so a broken,
+                // partial or in-progress install never has one and is never reused.
+                //   1. This workspace's node_modules matches the lockfile (main, plain job): nothing to do.
+                //   2. Another build whose lockfile matches main's: hard-link main's node_modules (cp -al: no download,
+                //      next to no disk, seconds). npm and the build replace files rather than edit them, and the stamp
+                //      is removed before it is rewritten, so nothing here can change main's copies. main's stamp is
+                //      read again after the copy: if main reinstalled meanwhile, the copy is discarded.
+                //   3. Otherwise (a changed lockfile, e.g. a Dependabot PR, or main not installed yet): npm ci.
                 sh '''
+                    set -eu
                     want="$(sha256sum package-lock.json | cut -c1-64) $(node --version)"
-                    if [ -d node_modules ] && [ "$(cat node_modules/.tablight-lock 2>/dev/null)" = "$want" ]; then
+                    stamp() { cat "$1/node_modules/.tablight-lock" 2>/dev/null || true; }
+                    if [ -d node_modules ] && [ "$(stamp .)" = "$want" ]; then
                         echo "node_modules is current for this lockfile; skipping npm ci"
-                    else
-                        rm -f node_modules/.tablight-lock
-                        npm ci --no-audit --no-fund
-                        echo "$want" > node_modules/.tablight-lock
+                        exit 0
                     fi
+                    rm -rf node_modules
+                    if [ "$(pwd -P)" != "$(cd "$MAIN_WORKSPACE" 2>/dev/null && pwd -P)" ] && [ "$(stamp "$MAIN_WORKSPACE")" = "$want" ]; then
+                        cp -al "$MAIN_WORKSPACE/node_modules" node_modules
+                        if [ "$(stamp "$MAIN_WORKSPACE")" = "$want" ]; then
+                            rm -rf node_modules/.vite node_modules/.cache
+                            rm -f node_modules/.tablight-lock
+                            echo "$want" > node_modules/.tablight-lock
+                            echo "node_modules hard-linked from main's workspace (same lockfile); skipping npm ci"
+                            exit 0
+                        fi
+                        echo "main's node_modules changed during the copy; installing instead"
+                        rm -rf node_modules
+                    fi
+                    npm ci --no-audit --no-fund
+                    rm -f node_modules/.tablight-lock
+                    echo "$want" > node_modules/.tablight-lock
                 '''
             }
         }
@@ -346,25 +376,16 @@ pipeline {
                 }
             }
         }
-        success {
-            script {
-                githubStatus('success', "Build #${env.BUILD_NUMBER} passed")
-                // A tag build's workspace (node_modules + model, ~1 GB) is never reused: each version tag gets its own
-                // and the shared host's disk fills up. Its reports and release files are archived by now, so it goes.
-                // main keeps its workspace, which is what lets the next main build skip npm ci.
-                if (env.TAG_NAME) {
-                    deleteDir()
-                    workspaceDeleted = true
-                }
-            }
-        }
+        success { script { githubStatus('success', "Build #${env.BUILD_NUMBER} passed") } }
         unstable { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} has failing tests") } }
         failure { script { githubStatus('failure', "Build #${env.BUILD_NUMBER} failed") } }
         aborted { script { githubStatus('error', "Build #${env.BUILD_NUMBER} was stopped") } }
         cleanup {
             script {
-                if (workspaceDeleted) {
-                    echo 'Workspace deleted after this tag build; nothing to clean.'
+                if (!keepsWorkspace()) {
+                    // A pull request or tag build: its reports and release files are archived by now (post always and
+                    // the archive stages run first), so the whole throwaway workspace goes, passed or failed.
+                    deleteDir()
                 } else if (workspaceStarted) {
                     // Keep node_modules for the next build; everything else git does not track goes.
                     sh 'git clean -ffdx -e node_modules'
