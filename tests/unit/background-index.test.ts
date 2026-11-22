@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installChromeMock } from '../../src/ui/mock/chrome-mock';
 vi.mock('../../src/background/tab-index', async (orig) => {
   const m = await orig<typeof import('../../src/background/tab-index')>();
-  return { ...m, maybeSuggest: vi.fn(m.maybeSuggest) };
+  return { ...m, maybeSuggest: vi.fn(m.maybeSuggest), sweepEmbeddings: vi.fn(m.sweepEmbeddings) };
 });
 vi.mock('../../src/shared/hash', async (orig) => {
   const m = await orig<typeof import('../../src/shared/hash')>();
@@ -132,6 +132,18 @@ describe('background index', () => {
     const bg = await import('../../src/background/index');
     const { embed } = await import('../../src/background/embedder');
     const db = await bg.getDb();
+    // The kicked pipeline ends with an embedding sweep that hashes every item's vector key. Hold it, as a slow host
+    // does, so it is still running when the classification check below passes.
+    const tabIndex = await import('../../src/background/tab-index');
+    const sweep = vi.mocked(tabIndex.sweepEmbeddings);
+    const sweepsBefore = sweep.mock.calls.length;
+    const sweepImpl = sweep.getMockImplementation()!;
+    let openSweep!: () => void;
+    const sweepGate = new Promise<void>((r) => (openSweep = r));
+    sweep.mockImplementationOnce(async (d) => {
+      await sweepGate;
+      return sweepImpl(d);
+    });
     const json = JSON.stringify({
       format: 'tab-organizer', version: 1, exportedAt: 1, groups: [], snapshots: [],
       items: [
@@ -159,6 +171,10 @@ describe('background index', () => {
     await expect(bg.handleRequest({ t: 'search', q: 'agnet', semantic: 'yes' as unknown as boolean })).rejects.toThrow();
     // Semantic search reads vectors in one transaction and never hashes per item.
     const { sha1hex } = await import('../../src/shared/hash');
+    // The pipeline hashes in its sweep: let it finish first, so only the search's own work is counted.
+    openSweep();
+    await vi.waitFor(() => expect(sweep.mock.calls.length).toBeGreaterThan(sweepsBefore));
+    await sweep.mock.results[sweepsBefore]!.value;
     const getMany = vi.spyOn(db.embeddings, 'getMany');
     const getOne = vi.spyOn(db.embeddings, 'get');
     vi.mocked(sha1hex).mockClear();
