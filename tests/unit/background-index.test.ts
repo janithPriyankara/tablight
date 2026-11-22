@@ -75,7 +75,7 @@ describe('background index', () => {
     await whenTabIndexIdle();
     expect(suggest).toHaveBeenCalledTimes(1);
     mock.uninstall();
-  });
+  }, 25_000); // 2.1 s of the steps are deliberate waits; the 5 s default leaves no room on a slow CI host
   it('a trained group that arrived without a centroid gets its seed centroid once the pipeline embeds', async () => {
     const mock = installChromeMock({ windows: [{ tabs: [{ url: 'https://stackoverflow.com/questions/5/y', title: 'Y question' }] }] });
     const bg = await import('../../src/background/index');

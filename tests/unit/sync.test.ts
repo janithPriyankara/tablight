@@ -9,7 +9,7 @@ import {
   MAX_NEW_GROUPS, SYNCED_IDS_KEY, SYNC_RETRY_ALARM, SYNC_STATUS_KEY, handleSyncStorageChange, pullSync, pushSync,
   readSyncStatus, scheduleSync, setSyncEnabled, touchStashedInGroup, wasSynced,
 } from '../../src/background/sync';
-import { META_KEY, encodeChunks, toRecord, type SyncRecord, type Tomb } from '../../src/sync/sync-codec';
+import { META_KEY, decodeChunks, encodeChunks, toRecord, type SyncRecord, type Tomb } from '../../src/sync/sync-codec';
 import { sha1hex } from '../../src/shared/hash';
 import type { Group, Item } from '../../src/shared/types';
 import { installChromeMock, type ChromeMockControl } from '../../src/ui/mock/chrome-mock';
@@ -240,7 +240,7 @@ describe('pullSync', () => {
     expect(get).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(200);
     await vi.waitFor(async () => expect(await db.items.get(r[0])).toBeDefined());
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledTimes(2); // one pass: its read, and the re-read just before it writes
   });
 });
 
@@ -383,6 +383,27 @@ describe('review fixes', () => {
     expect(await db.items.all()).toEqual(before);
     expect(before[0]!.updatedAt).toBe(future);
     expect(set).not.toHaveBeenCalled();
+  });
+});
+
+describe('a remote write during a pass', () => {
+  it('is merged, never overwritten, when another device writes between our read and our write', async () => {
+    await stashed('https://local.example.com/');
+    const rec = await remoteRec('https://remote.example.com/');
+    const get = chrome.storage.sync.get.bind(chrome.storage.sync);
+    let raced = false;
+    vi.spyOn(chrome.storage.sync, 'get').mockImplementation((async (keys?: string | string[] | null) => {
+      const snapshot = await get(keys);
+      if (!raced && keys === null) {
+        raced = true;
+        await remote([rec]); // the other device's write lands right after this pass read storage.sync
+      }
+      return snapshot;
+    }) as never);
+    expect(await pullSync(db)).toMatchObject({ ok: true });
+    const urls = decodeChunks(await syncStore()).recs.map((r) => r[1]).sort();
+    expect(urls).toEqual(['https://local.example.com/', 'https://remote.example.com/']);
+    expect((await db.items.get(rec[0]))?.state).toBe('stashed');
   });
 });
 
