@@ -1,7 +1,7 @@
 # Build-time only (fine-tuning and export); nothing here ships in the extension. Python 3.12.
 torch==2.15.0
 sentence-transformers==5.7.0
-transformers==4.57.6
+transformers==5.10.1
 tokenizers==0.22.2
 huggingface-hub==0.36.2
 accelerate==1.16.0
